@@ -1,0 +1,22 @@
+{
+	"datasource": {
+		"key": "articles",
+		"name": "Articles DS",
+		"endpoint": "editorial/articles",
+		"cache": false,
+
+		"paginate": true,
+
+		"filters": [
+			{ "category": ["blog"] }
+		],
+
+		"count": 5,
+		"sort": {
+			"field": "_id",
+			"order": "desc"
+		},
+		"search": {"title": "/(third)/iu"},
+		"fields": ["title", "author"]
+	}
+}

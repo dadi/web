@@ -1,0 +1,26 @@
+{
+	"datasource": {
+		"key": "tweets",
+		"name": "Tweets DS",
+		"endpoint": "editorial/articles",
+		"cache": false,
+
+		"paginate": true,
+
+		"fields": [
+			"title"
+		],
+
+		"filters": [
+			{ "category": ["blog"] }
+		],
+
+		"limit": "5",
+		"search": {"title": "/(third)/iu"},
+		"skip": 0,
+		"sort": {
+			"field": "_id",
+			"order": "desc"
+		}
+	}
+}
