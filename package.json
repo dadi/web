@@ -4,22 +4,21 @@
   "description": "template layer for the serama api",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node bantam/main"
   },
   "private": true,
   "dependencies": {
-    "express": "4.4.4",
-    "underscore":"1.6.0",
+    "body-parser": "^1.11.0",
+    "consolidate": "0.10.0",
+    "dustjs-helpers": "^1.5.0",
+    "dustjs-linkedin": "^2.5.1",
+    "json5": "0.2.0",
+    "moment": "^2.9.0",
     "mongodb": "1.4.7",
-    "morgan": "1.1.1",
-    "winston": "0.7.3",
-    "json5":"0.2.0",
-    "step":"0.0.5",
-    "serve-favicon":"2.0.1",
-    "q":"1.0.1",
-    "express-dust":"0.1.5",
-    "dustjs-linkedin":"2.4.0",
-    "consolidate":"0.10.0"
+    "path-to-regexp": "^1.0.3",
+    "serve-favicon": "2.0.1",
+    "underscore": "1.6.0"
   },
   "author": "",
   "license": "ISC"

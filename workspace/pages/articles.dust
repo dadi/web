@@ -21,5 +21,3 @@ Total: {total}
 
 And this is from the event:
 <h3>{events.testa}</h3>
-
-{>"../partials/footer" /}

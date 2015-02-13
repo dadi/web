@@ -13,4 +13,7 @@
 <!--
 {session}
 -->
+
+{>"partials/footer" /}
+
 </html>

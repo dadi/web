@@ -1,0 +1,43 @@
+{
+    "logging": {
+        "enabled": true,
+        "level": "DEBUG",
+        "path": "./log",
+        "filename": "rosecomb",
+        "dateFormat": "YYYY-MM-DD",
+        "extension": "log",
+        "messageFormat": "<%= label %> - <%= date %> - <%= message %>"
+    },
+    "caching": {
+        "enabled": true,
+        "ttl": 300,
+        "directory": "./cache/rosecomb/",
+        "extension": "json"
+    },
+    "server": {
+        "url": "vf.dev.dadi.technology:3000",
+        "assetUrl": "vf.dev.dadi.technology:3000",
+        "host": "localhost",
+        "port": 3000
+    },
+    "smtp": {
+        "host": "email-smtp.eu-west-1.amazonaws.com",
+        "port": "25", 
+        "tls": true,
+        "username": "AKIAIJESHNQTKMFGQJ3A",
+        "password": "At6jxMzKbN8FpCiSxBADnLiKGaQ+JKvg0wr7cLd42gzj",
+        "from": "feroviktor@gmail.com",
+        "replyTo": "feroviktor@gmail.com"
+    },
+    "mysql": {
+        "host": "localhost",
+        "port": "3306",
+        "username": "root",
+        "password": "M*6lock",
+        "database": "whatcar-valuations" 
+    },
+    "certificate": {
+        "key": "3eeafcf4a66af37c443c3afca3db32465223b632"
+    },
+    "feedback": false
+}

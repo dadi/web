@@ -1,0 +1,16 @@
+{
+	"datasource": {
+		"key": "books",
+		"name": "Books DS",
+		"endpoint": "vjoin/testdb/books",
+		"cache": false,
+		"paginate": true,
+		"count": 5,
+		"sort": {
+			"field": "_id",
+			"order": "desc"
+		},
+		"search": {},
+		"fields": ["name","authorId"]
+	}
+}

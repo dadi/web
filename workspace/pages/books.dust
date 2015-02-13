@@ -1,0 +1,30 @@
+{>layout/}
+
+<p>
+Total: {total}
+</p>
+
+<h3>Books</h3>
+<ul>
+{#books}
+  <li>
+    <p>{name}, {byline} by {authorId}</p>
+  </li>
+{/books}
+</ul>
+
+<h3>Users</h3>
+<ul>
+{#users}
+  <li>
+    <p>{name}, created {createdAt}</p>
+  </li>
+{/users}
+</ul>
+
+And this is from the event:
+<h3>{events.testa}</h3>
+
+{<content}
+  This is loaded from a partial.
+{/content}

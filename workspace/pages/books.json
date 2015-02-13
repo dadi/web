@@ -1,0 +1,14 @@
+{
+    "page": {
+        "name": "Books",
+        "description": "A collection of books.",
+        "language": "en"
+    },
+    "datasources": [
+        "books",
+        "users"
+    ],
+    "events": [
+        "testa"
+    ]
+}

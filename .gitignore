@@ -1,6 +1,9 @@
 # Logs
-logs
+log
 *.log
+
+.DS_Store
+cache
 
 # Runtime data
 pids
