@@ -1,8 +1,7 @@
 {
   "name": "rosecomb",
   "version": "0.0.1",
-  "description": "template layer for the serama api",
-  "main": "index.js",
+  "description": "Template layer for the Serama API",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node bantam/main"
@@ -19,6 +18,13 @@
     "path-to-regexp": "^1.0.3",
     "serve-favicon": "2.0.1",
     "underscore": "1.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dadiplus/rosecomb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dadiplus/rosecomb/issues"
   },
   "author": "",
   "license": "ISC"
