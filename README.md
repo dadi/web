@@ -10,9 +10,10 @@ Templating layer concept for Bantam. Node.
 
 ### Run
 
-	node index.js
+Rosecomb expects the Serama API to be running locally on port 3001. Start the Serama server before running Rosecomb.
 
-Rosecomb is currently hardcoded to run on port 8081, and expects the Serama API to be running locally on port 8888. These two settings need to be moved into a configuration block.
+	npm start
+
 
 ### How it works
 
@@ -24,5 +25,4 @@ A datasource is a JSON file specifying the API endpoint to connect to along with
 
 ### Example
 
-If a request is made to Rosecomb running on `http://localhost:8081/articles` the application takes the `articles` parameter and looks for an `articles.json` page descriptor in `workspace/pages`. Any datasources that page descriptor specifies are loaded from `workspace/data-sources` and the data is retrieved from the datasource's API endpoint. In order to render the returned data to the browser, a Dust template must exist in `workspace/pages` with the same name as the requested page, e.g. `articles.dust`.
-
+If a request is made to Rosecomb running on `http://localhost:3000/articles` the application takes the `articles` parameter and looks for an `articles.json` page descriptor in `workspace/pages`. Any datasources that page descriptor specifies are loaded from `workspace/data-sources` and the data is retrieved from the datasource's API endpoint. In order to render the returned data to the browser, a Dust template must exist in `workspace/pages` with the same name as the requested page, e.g. `articles.dust`.
