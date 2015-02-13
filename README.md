@@ -26,10 +26,10 @@ Rosecomb is based on Node.JS, using latest stable versions.
 
 Rosecomb constantly monitors the workspace folder for changes modifies it's behaviour according to file changes.
 
-New pages can be initialized by simply creating a new file in:
+New pages can be initialized by simply creating new files in `workspace/pages/{page name}.dust` and `workspace/pages/{page name}.json`
 
-- workspace/pages/{page name}.dust and workspace/pages/{page name}.json
-  - This will create a new page on *http://{url}/{page name}*
+This will create a new page at *http://{url}/{page name}*
+
     
 The page descriptor file ({page name}.json) describes the taxonomy and the interaction between Serama and Rosecomb.
 
@@ -51,18 +51,18 @@ The developer then implements a code in the event which will look for specific e
 The developer then returns the updated counter number from the event which is made accessible within the Dust template.
 
 ### File structure
-  
+```  
   bantam/main.js
   workspace/data-sources/{datasource name}.json
   workspace/events/{event name}.json
   workspace/pages/{page name}.dust
   workspace/pages/{page name}.json
   workspace/partials/{partial name}.dust
-  
+```
 ### Example files
 
 #### workspace/pages/articles.json
-
+```js
   {
       "page": {
           "name": "Articles", // Page title to be displayed in gui, also available for page file
@@ -76,9 +76,10 @@ The developer then returns the updated counter number from the event which is ma
           "testa"
       ]
   }
+```
 
 ####workspace/data-sources/articles.json
-
+```js
   {
     "datasource": {
       "key": "articles", // Name of data-source this is used in the page descriptor to attach a data source
@@ -101,7 +102,7 @@ The developer then returns the updated counter number from the event which is ma
       "fields": ["title", "author"] // Limit fields to return
     }
   }
-
+```
 
 ### Installation
 
