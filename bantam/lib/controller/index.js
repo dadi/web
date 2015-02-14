@@ -41,7 +41,7 @@ var Controller = function (page, options) {
   self = this;
 
   this.attachDatasources(function() {
-    console.log(self.datasources);
+    //console.log(self.datasources);
   });
 };
 
@@ -73,15 +73,22 @@ Controller.prototype.get = function (req, res, next) {
     //     skip: skip
     // };
     // if (sort) options.sort = sort;
+    
+    self = this;
 
     var data = {
-      "title": this.page.name
+      "title": self.page.name
+    }
+
+    var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(self.page.name) > -1; });
+    if (!template) {
+      return sendBackHTML(500, res, next)(null, "Dust template not found");
     }
 
     self.loadData(data, function(data) {      
       // Render the compiled template
       var test = dust.render(self.page.name, data, function(err, result) {
-        if (err) done(err);
+        if (err) done(err, null);
         done(err, result);
       });
     })
@@ -94,6 +101,9 @@ Controller.prototype.loadData = function(data, done) {
     self.getData(self.datasources[key], function(result) {
       data[key] = JSON.parse(result);
       idx++;
+      
+      // return the data if we're at the end of the datasources
+      // array, we have all the responses to render the page
       if (idx === Object.keys(self.datasources).length) {
         done(data);
       }
@@ -103,15 +113,17 @@ Controller.prototype.loadData = function(data, done) {
 };
 
 Controller.prototype.getData = function(query, done) {
+
+    // TODO add authentication request
+    // TODO allow non-Serama endpoints
     
     var token = '79654917-6110-4b20-8781-486d1c25f1e1';
 
     var headers = { 'Authorization': 'Bearer ' + token }
 
-    // TODO set the API host from config
     var options = {
-      host: 'localhost',
-      port: '3001',
+      host: config.api.host,
+      port: config.api.port,
       path: '/' + query,
       method: 'GET',
       headers: headers
@@ -119,8 +131,6 @@ Controller.prototype.getData = function(query, done) {
 
     req = http.request(options, function(res) {
       
-      console.log('STATUS: ' + res.statusCode);
-
       var output = '';
 
       res.on('data', function(chunk) {
@@ -128,20 +138,15 @@ Controller.prototype.getData = function(query, done) {
       });
 
       res.on('end', function() {
-        console.log('End GET Request');
-
-        //deferred.resolve(output);
         done(output);
       });
 
       req.on('error', function(err) {
         console.log('Error: ' + err);
       });
-
     });
 
     req.end();
-
 };
 
 Controller.prototype.post = function (req, res, next) {

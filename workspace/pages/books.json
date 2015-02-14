@@ -2,7 +2,8 @@
     "page": {
         "name": "Books",
         "description": "A collection of books.",
-        "language": "en"
+        "language": "en",
+        "cache": true
     },
     "datasources": [
         "books",

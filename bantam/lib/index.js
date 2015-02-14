@@ -119,13 +119,14 @@ Server.prototype.loadApi = function (options) {
 
     self.updateDatasources(datasourcePath);
     self.updateEvents(eventPath);
+    
+    // load routes
     self.updatePages(pagePath, options);
+    
+    // compile all dust templates
     self.dustCompile(options);
 
-    self.addMonitor(datasourcePath, function (dsFile) {
-        self.updateDatasources(datasourcePath);
-    });
-
+    // configure "index" route
     this.app.use('/', function (req, res, next) {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -144,6 +145,15 @@ Server.prototype.loadApi = function (options) {
       });
     });
 
+    self.addMonitor(pagePath, function (pageFile) {
+        self.updatePages(pagePath, options);
+        self.dustCompile(options);
+    });
+
+    self.addMonitor(partialPath, function (partialFile) {
+        self.dustCompile(options);
+    });
+
     //this.updateEndpoints(endpointPath);
 
     // this.addMonitor(endpointPath, function (endpointFile) {
@@ -160,7 +170,6 @@ Server.prototype.loadApi = function (options) {
     // });
     
     logger.prod('Server load complete');
-    //logger.prod(JSON.stringify(this.components));
 };
 
 Server.prototype.loadConfigApi = function () {
@@ -410,8 +419,8 @@ Server.prototype.addRoute = function (route, options) {
         component: control,
         filepath: route.filepath
     });
-
-    var self = this;
+    
+    //var self = this;
 
     // watch the schema's file and update it in place
     // this.addMonitor(options.filepath, function (filename) {

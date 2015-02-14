@@ -12,11 +12,15 @@
         "enabled": true,
         "ttl": 300,
         "directory": "./cache/rosecomb/",
-        "extension": "json"
+        "extension": "html"
     },
     "server": {
         "host": "localhost",
         "port": 3000
+    },
+    "api": {
+        "host": "localhost",
+        "port": 3001
     },
     "feedback": false
 }

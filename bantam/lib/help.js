@@ -40,9 +40,10 @@ module.exports.sendBackHTML = function (successCode, res, next) {
 
         res.statusCode = successCode;
 
-        var resBody = JSON.stringify(results);
+        var resBody = results;
         res.setHeader('content-type', 'text/html');
         res.setHeader('content-length', resBody.length);
+
         res.end(resBody);
     }
 }

@@ -3,7 +3,7 @@ log
 *.log
 
 .DS_Store
-cache
+cache/rosecomb
 
 # Runtime data
 pids
