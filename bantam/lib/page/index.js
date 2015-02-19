@@ -1,6 +1,9 @@
 var _pages = {};
 
 var Page = function (name, template, settings, datasources, events) {
+
+  if (!template) throw new Error('Template required');
+
   this.name = name;
   this.template = template;
 
@@ -18,9 +21,3 @@ module.exports = function (name, template, settings, datasources, events) {
 };
 
 module.exports.Page = Page;
-
-function validationError(message) {
-  var err = new Error(message || 'Model Validation Failed');
-  err.statusCode = 400
-  return err;
-}

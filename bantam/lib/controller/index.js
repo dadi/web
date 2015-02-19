@@ -19,6 +19,7 @@ var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var _ = require('underscore');
 
+var Event = require(__dirname + '/../event');
 var config = require(__dirname + '/../../../config');
 var help = require(__dirname + '/../help');
 var logger = require(__dirname + '/../log');
@@ -37,11 +38,16 @@ var Controller = function (page, options) {
   this.options = options || {};
 
   this.datasources = {};
+  this.events = {};
 
-  self = this;
+  var self = this;
 
   this.attachDatasources(function() {
     //console.log(self.datasources);
+  });
+
+  this.attachEvents(function() {
+    //console.log(self.events);
   });
 };
 
@@ -85,30 +91,44 @@ Controller.prototype.get = function (req, res, next) {
       return sendBackHTML(500, res, next)(null, "Dust template not found");
     }
 
-    self.loadData(data, function(data) {      
+    self.loadData(req, res, data, function(data) {      
       // Render the compiled template
-      var test = dust.render(self.page.name, data, function(err, result) {
+      var rendered = dust.render(self.page.name, data, function(err, result) {
         if (err) done(err, null);
         done(err, result);
       });
     })
 };
 
-Controller.prototype.loadData = function(data, done) {
+Controller.prototype.loadData = function(req, res, data, done) {
   var idx = 0;
+  var self = this;
   _.each(self.datasources, function(value, key) {
-    
     self.getData(self.datasources[key], function(result) {
       data[key] = JSON.parse(result);
       idx++;
       
-      // return the data if we're at the end of the datasources
-      // array, we have all the responses to render the page
+      // if we're at the end of the datasources array, 
+      // start processing the attached events
       if (idx === Object.keys(self.datasources).length) {
-        done(data);
-      }
 
-    });    
+        idx = 0;
+        _.each(self.events, function(value, key) {
+          
+            self.events[key].run(req, res, function(result) {
+              data[key] = result;
+            });
+
+            idx++;
+
+            // return the data if we're at the end of the events
+            // array, we have all the responses to render the page
+            if (idx === Object.keys(self.events).length) {
+              done(data);
+            }
+        });
+      }
+    });
   });
 };
 
@@ -202,6 +222,17 @@ Controller.prototype.attachDatasources = function(done) {
     var endpointQuery = self.processDatasourceParameters(schema, function(endpointQuery) {
       self.datasources[schema.datasource.key] = endpointQuery;
     });
+  });
+
+  done();
+};
+
+Controller.prototype.attachEvents = function(done) {
+  var self = this;
+
+  this.page.events.forEach(function(eventName) {
+    var e = new Event(self.page.name, eventName, self.options);
+    self.events[eventName] = e;
   });
 
   done();
