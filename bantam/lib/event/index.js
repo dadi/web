@@ -1,27 +1,14 @@
 var fs = require('fs');
-var http = require('http');
-var url = require('url');
-var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
-var help = require(__dirname + '/../help');
 var logger = require(__dirname + '/../log');
 
-// helpers
-var sendBackJSON = help.sendBackJSON;
-var sendBackJSONP = help.sendBackJSONP;
-var sendBackHTML = help.sendBackHTML;
-var parseQuery = help.parseQuery;
-
 var Event = function (pageName, eventName, options) {
-  //if (!page) throw new Error('Page instance required');
+  if (!pageName) throw new Error('Page name required');
   
   this.page = pageName;
   this.name = eventName;
-
   this.options = options || {};
-
-  this.eventFn = this.loadEvent(this.name);
 };
 
 Event.prototype.loadEvent = function(eventName) {
@@ -42,8 +29,7 @@ Event.prototype.loadEvent = function(eventName) {
 };
 
 Event.prototype.run = function(req, res, done) {
-  var self = this;
-  this.eventFn(req, res, function(result) {
+  this.loadEvent(this.name)(req, res, function(result) {
     done(result);
   });
 };
