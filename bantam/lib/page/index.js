@@ -16,7 +16,8 @@ var Page = function (name, template, settings, datasources, events) {
 
 // exports
 module.exports = function (name, template, settings, datasources, events) {
-  if (settings) return new Page(name, template, settings, datasources, events);
+  if (!template) throw new Error('Template required');
+  if (name && template && settings) return new Page(name, template, settings, datasources, events);
   return _pages[name];
 };
 
