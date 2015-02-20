@@ -1,5 +1,8 @@
 var fs = require('fs');
 var path = require('path');
+var http = require('http');
+var url = require('url');
+var _ = require('underscore');
 
 var self = this;
 
@@ -47,6 +50,43 @@ module.exports.sendBackHTML = function (successCode, res, next) {
         res.end(resBody);
     }
 }
+
+module.exports.getData = function(query, options, done) {
+
+    // TODO add authentication request
+    // TODO allow non-Serama endpoints
+    
+    var token = '79654917-6110-4b20-8781-486d1c25f1e1';
+    var headers = { 'Authorization': 'Bearer ' + token }
+
+    var defaults = {
+        path: '/' + query,
+        method: 'GET',
+        headers: headers
+    };
+
+    options = _.extend(defaults, options);
+
+    req = http.request(options, function(res) {
+      
+      var output = '';
+
+      res.on('data', function(chunk) {
+        output += chunk;
+      });
+
+      res.on('end', function() {
+        done(output);
+      });
+
+      req.on('error', function(err) {
+        console.log('Error: ' + err);
+      });
+    });
+
+    req.end();
+};
+
 
 // function to wrap try - catch for JSON.parse to mitigate pref losses
 module.exports.parseQuery = function (queryStr) {

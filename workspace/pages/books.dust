@@ -23,7 +23,7 @@ Total: {total}
 </ul>
 
 And this is from the event:
-<h3>{events.testa}</h3>
+<h3>{test.carMakeID}</h3>
 
 {<content}
   This is loaded from a partial.
