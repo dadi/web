@@ -93,6 +93,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   _.each(self.datasources, function(value, key) {
     help.getData(self.datasources[key], options, function(result) {
+      if (!result) return done();
       data[key] = JSON.parse(result);
       idx++;
       

@@ -22,5 +22,10 @@
         "host": "localhost",
         "port": 3000
     },
+    "auth": {
+        "tokenUrl":"/token",
+        "clientId":"testClient",
+        "secret":"superSecret"
+    },
     "feedback": false
 }

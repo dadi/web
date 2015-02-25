@@ -5,7 +5,7 @@ var _ = require('underscore');
 var controller = require(__dirname + '/controller');
 var page = require(__dirname + '/page');
 var api = require(__dirname + '/api');
-// var auth = require(__dirname + '/auth');
+var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
 var logger = require(__dirname + '/log');
@@ -16,8 +16,6 @@ var dustHelpers = require('dustjs-helpers');
 var configPath = path.resolve(__dirname + '/../../config.json');
 var config = require(configPath);
 
-// add an optional id component to the path, that is formatted to be matched by the `path-to-regexp` module
-var idParam = ':id([a-fA-F0-9]{24})?';
 
 var Server = function () {
     this.components = {};
@@ -38,8 +36,11 @@ Server.prototype.start = function (options, done) {
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
-    // configure authentication middleware
-    //auth(self);
+    // caching layer
+    cache(self);
+
+    // authentication layer
+    auth(self);
 
     dust.isDebug = true;
 
@@ -59,11 +60,6 @@ Server.prototype.start = function (options, done) {
         };
         next();
     });
-
-    //this.loadConfigApi();
-
-    // caching layer
-    cache(self);
 
     // start listening
     var server = this.server = app.listen(config.server.port, config.server.host);
@@ -117,6 +113,8 @@ Server.prototype.loadApi = function (options) {
     options.partialPath = partialPath;
     options.eventPath = eventPath;
 
+    self.ensureDirectories(options);
+
     self.updateDatasources(datasourcePath);
     self.updateEvents(eventPath);
     
@@ -153,161 +151,9 @@ Server.prototype.loadApi = function (options) {
     self.addMonitor(partialPath, function (partialFile) {
         self.dustCompile(options);
     });
-
-    //this.updateEndpoints(endpointPath);
-
-    // this.addMonitor(endpointPath, function (endpointFile) {
-    //     var filepath = path.join(endpointPath, endpointFile);
-
-    //     // need to ensure filepath exists since this could be a removal
-    //     if (endpointFile && fs.existsSync(filepath)) {
-    //         return self.addEndpointResource({
-    //             endpoint: endpointFile,
-    //             filepath: filepath
-    //         });
-    //     }
-    //     self.updateEndpoints(endpointPath);
-    // });
     
     logger.prod('Server load complete');
 };
-
-Server.prototype.loadConfigApi = function () {
-    var self = this;
-
-    // allow getting main config from API
-    this.app.use('/serama/config', function (req, res, next) {
-        var method = req.method && req.method.toLowerCase();
-
-        if (method === 'get') return help.sendBackJSON(200, res, next)(null, config);
-
-        if (method === 'post') {
-
-            // update the config file
-            var newConfig = _.extend({}, config, req.body);
-
-            return fs.writeFile(configPath, JSON.stringify(newConfig), function (err) {
-                help.sendBackJSON(200, res, next)(err, {
-                    result: 'success',
-                    message: 'server restart required'
-                });
-            });
-        }
-
-        next();
-    });
-
-    // listen for requests to add to the API
-    this.app.use('/:version/:database/:collectionName/config', function (req, res, next) {
-        var method = req.method && req.method.toLowerCase();
-        if (method !== 'post') return next();
-
-        var schemaString = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
-        if (typeof schemaString !== 'string') {
-            var err = new Error('Bad Syntax');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        var params = req.params;
-
-        var route = ['', params.version, params.database, params.collectionName, idParam].join('/');
-
-        // create schema
-        if (!self.components[route]) {
-            self.createDirectoryStructure(path.join(params.version, params.database));
-
-            var schemaPath = path.join(
-                self.collectionPath,
-                params.version,
-                params.database,
-                'collection.' + params.collectionName + '.json'
-            );
-
-            try {
-                
-                fs.writeFileSync(schemaPath, schemaString);
-
-                res.statusCode = 200;
-                res.setHeader('content-type', 'application/json');
-                res.end(JSON.stringify({
-                    result: 'success',
-                    message: params.collectionName + ' collection created'
-                }));
-
-            }
-            catch (err) {
-                return next(err);
-            }
-        }
-
-        next();
-    });
-
-    // this.app.use('/endpoints/:endpointName/config', function (req, res, next) {
-    //     var method = req.method && req.method.toLowerCase();
-    //     if (method !== 'post') return next();
-
-    //     var name = req.params.endpointName;
-    //     if (!self.components['/endpoints/' + name]) {
-    //         var filepath = path.join(self.endpointPath, 'endpoint.' + name + '.js');
-
-    //         return fs.writeFile(filepath, req.body, function (err) {
-    //             if (err) return next(err);
-
-    //             res.statusCode = 200;
-    //             res.setHeader('content-type', 'application/json');
-    //             res.end(JSON.stringify({
-    //                 result: 'success',
-    //                 message: req.params.endpointName + ' endpoint created'
-    //             }));
-    //         });
-    //     }
-
-    //     next();
-    // });
-};
-
-// Server.prototype.updateVersions = function (versionsPath) {
-//     var self = this;
-
-//     // Load initial api descriptions
-//     var versions = fs.readdirSync(versionsPath);
-
-//     versions.forEach(function (version) {
-//         if (version.indexOf('.') === 0) return;
-
-//         var dirname = path.join(versionsPath, version);
-//         self.updateDatabases(dirname);
-
-//         self.addMonitor(dirname, function (databaseName) {
-//             if (databaseName) return self.updateCollections(path.join(dirname, databaseName));
-//             self.updateDatabases(dirname);
-//         });
-//     });
-// };
-
-// Server.prototype.updateDatabases = function (databasesPath) {
-//     var self = this;
-//     var databases;
-//     try {
-//         databases = fs.readdirSync(databasesPath);
-//     } catch (e) {
-//         logger.prod(databasesPath + ' does not exist');
-//         return;
-//     }
-
-//     databases.forEach(function (database) {
-//         if (database.indexOf('.') === 0) return;
-
-//         var dirname = path.join(databasesPath, database);
-//         self.updateCollections(dirname);
-
-//         self.addMonitor(dirname, function (collectionFile) {
-//             self.updateCollections(dirname);
-//         });
-//     });
-// };
 
 Server.prototype.updateDatasources = function (directoryPath) {
     
@@ -384,17 +230,14 @@ Server.prototype.updatePages = function (directoryPath, options) {
         // check for matching template file
         var templateFilepath = path.join(directoryPath, name) + ".dust";
 
-        //if (fs.existsSync(templateFilepath)) {        
+      self.addRoute({
+        name: name,
+        route: ['', name].join('/'),
+        filepath: pageFilepath,
+        template: templateFilepath
+      }, options);
 
-          self.addRoute({
-            name: name,
-            route: ['', name].join('/'),
-            filepath: pageFilepath,
-            template: templateFilepath
-          }, options);
-
-          logger.prod('Page loaded: ' + page);
-        //}
+      logger.prod('Page loaded: ' + page);
     });
 };
 
@@ -419,28 +262,6 @@ Server.prototype.addRoute = function (route, options) {
         component: control,
         filepath: route.filepath
     });
-    
-    //var self = this;
-
-    // watch the schema's file and update it in place
-    // this.addMonitor(options.filepath, function (filename) {
-
-    //     // invalidate schema file cache then reload
-    //     delete require.cache[options.filepath];
-    //     try {
-
-    //         // This leverages the fact that Javscript's Object keys are references
-    //         self.components[options.route].model.schema = require(options.filepath).fields;
-    //         self.components[options.route].model.settings = require(options.filepath).settings;
-    //     } catch (e) {
-
-    //         // if file was removed "un-use" this component
-    //         if (e && e.code === 'ENOENT') {
-    //             self.removeMonitor(options.filepath);
-    //             self.removeComponent(options.route);
-    //         }
-    //     }
-    // });
 };
 
 Server.prototype.dustCompile = function (options) {
@@ -457,8 +278,15 @@ Server.prototype.dustCompile = function (options) {
         //Load the template from file
         var name = page.slice(0, page.indexOf('.'));
         var template =  fs.readFileSync(path.join(pagePath, page), "utf8");
-        var compiled = dust.compile(template, name, true);
-        dust.loadSource(compiled);
+        try {
+            var compiled = dust.compile(template, name, true);
+            dust.loadSource(compiled);
+        }
+        catch (e) {
+            var message = 'Couldn\'t compile Dust template at "' + path.join(pagePath, page) + '". ' + e;
+            logger.prod(message);
+            throw new Error(message);
+        }
     });
 
     var partials = fs.readdirSync(partialPath);
@@ -466,102 +294,17 @@ Server.prototype.dustCompile = function (options) {
         //Load the template from file
         var name = partial.slice(0, partial.indexOf('.'));
         var template =  fs.readFileSync(path.join(partialPath, partial), "utf8");
-        var compiled = dust.compile(template, "partials/" + name, true);
-        dust.loadSource(compiled);
+        try {
+            var compiled = dust.compile(template, "partials/" + name, true);
+            dust.loadSource(compiled);
+        }
+        catch (e) {
+            var message = 'Couldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e;
+            logger.prod(message);
+            throw new Error(message);
+        }
     });  
 };
-
-Server.prototype.addCollectionResource = function (options) {
-
-    // get the schema
-    var schema = require(options.filepath);
-
-    // With each schema we create a model.
-    // With each model we create a controller, that acts as a component of the REST api.
-    // We then add the component to the api by adding a route to the app and mapping
-    // `req.method` to component methods
-    var mod = model(options.name, schema.fields, null, schema.settings);
-    var control = controller(mod);
-
-    this.addComponent({
-        route: options.route,
-        component: control,
-        filepath: options.filepath
-    });
-
-    var self = this;
-
-    // watch the schema's file and update it in place
-    this.addMonitor(options.filepath, function (filename) {
-
-        // invalidate schema file cache then reload
-        delete require.cache[options.filepath];
-        try {
-
-            // This leverages the fact that Javscript's Object keys are references
-            self.components[options.route].model.schema = require(options.filepath).fields;
-            self.components[options.route].model.settings = require(options.filepath).settings;
-        } catch (e) {
-
-            // if file was removed "un-use" this component
-            if (e && e.code === 'ENOENT') {
-                self.removeMonitor(options.filepath);
-                self.removeComponent(options.route);
-            }
-        }
-    });
-
-    logger.prod('Initial ' + options.name + ' Schema loaded');
-};
-
-Server.prototype.updateEndpoints = function (endpointsPath) {
-    var self = this;
-    var endpoints = fs.readdirSync(endpointsPath);
-
-    endpoints.forEach(function (endpoint) {
-        self.addEndpointResource({
-            endpoint: endpoint,
-            filepath: path.join(endpointsPath, endpoint)
-        });
-    });
-
-};
-
-Server.prototype.addEndpointResource = function (options) {
-    var endpoint = options.endpoint
-    if (endpoint.indexOf('.') === 0) return;
-
-    var self = this;
-    var name = endpoint.slice(endpoint.indexOf('.') + 1, endpoint.indexOf('.js'));
-    var filepath = options.filepath;
-
-    // keep reference to component so hot loading component can be
-    // done by changing reference value
-    var opts = {
-        route: '/endpoints/' + name,
-        component: require(filepath),
-        filepath: filepath
-    };
-
-    self.addComponent(opts);
-
-    // if this endpoint's file is changed hot update the api
-    self.addMonitor(filepath, function (filename) {
-        delete require.cache[filepath];
-        try {
-            opts.component = require(filepath);
-        } catch (e) {
-
-            // if file was removed "un-use" this component
-            if (e && e.code === 'ENOENT') {
-                self.removeMonitor(filepath);
-                self.removeComponent(opts.route);
-            }
-        }
-    });
-
-    logger.prod('Endpoint ' + name + ' loaded');
-}
 
 Server.prototype.addComponent = function (options) {
 
@@ -570,7 +313,7 @@ Server.prototype.addComponent = function (options) {
 
     this.components[options.route] = options.component;
 
-    this.app.use(options.route +'/config', function (req, res, next) {
+    this.app.use(options.route + '/config', function (req, res, next) {
         var method = req.method && req.method.toLowerCase();
 
         // send schema
@@ -636,22 +379,25 @@ Server.prototype.removeMonitor = function (filepath) {
     delete this.monitors[filepath];
 };
 
-// Synchronously create directory structure to match path
-Server.prototype.createDirectoryStructure = function (dpath) {
+/**
+ *  Create workspace directories if they don't already exist
+ *  
+ *  @param {Object} options Object containing workspace paths
+ *  @return 
+ *  @api public
+ */
+Server.prototype.ensureDirectories = function (options) {
     var self = this;
 
-    var directories = dpath.split(path.sep);
-    var npath = self.collectionPath;
-    directories.forEach(function (dirname) {
-        npath = path.join(npath, dirname);
-        try {
-            fs.mkdirSync(npath);
-        } catch (err) {}
+    // create cache directory if it doesn't exist
+    _.each(options, function(dir) {
+        help.mkdirParent(path.resolve(dir), '777', function() {});
     });
 };
 
 /**
- *  expose VERB type methods for adding routes and middlewares 
+ *  Expose VERB type methods for adding routes and middlewares 
+ *  
  *  @param {String} [route] optional
  *  @param {function} callback, any number of callback to be called in order
  *  @return undefined

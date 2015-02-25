@@ -4,6 +4,8 @@ var http = require('http');
 var url = require('url');
 var _ = require('underscore');
 
+var token = require(__dirname + '/auth/token');
+
 var self = this;
 
 // helper that sends json response
@@ -53,11 +55,9 @@ module.exports.sendBackHTML = function (successCode, res, next) {
 
 module.exports.getData = function(query, options, done) {
 
-    // TODO add authentication request
     // TODO allow non-Serama endpoints
-    
-    var token = '79654917-6110-4b20-8781-486d1c25f1e1';
-    var headers = { 'Authorization': 'Bearer ' + token }
+
+    var headers = { 'Authorization': 'Bearer ' + token.authToken.accessToken }
 
     var defaults = {
         path: '/' + query,
@@ -92,8 +92,10 @@ module.exports.getData = function(query, options, done) {
 module.exports.parseQuery = function (queryStr) {
     var ret;
     try {
-        ret = JSON.parse(queryStr);
-    } catch (e) {
+        // strip leading zeroes from querystring before attempting to parse
+        ret = JSON.parse(queryStr.replace(/\b0(\d+)/, "\$1"));
+    }
+    catch (e) {
         ret = {};
     }
 
@@ -101,24 +103,6 @@ module.exports.parseQuery = function (queryStr) {
     if (typeof ret !== 'object' || ret === null) ret = {};
     return ret;
 }
-
-module.exports.parseFile = function(filename, callback) {
-
-  fs.readFile(filename, 'utf-8', function(err, data) {
-    if (err) {
-      callback({ status: 'DEFINITION_MISSING', message: 'Definition file missing: ' + filename });
-    }
-    else {
-      try {
-        callback(JSON.parse(data));
-      }
-      catch (e) {
-        callback({ status: 'DEFINITION_ISSUE', message: 'Unable to parse definition file, is it valid JSON? (' + filename + ')' });
-      }
-    }
-  });
-
-};
 
 /**
  * Recursively create directories.

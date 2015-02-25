@@ -1,30 +1,26 @@
 {>layout/}
 
-<p>
-Total: {total}
-</p>
-
-<h3>Books</h3>
-<ul>
-{#books}
-  <li>
-    <p>{name}, {byline} by {authorId}</p>
-  </li>
-{/books}
-</ul>
-
-<h3>Users</h3>
-<ul>
-{#users}
-  <li>
-    <p>{name}, created {createdAt}</p>
-  </li>
-{/users}
-</ul>
-
-And this is from the event:
-<h3>{test.carMakeID}</h3>
-
 {<content}
-  This is loaded from a partial.
+
+  <h3>Books ({@size key=books/} records)</h3>
+  <ul>
+  {#books}
+    <li>
+      <p>{name}, {byline} by {authorId}</p>
+    </li>
+  {/books}
+  </ul>
+
+  <h3>Users ({@size key=users/} records)</h3>
+  <ul>
+  {#users}
+    <li>
+      <p>{name}, created {createdAt}</p>
+    </li>
+  {/users}
+  </ul>
+
+  <h3>From the event associated with this page:</h3>
+  <p>{test.carMakeID}</p>
+
 {/content}

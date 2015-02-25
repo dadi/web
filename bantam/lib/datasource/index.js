@@ -13,16 +13,14 @@ var Datasource = function (page, datasource, options) {
 
   var self = this;
 
-  this.loadDatasource(function(schema) {
-    self.schema = schema;
-  });
+  this.schema = this.loadDatasource();;
   
   this.buildEndpoint(function(endpoint) {
     self.endpoint = endpoint;
   });
 };
 
-Datasource.prototype.loadDatasource = function(done) {
+Datasource.prototype.loadDatasource = function() {
 
   var filepath = this.options.datasourcePath + "/" + this.name + ".json";
   var schema;
@@ -39,7 +37,7 @@ Datasource.prototype.loadDatasource = function(done) {
     throw new Error('Error loading datasource schema "' + filepath + '". Is it valid JSON? ' + err);
   }
 
-  done(schema);
+  return schema;
 };
 
 Datasource.prototype.buildEndpoint = function(done) {
@@ -52,7 +50,6 @@ Datasource.prototype.buildEndpoint = function(done) {
 Datasource.prototype.processDatasourceParameters = function (done) {
 
   // TODO accept params from the querystring, e.g. "page"
-
   var endpoint = this.schema.datasource.endpoint;
   var query = "?";
   var params = [

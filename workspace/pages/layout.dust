@@ -10,9 +10,6 @@
 			This is the base content.
 		{/content}
   </body>
-<!--
-{session}
--->
 
 {>"partials/footer" /}
 
