@@ -3,7 +3,7 @@
         "name": "Books",
         "description": "A collection of books.",
         "language": "en",
-        "cache": true
+        "cache": false
     },
     "datasources": [
         "books",
