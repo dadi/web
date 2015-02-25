@@ -11,12 +11,12 @@ var Event = function (pageName, eventName, options) {
   this.options = options || {};
 };
 
-Event.prototype.loadEvent = function(eventName) {
+Event.prototype.loadEvent = function() {
 
-  var filepath = this.options.eventPath + "/" + eventName + ".js";
+  var filepath = this.options.eventPath + "/" + this.name + ".js";
 
   if (filepath && !fs.existsSync(filepath)) {
-    throw new Error('Page "' + this.page + '" references event "' + eventName + '" which can\'t be found in "' + this.options.eventPath + '"');
+    throw new Error('Page "' + this.page + '" references event "' + this.name + '" which can\'t be found in "' + this.options.eventPath + '"');
   }
   
   try {
@@ -29,13 +29,13 @@ Event.prototype.loadEvent = function(eventName) {
 };
 
 Event.prototype.run = function(req, res, done) {
-  this.loadEvent(this.name)(req, res, function(result) {
+  this.loadEvent()(req, res, function(result) {
     done(result);
   });
 };
 
-module.exports = function (page, eventName, options) {
-  return new Event(page, eventName, options);
+module.exports = function (pageName, eventName, options) {
+  return new Event(pageName, eventName, options);
 };
 
 module.exports.Event = Event;
