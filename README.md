@@ -1,10 +1,14 @@
-# Rosecomb
+![Rosecomb](rosecomb.png)
 
-### What is Rosecomb?
+![Build Status](http://img.shields.io/badge/Release-0.1.2_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)
 
-Rosecomb is a high performance schemaless templating layer designed in support of API-first development and the principle of COPE.
+## Overview
 
-It can opperate as a stand alone platform or in conjunction with Serama as a full stack web application.
+Rosecomb is built on Node.JS. It is a high performance schemaless templating layer designed in support of API-first development and the principle of COPE.
+
+It can opperate as a stand alone platform or in conjunction with [Serama](https://github.com/bantam-framework/serama) as a full stack web application.
+
+Rosecomb is part of [Bantam](https://github.com/bantam-framework/), a suite of components covering the full development stack, built for performance and scale.
 
 ### Environment
 
