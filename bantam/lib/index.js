@@ -12,6 +12,7 @@ var logger = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
+var serveStatic = require('serve-static')
 
 var configPath = path.resolve(__dirname + '/../../config.json');
 var config = require(configPath);
@@ -31,8 +32,10 @@ Server.prototype.start = function (options, done) {
     // create app
     var app = this.app = api();
 
-    // add necessary middlewares in order below here...
+    // override config
+    if (options.configPath) config = require(options.configPath);
 
+    // add necessary middlewares in order below here...
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
@@ -76,6 +79,10 @@ Server.prototype.start = function (options, done) {
     });
 
     this.loadApi(options);
+
+    // serve static files (css,js,fonts)
+    app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
+    app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
 
     this.readyState = 1;
 
@@ -123,25 +130,6 @@ Server.prototype.loadApi = function (options) {
     
     // compile all dust templates
     self.dustCompile(options);
-
-    // configure "index" route
-    this.app.use('/', function (req, res, next) {
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-
-      var data = {
-        "title": "Index"
-      }
-
-      var test = dust.render("index", data, function(err, result) {
-        if (err) {
-          logger.prod(err);
-          res.body = err;
-          res.end();
-        }
-        res.end(result);
-      });
-    });
 
     self.addMonitor(pagePath, function (pageFile) {
         self.updatePages(pagePath, options);
@@ -348,13 +336,34 @@ Server.prototype.addComponent = function (options) {
         next();
     });
 
-    this.app.use(options.route, function (req, res, next) {
-        // map request method to controller method
-        var method = req.method && req.method.toLowerCase();
-        if (method && options.component[method]) return options.component[method](req, res, next);
+    if (options.route === '/index') {
+        // configure "index" route
+        this.app.use('/', function (req, res, next) {
+            // map request method to controller method
+            var method = req.method && req.method.toLowerCase();
+            if (method && options.component[method]) return options.component[method](req, res, next);
 
-        next();
-    });
+            next();
+        });        
+    }
+    else {
+
+        this.app.use(options.route, function (req, res, next) {
+            // map request method to controller method
+            var method = req.method && req.method.toLowerCase();
+            if (method && options.component[method]) return options.component[method](req, res, next);
+
+            next();
+        });
+
+        this.app.use(options.route + '/:id', function (req, res, next) {
+            // map request method to controller method
+            var method = req.method && req.method.toLowerCase();
+            if (method && options.component[method]) return options.component[method](req, res, next);
+
+            next();
+        });
+    }
 };
 
 Server.prototype.removeComponent = function (route) {

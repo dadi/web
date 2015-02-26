@@ -1,0 +1,54 @@
+@font-face {
+	font-family: 'FontAwesome';
+	src: url('font-awesome/fontawesome-webfont.eot?v=4.3.0');
+	src: url('font-awesome/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'), url('font-awesome/fontawesome-webfont.woff2?v=4.3.0') format('woff2'), url('font-awesome/fontawesome-webfont.woff?v=4.3.0') format('woff'), url('font-awesome/fontawesome-webfont.ttf?v=4.3.0') format('truetype'), url('font-awesome/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+
+[icon]:before,
+[icon-r]:after {
+	font-family: 'FontAwesome';
+	font-weight: normal;
+	font-style: normal;
+	font-size: 1.75em;
+	line-height: 0;
+	vertical-align: middle;
+}
+[icon]:before {
+	margin-right: 0.15em;
+}
+[icon-r]:after {
+	margin-left: 0.15em;
+}
+.icon--small:before,
+.icon--small:after {
+	font-size: 0.75em;
+}
+.icon--small:before {
+	margin-right: 0.5em;
+}
+.icon--small:after {
+	margin-left: 0.5em;
+}
+.icon--large:before,
+.icon--large:after {
+	font-size: 2.5em;
+}
+.icon--large:before {
+	margin-right: 0.1em;
+}
+.icon--large:after {
+	margin-left: 0.1em;
+}
+
+
+[icon='angle-right']:before,
+[icon-r='angle-right']:after {
+	content: '\f105';
+}
+[icon='caret-down']:before,
+[icon-r='caret-down']:after {
+	content: '\f0d7';
+}

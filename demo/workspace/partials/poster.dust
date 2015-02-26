@@ -1,0 +1,3 @@
+<div class="film__poster media media--rounded media--pop">
+	<img src="{poster}" alt="{title} Poster" />
+</div>

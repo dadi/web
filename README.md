@@ -112,6 +112,12 @@ The developer then returns the updated counter number from the event which is ma
 
 	[sudo] npm install
 
+### Running the demo application
+
+
+  node demo/main.js
+
+
 ### Running the server
 
 Rosecomb expects the Serama API to be running locally on port 3001. Start the Serama server before running Rosecomb.

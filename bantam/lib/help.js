@@ -5,6 +5,7 @@ var url = require('url');
 var _ = require('underscore');
 
 var token = require(__dirname + '/auth/token');
+var DatasourceCache = require(__dirname + '/cache/datasource');
 
 var self = this;
 
@@ -46,21 +47,25 @@ module.exports.sendBackHTML = function (successCode, res, next) {
         res.statusCode = successCode;
 
         var resBody = results;
-        res.setHeader('content-type', 'text/html');
-        res.setHeader('content-length', resBody.length);
+        // res.setHeader('content-type', 'text/html');
+        // res.setHeader('content-length', resBody.length);
 
         res.end(resBody);
     }
 }
 
-module.exports.getData = function(query, options, done) {
+module.exports.getData = function(datasource, options, done) {
 
     // TODO allow non-Serama endpoints
+    
+    var datasourceCache = new DatasourceCache(datasource);
+    var cachedData = datasourceCache.getFromCache();
+    if (cachedData) done(cachedData);
 
     var headers = { 'Authorization': 'Bearer ' + token.authToken.accessToken }
 
     var defaults = {
-        path: '/' + query,
+        path: datasource.endpoint,
         method: 'GET',
         headers: headers
     };
@@ -76,15 +81,26 @@ module.exports.getData = function(query, options, done) {
       });
 
       res.on('end', function() {
+
+        // if response is not 200 don't cache
+        if (res.statusCode === 200) datasourceCache.cacheResponse(output);
+
         done(output);
       });
 
-      req.on('error', function(err) {
-        console.log('Error: ' + err);
-      });
     });
 
-    req.end();
+    req.on('error', function(err) {
+        console.log(err);
+        done('{ "error" : "Connection refused" }');
+    });
+
+    try {
+          req.end();
+    }
+    catch (e) {
+
+    }
 };
 
 

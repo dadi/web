@@ -2,8 +2,19 @@
 	"datasource": {
 		"key": "books",
 		"name": "Books DS",
-		"endpoint": "vjoin/testdb/books",
-		"cache": false,
+		"source": {
+			"type": "remote",
+			"protocol": "https",
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "vjoin/testdb/books"
+		},
+    "caching": {
+        "enabled": true,
+        "ttl": 300,
+        "directory": "./cache/rosecomb/",
+        "extension": "json"
+    },
 		"paginate": true,
 		"count": 5,
 		"sort": {

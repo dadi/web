@@ -1,7 +1,9 @@
-var config = require(__dirname + '/../../../config');
-var token = require(__dirname + '/token');
 var http = require('http');
 var querystring = require('querystring');
+
+var config = require(__dirname + '/../../../config');
+var logger = require(__dirname + '/../log');
+var token = require(__dirname + '/token');
 
 // This attaches middleware to the passed in app instance
 module.exports = function (server) {
@@ -52,16 +54,23 @@ module.exports = function (server) {
             console.log('Done.');
             return next();
           });
+        });
 
-          req.on('error', function(err) {
-            console.log('Error: ' + err);
-            next();
-          });
+        req.on('error', function(err) {
+          console.log(err);
+          logger.prod('Error requesting accessToken from ' + options.hostname);
+          next();
         });
 
         // write data to request body
         req.write(JSON.stringify(postData));
-        req.end();
+
+        try {
+          req.end();
+        }
+        catch (e) {
+
+        }
         
     });
 

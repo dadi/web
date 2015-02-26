@@ -1,0 +1,53 @@
+{
+	"datasource": {
+		"key": "films",
+		"name": "Films DS",
+		"source": {
+			"type": "static",
+			"data": 
+				[
+					{
+						"title": "Dallas Buyers Club",
+						"director": "Jean-Marc Vallée",
+						"poster": "/images/dallas-buyers-club.jpg",
+						"author": "Mark Kermode",
+						"length": "2h 10min",
+						"score": "87%"
+					},
+					{
+						"title": "Interstellar",
+						"director": "Christopher Nolan",
+						"poster": "/images/interstellar.jpg",
+						"author": "Roger Ebert",
+						"length": "2h 40min",
+						"score": "89%"
+					},
+					{
+						"title": "Killer Joe",
+						"director": "William Friedkin",
+						"poster": "/images/killerjoe.jpg",
+						"author": "Roger Ebert",
+						"length": "1h 40min",
+						"score": "82%"
+					},
+					{
+						"title": "Mud",
+						"director": "Jeff Nichols",
+						"poster": "/images/mud.jpg",
+						"author": "Mark Kermode",
+						"length": "1h 45min",
+						"score": "86%"
+					}
+				]
+		},
+		"cache": false,
+		"paginate": true,
+		"count": 5,
+		"sort": {
+			"field": "_id",
+			"order": "desc"
+		},
+		"search": {},
+		"fields": ["name","authorId"]
+	}
+}

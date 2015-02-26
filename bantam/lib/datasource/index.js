@@ -1,7 +1,5 @@
 var fs = require('fs');
 var _ = require('underscore');
-
-var config = require(__dirname + '/../../../config');
 var logger = require(__dirname + '/../log');
 
 var Datasource = function (page, datasource, options) {
@@ -13,7 +11,8 @@ var Datasource = function (page, datasource, options) {
 
   var self = this;
 
-  this.schema = this.loadDatasource();;
+  this.schema = this.loadDatasource();
+  this.source = this.schema.datasource.source;
   
   this.buildEndpoint(function(endpoint) {
     self.endpoint = endpoint;
@@ -41,17 +40,29 @@ Datasource.prototype.loadDatasource = function() {
 };
 
 Datasource.prototype.buildEndpoint = function(done) {
+  
+  if (this.schema.datasource.source.type === 'static') return;
+  
   var self = this;
-  self.processDatasourceParameters(function(endpoint) {
+  var uri = "";
+
+  var protocol = this.schema.datasource.source.protocol || "http";
+  var host = this.schema.datasource.source.host || "";
+  var port = this.schema.datasource.source.port || "";
+  
+  uri = [protocol, "://", host, port != "" ? ":" : "", port, "/", this.schema.datasource.source.endpoint].join("");
+
+  self.processDatasourceParameters(uri, function(endpoint) {
     done(endpoint);
   });
 };
 
-Datasource.prototype.processDatasourceParameters = function (done) {
+Datasource.prototype.processDatasourceParameters = function (uri, done) {
 
   // TODO accept params from the querystring, e.g. "page"
-  var endpoint = this.schema.datasource.endpoint;
+
   var query = "?";
+  
   var params = [
     {"count": (this.schema.datasource.count || 0)},
     {"page": (this.schema.datasource.page || 0)},
@@ -77,7 +88,7 @@ Datasource.prototype.processDatasourceParameters = function (done) {
     }
 
     if (params.indexOf(param) === (params.length-1)) {
-      done(endpoint + query.slice(0,-1));
+      done(uri + query.slice(0,-1));
     }
   });
 }

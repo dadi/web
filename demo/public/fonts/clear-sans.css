@@ -1,0 +1,48 @@
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-Thin.woff');
+	font-weight: 100;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-Light.woff');
+	font-weight: 300;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-Regular.woff');
+	font-weight: 400;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-Italic.woff');
+	font-weight: 400;
+	font-style: italic;
+}
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-Medium.woff');
+	font-weight: 500;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-MediumItalic.woff');
+	font-weight: 500;
+	font-style: italic;
+}
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-Bold.woff');
+	font-weight: 700;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Clear Sans';
+	src: url('./clear-sans/ClearSans-BoldItalic.woff');
+	font-weight: 700;
+	font-style: italic;
+}
