@@ -16,6 +16,7 @@ var dir = config.caching.directory;
 help.mkdirParent(path.resolve(dir), '777', function() {});
 
 function cachingEnabled(endpoints, requestUrl) {
+
     var endpointKey = _.find(_.keys(endpoints), function (k){ return k.indexOf(requestUrl) > -1; });
 
     if (!endpointKey) return false;
