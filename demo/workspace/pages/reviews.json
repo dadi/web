@@ -1,0 +1,13 @@
+{
+    "page": {
+        "name": "Reviews",
+        "description": "Reviews page.",
+        "language": "en"
+    },
+    "datasources": [
+
+    ],
+    "events": [
+        
+    ]
+}

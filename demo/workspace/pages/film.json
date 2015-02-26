@@ -1,0 +1,13 @@
+{
+    "page": {
+        "name": "Film",
+        "description": "A single Film page.",
+        "language": "en"
+    },
+    "datasources": [
+        "films"
+    ],
+    "events": [
+        
+    ]
+}

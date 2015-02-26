@@ -2,7 +2,12 @@
 	"datasource": {
 		"key": "users",
 		"name": "Users DS",
-		"endpoint": "vjoin/testdb/user",
+		"source": {
+			"type": "remote",
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "vjoin/testdb/user"
+		},
 		"cache": false,
 		"paginate": true,
 		"count": 5,

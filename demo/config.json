@@ -1,0 +1,26 @@
+{
+    "logging": {
+        "enabled": true,
+        "level": "DEBUG",
+        "path": "./log",
+        "filename": "rosecomb",
+        "dateFormat": "YYYY-MM-DD",
+        "extension": "log",
+        "messageFormat": "<%= label %> - <%= date %> - <%= message %>"
+    },
+    "caching": {
+        "enabled": false,
+        "ttl": 300,
+        "directory": "./cache/rosecomb/",
+        "extension": "html"
+    },
+    "server": {
+        "host": "localhost",
+        "port": 8080
+    },
+    "api": {
+        "host": "localhost",
+        "port": 3000
+    },
+    "feedback": false
+}

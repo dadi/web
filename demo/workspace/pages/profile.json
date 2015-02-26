@@ -1,0 +1,13 @@
+{
+    "page": {
+        "name": "Profile",
+        "description": "A users profile page.",
+        "language": "en"
+    },
+    "datasources": [
+        
+    ],
+    "events": [
+        
+    ]
+}

@@ -15,6 +15,7 @@
     "moment": "^2.9.0",
     "mongodb": "1.4.7",
     "path-to-regexp": "^1.0.3",
+    "serve-static": "^1.9.1",
     "underscore": "1.6.0"
   },
   "devDependencies": {

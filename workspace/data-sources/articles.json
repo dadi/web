@@ -2,7 +2,11 @@
 	"datasource": {
 		"key": "articles",
 		"name": "Articles DS",
-		"endpoint": "editorial/articles",
+		"source": {
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "editorial/articles"
+		},
 		"cache": false,
 
 		"paginate": true,

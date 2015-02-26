@@ -2,7 +2,12 @@
 	"datasource": {
 		"key": "tweets",
 		"name": "Tweets DS",
-		"endpoint": "editorial/articles",
+		"source": {
+			"type": "remote",
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "editorial/articles"
+		},
 		"cache": false,
 
 		"paginate": true,
