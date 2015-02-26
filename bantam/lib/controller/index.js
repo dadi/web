@@ -39,7 +39,7 @@ Controller.prototype.attachDatasources = function(done) {
 
   this.page.datasources.forEach(function(datasource) {
     var ds = new Datasource(self.page, datasource, self.options);
-    self.datasources[ds.schema.datasource.key] = ds.endpoint;
+    self.datasources[ds.schema.datasource.key] = ds;
   });
 
   done();
@@ -68,6 +68,9 @@ Controller.prototype.get = function (req, res, next) {
       "title": self.page.name
     }
 
+    // add id component from the request
+    if (req.params.id) data.id = decodeURIComponent(req.params.id);
+
     var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(self.page.name) > -1; });
     if (!template) {
       return sendBackHTML(500, res, next)(null, "Dust template not found");
@@ -86,38 +89,47 @@ Controller.prototype.loadData = function(req, res, data, done) {
   var idx = 0;
   var self = this;
 
-  var options = {
-    host: config.api.host,
-    port: config.api.port
-  };
-
   _.each(self.datasources, function(value, key) {
-    help.getData(self.datasources[key], options, function(result) {
-      if (!result) return done();
-      data[key] = JSON.parse(result);
-      idx++;
-      
-      // if we're at the end of the datasources array, 
-      // start processing the attached events
-      if (idx === Object.keys(self.datasources).length) {
 
-        idx = 0;
-        _.each(self.events, function(value, key) {
-          
-            self.events[key].run(req, res, function(result) {
-              data[key] = result;
-            });
+    var ds = self.datasources[key];
+    if (ds.source.type === 'static') {
+      data[key] = ds.source.data;
+      done(data);
+    }
+    else {
 
-            idx++;
+      var options = {
+        host: ds.source.host,
+        port: ds.source.port
+      };
 
-            // return the data if we're at the end of the events
-            // array, we have all the responses to render the page
-            if (idx === Object.keys(self.events).length) {
-              done(data);
-            }
-        });
-      }
-    });
+      help.getData(ds, options, function(result) {
+        if (!result) return done();
+        data[key] = JSON.parse(result);
+        idx++;
+        
+        // if we're at the end of the datasources array, 
+        // start processing the attached events
+        if (idx === Object.keys(self.datasources).length) {
+
+          idx = 0;
+          _.each(self.events, function(value, key) {
+            
+              self.events[key].run(req, res, function(result) {
+                data[key] = result;
+              });
+
+              idx++;
+
+              // return the data if we're at the end of the events
+              // array, we have all the responses to render the page
+              if (idx === Object.keys(self.events).length) {
+                done(data);
+              }
+          });
+        }
+      });
+    }
   });
 };
 
