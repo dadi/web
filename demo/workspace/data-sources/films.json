@@ -48,6 +48,6 @@
 			"order": "desc"
 		},
 		"search": {"author" : "Roger Ebert"},
-		"fields": ["title","director"]
+		"fields": ["title","director","poster","author","length","score"]
 	}
 }
