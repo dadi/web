@@ -54,13 +54,47 @@ module.exports.sendBackHTML = function (successCode, res, next) {
     }
 }
 
-module.exports.getData = function(datasource, options, done) {
+module.exports.getStaticData = function(datasource, done) {
+
+    var data = datasource.source.data;
+    
+    if (_.isArray(data)) {
+        var sortField = datasource.schema.datasource.sort.field;
+        var sortDir = datasource.schema.datasource.sort.order;
+        var search = datasource.schema.datasource.search;
+        var count = datasource.schema.datasource.count;
+        var fields = datasource.schema.datasource.fields;
+
+        if (search) data = _.where(data, search);
+        if (sortField) data = _.sortBy(data, sortField);
+        if (sortDir === 'desc') data = data.reverse();
+
+        if (count) data = _.first(data, count);
+
+        if (fields) data = _.chain(data).selectFields(fields.join(",")).value();
+    }
+
+    done(data);
+}
+
+module.exports.getData = function(datasource, done) {
 
     // TODO allow non-Serama endpoints
     
     var datasourceCache = new DatasourceCache(datasource);
     var cachedData = datasourceCache.getFromCache();
     if (cachedData) done(cachedData);
+
+    if (datasource.source.type === 'static') {
+      this.getStaticData(datasource, function(data) {
+        done(data);
+      });
+    }
+
+    var options = {
+        host: datasource.source.host,
+        port: datasource.source.port
+    };
 
     var headers = { 'Authorization': 'Bearer ' + token.authToken.accessToken }
 
@@ -138,4 +172,19 @@ module.exports.mkdirParent =  function(dirPath, mode, callback) {
         // Manually run the callback
         callback && callback(error);
     });
-};
+}
+
+// creates a new function in the underscore.js namespace
+// allowing us to pluck multiple properties - used to return only the 
+// fields we require from an array of objects
+_.mixin({selectFields: function() {
+        var args = _.rest(arguments, 1)[0];
+        return _.map(arguments[0], function(item) {
+            var obj = {};
+            _.each(args.split(','), function(arg) {
+                obj[arg] = item[arg]; 
+            });
+            return obj;
+        });
+    }
+});

@@ -1,7 +1,7 @@
 {
 	"datasource": {
-		"key": "films",
-		"name": "Films DS",
+		"key": "reviews",
+		"name": "Reviews DS",
 		"source": {
 			"type": "static",
 			"data": 
@@ -42,12 +42,12 @@
 		},
 		"cache": false,
 		"paginate": true,
-		"count": 10,
+		"count": 5,
 		"sort": {
-			"field": "title",
+			"field": "_id",
 			"order": "desc"
 		},
-		"search": {"author" : "Roger Ebert"},
-		"fields": ["title","director","poster","author","length","score"]
+		"search": {},
+		"fields": ["name","authorId"]
 	}
 }
