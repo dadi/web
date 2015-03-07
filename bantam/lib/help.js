@@ -90,13 +90,20 @@ module.exports.getData = function(datasource, done) {
         done(data);
       });
     }
+    
+    var headers;
+    
+    if (datasource.authStrategy) {
+        headers = { 'Authorization': 'Bearer ' + datasource.authStrategy.getToken() }
+    }
+    else {
+        headers = { 'Authorization': 'Bearer ' + token.authToken.accessToken }
+    }
 
     var options = {
         host: datasource.source.host,
         port: datasource.source.port
     };
-
-    var headers = { 'Authorization': 'Bearer ' + token.authToken.accessToken }
 
     var defaults = {
         path: datasource.endpoint,

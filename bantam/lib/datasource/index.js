@@ -13,7 +13,7 @@ var Datasource = function (page, datasource, options) {
 
   this.schema = this.loadDatasource();
   this.source = this.schema.datasource.source;
-  
+  this.authStrategy = this.setAuthStrategy();
   this.buildEndpoint(function(endpoint) {
     self.endpoint = endpoint;
   });
@@ -37,6 +37,15 @@ Datasource.prototype.loadDatasource = function() {
   }
 
   return schema;
+};
+
+Datasource.prototype.setAuthStrategy = function() {
+  
+  if (!this.schema.datasource.auth) return null;
+  
+  var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
+  
+  return new BearerAuthStrategy(this.schema.datasource.auth);
 };
 
 Datasource.prototype.buildEndpoint = function(done) {
