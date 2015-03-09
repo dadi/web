@@ -44,7 +44,7 @@ Datasource.prototype.setAuthStrategy = function() {
   if (!this.schema.datasource.auth) return null;
   
   var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
-  
+  console.log(this.schema.datasource.auth);
   return new BearerAuthStrategy(this.schema.datasource.auth);
 };
 

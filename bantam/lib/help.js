@@ -90,60 +90,61 @@ module.exports.getData = function(datasource, done) {
         done(data);
       });
     }
-    
-    var headers;
-    
-    if (datasource.authStrategy) {
-        headers = { 'Authorization': 'Bearer ' + datasource.authStrategy.getToken() }
-    }
-    else {
-        headers = { 'Authorization': 'Bearer ' + token.authToken.accessToken }
-    }
-
-    var options = {
-        host: datasource.source.host,
-        port: datasource.source.port
-    };
 
     var defaults = {
+        host: datasource.source.host,
+        port: datasource.source.port,
         path: datasource.endpoint,
-        method: 'GET',
-        headers: headers
+        method: 'GET'
     };
 
-    options = _.extend(defaults, options);
-
-    req = http.request(options, function(res) {
-      
-      var output = '';
-
-      res.on('data', function(chunk) {
-        output += chunk;
-      });
-
-      res.on('end', function() {
-
-        // if response is not 200 don't cache
-        if (res.statusCode === 200) datasourceCache.cacheResponse(output);
-
-        done(output);
-      });
-
+    this.getHeaders(datasource, function(headers) {
+        var options = _.extend(defaults, headers);
+    
+        req = http.request(options, function(res) {
+          
+          var output = '';
+ 
+          res.on('data', function(chunk) {
+            output += chunk;
+          });
+    
+          res.on('end', function() {
+        
+            // if response is not 200 don't cache
+            if (res.statusCode === 200) datasourceCache.cacheResponse(output);
+    
+            done(output);
+          });
+    
+        });
+    
+        req.on('error', function(err) {
+            console.log(err);
+            done('{ "error" : "Connection refused" }');
+        });
+    
+        try {
+            req.end();
+        }
+        catch (e) {
+    
+        }
     });
-
-    req.on('error', function(err) {
-        console.log(err);
-        done('{ "error" : "Connection refused" }');
-    });
-
-    try {
-          req.end();
-    }
-    catch (e) {
-
-    }
+    
 };
 
+module.exports.getHeaders = function(datasource, done) {
+    var headers;
+    if(datasource.authStrategy){
+        datasource.authStrategy.getToken(function(token){
+            done({headers: {'Authorization': 'Bearer ' + token}} );
+        });
+    }
+    else {
+        done( {headers:{'Authorization': 'Bearer ' + token.authToken.accessToken }});
+    }
+};
 
 // function to wrap try - catch for JSON.parse to mitigate pref losses
 module.exports.parseQuery = function (queryStr) {

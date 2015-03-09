@@ -1,21 +1,24 @@
 var http = require('http');
+var logger = require(__dirname + '/../log');
 
 var BearerAuthStrategy = function(options) {
 
     this.config = options;
     this.tokenRoute = options.tokenUrl || '/token';
-    this.token = null;
+    this.token = {};
     
 }
 
-BearerAuthStrategy.prototype.getToken = function() {
+BearerAuthStrategy.prototype.getToken = function(done) {
 
-    if (self.token.authToken.accessToken) {
+    var self = this;
+
+    if (self.token.authToken && self.token.authToken.accessToken) {
       var now = Math.floor(Date.now() / 1000);
       // if the token creation date + expiry in seconds is greater
       // than the current time, we don't need to generate a new token
       if ((self.token.created_at + self.token.authToken.expiresIn) > now) {
-        return self.token.authToken.accessToken;
+        done(self.token.authToken.accessToken);
       }
     }
 
@@ -49,7 +52,8 @@ BearerAuthStrategy.prototype.getToken = function() {
         self.token.created_at = Math.floor(Date.now() / 1000);
 
         console.log('Done.');
-        return self.token.authToken.accessToken;
+        
+        done(self.token.authToken.accessToken);
       });
     });
 

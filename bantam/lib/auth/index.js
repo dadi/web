@@ -41,12 +41,13 @@ module.exports = function (server) {
 
         var req = http.request(options, function(res) {            
           var output = '';
-
+console.log(options);
           res.on('data', function(chunk) {
             output += chunk;
           });
 
           res.on('end', function() {
+          console.log(output);
             var tokenResponse = JSON.parse(output);
             token.authToken = tokenResponse;
             token.created_at = Math.floor(Date.now() / 1000);
@@ -61,6 +62,8 @@ module.exports = function (server) {
           logger.prod('Error requesting accessToken from ' + options.hostname);
           next();
         });
+        
+        console.log(postData);
 
         // write data to request body
         req.write(JSON.stringify(postData));
@@ -69,7 +72,7 @@ module.exports = function (server) {
           req.end();
         }
         catch (e) {
-
+console.log(e);
         }
         
     });
