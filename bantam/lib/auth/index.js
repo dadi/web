@@ -61,7 +61,7 @@ module.exports = function (server) {
           logger.prod('Error requesting accessToken from ' + options.hostname);
           next();
         });
-
+        
         // write data to request body
         req.write(JSON.stringify(postData));
 
