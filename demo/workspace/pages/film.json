@@ -5,8 +5,7 @@
         "language": "en"
     },
     "datasources": [
-        "films",
-        "reviews"
+        "films"
     ],
     "events": [
         
