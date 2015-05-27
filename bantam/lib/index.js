@@ -12,11 +12,11 @@ var logger = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
+var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var serveStatic = require('serve-static')
 
 var configPath = path.resolve(__dirname + '/../../config.json');
 var config = require(configPath);
-
 
 var Server = function () {
     this.components = {};
@@ -46,6 +46,7 @@ Server.prototype.start = function (options, done) {
     auth(self);
 
     dust.isDebug = true;
+    dust.debugLevel = "DEBUG";
 
     // request logging middleware
     app.use(function (req, res, next) {
