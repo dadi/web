@@ -10,24 +10,22 @@
 				{>"partials/poster"/}
 			</div>
 
+			{@contextDump key="full" to="console"/}
 
 			<div class="col w-7">
 				<h1 class="giga pad">{title}</h1>
 				{>"partials/details" /}
 				<div class="push-3">
 					<h2 class="mega pad">Most read reviews</h2>
+					{#reviews}
 					<article class="push-1">
-						<h3 class="kilo pad">Roger Ebert</h3>
+						<h3 class="kilo pad">{author}</h3>
+						<p>{date}</p>
 						<div class="t">
-							<p>Terrific performances by Matthew McConaughey and Jared Leto elevate this socio-medical drama out of the realms of the ordinary into something quietly remarkable... <a href="review.html">Continue reading</a></p>
+							<p>{@Truncate data="{body}" length="250"/}... <a href="/review/{_id}">Continue reading</a></p>
 						</div>
 					</article>
-					<article class="push-1">
-						<h3 class="kilo pad">Mark Kermode</h3>
-						<div class="t">
-							<p>Terrific performances by Matthew McConaughey and Jared Leto elevate this socio-medical drama out of the realms of the ordinary into something quietly remarkable. While McConaughey's dramatic weight loss may make attention-grabbing headlines... <a href="review.html">Continue reading</a></p>
-						</div>
-					</article>
+					{/reviews}
 				</div>
 			</div>
 

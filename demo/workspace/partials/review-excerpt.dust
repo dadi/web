@@ -1,6 +1,11 @@
 <article class="review-excerpt grid">
   <div class="col w-2">
-    {>"partials/poster" /}
+    {#films}
+      {_id}
+      {@eq key=id value=film_id}
+        {>"partials/poster" /}
+      {/eq}
+    {/films}
   </div>
   <div class="col col--gutter w-10">
     <h1 class="mega pad review__title">{title}</h1>

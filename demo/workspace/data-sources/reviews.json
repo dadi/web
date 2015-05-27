@@ -7,36 +7,11 @@
 			"data": 
 				[
 					{
-						"title": "Dallas Buyers Club",
-						"director": "Jean-Marc Vallée",
-						"poster": "/images/dallas-buyers-club.jpg",
+						"_id": "83afa2ab-bf9d-4b7c-94f9-b63f8d6193b0",
+						"film_id": "3ff5b730-3544-4d77-9213-93ea87ef5acf",
+						"title": "Average.",
 						"author": "Mark Kermode",
-						"length": "2h 10min",
-						"score": "87%"
-					},
-					{
-						"title": "Interstellar",
-						"director": "Christopher Nolan",
-						"poster": "/images/interstellar.jpg",
-						"author": "Roger Ebert",
-						"length": "2h 40min",
-						"score": "89%"
-					},
-					{
-						"title": "Killer Joe",
-						"director": "William Friedkin",
-						"poster": "/images/killerjoe.jpg",
-						"author": "Roger Ebert",
-						"length": "1h 40min",
-						"score": "82%"
-					},
-					{
-						"title": "Mud",
-						"director": "Jeff Nichols",
-						"poster": "/images/mud.jpg",
-						"author": "Mark Kermode",
-						"length": "1h 45min",
-						"score": "86%"
+						"body": "Not the best film this year."
 					}
 				]
 		},
@@ -48,6 +23,7 @@
 			"order": "desc"
 		},
 		"search": {},
-		"fields": ["name","authorId"]
+		"fields": ["_id","film_id","title","author","body"]
 	}
 }
+

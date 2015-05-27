@@ -90,13 +90,14 @@ module.exports.getData = function(datasource, done) {
         done(data);
       });
     }
+    else {
 
-    var defaults = {
-        host: datasource.source.host,
-        port: datasource.source.port,
-        path: datasource.endpoint,
-        method: 'GET'
-    };
+        var defaults = {
+            host: datasource.source.host,
+            port: datasource.source.port,
+            path: datasource.endpoint,
+            method: 'GET'
+        };
 
     this.getHeaders(datasource, function(headers) {
         var options = _.extend(defaults, headers);
@@ -120,8 +121,8 @@ module.exports.getData = function(datasource, done) {
         });
     
         req.on('error', function(err) {
-            console.log(err);
-            done('{ "error" : "Connection refused" }');
+	    console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err);
+	    done('{ "error" : "Connection refused" }');
         });
     
         try {
@@ -131,7 +132,7 @@ module.exports.getData = function(datasource, done) {
     
         }
     });
-    
+    }
 };
 
 module.exports.getHeaders = function(datasource, done) {
