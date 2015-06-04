@@ -13,6 +13,7 @@ var Event = require(__dirname + '/../event');
 
 // helpers
 var sendBackHTML = help.sendBackHTML;
+var sendBackJSON = help.sendBackJSON;
 
 var Controller = function (page, options) {
   if (!page) throw new Error('Page instance required');
@@ -63,7 +64,7 @@ Controller.prototype.get = function (req, res, next) {
 
     // allow query string param to return data only
     var query = url.parse(req.url, true).query;
-    var debug = query.debug && query.debug.toString() === '1';
+    var debug = query.debug && query.debug.toString() === 'true';
 
     var done = sendBackHTML(200, res, next);
     if (debug) done = sendBackJSON(200, res, next);
