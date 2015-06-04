@@ -1,0 +1,94 @@
+Controller.prototype.post = function (req, res, next) {
+
+    // internal fields
+    var internals = {
+        apiVersion: req.url.split('/')[1]
+    };
+
+    // if id is present in the url, then this is an update
+    if (req.params.id) {
+        internals.lastModifiedAt = Date.now();
+        internals.lastModifiedBy = req.client && req.client.clientId;
+        return this.model.update({
+            _id: req.params.id
+        }, req.body, internals, sendBackJSON(200, res, next));
+    }
+
+    // if no id is present, then this is a create
+    internals.createdAt = Date.now();
+    internals.createdBy = req.client && req.client.clientId;
+
+    this.model.create(req.body, internals, sendBackJSON(200, res, next));
+};
+
+Controller.prototype.delete = function (req, res, next) {
+    var id = req.params.id;
+    if (!id) return next();
+
+    this.model.delete({_id: id}, function (err, results) {
+        if (err) return next(err);
+
+        if (config.feedback) {
+
+            // send 200 with json message
+            return help.sendBackJSON(200, res, next)(null, {
+                status: 'success',
+                message: 'Document deleted successfully'
+            });
+        }
+
+        // send no-content success 
+        res.statusCode = 204;
+        res.end();
+    });
+};
+
+
+Controller.prototype.get = function (req, res, next) {
+    // var options = url.parse(req.url, true).query;
+    // var query = parseQuery(options.filter);
+
+    //var settings = this.model.settings || {};
+    var settings = {};
+
+    // var limit = options.count || settings.count || 50;
+    // var skip = limit * ((options.page || 1) - 1);
+
+    // determine if this is jsonp
+    var done = sendBackHTML(200, res, next);
+
+    // if (options.sort) {
+    //     var sort = {};
+
+    //     // default to 'asc'
+    //     var order = (options.sortOrder || settings.sortOrder) === 'desc' ? -1 : 1;
+
+    //     sort[options.sort] = order;
+    // }
+
+    // // white list user specified options
+    // options = {
+    //     limit: limit,
+    //     skip: skip
+    // };
+    // if (sort) options.sort = sort;
+    
+    self = this;
+
+    var data = {
+      "title": self.page.name
+    }
+
+    var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(self.page.name) > -1; });
+    if (!template) {
+      return sendBackHTML(500, res, next)(null, "Dust template not found");
+    }
+
+    self.loadData(req, res, data, function(data) {      
+      // Render the compiled template
+      var rendered = dust.render(self.page.name, data, function(err, result) {
+        if (err) done(err, null);
+        done(err, result);
+      });
+    })
+};
