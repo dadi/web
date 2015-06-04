@@ -1,4 +1,5 @@
 var fs = require('fs');
+var url = require('url');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var _ = require('underscore');
@@ -60,7 +61,12 @@ Controller.prototype.get = function (req, res, next) {
 
     var settings = {};
 
+    // allow query string param to return data only
+    var query = url.parse(req.url, true).query;
+    var debug = query.debug && query.debug.toString() === '1';
+
     var done = sendBackHTML(200, res, next);
+    if (debug) done = sendBackJSON(200, res, next);
     
     self = this;
 
@@ -76,12 +82,19 @@ Controller.prototype.get = function (req, res, next) {
       return sendBackHTML(500, res, next)(null, "Dust template not found");
     }
 
-    self.loadData(req, res, data, function(data) {      
-      // Render the compiled template
-      var rendered = dust.render(self.page.name, data, function(err, result) {
-        if (err) done(err, null);
-        done(err, result);
-      });
+    self.loadData(req, res, data, function(data) {
+      
+      if (debug) {
+        // Return the raw data
+        done(null, data);
+      }
+      else {
+        // Render the compiled template
+        var rendered = dust.render(self.page.name, data, function(err, result) {
+          if (err) done(err, null);
+          done(err, result);
+        });
+      }
     })
 };
 
