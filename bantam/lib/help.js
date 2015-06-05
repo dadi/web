@@ -14,9 +14,9 @@ module.exports.sendBackJSON = function (successCode, res, next) {
     return function (err, results) {
         if (err) return next(err);
 
-        res.statusCode = successCode;
-
         var resBody = JSON.stringify(results, null, 4);
+
+        res.statusCode = successCode;
         res.setHeader('content-type', 'application/json');
         res.setHeader('content-length', resBody.length);
         res.end(resBody);
@@ -100,8 +100,9 @@ module.exports.getData = function(datasource, done) {
         };
 
     this.getHeaders(datasource, function(headers) {
+
         var options = _.extend(defaults, headers);
-    
+
         req = http.request(options, function(res) {
           
           var output = '';

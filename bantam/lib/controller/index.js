@@ -66,8 +66,14 @@ Controller.prototype.get = function (req, res, next) {
     var query = url.parse(req.url, true).query;
     var debug = query.debug && query.debug.toString() === 'true';
 
-    var done = sendBackHTML(200, res, next);
-    if (debug) done = sendBackJSON(200, res, next);
+    var done;
+
+    if (debug) {
+      done = sendBackJSON(200, res, next);
+    }
+    else {
+      done = sendBackHTML(200, res, next);
+    }
     
     self = this;
 
@@ -117,23 +123,26 @@ Controller.prototype.loadData = function(req, res, data, done) {
       // start processing the attached events
       if (idx === Object.keys(self.datasources).length) {
 
-        idx = 0;
+      if (0 !== Object.keys(self.events).length) {
+        var eventIdx = 0;
         _.each(self.events, function(value, key) {
           
             self.events[key].run(req, res, function(result) {
               data[key] = result;
             });
 
-            idx++;
+            eventIdx++;
 
             // return the data if we're at the end of the events
             // array, we have all the responses to render the page
-            if (idx === Object.keys(self.events).length) {
+            if (eventIdx === Object.keys(self.events).length) {
               done(data);
             }
         });
-
+      }
+      else {
         done(data);
+      }
       }
     });
   });
