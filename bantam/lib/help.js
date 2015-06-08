@@ -86,9 +86,9 @@ module.exports.getData = function(datasource, done) {
     if (cachedData) done(cachedData);
 
     if (datasource.source.type === 'static') {
-      this.getStaticData(datasource, function(data) {
-        done(data);
-      });
+        this.getStaticData(datasource, function(data) {
+            done(data);
+        });
     }
     else {
 
@@ -99,40 +99,40 @@ module.exports.getData = function(datasource, done) {
             method: 'GET'
         };
 
-    this.getHeaders(datasource, function(headers) {
+        this.getHeaders(datasource, function(headers) {
 
-        var options = _.extend(defaults, headers);
+            var options = _.extend(defaults, headers);
 
-        req = http.request(options, function(res) {
-          
-          var output = '';
- 
-          res.on('data', function(chunk) {
-            output += chunk;
-          });
-    
-          res.on('end', function() {
+            req = http.request(options, function(res) {
+              
+              var output = '';
+     
+              res.on('data', function(chunk) {
+                output += chunk;
+              });
         
-            // if response is not 200 don't cache
-            if (res.statusCode === 200) datasourceCache.cacheResponse(output);
-    
-            done(output);
-          });
-    
+              res.on('end', function() {
+            
+                // if response is not 200 don't cache
+                if (res.statusCode === 200) datasourceCache.cacheResponse(output);
+        
+                done(output);
+              });
+        
+            });
+        
+            req.on('error', function(err) {
+    	    console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err);
+    	    done('{ "error" : "Connection refused" }');
+            });
+        
+            try {
+                req.end();
+            }
+            catch (e) {
+        
+            }
         });
-    
-        req.on('error', function(err) {
-	    console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err);
-	    done('{ "error" : "Connection refused" }');
-        });
-    
-        try {
-            req.end();
-        }
-        catch (e) {
-    
-        }
-    });
     }
 };
 
