@@ -132,20 +132,18 @@ Controller.prototype.loadData = function(req, res, data, done) {
         delete filter.id;
       }
 
-      if (Object.keys(filter).length !== 0) {
+      ds.schema.datasource.filter = {};
 
-          ds.schema.datasource.filter = {};
+      _.each(filter, function(value, key) {
+          ds.schema.datasource.filter[key] = value;
+      });
 
-          _.each(filter, function(value, key) {
-              ds.schema.datasource.filter[key] = value;
-          });
+      // rebuild datasource endpoint with filters
+      var d = new Datasource();
+      d.buildEndpoint(ds.schema, function(endpoint) {
+        ds.endpoint = endpoint;
+      });
 
-          // rebuild datasource endpoint with filters
-          var d = new Datasource();
-          d.buildEndpoint(ds.schema, function(endpoint) {
-            ds.endpoint = endpoint;
-          });
-      }
     }
 
     help.getData(ds, function(result) {
