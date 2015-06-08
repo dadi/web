@@ -124,6 +124,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
     var filter = {};
 
     if (path.indexOf(key) >= 0) {
+
+      ds.schema.datasource.page = query.page || 1;
+      delete query.page;
       
       filter = query;
       
