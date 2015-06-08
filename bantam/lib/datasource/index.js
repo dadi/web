@@ -3,20 +3,22 @@ var _ = require('underscore');
 var logger = require(__dirname + '/../log');
 
 var Datasource = function (page, datasource, options) {
-  if (!page) throw new Error('Page instance required');
+  if (page) {
+      //throw new Error('Page instance required');
   
-  this.page = page;
-  this.name = datasource;
-  this.options = options || {};
+    this.page = page;
+    this.name = datasource;
+    this.options = options || {};
 
-  var self = this;
+    var self = this;
 
-  this.schema = this.loadDatasource();
-  this.source = this.schema.datasource.source;
-  this.authStrategy = this.setAuthStrategy();
-  this.buildEndpoint(function(endpoint) {
-    self.endpoint = endpoint;
-  });
+    this.schema = this.loadDatasource();
+    this.source = this.schema.datasource.source;
+    this.authStrategy = this.setAuthStrategy();
+    this.buildEndpoint(this.schema, function(endpoint) {
+      self.endpoint = endpoint;
+    });
+  }
 };
 
 Datasource.prototype.loadDatasource = function() {
@@ -44,39 +46,39 @@ Datasource.prototype.setAuthStrategy = function() {
   if (!this.schema.datasource.auth) return null;
   
   var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
-  console.log(this.schema.datasource.auth);
   return new BearerAuthStrategy(this.schema.datasource.auth);
 };
 
-Datasource.prototype.buildEndpoint = function(done) {
+Datasource.prototype.buildEndpoint = function(schema, done) {
   
-  if (this.schema.datasource.source.type === 'static') return;
+  if (schema.datasource.source.type === 'static') return;
   
   var self = this;
   var uri = "";
 
-  var protocol = this.schema.datasource.source.protocol || "http";
-  var host = this.schema.datasource.source.host || "";
-  var port = this.schema.datasource.source.port || "";
+  var protocol = schema.datasource.source.protocol || "http";
+  var host = schema.datasource.source.host || "";
+  var port = schema.datasource.source.port || "";
   
-  uri = [protocol, "://", host, port != "" ? ":" : "", port, "/", this.schema.datasource.source.endpoint].join("");
+  uri = [protocol, "://", host, port != "" ? ":" : "", port, "/", schema.datasource.source.endpoint].join("");
 
-  self.processDatasourceParameters(uri, function(endpoint) {
+  self.processDatasourceParameters(schema, uri, function(endpoint) {
     done(endpoint);
   });
 };
 
-Datasource.prototype.processDatasourceParameters = function (uri, done) {
+Datasource.prototype.processDatasourceParameters = function (schema, uri, done) {
 
   // TODO accept params from the querystring, e.g. "page"
 
   var query = "?";
   
   var params = [
-    {"count": (this.schema.datasource.count || 0)},
-    {"page": (this.schema.datasource.page || 0)},
-    {"search": this.schema.datasource.search},
-    {"fields": this.schema.datasource.fields}
+    {"count": (schema.datasource.count || 0)},
+    {"page": (schema.datasource.page || 0)},
+    {"search": schema.datasource.search},
+    {"filter": schema.datasource.filter || {}},
+    {"fields": schema.datasource.fields}
   ];
 
   params.forEach(function(param) {
