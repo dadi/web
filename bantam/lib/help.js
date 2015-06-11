@@ -18,7 +18,7 @@ module.exports.sendBackJSON = function (successCode, res, next) {
 
         res.statusCode = successCode;
         res.setHeader('content-type', 'application/json');
-        res.setHeader('content-length', resBody.length);
+        res.setHeader('content-length', Buffer.byteLength(resBody));
         res.end(resBody);
     }
 }

@@ -1,0 +1,14 @@
+{>layout/}
+
+{<content}
+
+  <h3>Book ({@size key=books/} records)</h3>
+  <ul>
+  {#books}
+    <li>
+      <p>{name}, {byline} by {authorId}</p>
+    </li>
+  {/books}
+  </ul>
+
+{/content}

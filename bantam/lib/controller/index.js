@@ -90,7 +90,6 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     self.loadData(req, res, data, function(data) {
-      
       if (debug) {
         // Return the raw data
         done(null, data);
@@ -123,7 +122,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
     var filter = {};
 
-    if (path.indexOf(key) >= 0) {
+    if (key.indexOf(data.title) >= 0) {
 
       ds.schema.datasource.page = query.page || 1;
       delete query.page;
@@ -150,14 +149,17 @@ Controller.prototype.loadData = function(req, res, data, done) {
     }
 
     help.getData(ds, function(result) {
-      if (!result) return done();
-      
-      data[key] = (typeof result === 'object' ? result : JSON.parse(result));
+
+      if (result) {
+        data[key] = (typeof result === 'object' ? result : JSON.parse(result));
+      }
+
       idx++;
-      
+
       // if we're at the end of the datasources array, 
       // start processing the attached events
       if (idx === Object.keys(self.datasources).length) {
+
 
         if (0 !== Object.keys(self.events).length) {
           var eventIdx = 0;

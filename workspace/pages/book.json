@@ -1,0 +1,14 @@
+{
+    "page": {
+        "name": "Book",
+        "description": "A single book.",
+        "language": "en",
+        "cache": true
+    },
+    "datasources": [
+        "books"
+    ],
+    "events": [
+        
+    ]
+}
