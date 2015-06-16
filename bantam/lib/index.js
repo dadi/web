@@ -123,14 +123,18 @@ Server.prototype.loadApi = function (options) {
 
     self.ensureDirectories(options);
 
-    self.updateDatasources(datasourcePath);
-    self.updateEvents(eventPath);
+    // self.updateDatasources(datasourcePath);
+    // self.updateEvents(eventPath);
     
     // load routes
-    self.updatePages(pagePath, options);
+    self.updatePages(pagePath, options, false);
     
     // compile all dust templates
     self.dustCompile(options);
+
+    self.addMonitor(datasourcePath, function (dsFile) {
+        self.updatePages(pagePath, options, true);
+    });
 
     self.addMonitor(pagePath, function (pageFile) {
         self.updatePages(pagePath, options);
@@ -200,7 +204,7 @@ Server.prototype.updateEvents = function (directoryPath) {
     });
 };
 
-Server.prototype.updatePages = function (directoryPath, options) {
+Server.prototype.updatePages = function (directoryPath, options, reload) {
 
     if (!fs.existsSync(directoryPath)) return;
 
@@ -224,13 +228,13 @@ Server.prototype.updatePages = function (directoryPath, options) {
         route: ['', name].join('/'),
         filepath: pageFilepath,
         template: templateFilepath
-      }, options);
+      }, options, reload);
 
       logger.prod('Page loaded: ' + page);
     });
 };
 
-Server.prototype.addRoute = function (route, options) {
+Server.prototype.addRoute = function (route, options, reload) {
 
     // get the page schema
     try {
@@ -244,63 +248,30 @@ Server.prototype.addRoute = function (route, options) {
     // We then add the component to the api by adding a route to the app and mapping
     // `req.method` to component methods
     var p = page(route.name, route.template, schema.page, schema.datasources, schema.events);
-    var control = controller(p, options);
+
+    var control = new controller(p, options);
 
     this.addComponent({
         route: route.route,
         component: control,
         filepath: route.filepath
-    });
+    }, reload);
 };
 
-Server.prototype.dustCompile = function (options) {
+Server.prototype.addComponent = function (options, reload) {
 
-    var self = this;
-    var pagePath = options.pagePath;
-    var partialPath = options.partialPath;
-
-    var self = this;
-    
-    var pages = fs.readdirSync(pagePath);
-    pages.forEach(function (page) {
-        if (page.indexOf('.dust') < 0) return;
-        //Load the template from file
-        var name = page.slice(0, page.indexOf('.'));
-        var template =  fs.readFileSync(path.join(pagePath, page), "utf8");
-        try {
-            var compiled = dust.compile(template, name, true);
-            dust.loadSource(compiled);
-        }
-        catch (e) {
-            var message = 'Couldn\'t compile Dust template at "' + path.join(pagePath, page) + '". ' + e;
-            logger.prod(message);
-            throw new Error(message);
-        }
-    });
-
-    var partials = fs.readdirSync(partialPath);
-    partials.forEach(function (partial) {
-        //Load the template from file
-        var name = partial.slice(0, partial.indexOf('.'));
-        var template =  fs.readFileSync(path.join(partialPath, partial), "utf8");
-        try {
-            var compiled = dust.compile(template, "partials/" + name, true);
-            dust.loadSource(compiled);
-        }
-        catch (e) {
-            var message = 'Couldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e;
-            logger.prod(message);
-            throw new Error(message);
-        }
-    });  
-};
-
-Server.prototype.addComponent = function (options) {
+    console.log(reload);
 
     // only add a route once
-    if (this.components[options.route]) return;
+    if (this.components[options.route] && !reload) return;
 
     this.components[options.route] = options.component;
+
+    console.log("route: " + options.route);
+    console.log("filepath: " + options.filepath);
+    if (options.component.datasources.books) console.log("datasources: " + JSON.stringify(options.component.datasources.books.schema));
+    console.log("");
+    console.log("FTW");
 
     this.app.use(options.route + '/config', function (req, res, next) {
         var method = req.method && req.method.toLowerCase();
@@ -387,6 +358,48 @@ Server.prototype.addMonitor = function (filepath, callback) {
 Server.prototype.removeMonitor = function (filepath) {
     this.monitors[filepath] && this.monitors[filepath].close();
     delete this.monitors[filepath];
+};
+
+Server.prototype.dustCompile = function (options) {
+
+    var self = this;
+    var pagePath = options.pagePath;
+    var partialPath = options.partialPath;
+
+    var self = this;
+    
+    var pages = fs.readdirSync(pagePath);
+    pages.forEach(function (page) {
+        if (page.indexOf('.dust') < 0) return;
+        //Load the template from file
+        var name = page.slice(0, page.indexOf('.'));
+        var template =  fs.readFileSync(path.join(pagePath, page), "utf8");
+        try {
+            var compiled = dust.compile(template, name, true);
+            dust.loadSource(compiled);
+        }
+        catch (e) {
+            var message = 'Couldn\'t compile Dust template at "' + path.join(pagePath, page) + '". ' + e;
+            logger.prod(message);
+            throw new Error(message);
+        }
+    });
+
+    var partials = fs.readdirSync(partialPath);
+    partials.forEach(function (partial) {
+        //Load the template from file
+        var name = partial.slice(0, partial.indexOf('.'));
+        var template =  fs.readFileSync(path.join(partialPath, partial), "utf8");
+        try {
+            var compiled = dust.compile(template, "partials/" + name, true);
+            dust.loadSource(compiled);
+        }
+        catch (e) {
+            var message = 'Couldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e;
+            logger.prod(message);
+            throw new Error(message);
+        }
+    });  
 };
 
 /**

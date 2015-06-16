@@ -38,6 +38,11 @@ Datasource.prototype.loadDatasource = function() {
     throw new Error('Error loading datasource schema "' + filepath + '". Is it valid JSON? ' + err);
   }
 
+  console.log("loadDatasource: " + this.name);
+  console.log("loadDatasource: " + this.options.datasourcePath);
+  console.log("loadDatasource: " + filepath);
+  console.log("loadDatasource: " + JSON.stringify(schema));
+
   return schema;
 };
 
