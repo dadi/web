@@ -249,7 +249,7 @@ Server.prototype.addRoute = function (route, options, reload) {
     // `req.method` to component methods
     var p = page(route.name, route.template, schema.page, schema.datasources, schema.events);
 
-    var control = new controller(p, options);
+    var control = controller(p, options);
 
     this.addComponent({
         route: route.route,
@@ -260,18 +260,12 @@ Server.prototype.addRoute = function (route, options, reload) {
 
 Server.prototype.addComponent = function (options, reload) {
 
-    console.log(reload);
+    if (reload) this.removeComponent(options.route);
 
     // only add a route once
-    if (this.components[options.route] && !reload) return;
+    if (this.components[options.route]) return;
 
     this.components[options.route] = options.component;
-
-    console.log("route: " + options.route);
-    console.log("filepath: " + options.filepath);
-    if (options.component.datasources.books) console.log("datasources: " + JSON.stringify(options.component.datasources.books.schema));
-    console.log("");
-    console.log("FTW");
 
     this.app.use(options.route + '/config', function (req, res, next) {
         var method = req.method && req.method.toLowerCase();

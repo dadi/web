@@ -28,24 +28,26 @@ var Controller = function (page, options) {
   var self = this;
 
   this.attachDatasources(function() {
-    console.log("self.datasources: " + JSON.stringify(self.datasources));
+    //console.log(self.datasources);
   });
 
   this.attachEvents(function() {
-    console.log(self.events);
+    //console.log(self.events);
   });
 };
 
 Controller.prototype.attachDatasources = function(done) {    
   var self = this;
+  var i = 0;
 
   this.page.datasources.forEach(function(datasource) {
-    var ds = new Datasource(self.page, datasource, self.options);
-    console.log(ds);
-    self.datasources[ds.schema.datasource.key] = ds;
+    var ds = new Datasource(self.page, datasource, self.options, function(ds) {
+      self.datasources[ds.schema.datasource.key] = ds;
+      i++;
+      if (i == self.page.datasources.length) done();
+    });
+    
   });
-
-  done();
 };
 
 Controller.prototype.attachEvents = function(done) {
