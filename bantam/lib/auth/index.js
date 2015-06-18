@@ -47,6 +47,15 @@ module.exports = function (server) {
           });
 
           res.on('end', function() {
+            
+            if (!output) {
+              console.log('No token received, invalid credentials.');
+              logger.prod('No token received, invalid credentials.');
+              
+              res.statusCode = 401;
+              return next();
+            }
+
             var tokenResponse = JSON.parse(output);
             token.authToken = tokenResponse;
             token.created_at = Math.floor(Date.now() / 1000);
@@ -69,7 +78,6 @@ module.exports = function (server) {
           req.end();
         }
         catch (e) {
-
         }
         
     });

@@ -38,13 +38,16 @@ var Controller = function (page, options) {
 
 Controller.prototype.attachDatasources = function(done) {    
   var self = this;
+  var i = 0;
 
   this.page.datasources.forEach(function(datasource) {
-    var ds = new Datasource(self.page, datasource, self.options);
-    self.datasources[ds.schema.datasource.key] = ds;
+    var ds = new Datasource(self.page, datasource, self.options, function(ds) {
+      self.datasources[ds.schema.datasource.key] = ds;
+      i++;
+      if (i == self.page.datasources.length) done();
+    });
+    
   });
-
-  done();
 };
 
 Controller.prototype.attachEvents = function(done) {

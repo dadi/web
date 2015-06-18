@@ -47,6 +47,14 @@ BearerAuthStrategy.prototype.getToken = function(done) {
       });
 
       res.on('end', function() {
+        if (output === '') {
+          console.log('No token received, invalid credentials.');
+          logger.prod('No token received, invalid credentials.');
+          
+          res.statusCode = 401;
+          return done();
+        }
+
         var tokenResponse = JSON.parse(output);
         self.token.authToken = tokenResponse;
         self.token.created_at = Math.floor(Date.now() / 1000);

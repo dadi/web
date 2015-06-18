@@ -1,1 +1,7 @@
 <p>This is the footer.</p>
+
+{#books}
+  <li>
+    <p>{name}, {byline} by {authorId}</p>
+  </li>
+{/books}

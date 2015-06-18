@@ -2,7 +2,7 @@ var fs = require('fs');
 var _ = require('underscore');
 var logger = require(__dirname + '/../log');
 
-var Datasource = function (page, datasource, options) {
+var Datasource = function (page, datasource, options, callback) {
   if (page) {
       //throw new Error('Page instance required');
   
@@ -12,16 +12,19 @@ var Datasource = function (page, datasource, options) {
 
     var self = this;
 
-    this.schema = this.loadDatasource();
-    this.source = this.schema.datasource.source;
-    this.authStrategy = this.setAuthStrategy();
-    this.buildEndpoint(this.schema, function(endpoint) {
-      self.endpoint = endpoint;
+    this.loadDatasource(function(schema) {
+      self.schema = schema;
+      self.source = schema.datasource.source;
+      self.authStrategy = self.setAuthStrategy();
+      self.buildEndpoint(schema, function(endpoint) {
+        self.endpoint = endpoint;
+        callback(self);
+      });
     });
   }
 };
 
-Datasource.prototype.loadDatasource = function() {
+Datasource.prototype.loadDatasource = function(done) {
 
   var filepath = this.options.datasourcePath + "/" + this.name + ".json";
   var schema;
@@ -32,13 +35,13 @@ Datasource.prototype.loadDatasource = function() {
   }
   
   try {
-    schema = require(filepath);
+    var body = fs.readFileSync(filepath, {encoding: 'utf-8'});
+    schema = JSON.parse(body);
+    done(schema);
   }
   catch (err) {
     throw new Error('Error loading datasource schema "' + filepath + '". Is it valid JSON? ' + err);
   }
-
-  return schema;
 };
 
 Datasource.prototype.setAuthStrategy = function() {
@@ -104,8 +107,8 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri, done) 
   });
 }
 
-module.exports = function (page, datasource, options) {
-  return new Datasource(page, datasource, options);
+module.exports = function (page, datasource, options, callback) {
+  return new Datasource(page, datasource, options, callback);
 };
 
 module.exports.Datasource = Datasource;
