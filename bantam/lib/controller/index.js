@@ -121,7 +121,27 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   // no datasources specified for this page
   if (typeof self.datasources === 'object' && Object.keys(self.datasources).length === 0) {
-    done(data);
+    // start processing the attached events
+    if (0 !== Object.keys(self.events).length) {
+      var eventIdx = 0;
+      _.each(self.events, function(value, key) {
+        
+          self.events[key].run(req, res, function(result) {                
+            data[key] = result;
+          });
+
+          eventIdx++;
+
+          // return the data if we're at the end of the events
+          // array, we have all the responses to render the page
+          if (eventIdx === Object.keys(self.events).length) {
+            done(data);
+          }
+      });
+    }
+    else {
+      done(data);
+    }
   }
 
   _.each(self.datasources, function(value, key) {
