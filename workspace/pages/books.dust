@@ -2,22 +2,29 @@
 
 {<content}
 
-  <h3>Books ({@size key=books/} records)</h3>
   <ul>
-  {#books}
+    <li># of records: {books.metadata.totalCount}</li>
+    <li># of pages: {books.metadata.totalPages}</li>
+    <li>page: {books.metadata.page}</li>
+    <li>per page: {books.metadata.limit}</li>
+  </ul>
+
+  <h3>Books ({@size key=books.results/} records)</h3>
+  <ul>
+  {#books.results}
     <li>
       <p>{name}, {byline} by {authorId}</p>
     </li>
-  {/books}
+  {/books.results}
   </ul>
 
-  <h3>Users ({@size key=users/} records)</h3>
+  <h3>Users ({@size key=users.results/} records)</h3>
   <ul>
-  {#users}
+  {#users.results}
     <li>
       <p>{name}, created {createdAt}</p>
     </li>
-  {/users}
+  {/users.results}
   </ul>
 
   <h3>From the event associated with this page:</h3>
