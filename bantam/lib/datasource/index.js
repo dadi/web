@@ -15,6 +15,12 @@ var Datasource = function (page, datasource, options, callback) {
     this.loadDatasource(function(schema) {
       self.schema = schema;
       self.source = schema.datasource.source;
+      
+      if (self.source.type === 'static') {
+        callback(self);
+      }
+
+      self.requestParams = schema.datasource.requestParams || [];
       self.authStrategy = self.setAuthStrategy();
       self.buildEndpoint(schema, function(endpoint) {
         self.endpoint = endpoint;

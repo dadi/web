@@ -1,7 +1,11 @@
-<p>This is the footer.</p>
+<h4>This is the footer.</h4>
 
-{#books}
+<p>Bind to datasource results in partials:</p>
+
+<ul>
+{#books.results}
   <li>
     <p>{name}, {byline} by {authorId}</p>
   </li>
-{/books}
+{/books.results}
+</ul>
