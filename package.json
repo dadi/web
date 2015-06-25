@@ -20,6 +20,7 @@
     "underscore": "1.6.0"
   },
   "devDependencies": {
+    "colors": "^1.1.2",
     "mocha": "~1.21.3",
     "should": "~4.0.4",
     "sinon": "~1.10.3",

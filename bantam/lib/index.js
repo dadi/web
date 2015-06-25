@@ -122,9 +122,6 @@ Server.prototype.loadApi = function (options) {
     options.eventPath = eventPath;
 
     self.ensureDirectories(options);
-
-    // self.updateDatasources(datasourcePath);
-    // self.updateEvents(eventPath);
     
     // load routes
     self.updatePages(pagePath, options, false);
@@ -133,6 +130,10 @@ Server.prototype.loadApi = function (options) {
     self.dustCompile(options);
 
     self.addMonitor(datasourcePath, function (dsFile) {
+        self.updatePages(pagePath, options, true);
+    });
+
+    self.addMonitor(eventPath, function (eventFile) {
         self.updatePages(pagePath, options, true);
     });
 
@@ -146,62 +147,6 @@ Server.prototype.loadApi = function (options) {
     });
     
     logger.prod('Server load complete');
-};
-
-Server.prototype.updateDatasources = function (directoryPath) {
-    
-    if (!fs.existsSync(directoryPath)) return;
-
-    var self = this;
-    var datasources = fs.readdirSync(directoryPath);
-
-    datasources.forEach(function (datasource) {
-        //if (collection.indexOf('.') === 0) return;
-
-        logger.prod('Datasource loaded: ' + datasource);
-        // parse the url out of the directory structure
-        // var cpath = path.join(collectionsPath, collection);
-        // var dirs = cpath.split('/');
-        // var version = dirs[dirs.length - 3];
-        // var database = dirs[dirs.length - 2];
-
-        // // collection should be json file containing schema
-        // var name = collection.slice(collection.indexOf('.') + 1, collection.indexOf('.json'));
-
-        // self.addCollectionResource({
-        //     route: ['', version, database, name, idParam].join('/'),
-        //     filepath: cpath,
-        //     name: name
-        // });
-    });
-};
-
-Server.prototype.updateEvents = function (directoryPath) {
-    
-    if (!fs.existsSync(directoryPath)) return;
-
-    var self = this;
-    var events = fs.readdirSync(directoryPath);
-
-    events.forEach(function (e) {
-        //if (collection.indexOf('.') === 0) return;
-
-        logger.prod('Event loaded: ' + e);
-        // parse the url out of the directory structure
-        // var cpath = path.join(collectionsPath, collection);
-        // var dirs = cpath.split('/');
-        // var version = dirs[dirs.length - 3];
-        // var database = dirs[dirs.length - 2];
-
-        // // collection should be json file containing schema
-        // var name = collection.slice(collection.indexOf('.') + 1, collection.indexOf('.json'));
-
-        // self.addCollectionResource({
-        //     route: ['', version, database, name, idParam].join('/'),
-        //     filepath: cpath,
-        //     name: name
-        // });
-    });
 };
 
 Server.prototype.updatePages = function (directoryPath, options, reload) {
@@ -221,40 +166,38 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
         var name = page.slice(0, page.indexOf('.'));
 
         // check for matching template file
-        var templateFilepath = path.join(directoryPath, name) + ".dust";
+        //var templateFilepath = path.join(directoryPath, name) + ".dust";
 
       self.addRoute({
         name: name,
-        route: ['', name].join('/'),
-        filepath: pageFilepath,
-        template: templateFilepath
+        filepath: pageFilepath
       }, options, reload);
 
       logger.prod('Page loaded: ' + page);
     });
 };
 
-Server.prototype.addRoute = function (route, options, reload) {
+Server.prototype.addRoute = function (obj, options, reload) {
 
     // get the page schema
     try {
-      var schema = require(route.filepath);
+      var schema = require(obj.filepath);
     }
     catch (e) {
-      throw new Error('Error loading page schema "' + route.filepath + '". Is it valid JSON?');
+      throw new Error('Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
     }
 
     // With each page we create a controller, that acts as a component of the REST api.
     // We then add the component to the api by adding a route to the app and mapping
     // `req.method` to component methods
-    var p = page(route.name, route.template, schema.page, schema.datasources, schema.events);
+    var p = page(obj.name, schema);
 
     var control = controller(p, options);
 
     this.addComponent({
-        route: route.route,
+        route: p.route,
         component: control,
-        filepath: route.filepath
+        filepath: obj.filepath
     }, reload);
 };
 
@@ -313,6 +256,8 @@ Server.prototype.addComponent = function (options, reload) {
         });        
     }
     else {
+        console.log("route: " + options.route);
+        console.log("");
 
         this.app.use(options.route, function (req, res, next) {
             // map request method to controller method
@@ -322,13 +267,13 @@ Server.prototype.addComponent = function (options, reload) {
             next();
         });
 
-        this.app.use(options.route + '/:id', function (req, res, next) {
-            // map request method to controller method
-            var method = req.method && req.method.toLowerCase();
-            if (method && options.component[method]) return options.component[method](req, res, next);
+        // this.app.use(options.route + '/:id', function (req, res, next) {
+        //     // map request method to controller method
+        //     var method = req.method && req.method.toLowerCase();
+        //     if (method && options.component[method]) return options.component[method](req, res, next);
 
-            next();
-        });
+        //     next();
+        // });
     }
 };
 
@@ -358,26 +303,51 @@ Server.prototype.dustCompile = function (options) {
 
     var self = this;
     var pagePath = options.pagePath;
+    var templatePath = options.pagePath;
     var partialPath = options.partialPath;
 
     var self = this;
-    
-    var pages = fs.readdirSync(pagePath);
-    pages.forEach(function (page) {
-        if (page.indexOf('.dust') < 0) return;
-        //Load the template from file
-        var name = page.slice(0, page.indexOf('.'));
-        var template =  fs.readFileSync(path.join(pagePath, page), "utf8");
+
+    _.each(self.components, function(component) {
         try {
+            var filepath = path.join(templatePath, component.page.template);
+            var template =  fs.readFileSync(filepath, "utf8");
+            var name = component.page.template.slice(0, component.page.template.indexOf('.'));
             var compiled = dust.compile(template, name, true);
             dust.loadSource(compiled);
         }
         catch (e) {
-            var message = 'Couldn\'t compile Dust template at "' + path.join(pagePath, page) + '". ' + e;
+            var message = 'Couldn\'t compile Dust template at "' + filepath + '". ' + e;
             logger.prod(message);
             throw new Error(message);
         }
     });
+
+    var template =  fs.readFileSync(path.join(templatePath, 'index.dust'), "utf8");
+    var compiled = dust.compile(template, 'index', true);
+    dust.loadSource(compiled);
+
+    var template =  fs.readFileSync(path.join(templatePath, 'layout.dust'), "utf8");
+    var compiled = dust.compile(template, 'layout', true);
+    dust.loadSource(compiled);
+
+    
+    // var pages = fs.readdirSync(pagePath);
+    // pages.forEach(function (page) {
+    //     if (page.indexOf('.dust') < 0) return;
+    //     //Load the template from file
+    //     var name = page.slice(0, page.indexOf('.'));
+    //     var template =  fs.readFileSync(path.join(pagePath, page), "utf8");
+    //     // try {
+    //     //     var compiled = dust.compile(template, name, true);
+    //     //     dust.loadSource(compiled);
+    //     // }
+    //     // catch (e) {
+    //     //     var message = 'Couldn\'t compile Dust template at "' + path.join(pagePath, page) + '". ' + e;
+    //     //     logger.prod(message);
+    //     //     throw new Error(message);
+    //     // }
+    // });
 
     var partials = fs.readdirSync(partialPath);
     partials.forEach(function (partial) {

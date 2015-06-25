@@ -1,13 +1,13 @@
 {
 	"datasource": {
-		"key": "books",
-		"name": "Books datasource",
+		"key": "car-models",
+		"name": "Models datasource",
 		"source": {
 			"type": "remote",
 			"protocol": "http",
 			"host": "localhost",
 			"port": "3000",
-			"endpoint": "vjoin/testdb/books"
+			"endpoint": "1.0/car-data/models"
 		},
     "caching": {
         "enabled": true,
@@ -32,7 +32,9 @@
 			"order": "desc"
 		},
 		"search": {},
-		"fields": ["name","authorId"],
-    "requestParams": ["authorId"]
+		"fields": ["name","makeId","capId"],
+    "requestParams": [
+      { "param": "model", "field": "name" }
+    ]
 	}
 }

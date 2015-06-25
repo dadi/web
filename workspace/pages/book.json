@@ -5,6 +5,7 @@
         "language": "en",
         "cache": true
     },
+    "route": "/book/:id",
     "datasources": [
         "books"
     ],

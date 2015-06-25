@@ -2,13 +2,13 @@
 
 {<content}
 
-  <h3>Book ({@size key=books/} records)</h3>
+  <h3>Book ({@size key=books.results/} records)</h3>
   <ul>
-  {#books}
+  {#books.results}
     <li>
       <p>{name}, {byline} by {authorId}</p>
     </li>
-  {/books}
+  {/books.results}
   </ul>
 
 {/content}

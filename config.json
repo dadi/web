@@ -24,7 +24,7 @@
     },
     "auth": {
         "tokenUrl":"/token",
-        "clientId":"testClient",
+        "clientId":"test123",
         "secret":"superSecret"
     },
     "feedback": false
