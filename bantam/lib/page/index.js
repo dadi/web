@@ -1,23 +1,20 @@
 var _pages = {};
 
-var Page = function (name, template, settings, datasources, events) {
-
-  if (!template) throw new Error('Template required');
-
+var Page = function (name, schema) {
   this.name = name;
-  this.template = template;
+  this.route = schema.route || '/' + name;
+  this.template = schema.template || name + '.dust';
 
-  this.settings = settings;
-  this.datasources = datasources;
-  this.events = events;
+  this.settings = schema.settings;
+  this.datasources = schema.datasources;
+  this.events = schema.events;
 
   _pages[name] = this;
 };
 
 // exports
-module.exports = function (name, template, settings, datasources, events) {
-  if (!template) throw new Error('Template required');
-  if (name && template && settings) return new Page(name, template, settings, datasources, events);
+module.exports = function (name, schema) {
+  if (name && schema) return new Page(name, schema);
   return _pages[name];
 };
 

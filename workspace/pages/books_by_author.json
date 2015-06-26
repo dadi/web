@@ -6,6 +6,7 @@
         "cache": true
     },
     "route": "/books/:authorId",
+    "template": "books.dust",
     "datasources": [
         "books",
         "users"

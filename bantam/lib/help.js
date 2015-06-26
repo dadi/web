@@ -79,11 +79,10 @@ module.exports.getStaticData = function(datasource, done) {
 
 module.exports.getData = function(datasource, done) {
 
-    // TODO allow non-Serama endpoints
-    
+    // TODO allow non-Serama endpoints    
     var datasourceCache = new DatasourceCache(datasource);
     var cachedData = datasourceCache.getFromCache();
-    if (cachedData) done(cachedData);
+    if (cachedData) return done(cachedData);
 
     if (datasource.source.type === 'static') {
         this.getStaticData(datasource, function(data) {
@@ -112,7 +111,7 @@ module.exports.getData = function(datasource, done) {
               });
         
               res.on('end', function() {
-            
+
                 // if response is not 200 don't cache
                 if (res.statusCode === 200) datasourceCache.cacheResponse(output);
         
@@ -122,8 +121,8 @@ module.exports.getData = function(datasource, done) {
             });
         
             req.on('error', function(err) {
-    	    console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err);
-    	    done('{ "error" : "Connection refused" }');
+    	       console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err);
+    	       done('{ "error" : "Connection refused" }');
             });
         
             try {

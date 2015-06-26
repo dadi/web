@@ -18,11 +18,11 @@ BearerAuthStrategy.prototype.getToken = function(done) {
       // if the token creation date + expiry in seconds is greater
       // than the current time, we don't need to generate a new token
       if ((self.token.created_at + self.token.authToken.expiresIn) > now) {
-        done(self.token.authToken.accessToken);
+        return done(self.token.authToken.accessToken);
       }
     }
 
-    console.log("Generating new access token...");
+    console.log("[BEARER] Generating new access token...");
 
     var postData = {
       clientId : self.config.credentials.clientId,
@@ -61,7 +61,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
 
         console.log('Done.');
         
-        done(self.token.authToken.accessToken);
+        return done(self.token.authToken.accessToken);
       });
     });
 
