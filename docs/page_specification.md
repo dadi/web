@@ -14,7 +14,7 @@ The following URLs all match this page's route:
 ```
 /cars/ford/focus -> named parameters :make = ford, :model = focus
 /cars/nissan/pathfinder -> named parameters :make = nissan, :model = pathfinder
-/cars/bmw/3-series -> named parameters :make = bmws, :model = 3-series
+/cars/bmw/3-series -> named parameters :make = bmw, :model = 3-series
 ```
 
 See [Datasource Specification](page_specification.md) for more information regarding the use of named parameters.
