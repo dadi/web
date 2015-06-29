@@ -23,4 +23,7 @@
   <p>{name}, {makeId}, {capId}</p>
   {/car-models.results}
 
+  <h3>Attached Event</h3>
+  <p>{test.carMakeFromEvent}</p>
+
 {/content}

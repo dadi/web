@@ -256,7 +256,6 @@ Server.prototype.addComponent = function (options, reload) {
         });        
     }
     else {
-        console.log("loading route " + options.route);
 
         this.app.use(options.route, function (req, res, next) {
             // map request method to controller method

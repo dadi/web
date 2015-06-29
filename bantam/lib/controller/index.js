@@ -128,7 +128,7 @@ function loadEventData(events, req, res, data, done) {
   var eventIdx = 0;
   _.each(events, function(value, key) {
     
-      events[key].run(req, res, function(result) {                
+      events[key].run(req, res, data, function(result) {                
         data[key] = result;
       });
 

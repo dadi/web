@@ -28,8 +28,8 @@ Event.prototype.loadEvent = function() {
   }
 };
 
-Event.prototype.run = function(req, res, done) {
-  this.loadEvent()(req, res, function(result) {
+Event.prototype.run = function(req, res, data, done) {
+  this.loadEvent()(req, res, data, function(result) {
     done(result);
   });
 };

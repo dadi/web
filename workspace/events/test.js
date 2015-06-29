@@ -1,37 +1,34 @@
-/* Node module includes */
+/* Sample Node module includes */
 var path = require('path');
 var http = require("http");
 var querystring = require('querystring');
 
-/* Rosecomb includes */
+/* Sample Rosecomb includes */
 var config = require(__dirname + '/../../config.json');
 var help = require(__dirname + '/../../bantam/lib/help');
 
-var Event = function (req, res, callback) {
-  var data = {};
+// the `data` parameter contains the data already loaded by 
+// the page's datasources and any previous events that have fired
+var Event = function (req, res, data, callback) {
 
-  if (1==1) {
-    data = {
-      carMakeID: "req.body.carMakeID",
-      carModelID: "req.body.carModelID",
-      carDerID: "req.body.carDerID",
-      carDer: "req.body.carDer",
-      carYear: "req.body.carYear",
-      carMake: "req.body.carMake",
-      carModel: "req.body.carModel",
-      carVRN: "req.body.carVRN"
+  var result = {};
+
+  if (data['car-makes'] && data['car-makes']['results'] && data['car-makes']['results'][0]) {
+    result = {
+      carMakeFromEvent: data['car-makes']['results'][0].name
     };
   }
   else {
-    data = {};
+    result = {
+      carMakeFromEvent: "No make found!"
+    }; 
   }
   
-  //console.log(data);
-  callback(data); 
+  callback(result);
 };
 
-module.exports = function (req, res, callback) {
-    return new Event(req, res, callback);
+module.exports = function (req, res, data, callback) {
+    return new Event(req, res, data, callback);
 };
 
 module.exports.Event = Event;
