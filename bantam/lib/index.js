@@ -256,6 +256,7 @@ Server.prototype.addComponent = function (options, reload) {
         });        
     }
     else {
+
         this.app.use(options.route, function (req, res, next) {
             // map request method to controller method
             var method = req.method && req.method.toLowerCase();
@@ -320,32 +321,24 @@ Server.prototype.dustCompile = function (options) {
         }
     });
 
-    var template =  fs.readFileSync(path.join(templatePath, 'index.dust'), "utf8");
-    var compiled = dust.compile(template, 'index', true);
-    dust.loadSource(compiled);
-
-    var template =  fs.readFileSync(path.join(templatePath, 'layout.dust'), "utf8");
-    var compiled = dust.compile(template, 'layout', true);
-    dust.loadSource(compiled);
-
+    // load templates in the template folder that haven't already been loaded
+    var templates = fs.readdirSync(templatePath);
+    templates.map(function (file) {
+        return path.join(templatePath, file);
+    }).filter(function (file) {
+        return path.extname(file) === '.dust';
+    }).forEach(function (file) {
+        
+        var pageTemplateName = path.basename(file, '.dust');
+        
+        if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
+            var template =  fs.readFileSync(file, "utf8");
+            var compiled = dust.compile(template, pageTemplateName, true);
+            console.log("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
+            dust.loadSource(compiled);
+        }
+    });
     
-    // var pages = fs.readdirSync(pagePath);
-    // pages.forEach(function (page) {
-    //     if (page.indexOf('.dust') < 0) return;
-    //     //Load the template from file
-    //     var name = page.slice(0, page.indexOf('.'));
-    //     var template =  fs.readFileSync(path.join(pagePath, page), "utf8");
-    //     // try {
-    //     //     var compiled = dust.compile(template, name, true);
-    //     //     dust.loadSource(compiled);
-    //     // }
-    //     // catch (e) {
-    //     //     var message = 'Couldn\'t compile Dust template at "' + path.join(pagePath, page) + '". ' + e;
-    //     //     logger.prod(message);
-    //     //     throw new Error(message);
-    //     // }
-    // });
-
     var partials = fs.readdirSync(partialPath);
     partials.forEach(function (partial) {
         //Load the template from file
@@ -360,7 +353,7 @@ Server.prototype.dustCompile = function (options) {
             logger.prod(message);
             throw new Error(message);
         }
-    });  
+    });
 };
 
 /**
