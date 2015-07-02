@@ -5,7 +5,7 @@
 
 An array of parameters that this datasource can accept from the querystring. Used in conjunction with the custom routing option in the page specification.
 
-```
+```js
 "requestParams": [
 	{ "param": "make", "field": "name" }
 ]
@@ -21,12 +21,26 @@ With a request to `http://www.example.com/cars/ford/focus`, Rosecomb will extrac
 
 The Serama query becomes `{ "name" : "Ford" }`.
 
+####workspace/data-sources/articles.json
+
+datasource.key: Name of data-source this is used in the page descriptor to attach a data source
+datasource.name: This is the name of the data source, it will be displayed on the front-end of the gui
+datasource.source.endpoint: Link to endpoint on Serama
+cache: false, // Sets caching enabled or disabled on Serama
+paginate: true, // Turns pagination on and off on Serama
+filters: // List of filters - See Serama brief for more info
+        { "category": ["blog"] }
+count: 5, // Number of items Serama has to return
+sort: // Order of the result set
+        "field": "_id",
+        "order": "desc"
+fields: ["title", "author"] // Limit fields to return
 
 
 See [Page Specification](page_specification.md) for custom routing information.
 
 
-```
+```js
 {
     "datasource": {
         "key": "car-makes",

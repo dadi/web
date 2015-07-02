@@ -1,4 +1,4 @@
-### Page Specification
+### Events
 
 
 #### route
@@ -20,21 +20,23 @@ The following URLs all match this page's route:
 See [Datasource Specification](datasource_specification.md) for more information regarding the use of named parameters.
 
 
-```js
-	{
-	    "page": {
-	        "name": "Car Reviews",
-	        "description": "A collection of car reviews.",
-	        "language": "en",
-	        "cache": true
-	    },
-	    "route": "/car-reviews/:make/:model", // route configuration (optional)
-	    "template": "car-reviews.dust", // template filename (optional)
-	    "datasources": [ // specifies attached data sources
-	        "car-makes",
-	        "car-models"
-	    ],
-	    "events": [ ]
-	}
+```
+{
+    "page": {
+        "name": "Car Reviews",
+        "description": "A collection of car reviews.",
+        "language": "en",
+        "cache": true
+    },
+    "route": "/car-reviews/:make/:model",
+    "template": "car-reviews.dust",
+    "datasources": [
+        "car-makes",
+        "car-models"
+    ],
+    "events": [
+
+    ]
+}
 
 ```
