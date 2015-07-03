@@ -2,6 +2,20 @@
 
 ![Build Status](http://img.shields.io/badge/Release-0.1.2_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)
 
+## Contents
+
+* [Overview](#overview)
+* [Pages](docs/page_specification.md) 
+* [Data sources](docs/datasource_specification.md) 
+* [Setup and installation](#setup-and-installation)
+* [Running the demo application](#running-the-demo-application)
+* [Running the server](#running-the-server)
+
+* [Configuration notes](#configuration-notes)
+* [Further reading](#further-reading)
+* [Development](#development)
+
+
 ## Overview
 
 Rosecomb is built on Node.JS. It is a high performance schemaless templating layer designed in support of API-first development and the principle of COPE.
@@ -10,23 +24,32 @@ It can opperate as a stand alone platform or in conjunction with [Serama](https:
 
 Rosecomb is part of [Bantam](https://github.com/bantam-framework/), a suite of components covering the full development stack, built for performance and scale.
 
-### Environment
-
 Rosecomb is based on Node.JS, using latest stable versions.
 
-### Terminology
+### Terminology/Folder Structure
 
-`Pages` - Pages are the main template files. Templating is based around the *dust* (http://akdubya.github.io/dustjs/) templating language.
+#### Page descriptors
+These files describe the application's pages and the routes which load them. Data sources and events used by the page are specified within these files.
 
-`Page descriptors` - These files are describing the pages. Page taxonomy can be set here as well which data sources and events does the page uses.
+#### Pages
+Pages are the main template files. Templating is based around the *dust* (http://akdubya.github.io/dustjs/) templating language.
 
-`Partials` - These are reusable *dust* snippets. They can be included in the main page files.
+#### Partials
+These are reusable template files that may be referenced from the main page templates. Partials may also contain *dust* code and have access to the same data sources as the page they are included in.
 
-`Data sources` - Data sources are the main link between Serama (REST API [and other third party end points]) and Rosecomb. They describe which endpoints to use, if caching is enabled, pagination and filters. A sample file is incuded in the end of this document. These are assigned to the page in the page descriptor file.
+#### Data sources
+Data sources are the main link between Rosecomb and a Serama REST API or other third party end point. Data sources describe which endpoints to use, how to authenticate against that service, whether caching and pagination are enabled and can include default filters to pass to Serama. See [Datasource Specification](datasource_specification.md) for a sample data source.
 
-`Events` - These files add additional server side functionality to pages. These are assigned to the page in the page descriptor file.
+Data sources are assigned to pages in the page descriptor file.
 
-### Functionality
+#### Events
+These files add additional server side functionality to pages. Events are run after a page has loaded data from all of it's data sources, so they have access to the retrieved data.
+
+See [Events](events.md) for more information and a sample event file.
+
+Events are assigned to pages in the page descriptor file.
+
+### xFunctionality
 
 Rosecomb constantly monitors the workspace folder for changes modifies it's behaviour according to file changes.
 
@@ -63,52 +86,8 @@ The developer then returns the updated counter number from the event which is ma
   workspace/pages/{page name}.json
   workspace/partials/{partial name}.dust
 ```
-### Example files
 
-#### workspace/pages/articles.json
-```js
-  {
-      "page": {
-          "name": "Articles", // Page title to be displayed in gui, also available for page file
-          "description": "A collection of articles.",
-          "language": "en"
-      },
-      "datasources": [ // Sets all attached data sources
-          "articles"
-      ],
-      "events": [ // Sets all attached events
-          "testa"
-      ]
-  }
-```
-
-####workspace/data-sources/articles.json
-```js
-  {
-    "datasource": {
-      "key": "articles", // Name of data-source this is used in the page descriptor to attach a data source
-      "name": "Articles DS", // This is the name of the data source, it will be displayed on the front-end of the gui
-      "endpoint": "editorial/articles", // Link to endpoint on Serama
-      "cache": false, // Sets caching enabled or disabled on Serama
-  
-      "paginate": true, // Turns pagination on and off on Serama
-  
-      "filters": [ // List of filters - See Serama brief for more info
-        { "category": ["blog"] }
-      ],
-  
-      "count": 5, // Number of items Serama has to return
-      "sort": { // Order of the result set
-        "field": "_id",
-        "order": "desc"
-      },
-
-      "fields": ["title", "author"] // Limit fields to return
-    }
-  }
-```
-
-### Installation
+### Setup and installation
 
 	[sudo] npm install
 

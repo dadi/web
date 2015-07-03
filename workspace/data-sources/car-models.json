@@ -27,10 +27,9 @@
     },
 		"paginate": true,
 		"count": 5,
-		"sort": {
-			"field": "name",
-			"order": "desc"
-		},
+		"sort": [
+      {"field": "name","order": "desc"}
+    ],
 		"search": {},
 		"fields": ["name","makeId","capId"],
     "requestParams": [
