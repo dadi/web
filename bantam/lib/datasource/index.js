@@ -42,6 +42,7 @@ Datasource.prototype.loadDatasource = function(done) {
   
   try {
     var body = fs.readFileSync(filepath, {encoding: 'utf-8'});
+
     schema = JSON.parse(body);
     done(schema);
   }
@@ -87,7 +88,8 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri, done) 
     {"page": (schema.datasource.page || 0)},
     {"search": schema.datasource.search},
     {"filter": schema.datasource.filter || {}},
-    {"fields": schema.datasource.fields}
+    {"fields": schema.datasource.fields},
+    {"sort": processSortParameter(schema.datasource.sort)}
   ];
 
   params.forEach(function(param) {
@@ -111,6 +113,19 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri, done) 
       done(uri + query.slice(0,-1));
     }
   });
+}
+
+function processSortParameter(obj) {
+  var sort = {};
+  if (typeof obj !== 'object' || obj === null) return sort;
+
+  _.each(obj, function(value, key) {    
+    if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
+      sort[value.field] = (value.order === 'asc') ? 1 : -1;
+    }
+  });
+
+  return sort;
 }
 
 module.exports = function (page, datasource, options, callback) {
