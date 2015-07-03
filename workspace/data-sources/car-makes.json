@@ -26,15 +26,14 @@
         }
     },
 		"paginate": true,
-		"count": 5,
-		"sort": {
-			"field": "name",
-			"order": "desc"
-		},
+		"count": 20,
+		"sort": [
+            { "field": "name", "order": "asc" }
+        ],
 		"search": {},
 		"fields": ["name","capId"],
-    "requestParams": [
-      { "param": "make", "field": "name" }
-    ]
+        "requestParams": [
+            { "param": "make", "field": "name" }
+        ]
 	}
 }
