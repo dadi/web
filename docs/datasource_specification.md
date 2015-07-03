@@ -69,6 +69,12 @@ The Serama query becomes `{ "name" : "Ford" }`.
 
 ####workspace/data-sources/articles.json
 
+###### Section
+
+ Property       | Description                 | Default value  |  Example
+:---------------|:----------------------------|:---------------|:--------------
+count           | Maximum number of results   | 0              | 50       
+
 datasource.key: Name of data-source this is used in the page descriptor to attach a data source
 datasource.name: This is the name of the data source, it will be displayed on the front-end of the gui
 datasource.source.endpoint: Link to endpoint on Serama
