@@ -1,24 +1,20 @@
 ### Events
 
+#### More on Events
 
-#### route
+Events are server side JavaScript and can add additional functionality to a page/dust template. Events can serve as a useful way to implement logic to a logicless Dust template.
 
-Used to specify the URL for the page. The default value for this property is a route matching the page name. For example if the page name is `books` the route becomes `/books`.
+Use case:
+A Rosecomb developer would like count how many people clicked on a 'plus' button.
 
-It is possible to specify a route containing named parameters which can be utilised by the datasources attached to the page.
+To achieve this he has to create a new event and attach it to the page where he has the 'plus' button.
 
-For example the route `/cars/:make/:model` will ensure this page is loaded for any request matching this format. Rosecomb will extract the `:make` and `:model` parameters making them available as filter parameters in the page's attached datasources.
+The developer then implements a code in the event which will look for specific event (i.e. POST buttonpressed) and inside this he will increase a counter stored in a text file.
 
-The following URLs all match this page's route:
+The developer then returns the updated counter number from the event which is made accessible within the Dust template.
 
-```
-/cars/ford/focus -> named parameters :make = ford, :model = focus
-/cars/nissan/pathfinder -> named parameters :make = nissan, :model = pathfinder
-/cars/bmw/3-series -> named parameters :make = bmw, :model = 3-series
-```
 
-See [Datasource Specification](datasource_specification.md) for more information regarding the use of named parameters.
-
+Events are assigned to pages in the page descriptor file.
 
 ```
 {
@@ -35,8 +31,49 @@ See [Datasource Specification](datasource_specification.md) for more information
         "car-models"
     ],
     "events": [
-
+		""
     ]
 }
+
+```
+
+#### Sample event file
+
+```js
+/* optional Node includes */
+var path = require('path');
+var http = require("http");
+var querystring = require('querystring');
+
+/* optional Rosecomb includes */
+var config = require(__dirname + '/../../config.json');
+var help = require(__dirname + '/../../bantam/lib/help');
+
+// the `data` parameter contains the data already loaded by 
+// the page's datasources and any previous events that have fired
+
+var Event = function (req, res, data, callback) {
+
+  var result = {};
+
+  if (data['car-makes'] && data['car-makes']['results'] && data['car-makes']['results'][0]) {
+    result = {
+      carMakeFromEvent: data['car-makes']['results'][0].name
+    };
+  }
+  else {
+    result = {
+      carMakeFromEvent: "No make found in supplied data."
+    }; 
+  }
+  
+  callback(result);
+};
+
+module.exports = function (req, res, data, callback) {
+    return new Event(req, res, data, callback);
+};
+
+module.exports.Event = Event;
 
 ```

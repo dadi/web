@@ -64,19 +64,6 @@ Multiple datasource files (workspace/data-sources/{datasource name}.json) can be
 
 Pages and data sources can also be created and modifyed through Rosecomb's authenticated API.
 
-### More on Events
-
-Events will add additional functionality to a page/dust template. Events will be server side JavaScript and can be attached to a page. If an event is attached to a page, that page should be able to access variables and values defined in that event. A good way to see this is as a workaround to implement logic to a logicless Dust template.
-
-Use case:
-A Rosecomb developer would like count how many people clicked on a 'plus' button.
-
-To achieve this he has to create a new event and attach it to the page where he has the 'plus' button.
-
-The developer then implements a code in the event which will look for specific event (i.e. POST buttonpressed) and inside this he will increase a counter stored in a text file.
-
-The developer then returns the updated counter number from the event which is made accessible within the Dust template.
-
 ### File structure
 ```  
   bantam/main.js
