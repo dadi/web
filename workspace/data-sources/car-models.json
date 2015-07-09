@@ -39,8 +39,7 @@
           "datasource": "car-makes",
           "outputParam": {
             "param": "results.0.capId",
-            "field": "makeId",
-            "type": "Number"
+            "field": "makeId"
           }
         }
 	}
