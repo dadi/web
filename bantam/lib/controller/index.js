@@ -162,70 +162,98 @@ Controller.prototype.loadData = function(req, res, data, done) {
     });
   }
 
-  _.each(self.datasources, function(value, key) {
+  var primaryDatasources = {}, chainedDatasources = {};
+  _.each(self.datasources, function (ds, key) {
+    if (ds.chained) {
+      chainedDatasources[key] = ds;
+    }
+    else {
+      primaryDatasources[key] = ds;
+    }
+  });
 
-    var ds = self.datasources[key];
+  _.each(primaryDatasources, function(datasource, key) {
 
-    processSearchParameters(key, ds, req.params, query)
-    .then(
-      help.getData(ds, function(result) {
+    processSearchParameters(key, datasource, req.params, query)
+    .then(help.getData(datasource, function(result) {
 
         if (result) {
           data[key] = (typeof result === 'object' ? result : JSON.parse(result));
         }
 
-        idx++;
+        idx++;        
+
+        console.log(idx);
+
+        if (idx === Object.keys(primaryDatasources).length) {
+          processChained(chainedDatasources, data, function() {
+
+            loadEventData(self.events, req, res, data, function(result) {
+              done(result);
+            });
+
+          });
+        }
 
         // if we're at the end of the datasources array, 
         // start processing the attached events
-        if (idx === Object.keys(self.datasources).length) {
-          idx = 0;
-          loadEventData(self.events, req, res, data, function(result) {
-            done(result);
-          });
-        }
+        //if (idx === Object.keys(self.datasources).length) {
+          //idx = 0;
+          // loadEventData(self.events, req, res, data, function(result) {
+          //   done(result);
+          // });
+        //}
       })
     );
   });
 }
 
-// function processFilters(key, data, query, params, datasource) {
+function processChained(chainedDatasources, data, done) {
+  
+  var idx = 0;
 
-//   var deferred = Q.defer();
+  if (0 === Object.keys(chainedDatasources).length) {
+    return done(data);
+  }
 
-//     var filter = {};
+  _.each(chainedDatasources, function(chainedDatasource, chainedKey) {
+    
+    if (data[chainedDatasource.chained.datasource]) {
 
-//     if (key.indexOf(data.title) >= 0) {
+      console.log(chainedKey);
 
-//       datasource.schema.datasource.page = query.page || 1;
-//       delete query.page;
-      
-//       filter = query;
-      
-//       if (params.id || filter.id) {
-//         filter._id = params.id || filter.id;
-//         delete filter.id;
-//       }
+      var param = chainedDatasource.chained.outputParam.param.split(".").reduce(function(o, x) { 
+        return o[x] }, data[chainedDatasource.chained.datasource]);
+      }
 
-//       datasource.schema.datasource.filter = {};
+      console.log(param);
 
-//       _.each(filter, function(value, key) {
-//           datasource.schema.datasource.filter[key] = value;
-//       });
+      chainedDatasource.schema.datasource.filter = {};
+      chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
 
-//       // rebuild datasource endpoint with filters
-//       var d = new Datasource();
-//       d.buildEndpoint(datasource.schema, function(endpoint) {
-//         datasource.endpoint = endpoint;
+      // rebuild the datasource endpoint with the new filters
+      var d = new Datasource();
+      d.buildEndpoint(chainedDatasource.schema, function(endpoint) {
+        chainedDatasource.endpoint = endpoint;
 
-//         console.log("finished processFilters");
+        help.getData(chainedDatasource, function(result) {
 
-//         deferred.resolve();
-//       });
+          if (result) {
+            data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result));
+          }
 
-//     }
-//   return deferred.promise;
-// }
+          idx++;
+
+          if (idx === Object.keys(chainedDatasources).length) {
+            done(data);
+          }
+
+        });
+
+      });
+  });
+
+}
 
 function processSearchParameters(key, datasource, params, query) {
 
