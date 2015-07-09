@@ -277,7 +277,12 @@ function processSearchParameters(key, datasource, params, query) {
 
     // URI encode each filter value
     _.each(query, function(value, key) {
-        datasource.schema.datasource.filter[key] = encodeURIComponent(value);
+        if (key === 'filter') {
+          _.extend(datasource.schema.datasource.filter, JSON.parse(value));
+        }
+        else {
+          datasource.schema.datasource.filter[key] = encodeURIComponent(value);
+        }
     });
   }
   
