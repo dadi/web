@@ -21,6 +21,7 @@ var Datasource = function (page, datasource, options, callback) {
       }
 
       self.requestParams = schema.datasource.requestParams || [];
+      self.chained = schema.datasource.chained || null;
       self.authStrategy = self.setAuthStrategy();
       self.buildEndpoint(schema, function(endpoint) {
         self.endpoint = endpoint;
