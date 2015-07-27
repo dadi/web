@@ -34,13 +34,6 @@
 		"fields": ["name","makeId","capId"],
         "requestParams": [
           { "param": "model", "field": "name" }
-        ],
-        "chained": {
-          "datasource": "car-makes",
-          "outputParam": {
-            "param": "results.0.capId",
-            "field": "makeId"
-          }
-        }
+        ]
 	}
 }
