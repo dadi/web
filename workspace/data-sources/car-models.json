@@ -21,20 +21,26 @@
         "port": "3000",
         "tokenUrl": "/token",
         "credentials": {
-            "clientId": "test123",
+            "clientId": "rosecombClient",
             "secret": "superSecret"
         }
     },
 		"paginate": true,
 		"count": 5,
-		"sort": {
-			"field": "name",
-			"order": "desc"
-		},
+		"sort": [
+      {"field": "name","order": "desc"}
+    ],
 		"search": {},
 		"fields": ["name","makeId","capId"],
-    "requestParams": [
-      { "param": "model", "field": "name" }
-    ]
+        "requestParams": [
+          { "param": "model", "field": "name" }
+        ],
+        "chained": {
+          "datasource": "car-makes",
+          "outputParam": {
+            "param": "results.0.capId",
+            "field": "makeId"
+          }
+        }
 	}
 }

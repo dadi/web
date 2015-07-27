@@ -16,10 +16,9 @@
 		],
 
 		"count": 5,
-		"sort": {
-			"field": "_id",
-			"order": "desc"
-		},
+		"sort": [
+			{ "field": "_id", "order": "asc" }
+		],
 		"search": {"title": "/(third)/iu"},
 		"fields": ["title", "author"]
 	}

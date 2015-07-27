@@ -23,9 +23,8 @@
 		"limit": "5",
 		"search": {"title": "/(third)/iu"},
 		"skip": 0,
-		"sort": {
-			"field": "_id",
-			"order": "desc"
-		}
+		"sort": [
+      {"field": "_id","order": "desc"}
+    ]
 	}
 }

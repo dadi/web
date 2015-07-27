@@ -24,7 +24,7 @@
     },
     "auth": {
         "tokenUrl":"/token",
-        "clientId":"test123",
+        "clientId":"rosecombClient",
         "secret":"superSecret"
     },
     "feedback": false

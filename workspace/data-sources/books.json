@@ -21,16 +21,15 @@
         "port": "3000",
         "tokenUrl": "/token",
         "credentials": {
-            "clientId": "test123",
+            "clientId": "rosecombClient",
             "secret": "superSecret"
         }
     },
 		"paginate": true,
 		"count": 5,
-		"sort": {
-			"field": "name",
-			"order": "desc"
-		},
+		"sort": [
+      {"field": "name","order": "desc"}
+    ],
 		"search": {},
 		"fields": ["name","authorId"],
     "requestParams": ["authorId"]

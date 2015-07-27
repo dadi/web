@@ -21,20 +21,19 @@
         "port": "3000",
         "tokenUrl": "/token",
         "credentials": {
-            "clientId": "test123",
+            "clientId": "rosecombClient",
             "secret": "superSecret"
         }
     },
 		"paginate": true,
-		"count": 5,
-		"sort": {
-			"field": "name",
-			"order": "desc"
-		},
+		"count": 20,
+		"sort": [
+            { "field": "name", "order": "asc" }
+        ],
 		"search": {},
 		"fields": ["name","capId"],
-    "requestParams": [
-      { "param": "make", "field": "name" }
-    ]
+        "requestParams": [
+            { "param": "make", "field": "name" }
+        ]
 	}
 }
