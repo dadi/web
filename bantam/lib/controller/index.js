@@ -91,6 +91,9 @@ Controller.prototype.get = function (req, res, next) {
       "title": self.page.name
     }
 
+    // global values from config
+    if (config.global) data.global = config.global; 
+
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);
 
