@@ -117,7 +117,7 @@ Controller.prototype.get = function (req, res, next) {
 };
 
 function haveDatasources(datasources) {
-  return (typeof datasources === 'object' && Object.keys(datasources).length === 0);
+  return (typeof datasources === 'object' && Object.keys(datasources).length > 0);
 }
 
 function loadEventData(events, req, res, data, done) {
@@ -137,7 +137,7 @@ function loadEventData(events, req, res, data, done) {
       // return the data if we're at the end of the events
       // array, we have all the responses to render the page
       if (eventIdx === Object.keys(events).length) {
-        done(data);
+        return done(data);
       }
   });
 }
@@ -156,9 +156,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   // no datasources specified for this page
   // so start processing the attached events
-  if (haveDatasources(self.datasources)) {
+  if (!haveDatasources(self.datasources)) {
     loadEventData(self.events, req, res, data, function(result) {
-      done(result);
+      return done(result);
     });
   }
 

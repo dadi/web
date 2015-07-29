@@ -13,7 +13,7 @@
     "dustjs-linkedin": "^2.5.1",
     "json5": "0.2.0",
     "markdown": "^0.5.0",
-    "moment": "^2.9.0",
+    "moment": "^2.10.6",
     "mongodb": "1.4.7",
     "path-to-regexp": "^1.0.3",
     "q": "^1.4.1",
