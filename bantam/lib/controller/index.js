@@ -116,7 +116,7 @@ Controller.prototype.get = function (req, res, next) {
     })
 };
 
-function haveDatasources(datasources) {
+function hasAttachedDatasources(datasources) {
   return (typeof datasources === 'object' && Object.keys(datasources).length > 0);
 }
 
@@ -156,7 +156,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   // no datasources specified for this page
   // so start processing the attached events
-  if (!haveDatasources(self.datasources)) {
+  if (!hasAttachedDatasources(self.datasources)) {
     loadEventData(self.events, req, res, data, function(result) {
       return done(result);
     });
