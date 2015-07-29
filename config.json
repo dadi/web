@@ -27,5 +27,8 @@
         "clientId":"rosecombClient",
         "secret":"superSecret"
     },
+    "global" : {
+        "baseUrl": "http://www.example.com"
+    },
     "feedback": false
 }
