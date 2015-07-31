@@ -124,24 +124,30 @@ function hasAttachedDatasources(datasources) {
 }
 
 function loadEventData(events, req, res, data, done) {
+  
+  // return the global data object, no events to run
   if (0 === Object.keys(events).length) {
     return done(data);
   }
 
   var eventIdx = 0;
+  
   _.each(events, function(value, key) {
-    
+      
+      // run the event  
       events[key].run(req, res, data, function(result) {                
+        
+        // add the result to our global data object
         data[key] = result;
+
+        eventIdx++;
+
+        // return the data if we're at the end of the events
+        // array, we have all the responses to render the page
+        if (eventIdx === Object.keys(events).length) {
+          return done(data);
+        }
       });
-
-      eventIdx++;
-
-      // return the data if we're at the end of the events
-      // array, we have all the responses to render the page
-      if (eventIdx === Object.keys(events).length) {
-        return done(data);
-      }
   });
 }
 
