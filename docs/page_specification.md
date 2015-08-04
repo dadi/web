@@ -38,5 +38,18 @@ The following URLs all match this page's route:
 /cars/bmw/3-series -> named parameters :make = bmw, :model = 3-series
 ```
 
-See [Datasource Specification](datasource_specification.md) for more information regarding the use of named parameters.
+##### Optional Parameters
 
+Parameters can be made optional by adding a question mark (?). 
+
+For example the route `/cars/:make/:page?` will match requests in both the following formats:
+
+```
+/cars/ford -> named parameters :make = ford
+/cars/ford/2 -> named parameters :make = ford, :page = 2
+```
+
+#### More Informaion
+
+ * See [Datasource Specification](datasource_specification.md) for more information regarding the use of named parameters.
+ * Rosecomb uses the [Path to Regexp](https://github.com/pillarjs/path-to-regexp) library when parsing routes. More information on parameter usage can be found in the Github repository.

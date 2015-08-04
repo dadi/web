@@ -2,7 +2,7 @@
 
 #### Example Data Source Specification
 
-```js
+```
 {
     "datasource": {
         "key": "car-makes",
@@ -32,10 +32,9 @@
         },
         "paginate": true,
         "count": 5,
-        "sort": {
-            "field": "name",
-            "order": "desc"
-        },
+        "sort": [
+            { "field": "name", "order": "desc" }
+        ],
         "search": {},
         "fields": ["name", "capId"],
         "requestParams": [{
@@ -47,13 +46,57 @@
 
 ```
 
+#### Property Description
+
+###### Section: `datasource`
+
+ Property       | Description                 | Default value  |  Example
+:---------------|:----------------------------|:---------------|:--------------
+key           | Name of data-source this is used in the page descriptor to attach a data source   |               | books       
+name           | This is the name of the data source, it will be displayed on the front-end of the gui   |               | Books       
+paginate           |    | true              | true
+count           | Number of items to return from the endpoint    | 20              | 5       
+sort           | An array of fields to order the result set by |     | [ { "field": "title", "order": "asc" } ]
+search           |    |               | 
+fields           | Limit fields to return   |               | ["title", "author"]
+requestParams           | An array of parameters the datasource can accept from the querystring   |               | [ { "param": "author", "field": "author_id" } ]
+
+###### Section: `datasource.source`
+
+ Property       | Description                 | Default value  |  Example
+:---------------|:----------------------------|:---------------|:--------------
+type           | Maximum number of results   | 0              | 50       
+protocol           | Maximum number of results   | 0              | 50       
+host           | Maximum number of results   | 0              | 50       
+port           | Maximum number of results   | 0              | 50       
+endpoint           | Maximum number of results   | 0              | 50       
+
+###### Section: `datasource.caching`
+
+ Property       | Description                 | Default value  |  Example
+:---------------|:----------------------------|:---------------|:--------------
+enabled           | Sets caching enabled or disabled   | enabled              | enabled
+ttl           |    |               |        
+directory           |    |               | 
+extension           |    |               |        
+
+###### Section: `datasource.auth`
+
+ Property       | Description                 | Default value  |  Example
+:---------------|:----------------------------|:---------------|:--------------
+type           |    |               | bearer
+host           |    |               | api.example.com       
+port           |    |               | 3000
+tokenUrl           |    |               |     "/token"   
+credentials           |    |               |        { "clientId": "test123", "secret": "superSecret" }
+
 #### requestParams
 
 An array of parameters that this datasource can accept from the querystring. Used in conjunction with the custom routing option in the page specification.
 
 ```js
 "requestParams": [
-	{ "param": "make", "field": "name" }
+    { "param": "make", "field": "name" }
 ]
 ```
 
