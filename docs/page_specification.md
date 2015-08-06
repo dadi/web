@@ -16,7 +16,7 @@
 	        "car-makes",
 	        "car-models"
 	    ],
-	    "events": [ ]
+	    "events": [ ] // specifies optional attached events
 	}
 
 ```
@@ -32,11 +32,11 @@ For example the route `/cars/:make/:model` will ensure this page is loaded for a
 
 The following URLs all match this page's route:
 
-```
-/cars/ford/focus -> named parameters :make = ford, :model = focus
-/cars/nissan/pathfinder -> named parameters :make = nissan, :model = pathfinder
-/cars/bmw/3-series -> named parameters :make = bmw, :model = 3-series
-```
+URL       | Named Parameters                 
+:---------------|:---------------------------
+/cars/ford/focus           |    :make = ford, :model = focus
+/cars/nissan/pathfinder           |    :make = nissan, :model = pathfinder
+/cars/bmw/3-series           |    :make = bmw, :model = 3-series
 
 ##### Optional Parameters
 
@@ -44,12 +44,13 @@ Parameters can be made optional by adding a question mark (?).
 
 For example the route `/cars/:make/:page?` will match requests in both the following formats:
 
-```
-/cars/ford -> named parameters :make = ford
-/cars/ford/2 -> named parameters :make = ford, :page = 2
-```
+URL       | Named Parameters                 
+:---------------|:---------------------------
+/cars/ford | :make = ford
+/cars/ford/2 | :make = ford, :page = 2
 
-#### More Informaion
+
+#### More Information
 
  * See [Datasource Specification](datasource_specification.md) for more information regarding the use of named parameters.
  * Rosecomb uses the [Path to Regexp](https://github.com/pillarjs/path-to-regexp) library when parsing routes. More information on parameter usage can be found in the Github repository.

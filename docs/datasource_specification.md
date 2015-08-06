@@ -1,6 +1,6 @@
 ### Datasource Specification
 
-#### Example Data Source Specification
+#### Example datasource Specification
 
 ```
 {
@@ -36,6 +36,7 @@
             { "field": "name", "order": "desc" }
         ],
         "search": {},
+        "filter": {},
         "fields": ["name", "capId"],
         "requestParams": [{
             "param": "make",
@@ -52,12 +53,13 @@
 
  Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
-key           | Name of data-source this is used in the page descriptor to attach a data source   |               | books       
-name           | This is the name of the data source, it will be displayed on the front-end of the gui   |               | Books       
+key           | Name of datasource this is used in the page descriptor to attach a datasource   |               | books       
+name           | This is the name of the datasource, it will be displayed on the front-end of the gui   |               | Books       
 paginate           |    | true              | true
 count           | Number of items to return from the endpoint    | 20              | 5       
 sort           | An array of fields to order the result set by |     | [ { "field": "title", "order": "asc" } ]
 search           |    |               | 
+filter           | A JSON object containing a MongoDB query  |               | { "SaleDate" : { "$ne" : null} }
 fields           | Limit fields to return   |               | ["title", "author"]
 requestParams           | An array of parameters the datasource can accept from the querystring   |               | [ { "param": "author", "field": "author_id" } ]
 
@@ -65,11 +67,11 @@ requestParams           | An array of parameters the datasource can accept from 
 
  Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
-type           | Maximum number of results   | 0              | 50       
-protocol           | Maximum number of results   | 0              | 50       
-host           | Maximum number of results   | 0              | 50       
-port           | Maximum number of results   | 0              | 50       
-endpoint           | Maximum number of results   | 0              | 50       
+type           | Determines whether the data is from a remote endpoint or local, static data   | "remote"              | "remote", "static"       
+protocol           | The protocol portion of an endpoint URI   | "http"              | "http", "https"
+host           | The host portion of an endpoint URL   |               | "api.example.com"
+port           | The port portion of an endpoint URL (optional)   |               | "3001"
+endpoint           | The path to the endpoint which contains the data for this datasource   |               | "/1.0/news/articles"       
 
 ###### Section: `datasource.caching`
 
@@ -77,8 +79,8 @@ endpoint           | Maximum number of results   | 0              | 50
 :---------------|:----------------------------|:---------------|:--------------
 enabled           | Sets caching enabled or disabled   | enabled              | enabled
 ttl           |    |               |        
-directory           |    |               | 
-extension           |    |               |        
+directory           | The directory to use for storing cache files, relative to the root of the application   |               | "./cache"
+extension           | The file extension to use for cache files   |               |  "json"
 
 ###### Section: `datasource.auth`
 
@@ -110,21 +112,83 @@ With a request to `http://www.example.com/cars/ford/focus`, Rosecomb will extrac
 
 The Serama query becomes `{ "name" : "Ford" }`.
 
-####workspace/data-sources/articles.json
-
-datasource.key: Name of data-source this is used in the page descriptor to attach a data source
-datasource.name: This is the name of the data source, it will be displayed on the front-end of the gui
-datasource.source.endpoint: Link to endpoint on Serama
-cache: false, // Sets caching enabled or disabled on Serama
-paginate: true, // Turns pagination on and off on Serama
-filters: // List of filters - See Serama brief for more info
-        { "category": ["blog"] }
-count: 5, // Number of items Serama has to return
-sort: // Order of the result set
-        "field": "_id",
-        "order": "desc"
-fields: ["title", "author"] // Limit fields to return
-
 
 See [Page Specification](page_specification.md) for custom routing information.
 
+#### Chaining datasources
+ 
+It is often a requirement to query a datasource using data from another datasource. Rosecomb supports this through the use of chained datasources.
+ 
+Add the `chained` property to the datasource that relies on data loaded by another datasource.
+ 
+```js
+"chained": {
+  "datasource": "car-makes",
+  "outputParam": {
+    "param": "results.0.capId",
+    "field": "makeId"
+  }
+}
+```
+
+* `datasource` Should match the `key` property of the primary datasource.
+* `outputParam` The `param` value specifies where to locate the output value in the results returned by the primary datasource. The `field` value should match the MongoDB field to be queried. 
+
+###### For example
+
+On a page that displays a car make and all it's associated models, we have two datasources querying two collections, __makes__ and __models__.
+
+** Collections **
+
+* __makes__ has the fields `_id` and `name`
+* __models__ has the fields `_id`, `makeId` and `name`
+
+** Datasources **
+
+* The primary datasource, `makes` (some properties removed for brevity)
+
+```
+{
+    "datasource": {
+         "key": "makes",
+         "source": {
+             "endpoint": "1.0/car-data/makes"
+         },
+         filter: { "name": "Ford" }
+     }
+}
+```
+
+The result of this datasource will be:
+
+```
+{
+    "results": [
+        {
+            "_id": "5596048644713e80a10e0290",
+            "name": "Ford"
+        }
+    ]
+}
+```
+
+To query the models collection based on the above data being returned, add a `chained` property to the models datasource specifying `makes` as the primary datasource:
+ 
+```
+{
+    "datasource": {
+         "key": "models",
+         "source": {
+             "endpoint": "1.0/car-data/models"
+         },
+         "chained": {
+            "datasource": "makes",
+            "outputParam": {
+                "param": "results.0._id",
+                "field": "makeId"
+            }
+        }
+     }
+}
+```
+In this scenario the **models** collection will be queried using the value of `_id` from the first document of the `results` array returned by the **makes** datasource.
