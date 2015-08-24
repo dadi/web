@@ -269,6 +269,7 @@ function processChained(chainedDatasources, data, done) {
         });
 
       });
+    }
   });
 
 }
