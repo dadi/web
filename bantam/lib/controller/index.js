@@ -192,8 +192,6 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
         idx++;        
 
-        console.log(idx);
-
         if (idx === Object.keys(primaryDatasources).length) {
           processChained(chainedDatasources, data, function() {
 
@@ -203,15 +201,6 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
           });
         }
-
-        // if we're at the end of the datasources array, 
-        // start processing the attached events
-        //if (idx === Object.keys(self.datasources).length) {
-          //idx = 0;
-          // loadEventData(self.events, req, res, data, function(result) {
-          //   done(result);
-          // });
-        //}
       })
     );
   });
@@ -229,16 +218,36 @@ function processChained(chainedDatasources, data, done) {
     
     if (data[chainedDatasource.chained.datasource]) {
 
-      console.log(chainedKey);
-
-      var param = chainedDatasource.chained.outputParam.param.split(".").reduce(function(o, x) { 
-        return o[x] }, data[chainedDatasource.chained.datasource]);
+      // find the value of the parameter in the returned data
+      // to use in the chained datasource
+      var param = "";
+      
+      try {
+        param = 
+      chainedDatasource.chained.outputParam.param.split(".").reduce(function(o, x) { 
+        return o ? o[x] : "" }, data[chainedDatasource.chained.datasource]);
+      }
+      catch(e) {
+        param = e;
+        logger.prod('Error processng chained datasource: ' + e);
+        console.log('Error processng chained datasource: ' + e);
       }
 
-      console.log(param);
+      // add or extend the filter property
+      chainedDatasource.schema.datasource.filter = chainedDatasource.schema.datasource.filter || {};
 
-      chainedDatasource.schema.datasource.filter = {};
-      chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
+      // if there is a field to filter on, add the new parameter value to the filters
+      if (chainedDatasource.chained.outputParam.field) {
+        chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = encodeURIComponent(param);
+      }
+
+      // if the datasource specified a query, add it to the existing filter by looking for the placeholder value
+      if (chainedDatasource.chained.outputParam.query) {
+        var placeholder = "{" + chainedKey + "}";
+        chainedDatasource.schema.datasource.filter.replace(placeholder, chainedDatasource.chained.outputParam.query);
+      }
+
+      console.log(chainedDatasource.schema.datasource.filter);
 
       // rebuild the datasource endpoint with the new filters
       var d = new Datasource();
@@ -268,7 +277,7 @@ function processSearchParameters(key, datasource, params, query) {
 
   var deferred = Q.defer();
 
-  datasource.schema.datasource.filter = {};
+  datasource.schema.datasource.filter = datasource.schema.datasource.filter || {};
 
   // add ID filter if the current datasource matches the page name
   if (key.indexOf(datasource.page.name) >= 0) {

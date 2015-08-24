@@ -28,12 +28,20 @@
 		"paginate": true,
 		"count": 5,
 		"sort": [
-      {"field": "name","order": "desc"}
-    ],
+            {"field": "name","order": "desc"}
+        ],
 		"search": {},
+        "filter": ["{car-makes}",{"$group": {"_id" : {"make":"$makeName", "model":"$modelName","body":"$bodyStyle"}}}],
 		"fields": ["name","makeId","capId"],
         "requestParams": [
           { "param": "model", "field": "name" }
-        ]
+        ],
+        "chained": {
+          "datasource": "car-makes",
+          "outputParam": {
+            "param": "results.0.capId",
+            "query": { "$match" : { "sector" : "{value}" } }
+          }
+        }
 	}
 }
