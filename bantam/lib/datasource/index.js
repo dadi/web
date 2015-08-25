@@ -95,7 +95,7 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri, done) 
 
   params.forEach(function(param) {
     for (key in param) {
-      if (param.hasOwnProperty(key) && param[key] !== 0) {
+      if (param.hasOwnProperty(key) && param[key]) {
         if (key === "fields") {
           //var fields = {};
           //for (field in param[key]) {
