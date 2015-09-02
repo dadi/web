@@ -34,6 +34,17 @@ These files describe the application's pages and the routes which load them. Dat
 #### Pages
 Pages are the main template files. Templating is based around the *dust* (http://akdubya.github.io/dustjs/) templating language.
 
+##### HTTP 404 Not Found
+To enable a custom 404 Not Found error page, add a page descriptor and template to the pages directory:
+
+```
+workspace/pages/404.json
+workspace/pages/404.dust
+```
+
+404 templates have access to data source and event data in the same way as standard pages. 
+
+
 #### Partials
 These are reusable template files that may be referenced from the main page templates. Partials may also contain *dust* code and have access to the same data sources as the page they are included in.
 
