@@ -111,10 +111,15 @@ Controller.prototype.get = function (req, res, next) {
       }
       else {
         // Render the compiled template
-        var rendered = dust.render(pageTemplate, data, function(err, result) {
-          if (err) done(err, null);
-          return done(err, result);
-        });
+        try {
+          var rendered = dust.render(pageTemplate, data, function(err, result) {
+            if (err) done(err, null);
+            return done(err, result);
+          });
+        }
+        catch (e) {
+          console.log(e);
+        }
       }
     })
 };
@@ -187,7 +192,12 @@ Controller.prototype.loadData = function(req, res, data, done) {
     .then(help.getData(datasource, function(result) {
 
         if (result) {
-          data[key] = (typeof result === 'object' ? result : JSON.parse(result));
+          try {
+            data[key] = (typeof result === 'object' ? result : JSON.parse(result));
+          }
+          catch (e) {
+            console.log(e);
+          }
         }
 
         idx++;        
@@ -247,7 +257,7 @@ function processChained(chainedDatasources, data, done) {
         chainedDatasource.schema.datasource.filter.replace(placeholder, chainedDatasource.chained.outputParam.query);
       }
 
-      console.log(chainedDatasource.schema.datasource.filter);
+      //console.log(chainedDatasource.schema.datasource.filter);
 
       // rebuild the datasource endpoint with the new filters
       var d = new Datasource();
@@ -257,7 +267,12 @@ function processChained(chainedDatasources, data, done) {
         help.getData(chainedDatasource, function(result) {
 
           if (result) {
-            data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result));
+            try {
+              data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result));
+            }
+            catch (e) {
+              console.log(e);
+            }
           }
 
           idx++;

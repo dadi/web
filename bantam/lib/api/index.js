@@ -161,9 +161,20 @@ function defaultError() {
 }
 
 // return a 404
-function notFound(req, res) {
+function notFound(api, req, res) {
     return function () {
         res.statusCode = 404;
-        res.end("404: Nothing here.");
+        
+        // look for a 404 page that has been loaded
+        // along with the rest of the API, and call its
+        // handler if it exists
+        var matches = api._match('/404', req);
+        if (matches && matches[0]) {
+            matches[0](req, res);
+        }
+        // otherwise, respond with default message
+        else {
+            res.end("404: Ain't nothing here but you and me.");
+        }
     }
 }

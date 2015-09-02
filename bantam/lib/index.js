@@ -319,7 +319,7 @@ Server.prototype.dustCompile = function (options) {
         catch (e) {
             var message = 'Couldn\'t compile Dust template at "' + filepath + '". ' + e;
             logger.prod(message);
-            throw new Error(message);
+            console.log(message);
         }
     });
 
@@ -334,10 +334,17 @@ Server.prototype.dustCompile = function (options) {
         var pageTemplateName = path.basename(file, '.dust');
         
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
-            var template =  fs.readFileSync(file, "utf8");
-            var compiled = dust.compile(template, pageTemplateName, true);
             console.log("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
-            dust.loadSource(compiled);
+            var template =  fs.readFileSync(file, "utf8");
+            try {
+                var compiled = dust.compile(template, pageTemplateName, true);
+                dust.loadSource(compiled);
+            }
+            catch (e) {
+                var message = 'Couldn\'t compile Dust template "' + pageTemplateName + '". ' + e;
+                logger.prod(message);
+                console.log(message);
+            }
         }
     });
     
