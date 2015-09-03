@@ -30,5 +30,10 @@
     "global" : {
         "baseUrl": "http://www.example.com"
     },
+    "dust": {
+        "debug": true,
+        "debugLevel": "DEBUG",
+        "whitespace": true 
+    },
     "feedback": false
 }

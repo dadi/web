@@ -45,8 +45,9 @@ Server.prototype.start = function (options, done) {
     // authentication layer
     auth(self);
 
-    dust.isDebug = true;
-    dust.debugLevel = "DEBUG";
+    dust.isDebug = config.dust ? (config.dust.hasOwnProperty('debug') ? config.dust.debug : true) : true;
+    dust.debugLevel = config.dust ? config.dust.debugLevel || "DEBUG" : "DEBUG";
+    dust.config.whitespace = config.dust ? (config.dust.hasOwnProperty('whitespace') ? config.dust.whitespace : true) : true;
 
     // request logging middleware
     app.use(function (req, res, next) {
