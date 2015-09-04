@@ -100,7 +100,7 @@ Api.prototype.listener = function (req, res) {
     stack = stack.concat(matches);
 
     // add 404 handler
-    stack.push(notFound(req, res));
+    stack.push(notFound(this, req, res));
 
     // start going through the middleware/routes
     doStack(0)();
