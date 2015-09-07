@@ -3,6 +3,7 @@ var path = require('path');
 var bodyParser = require('body-parser');
 var _ = require('underscore');
 var controller = require(__dirname + '/controller');
+var router = require(__dirname + '/controller/router');
 var page = require(__dirname + '/page');
 var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
@@ -44,6 +45,8 @@ Server.prototype.start = function (options, done) {
 
     // authentication layer
     auth(self);
+
+    router(self, options);
 
     dust.isDebug = config.dust ? (config.dust.hasOwnProperty('debug') ? config.dust.debug : true) : true;
     dust.debugLevel = config.dust ? config.dust.debugLevel || "DEBUG" : "DEBUG";
@@ -204,14 +207,14 @@ Server.prototype.addRoute = function (obj, options, reload) {
 
 Server.prototype.addComponent = function (options, reload) {
 
-    if (reload) this.removeComponent(options.route);
+    if (reload) this.removeComponent(options.route.path);
 
     // only add a route once
-    if (this.components[options.route]) return;
+    if (this.components[options.route.path]) return;
 
-    this.components[options.route] = options.component;
+    this.components[options.route.path] = options.component;
 
-    this.app.use(options.route + '/config', function (req, res, next) {
+    this.app.use(options.route.path + '/config', function (req, res, next) {
         var method = req.method && req.method.toLowerCase();
 
         // send schema
@@ -246,7 +249,7 @@ Server.prototype.addComponent = function (options, reload) {
         next();
     });
 
-    if (options.route === '/index') {
+    if (options.route.path === '/index') {
         // configure "index" route
         this.app.use('/', function (req, res, next) {
             // map request method to controller method
@@ -258,23 +261,29 @@ Server.prototype.addComponent = function (options, reload) {
     }
     else {
 
-        console.log("Loaded route " + options.route);
+        console.log("Loaded route " + options.route.path);
 
-        this.app.use(options.route, function (req, res, next) {
-            // map request method to controller method
-            var method = req.method && req.method.toLowerCase();
-            if (method && options.component[method]) return options.component[method](req, res, next);
+        if (options.route.constraint) this.app.Router.constrain(options.route.path, options.route.constraint);
 
-            next();
+        var self = this;
+
+        this.app.use(options.route.path, function (req, res, next) {
+            // console.log("testing: " + req.url);
+            // console.log("testing: " + options.route.path);
+            self.app.Router.testConstraint(options.route.path, req, res, function (result) {
+
+                // test returned false, try the next matching route
+                if (!result) return next();
+
+                // map request method to controller method
+                var method = req.method && req.method.toLowerCase();
+
+                if (method && options.component[method]) return options.component[method](req, res, next);
+
+                // no matching HTTP method found, try the next matching route
+                return next();
+            });
         });
-
-        // this.app.use(options.route + '/:id', function (req, res, next) {
-        //     // map request method to controller method
-        //     var method = req.method && req.method.toLowerCase();
-        //     if (method && options.component[method]) return options.component[method](req, res, next);
-
-        //     next();
-        // });
     }
 };
 

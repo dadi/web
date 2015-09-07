@@ -1,0 +1,22 @@
+{>layout/}
+
+{<content}
+
+  <ul>
+    <li># of records: {car-makes.metadata.totalCount}</li>
+    <li># of pages: {car-makes.metadata.totalPages}</li>
+    <li>page: {car-makes.metadata.page}</li>
+    <li>per page: {car-makes.metadata.limit}</li>
+  </ul>
+
+  <h3>Makes ({@size key=car-makes.results/} records)</h3>
+  Sort: <a href="/makes?sort=1">A-Z</a> | <a href="/makes?sort=-1">Z-A</a>
+  <ul>
+  {#car-makes.results}
+    <li>
+      <p>{name}</p>
+    </li>
+  {/car-makes.results}
+  </ul>
+
+{/content}

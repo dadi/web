@@ -74,7 +74,7 @@ Api.prototype.listen = function (port, host, backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
-
+    
     // clone the middleware stack
     var stack = this.all.slice(0);
     var path = url.parse(req.url).pathname;
@@ -130,7 +130,6 @@ Api.prototype._match = function (path, req) {
         handlers.push(paths[key].handler);
 
         match.forEach(function (k, i) {
-
             var keyOpts = keys[i] || {};
             if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
         });
@@ -163,14 +162,14 @@ function defaultError() {
 // return a 404
 function notFound(api, req, res) {
     return function () {
+
         res.statusCode = 404;
-        
+
         // look for a 404 page that has been loaded
         // along with the rest of the API, and call its
         // handler if it exists
-        var matches = api._match('/404', req);
-        if (matches && matches[0]) {
-            matches[0](req, res);
+        if (api.paths.hasOwnProperty('/404')) {
+            api.paths['/404'].handler(req, res);
         }
         // otherwise, respond with default message
         else {

@@ -1,0 +1,9 @@
+{
+  "rewrites" : [
+    {
+      "match": "^/pie$",
+      "replace": "/books/123",
+      "flags": "[R=301]"
+    }
+  ]
+}

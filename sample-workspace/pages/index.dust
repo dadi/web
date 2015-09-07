@@ -1,0 +1,9 @@
+{>layout/}
+
+{<content}
+	This is loaded from a partial.
+{/content}
+
+<ul>
+  <li><a href="/books">Books</a></li>
+</ul>

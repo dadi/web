@@ -1,0 +1,15 @@
+{
+    "page": {
+        "name": "Makes",
+        "description": "A collection of car makes.",
+        "language": "en",
+        "cache": true
+    },
+    "template": "cars.dust",
+    "datasources": [
+        "car-makes"
+    ],
+    "events": [
+        
+    ]
+}

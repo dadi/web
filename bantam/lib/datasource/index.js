@@ -25,7 +25,7 @@ var Datasource = function (page, datasource, options, callback) {
       self.authStrategy = self.setAuthStrategy();
       self.buildEndpoint(schema, function(endpoint) {
         self.endpoint = endpoint;
-        callback(self);
+        callback(null, self);
       });
     });
   }

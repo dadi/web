@@ -1,8 +1,18 @@
 var _pages = {};
 
 var Page = function (name, schema) {
+
+  if (schema.route && typeof schema.route != 'object') {
+    var newSchema = schema;
+    newSchema.route = { "path": schema.route };
+    var message = "\nThe `route` property for pages has been extended to provide better routing functionality.\n";
+    message += "Please modify the route property for page '" + name + "'. The schema should change to the below:\n\n";
+    message += JSON.stringify(newSchema, null, 4) + "\n\n";
+    throw new Error(message);
+  }
+
   this.name = name;
-  this.route = schema.route || '/' + name;
+  this.route = schema.route || { "path": '/' + name };
   this.template = schema.template || name + '.dust';
 
   this.settings = schema.settings;

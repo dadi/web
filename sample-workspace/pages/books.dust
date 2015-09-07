@@ -1,0 +1,33 @@
+{>layout/}
+
+{<content}
+
+  <ul>
+    <li># of records: {books.metadata.totalCount}</li>
+    <li># of pages: {books.metadata.totalPages}</li>
+    <li>page: {books.metadata.page}</li>
+    <li>per page: {books.metadata.limit}</li>
+  </ul>
+
+  <h3>Books ({@size key=books.results/} records)</h3>
+  <ul>
+  {#books.results}
+    <li>
+      <p>{name}, {byline} by {authorId}</p>
+    </li>
+  {/books.results}
+  </ul>
+
+  <h3>Users ({@size key=users.results/} records)</h3>
+  <ul>
+  {#users.results}
+    <li>
+      <p>{name}, created {createdAt}</p>
+    </li>
+  {/users.results}
+  </ul>
+
+  <h3>From the event associated with this page:</h3>
+  <p>{test.carMakeID}</p>
+
+{/content}

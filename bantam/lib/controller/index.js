@@ -28,8 +28,11 @@ var Controller = function (page, options) {
 
   var self = this;
 
-  this.attachDatasources(function() {
+  this.attachDatasources(function(err) {
     //console.log(self.datasources);
+    if (err) {
+      console.log(err);
+    }
   });
 
   this.attachEvents(function() {
@@ -45,10 +48,13 @@ Controller.prototype.attachDatasources = function(done) {
   var i = 0;
 
   this.page.datasources.forEach(function(datasource) {
-    var ds = new Datasource(self.page, datasource, self.options, function(ds) {
+    var ds = new Datasource(self.page, datasource, self.options, function(err, ds) {
+      if (err) {
+        return done(err);
+      }
       self.datasources[ds.schema.datasource.key] = ds;
       i++;
-      if (i == self.page.datasources.length) done();
+      if (i == self.page.datasources.length) done(null);
     });
     
   });

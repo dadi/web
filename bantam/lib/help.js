@@ -47,8 +47,8 @@ module.exports.sendBackHTML = function (successCode, res, next) {
         res.statusCode = successCode;
 
         var resBody = results;
-        // res.setHeader('content-type', 'text/html');
-        // res.setHeader('content-length', resBody.length);
+        res.setHeader('content-type', 'text/html');
+        res.setHeader('content-length', Buffer.byteLength(resBody));
 
         res.end(resBody);
     }

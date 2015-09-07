@@ -1,0 +1,20 @@
+{
+	"datasource": {
+		"key": "users",
+		"name": "Users DS",
+		"source": {
+			"type": "remote",
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "vjoin/testdb/user"
+		},
+		"cache": false,
+		"paginate": true,
+		"count": 5,
+		"sort": [
+      {"field": "_id","order": "desc"}
+    ],
+		"search": {},
+		"fields": ["name"]
+	}
+}
