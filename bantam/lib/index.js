@@ -46,6 +46,7 @@ Server.prototype.start = function (options, done) {
     // authentication layer
     auth(self);
 
+    // handle routing & redirects
     router(self, options);
 
     dust.isDebug = config.dust ? (config.dust.hasOwnProperty('debug') ? config.dust.debug : true) : true;
@@ -83,6 +84,7 @@ Server.prototype.start = function (options, done) {
       }
     });
 
+    // load app specific routes
     this.loadApi(options);
 
     // serve static files (css,js,fonts)
@@ -327,7 +329,7 @@ Server.prototype.dustCompile = function (options) {
             dust.loadSource(compiled);
         }
         catch (e) {
-            var message = 'Couldn\'t compile Dust template at "' + filepath + '". ' + e;
+            var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
             logger.prod(message);
             console.log(message);
         }
@@ -344,14 +346,17 @@ Server.prototype.dustCompile = function (options) {
         var pageTemplateName = path.basename(file, '.dust');
         
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
+            
             console.log("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
+            
             var template =  fs.readFileSync(file, "utf8");
+            
             try {
                 var compiled = dust.compile(template, pageTemplateName, true);
                 dust.loadSource(compiled);
             }
             catch (e) {
-                var message = 'Couldn\'t compile Dust template "' + pageTemplateName + '". ' + e;
+                var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
                 logger.prod(message);
                 console.log(message);
             }
@@ -363,14 +368,16 @@ Server.prototype.dustCompile = function (options) {
         //Load the template from file
         var name = partial.slice(0, partial.indexOf('.'));
         var template =  fs.readFileSync(path.join(partialPath, partial), "utf8");
+
         try {
             var compiled = dust.compile(template, "partials/" + name, true);
             dust.loadSource(compiled);
         }
         catch (e) {
-            var message = 'Couldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e;
+            var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
             logger.prod(message);
-            throw new Error(message);
+            console.log(message);
+            //throw new Error(message);
         }
     });
 };

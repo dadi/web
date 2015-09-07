@@ -61,9 +61,11 @@ module.exports = function (server, options) {
 
     console.log("Router in place...");
 
-    if (!_.isEmpty(this.rules)) {
-        server.app.use(modRewrite(this.rules));
+    if (!_.isEmpty(server.app.Router.rules)) {
+        server.app.use(modRewrite(server.app.Router.rules));
+
         console.log("Redirects loaded...");
+        console.log(server.app.Router.rules);
     }
 
     server.app.use(function (req, res, next) {

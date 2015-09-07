@@ -105,29 +105,34 @@ Controller.prototype.get = function (req, res, next) {
 
     var pageTemplate = self.page.template.slice(0, self.page.template.indexOf('.'));
     var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(pageTemplate) > -1; });
-    
+
     if (!template) {
-      return sendBackHTML(500, res, next)(null, "Dust template not found");
+      var err = new Error();
+      err.json = { "message": "Dust template not found" };
+      err.statusCode = 500;
+      return next(err);
     }
 
     self.loadData(req, res, data, function(data) {
-      if (debug) {
-        // Return the raw data
-        return done(null, data);
-      }
-      else {
-        // Render the compiled template
-        try {
+      try {
+        if (debug) {
+          // Return the raw data
+          return done(null, data);
+        }
+        else {
+          // Render the compiled template
           var rendered = dust.render(pageTemplate, data, function(err, result) {
             if (err) done(err, null);
             return done(err, result);
           });
         }
-        catch (e) {
-          console.log(e);
-        }
       }
-    })
+      catch (e) {
+        var err = new Error(e.message);
+        err.statusCode = 500;
+        return next(err);
+      }
+    });
 };
 
 function hasAttachedDatasources(datasources) {

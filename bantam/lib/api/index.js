@@ -74,7 +74,7 @@ Api.prototype.listen = function (port, host, backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
-    
+
     // clone the middleware stack
     var stack = this.all.slice(0);
     var path = url.parse(req.url).pathname;
@@ -152,9 +152,10 @@ function defaultError() {
         if (err.json) {
             var resBody = JSON.stringify(err.json);
             res.setHeader('content-type', 'application/json');
-            res.setHeader('content-length', resBody.length);
+            res.setHeader('content-length', Buffer.byteLength(resBody));
             return res.end(resBody);
         }
+
         res.end();
     }
 }
