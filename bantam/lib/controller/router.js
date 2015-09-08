@@ -31,17 +31,16 @@ var Router = function (options) {
 
   if (fs.existsSync(options.routePath + '/rewrites.json')) {
     var rewrites = require(options.routePath + '/rewrites.json');
-    _.each(rewrites.rewrites, function(rewrite) {
-        var rule = rewrite.match + " " + rewrite.replace + " " + (rewrite.flags ? rewrite.flags : "");
-        self.rules.push(rule);
-    });
+    if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
+      self.rules = rewrites.rewrites;
+    }
   }
 
 }
 
 Router.prototype.constrain = function(route, fn) {
   if (!this.handlers[fn]) {
-    console.log("\nRoute constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
+    console.log("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
     return;
   }
 
@@ -53,22 +52,24 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
   var debug = debugMode(req);
   
   if (debug) {
-    console.log("testConstraint: " + req.url);
-    console.log("testConstraint: " + route);
+    console.log("[ROUTER] testConstraint: " + req.url);
+    console.log("[ROUTER] testConstraint: " + route);
   }
 
   if (this.constraints[route]) {
     
-    if (debug) console.log("testConstraint: found fn");
+    if (debug) console.log("[ROUTER] testConstraint: found fn");
     
     this.constraints[route](req, res, function (result) {
       
-      if (debug) console.log("testConstraint: result: " + result);
+      if (debug) console.log("[ROUTER] testConstraint: this route matches = " + result);
       
       return callback(result);
     });
   }
   else {
+    // no constraint against this route,
+    // let's use it
     return callback(true);
   }
 }
@@ -80,25 +81,16 @@ var debugMode = function(req) {
 
 module.exports = function (server, options) {
 
-    server.app.Router = new Router(options);
+  server.app.Router = new Router(options);
 
-    console.log("Router in place...");
+  console.log("[ROUTER] Router loaded.");
 
-    if (!_.isEmpty(server.app.Router.rules)) {
-        server.app.use(modRewrite(server.app.Router.rules));
+  server.app.use(modRewrite(server.app.Router.rules));
 
-        console.log("Redirects loaded...");
-        console.log(server.app.Router.rules);
-    }
-
-    server.app.use(function (req, res, next) {
-
-      console.log("Router response...");
-      console.log(req.url);
-
-      next();
-        
-    });
+  if (!_.isEmpty(server.app.Router.rules)) {
+      console.log("[ROUTER] " + server.app.Router.rules.length + " redirects loaded:");
+      console.log(server.app.Router.rules);
+  }
 
 };
 
