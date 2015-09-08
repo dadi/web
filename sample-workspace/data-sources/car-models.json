@@ -40,6 +40,7 @@
           "datasource": "car-makes",
           "outputParam": {
             "param": "results.0.capId",
+            "type": "Number",
             "query": { "$match" : { "sector" : "{value}" } }
           }
         }

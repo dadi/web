@@ -114,8 +114,15 @@ module.exports.getData = function(datasource, done) {
 
                 // if response is not 200 don't cache
                 if (res.statusCode === 200) datasourceCache.cacheResponse(output);
+
+                if (res.statusCode === 404) {
+                    var err = new Error();
+                    err.statusCode = res.statusCode;
+                    err.json = { "error" : res.statusMessage + ": " + datasource.endpoint };
+                    return done(err);
+                }
         
-                done(output);
+                done(null, output);
               });
         
             });

@@ -113,7 +113,10 @@ Controller.prototype.get = function (req, res, next) {
       return next(err);
     }
 
-    self.loadData(req, res, data, function(data) {
+    self.loadData(req, res, data, function(err, data) {
+      
+      if (err) return next(err);
+
       try {
         if (debug) {
           // Return the raw data
@@ -200,7 +203,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
   _.each(primaryDatasources, function(datasource, key) {
 
     processSearchParameters(key, datasource, req.params, query)
-    .then(help.getData(datasource, function(result) {
+    .then(help.getData(datasource, function(err, result) {
+        
+        if (err) return done(err);
 
         if (result) {
           try {
@@ -217,7 +222,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
           processChained(chainedDatasources, data, function() {
 
             loadEventData(self.events, req, res, data, function(result) {
-              done(result);
+              done(null, result);
             });
 
           });
@@ -259,7 +264,14 @@ function processChained(chainedDatasources, data, done) {
 
       // if there is a field to filter on, add the new parameter value to the filters
       if (chainedDatasource.chained.outputParam.field) {
-        chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = encodeURIComponent(param);
+        if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
+          param = parseInt(param);
+        }
+        else {
+          param = encodeURIComponent(param);
+        }
+
+        chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
       }
 
       // if the datasource specified a query, add it to the existing filter by looking for the placeholder value
@@ -273,6 +285,7 @@ function processChained(chainedDatasources, data, done) {
       // rebuild the datasource endpoint with the new filters
       var d = new Datasource();
       d.buildEndpoint(chainedDatasource.schema, function(endpoint) {
+
         chainedDatasource.endpoint = endpoint;
 
         help.getData(chainedDatasource, function(result) {
