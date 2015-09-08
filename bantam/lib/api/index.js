@@ -169,6 +169,7 @@ function notFound(api, req, res) {
         // look for a 404 page that has been loaded
         // along with the rest of the API, and call its
         // handler if it exists
+
         if (api.paths.hasOwnProperty('/404')) {
             api.paths['/404'].handler(req, res);
         }
