@@ -192,3 +192,23 @@ To query the models collection based on the above data being returned, add a `ch
 }
 ```
 In this scenario the **models** collection will be queried using the value of `_id` from the first document of the `results` array returned by the **makes** datasource.
+
+If your query parameter must be passed to the endpoint as an integer, add a `type` property to the `outputParam` specifying `"Number"`.
+```
+{
+    "datasource": {
+         "key": "models",
+         "source": {
+             "endpoint": "1.0/car-data/models"
+         },
+         "chained": {
+            "datasource": "makes",
+            "outputParam": {
+                "param": "results.0._id",
+                "type": "Number",
+                "field": "makeId"
+            }
+        }
+     }
+}
+```

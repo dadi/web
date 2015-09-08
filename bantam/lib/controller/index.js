@@ -248,7 +248,14 @@ function processChained(chainedDatasources, data, done) {
 
       // if there is a field to filter on, add the new parameter value to the filters
       if (chainedDatasource.chained.outputParam.field) {
-        chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = encodeURIComponent(param);
+        if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
+          param = parseInt(param);
+        }
+        else {
+          param = encodeURIComponent(param);
+        }
+
+        chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
       }
 
       // if the datasource specified a query, add it to the existing filter by looking for the placeholder value
