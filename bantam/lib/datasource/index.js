@@ -80,8 +80,6 @@ Datasource.prototype.buildEndpoint = function(schema, done) {
 
 Datasource.prototype.processDatasourceParameters = function (schema, uri, done) {
 
-  // TODO accept params from the querystring, e.g. "page"
-
   var query = "?";
   
   var params = [
@@ -93,9 +91,14 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri, done) 
     {"sort": processSortParameter(schema.datasource.sort)}
   ];
 
+  if (schema.datasource.hasOwnProperty('cache')) {
+    // pass cache flag to Serama endpoint
+    params.push({"cache": schema.datasource.cache});
+  }
+
   params.forEach(function(param) {
     for (key in param) {
-      if (param.hasOwnProperty(key) && param[key]) {
+      if (param.hasOwnProperty(key) && (typeof param[key] !== 'undefined')) {
         if (key === "fields") {
           //var fields = {};
           //for (field in param[key]) {

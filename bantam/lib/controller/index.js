@@ -176,8 +176,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   var query = url.parse(req.url, true).query;
   
-  // remove cache & debug from query
-  delete query.cache;
+  // remove debug from query
   delete query.debug;
 
   var path = url.parse(req.url).pathname.replace('/','');
@@ -316,6 +315,12 @@ function processChained(chainedDatasources, data, done) {
 function processSearchParameters(key, datasource, params, query) {
 
   var deferred = Q.defer();
+
+  if (query.cache === 'false') {
+    // remove cache from query
+    delete query.cache;
+    datasource.schema.datasource.cache = false;
+  }
 
   datasource.schema.datasource.filter = datasource.schema.datasource.filter || {};
 
