@@ -11,4 +11,12 @@
   {/books.results}
   </ul>
 
+  <h3>From the event associated with this page:</h3>
+  <ul>
+    <li>Host: {test.host}</li>
+    <li>URL: {test.url}</li>
+    <li>Path: {test.pathname}</li>
+    <li>Params: {test.params}</li>
+  </ul>
+
 {/content}

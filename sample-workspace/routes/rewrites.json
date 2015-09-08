@@ -1,9 +1,6 @@
 {
   "rewrites" : [
-    {
-      "match": "^/pie$",
-      "replace": "/books/123",
-      "flags": "[R=301]"
-    }
+    "^/pie$ /books/123 [R=301]",
+    "^/cars/(.*)$ /cars?makeId=$1"
   ]
 }

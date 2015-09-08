@@ -25,10 +25,12 @@ var Router = function (options) {
 
   var self = this;
 
+  // load the route constraint specifications if they exist
   if (fs.existsSync(options.routePath + '/constraints.js')) {
     this.handlers = require(options.routePath + '/constraints.js');
   }
 
+  // load the rewrite specifications if they exist
   if (fs.existsSync(options.routePath + '/rewrites.json')) {
     var rewrites = require(options.routePath + '/rewrites.json');
     if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
@@ -38,7 +40,16 @@ var Router = function (options) {
 
 }
 
+/**
+ *  Attaches a function from /workspace/routes/constraints.js to the specified route
+ *  @param {String} route
+ *  @param {String} fn
+ *  @return undefined
+ *  @api public
+ */
 Router.prototype.constrain = function(route, fn) {
+  
+  // check the specified function has been loaed from /workspace/routes/constraints.js
   if (!this.handlers[fn]) {
     console.log("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
     return;
@@ -47,6 +58,13 @@ Router.prototype.constrain = function(route, fn) {
   this.constraints[route] = this.handlers[fn];
 }
 
+/**
+ *  Attaches a function from /workspace/routes/constraints.js to the specified route
+ *  @param {String} route
+ *  @return `true` if `route` can be handled by a route handler, or if no handler matches the route. `false`
+ *  if a route handler matches but returned false when tested.
+ *  @api public
+ */
 Router.prototype.testConstraint = function(route, req, res, callback) {
 
   var debug = debugMode(req);
@@ -56,6 +74,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
     console.log("[ROUTER] testConstraint: " + route);
   }
 
+  // if there's a constraint handler for this route, run it
   if (this.constraints[route]) {
     
     if (debug) console.log("[ROUTER] testConstraint: found fn");
@@ -64,6 +83,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
       
       if (debug) console.log("[ROUTER] testConstraint: this route matches = " + result);
       
+      // return the result
       return callback(result);
     });
   }

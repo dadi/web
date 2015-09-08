@@ -1,6 +1,7 @@
 /* Sample Node module includes */
 var path = require('path');
 var http = require("http");
+var url = require('url');
 var querystring = require('querystring');
 
 /* Sample Rosecomb includes */
@@ -11,20 +12,12 @@ var help = require(__dirname + '/../../bantam/lib/help');
 // the page's datasources and any previous events that have fired
 var Event = function (req, res, data, callback) {
 
-  var result = {};
+  data.host = req.headers.host;
+  data.url = req.url;
+  data.params = JSON.stringify(url.parse(req.url,true).query);
+  data.pathname = url.parse(req.url,true).pathname;
 
-  if (data['car-makes'] && data['car-makes']['results'] && data['car-makes']['results'][0]) {
-    result = {
-      carMakeFromEvent: data['car-makes']['results'][0].name
-    };
-  }
-  else {
-    result = {
-      carMakeFromEvent: "No make found!"
-    }; 
-  }
-  
-  callback(result);
+  callback(data); 
 };
 
 module.exports = function (req, res, data, callback) {

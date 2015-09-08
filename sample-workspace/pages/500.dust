@@ -1,0 +1,14 @@
+{>layout/}
+
+<h1>{title}</h1>
+
+{<content}
+  This is loaded from a partial.
+{/content}
+
+<p>
+ERROR!
+</p>
+
+And this is from the event:
+<h3>{test}</h3>

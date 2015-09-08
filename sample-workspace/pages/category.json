@@ -1,14 +1,14 @@
 {
     "page": {
-        "name": "Make Index",
-        "description": "An index page for a car.",
+        "name": "Category Index",
+        "description": "An index page for a category.",
         "language": "en",
         "cache": true
     },
     "route": {
-        "path": "/:make"
+        "path": "/:category"
     },
-    "template": "cars.dust",
+    "template": "category.dust",
     "datasources": [
         "car-makes"
     ],
