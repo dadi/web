@@ -82,13 +82,14 @@ Controller.prototype.get = function (req, res, next) {
     var query = url.parse(req.url, true).query;
     var debug = query.debug && query.debug.toString() === 'true';
 
+    var statusCode = res.statusCode || 200;
     var done;
 
     if (debug) {
-      done = sendBackJSON(200, res, next);
+      done = sendBackJSON(statusCode, res, next);
     }
     else {
-      done = sendBackHTML(200, res, next);
+      done = sendBackHTML(statusCode, res, next);
     }
     
     self = this;
