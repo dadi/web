@@ -115,7 +115,6 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     self.loadData(req, res, data, function(err, data) {
-      
       if (err) return next(err);
 
       try {
@@ -186,7 +185,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
     loadEventData(self.events, req, res, data, function(result) {
-      return done(result);
+      return done(null, result);
     });
   }
 
