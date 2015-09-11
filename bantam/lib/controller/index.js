@@ -28,8 +28,11 @@ var Controller = function (page, options) {
 
   var self = this;
 
-  this.attachDatasources(function() {
+  this.attachDatasources(function(err) {
     //console.log(self.datasources);
+    if (err) {
+      console.log(err);
+    }
   });
 
   this.attachEvents(function() {
@@ -45,10 +48,13 @@ Controller.prototype.attachDatasources = function(done) {
   var i = 0;
 
   this.page.datasources.forEach(function(datasource) {
-    var ds = new Datasource(self.page, datasource, self.options, function(ds) {
+    var ds = new Datasource(self.page, datasource, self.options, function(err, ds) {
+      if (err) {
+        return done(err);
+      }
       self.datasources[ds.schema.datasource.key] = ds;
       i++;
-      if (i == self.page.datasources.length) done();
+      if (i == self.page.datasources.length) done(null);
     });
     
   });
@@ -76,13 +82,14 @@ Controller.prototype.get = function (req, res, next) {
     var query = url.parse(req.url, true).query;
     var debug = query.debug && query.debug.toString() === 'true';
 
+    var statusCode = res.statusCode || 200;
     var done;
 
     if (debug) {
-      done = sendBackJSON(200, res, next);
+      done = sendBackJSON(statusCode, res, next);
     }
     else {
-      done = sendBackHTML(200, res, next);
+      done = sendBackHTML(statusCode, res, next);
     }
     
     self = this;
@@ -99,29 +106,37 @@ Controller.prototype.get = function (req, res, next) {
 
     var pageTemplate = self.page.template.slice(0, self.page.template.indexOf('.'));
     var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(pageTemplate) > -1; });
-    
+
     if (!template) {
-      return sendBackHTML(500, res, next)(null, "Dust template not found");
+      var err = new Error();
+      err.json = { "message": "Dust template not found" };
+      err.statusCode = 500;
+      return next(err);
     }
 
-    self.loadData(req, res, data, function(data) {
-      if (debug) {
-        // Return the raw data
-        return done(null, data);
-      }
-      else {
-        // Render the compiled template
-        try {
+    self.loadData(req, res, data, function(err, data) {
+      
+      if (err) return next(err);
+
+      try {
+        if (debug) {
+          // Return the raw data
+          return done(null, data);
+        }
+        else {
+          // Render the compiled template
           var rendered = dust.render(pageTemplate, data, function(err, result) {
             if (err) done(err, null);
             return done(err, result);
           });
         }
-        catch (e) {
-          console.log(e);
-        }
       }
-    })
+      catch (e) {
+        var err = new Error(e.message);
+        err.statusCode = 500;
+        return next(err);
+      }
+    });
 };
 
 function hasAttachedDatasources(datasources) {
@@ -162,8 +177,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   var query = url.parse(req.url, true).query;
   
-  // remove cache & debug from query
-  delete query.cache;
+  // remove debug from query
   delete query.debug;
 
   var path = url.parse(req.url).pathname.replace('/','');
@@ -189,7 +203,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
   _.each(primaryDatasources, function(datasource, key) {
 
     processSearchParameters(key, datasource, req.params, query)
-    .then(help.getData(datasource, function(result) {
+    .then(help.getData(datasource, function(err, result) {
+        
+        if (err) return done(err);
 
         if (result) {
           try {
@@ -206,7 +222,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
           processChained(chainedDatasources, data, function() {
 
             loadEventData(self.events, req, res, data, function(result) {
-              done(result);
+              done(null, result);
             });
 
           });
@@ -269,6 +285,7 @@ function processChained(chainedDatasources, data, done) {
       // rebuild the datasource endpoint with the new filters
       var d = new Datasource();
       d.buildEndpoint(chainedDatasource.schema, function(endpoint) {
+
         chainedDatasource.endpoint = endpoint;
 
         help.getData(chainedDatasource, function(result) {
@@ -299,6 +316,12 @@ function processChained(chainedDatasources, data, done) {
 function processSearchParameters(key, datasource, params, query) {
 
   var deferred = Q.defer();
+
+  if (query.cache === 'false') {
+    // remove cache from query
+    delete query.cache;
+    datasource.schema.datasource.cache = false;
+  }
 
   datasource.schema.datasource.filter = datasource.schema.datasource.filter || {};
 

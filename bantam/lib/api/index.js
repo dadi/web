@@ -130,7 +130,6 @@ Api.prototype._match = function (path, req) {
         handlers.push(paths[key].handler);
 
         match.forEach(function (k, i) {
-
             var keyOpts = keys[i] || {};
             if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
         });
@@ -153,9 +152,10 @@ function defaultError() {
         if (err.json) {
             var resBody = JSON.stringify(err.json);
             res.setHeader('content-type', 'application/json');
-            res.setHeader('content-length', resBody.length);
+            res.setHeader('content-length', Buffer.byteLength(resBody));
             return res.end(resBody);
         }
+
         res.end();
     }
 }
@@ -163,8 +163,9 @@ function defaultError() {
 // return a 404
 function notFound(api, req, res) {
     return function () {
+
         res.statusCode = 404;
-        
+
         // look for a 404 page that has been loaded
         // along with the rest of the API, and call its
         // handler if it exists

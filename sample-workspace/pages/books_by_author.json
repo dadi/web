@@ -1,0 +1,19 @@
+{
+    "page": {
+        "name": "Books",
+        "description": "A collection of books.",
+        "language": "en",
+        "cache": true
+    },
+    "route": {
+        "path": "/books/:authorId"
+    },
+    "template": "books.dust",
+    "datasources": [
+        "books",
+        "users"
+    ],
+    "events": [
+        "test"
+    ]
+}

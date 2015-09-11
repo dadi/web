@@ -1,0 +1,48 @@
+{
+	"datasource": {
+		"key": "car-models",
+		"name": "Models datasource",
+		"source": {
+			"type": "remote",
+			"protocol": "http",
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "1.0/car-data/models"
+		},
+    "caching": {
+        "enabled": true,
+        "ttl": 300,
+        "directory": "./cache/rosecomb/",
+        "extension": "json"
+    },
+    "auth": {
+        "type": "bearer",
+        "host": "localhost",
+        "port": "3000",
+        "tokenUrl": "/token",
+        "credentials": {
+            "clientId": "rosecombClient",
+            "secret": "superSecret"
+        }
+    },
+		"paginate": true,
+		"count": 5,
+		"sort": [
+            {"field": "name","order": "desc"}
+        ],
+		"search": {},
+        "filter": ["{car-makes}",{"$group": {"_id" : {"make":"$makeName", "model":"$modelName","body":"$bodyStyle"}}}],
+		"fields": ["name","makeId","capId"],
+        "requestParams": [
+          { "param": "model", "field": "name" }
+        ],
+        "chained": {
+          "datasource": "car-makes",
+          "outputParam": {
+            "param": "results.0.capId",
+            "type": "Number",
+            "query": { "$match" : { "sector" : "{value}" } }
+          }
+        }
+	}
+}

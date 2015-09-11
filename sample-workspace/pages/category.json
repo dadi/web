@@ -1,0 +1,18 @@
+{
+    "page": {
+        "name": "Category Index",
+        "description": "An index page for a category.",
+        "language": "en",
+        "cache": true
+    },
+    "route": {
+        "path": "/:category"
+    },
+    "template": "category.dust",
+    "datasources": [
+        "car-makes"
+    ],
+    "events": [
+        
+    ]
+}

@@ -1,0 +1,30 @@
+{
+	"datasource": {
+		"key": "tweets",
+		"name": "Tweets DS",
+		"source": {
+			"type": "remote",
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "editorial/articles"
+		},
+		"cache": false,
+
+		"paginate": true,
+
+		"fields": [
+			"title"
+		],
+
+		"filters": [
+			{ "category": ["blog"] }
+		],
+
+		"limit": "5",
+		"search": {"title": "/(third)/iu"},
+		"skip": 0,
+		"sort": [
+      {"field": "_id","order": "desc"}
+    ]
+	}
+}

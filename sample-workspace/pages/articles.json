@@ -1,0 +1,13 @@
+{
+    "page": {
+        "name": "Articles",
+        "description": "A collection of articles.",
+        "language": "en"
+    },
+    "datasources": [
+        "articles"
+    ],
+    "events": [
+        "test"
+    ]
+}

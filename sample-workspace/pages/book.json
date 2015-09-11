@@ -1,0 +1,17 @@
+{
+    "page": {
+        "name": "Book",
+        "description": "A single book.",
+        "language": "en",
+        "cache": true
+    },
+    "route": {
+        "path": "/book/:id"
+    },
+    "datasources": [
+        "books"
+    ],
+    "events": [
+        "test"
+    ]
+}

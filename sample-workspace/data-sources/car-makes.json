@@ -1,0 +1,39 @@
+{
+	"datasource": {
+		"key": "car-makes",
+		"name": "Makes datasource",
+		"source": {
+			"type": "remote",
+			"protocol": "http",
+			"host": "localhost",
+			"port": "3000",
+			"endpoint": "1.0/car-data/makes"
+		},
+    "caching": {
+        "enabled": true,
+        "ttl": 300,
+        "directory": "./cache/rosecomb/",
+        "extension": "json"
+    },
+    "auth": {
+        "type": "bearer",
+        "host": "localhost",
+        "port": "3000",
+        "tokenUrl": "/token",
+        "credentials": {
+            "clientId": "rosecombClient",
+            "secret": "superSecret"
+        }
+    },
+		"paginate": true,
+		"count": 20,
+		"sort": [
+            { "field": "name", "order": "asc" }
+        ],
+		"search": {},
+		"fields": ["name","capId"],
+        "requestParams": [
+            { "param": "make", "field": "name" }
+        ]
+	}
+}

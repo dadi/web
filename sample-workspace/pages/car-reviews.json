@@ -1,0 +1,19 @@
+{
+    "page": {
+        "name": "Car Reviews",
+        "description": "A collection of car reviews.",
+        "language": "en",
+        "cache": true
+    },
+    "route": {
+        "path": "/car-reviews/:make/:model/:page?"
+    },
+    "template": "car-reviews.dust",
+    "datasources": [
+        "car-makes",
+        "car-models"
+    ],
+    "events": [
+        "test"        
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "page": {
+        "name": "500",
+        "description": "An error page.",
+        "language": "en"
+    },
+    "datasources": [
+        
+    ],
+    "events": [
+        "test"
+    ]
+}

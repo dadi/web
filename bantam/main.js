@@ -5,5 +5,6 @@ app.start({
   datasourcePath: __dirname + '/../workspace/data-sources',
   pagePath: __dirname + '/../workspace/pages',
   partialPath: __dirname + '/../workspace/partials',
-  eventPath: __dirname + '/../workspace/events'
+  eventPath: __dirname + '/../workspace/events',
+  routePath: __dirname + '/../workspace/routes'
 });
