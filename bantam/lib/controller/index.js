@@ -92,7 +92,7 @@ Controller.prototype.get = function (req, res, next) {
       done = sendBackHTML(statusCode, res, next);
     }
     
-    self = this;
+    var self = this;
 
     var data = {
       "title": self.page.name
