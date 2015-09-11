@@ -81,20 +81,25 @@ Controller.prototype.get = function (req, res, next) {
     // allow query string param to return data only
     var query = url.parse(req.url, true).query;
     var debug = query.debug && query.debug.toString() === 'true';
+    var json = query.json && query.json.toString() === 'true';
+
+    var statusCode = res.statusCode || 200;
 
     var done;
 
-    if (debug) {
-      done = sendBackJSON(200, res, next);
+    if (json) {
+      done = sendBackJSON(statusCode, res, next);
     }
     else {
-      done = sendBackHTML(200, res, next);
+      done = sendBackHTML(statusCode, res, next);
     }
     
     self = this;
 
     var data = {
-      "title": self.page.name
+      "title": self.page.name,
+      "debug": debug || false,
+      "json": json || false
     }
 
     // global values from config
@@ -118,7 +123,7 @@ Controller.prototype.get = function (req, res, next) {
       if (err) return next(err);
 
       try {
-        if (debug) {
+        if (json) {
           // Return the raw data
           return done(null, data);
         }
@@ -185,7 +190,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
     loadEventData(self.events, req, res, data, function(result) {
-      return done(result);
+      return done(null, result);
     });
   }
 
@@ -275,11 +280,22 @@ function processChained(chainedDatasources, data, done) {
 
       // if the datasource specified a query, add it to the existing filter by looking for the placeholder value
       if (chainedDatasource.chained.outputParam.query) {
-        var placeholder = "{" + chainedKey + "}";
-        chainedDatasource.schema.datasource.filter.replace(placeholder, chainedDatasource.chained.outputParam.query);
-      }
+        var placeholder = "{" + chainedDatasource.chained.datasource + "}";
+        var f = JSON.stringify(chainedDatasource.schema.datasource.filter);
+        //console.log(param);
+        param = [1,2,3];
+        if (_.isArray(param)) param = "[" + param + "]";
+        var query = JSON.stringify(chainedDatasource.chained.outputParam.query).replace("{param}", param);
+        console.log(query);
+        console.log(f);
+        chainedDatasource.schema.datasource.filter = f.replace('"' + placeholder + '"', query);
+        console.log(chainedDatasource.schema.datasource.filter);
+        chainedDatasource.schema.datasource.filter = JSON.parse(chainedDatasource.schema.datasource.filter);
+        console.log(chainedDatasource.schema.datasource.filter);
 
-      //console.log(chainedDatasource.schema.datasource.filter);
+        var x = JSON.stringify({ "primaryCategory": { "$in": [1,2,3] } });
+        console.log(JSON.parse(x));
+      }
 
       // rebuild the datasource endpoint with the new filters
       var d = new Datasource();

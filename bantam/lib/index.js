@@ -74,7 +74,8 @@ Server.prototype.start = function (options, done) {
     var server = this.server = app.listen(config.server.port, config.server.host);
 
     server.on('listening', function (e) {
-      logger.prod('Started server on ' + config.server.host + ':' + config.server.port);
+      console.log('\nStarted Rosecomb on ' + config.server.host + ':' + config.server.port + "\n");
+      logger.prod('Started Rosecomb on ' + config.server.host + ':' + config.server.port);
     });
 
     server.on('error', function (e) {

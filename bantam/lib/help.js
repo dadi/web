@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var http = require('http');
 var url = require('url');
+var util = require('util');
 var _ = require('underscore');
 
 var token = require(__dirname + '/auth/token');

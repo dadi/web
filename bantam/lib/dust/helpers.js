@@ -42,3 +42,23 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
     }
     return chunk;
 };
+
+/*
+* Returns the markdown content formatted as HTML, but without <p> wrappers
+*/
+dust.helpers.soberMarkdown = function(chunk, context, bodies, params) {
+    if (bodies.block) {
+        return chunk.capture(bodies.block, context, function(string, chunk) {
+            var md = markdown.parse(string);
+            
+            // Replace </p><p> with <br>
+            var str = md.replace(/<\/p><p[^>]*>/igm, '<br>');
+
+            // Remove wrapping <p></p> tags
+            str = str.replace(/<p[^>]*>(.*?)<\/p>/igm, "$1");
+            
+            chunk.end(str);
+        });
+    }
+    return chunk;
+};

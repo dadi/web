@@ -105,6 +105,18 @@ module.exports = function (server, options) {
 
   console.log("[ROUTER] Router loaded.");
 
+  // server.app.use(function (req, res, next) {
+  //   if (req.url.substr(-1) == '/' && req.url.length > 1) {
+  //     res.writeHead(301, {
+  //       Location : req.url.slice(0, -1)
+  //     });
+  //     res.end();
+  //   }
+  //   else {
+  //     next();
+  //   }
+  // });
+
   server.app.use(modRewrite(server.app.Router.rules));
 
   if (!_.isEmpty(server.app.Router.rules)) {
