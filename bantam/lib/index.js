@@ -15,6 +15,7 @@ var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var serveStatic = require('serve-static')
+var serveFavicon = require('serve-favicon');
 var toobusy = require('toobusy-js');
 
 var configPath = path.resolve(__dirname + '/../../config.json');
@@ -38,6 +39,9 @@ Server.prototype.start = function (options, done) {
     if (options.configPath) config = require(options.configPath);
 
     // add necessary middlewares in order below here...
+
+    app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
@@ -87,13 +91,12 @@ Server.prototype.start = function (options, done) {
       }
     });
 
-
-    // load app specific routes
-    this.loadApi(options);
-
     // serve static files (css,js,fonts)
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
+
+    // load app specific routes
+    this.loadApi(options);
 
     this.readyState = 1;
 

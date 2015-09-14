@@ -146,32 +146,20 @@ Api.prototype._match = function (path, req) {
     var matches = [];
     var handlers = [];
 
-    console.log(req.url);
-
     // always add params object to avoid need for checking later
     req.params = {};
 
     for (i = 0; i < paths.length; i++) {
         var match = paths[i].regex.exec(path);
 
-        console.log(paths[i]);
-
         if (!match) { continue; }
 
         var keys = paths[i].regex.keys;
         handlers.push(paths[i].handler);
 
-        console.log(JSON.stringify(match));
-
         match.forEach(function (k, i) {
             var keyOpts = keys[i] || {};
-            console.log("k: " + k);
-            console.log("i: " + i);
-            console.log("keys[i]: "+ JSON.stringify(keys[i]));
-            console.log("keyOpts: " + JSON.stringify(keyOpts));
-            console.log("match[i + 1]: " + match[i + 1]);
             if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
-            console.log(req.params);
         });
 
         break;
