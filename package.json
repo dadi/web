@@ -19,7 +19,8 @@
     "path-to-regexp": "^1.2.1",
     "q": "^1.4.1",
     "serve-static": "^1.9.1",
-    "underscore": "1.6.0"
+    "underscore": "1.6.0",
+    "toobusy-js": "latest"
   },
   "devDependencies": {
     "colors": "^1.1.2",
