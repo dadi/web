@@ -31,6 +31,7 @@
         "baseUrl": "http://www.example.com"
     },
     "dust": {
+        "cache": false,
         "debug": true,
         "debugLevel": "DEBUG",
         "whitespace": true 
