@@ -15,6 +15,7 @@ var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var serveStatic = require('serve-static')
+var toobusy = require('toobusy-js');
 
 var configPath = path.resolve(__dirname + '/../../config.json');
 var config = require(configPath);
@@ -51,8 +52,9 @@ Server.prototype.start = function (options, done) {
 
     dust.isDebug = config.dust ? (config.dust.hasOwnProperty('debug') ? config.dust.debug : true) : true;
     dust.debugLevel = config.dust ? config.dust.debugLevel || "DEBUG" : "DEBUG";
+    dust.config.cache = config.dust ? (config.dust.hasOwnProperty('cache') ? config.dust.cache : true) : true;
     dust.config.whitespace = config.dust ? (config.dust.hasOwnProperty('whitespace') ? config.dust.whitespace : true) : true;
-
+    
     // request logging middleware
     app.use(function (req, res, next) {
         var start = Date.now();
@@ -74,6 +76,7 @@ Server.prototype.start = function (options, done) {
     var server = this.server = app.listen(config.server.port, config.server.host);
 
     server.on('listening', function (e) {
+      console.log('\nStarted server on ' + config.server.host + ':' + config.server.port + '\n');
       logger.prod('Started server on ' + config.server.host + ':' + config.server.port);
     });
 
@@ -84,6 +87,7 @@ Server.prototype.start = function (options, done) {
       }
     });
 
+
     // load app specific routes
     this.loadApi(options);
 
@@ -92,6 +96,14 @@ Server.prototype.start = function (options, done) {
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
 
     this.readyState = 1;
+
+    process.on('SIGINT', function() {
+      server.close();
+      toobusy.shutdown();
+      console.log('\nServer stopped, process exiting.\n');
+      logger.prod('\nServer stopped, process exiting.\n');
+      process.exit();
+    });        
 
     // this is all sync, so callback isn't really necessary.
     done && done();

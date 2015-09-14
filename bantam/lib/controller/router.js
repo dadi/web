@@ -8,6 +8,7 @@ https://github.com/tinganho/connect-modrewrite
 var fs = require('fs');
 var url = require('url');
 var modRewrite = require('connect-modrewrite');
+var toobusy = require('toobusy-js');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
@@ -104,6 +105,16 @@ module.exports = function (server, options) {
   server.app.Router = new Router(options);
 
   console.log("[ROUTER] Router loaded.");
+
+  // middleware which blocks requests when we're too busy
+	server.app.use(function (req, res, next) {
+	  if (toobusy()) {
+	    res.send(503, "I'm busy right now, sorry.");
+	  }
+	  else {
+	    next();
+	  }
+	});
 
   server.app.use(modRewrite(server.app.Router.rules));
 

@@ -122,14 +122,14 @@ module.exports.getData = function(datasource, done) {
                     return done(err);
                 }
         
-                done(null, output);
+                return done(null, output);
               });
         
             });
         
             req.on('error', function(err) {
     	       console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err);
-    	       done('{ "error" : "Connection refused" }');
+    	       return done('{ "error" : "Connection refused" }');
             });
         
             try {
