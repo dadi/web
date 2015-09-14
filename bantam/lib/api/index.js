@@ -1,10 +1,11 @@
 var http = require('http');
 var url = require('url');
 var pathToRegexp = require('path-to-regexp');
+var _ = require('underscore');
 var logger = require(__dirname + '/../log');
 
 var Api = function () {
-    this.paths = {};
+    this.paths = [];
     this.all = [];
     this.errors = [];
 
@@ -28,10 +29,36 @@ Api.prototype.use = function (path, handler) {
         return this.all.push(path);
     }
 
-    this.paths[path] = {
+    var tokens = pathToRegexp.parse(path);
+
+    var staticRouteLength = 0;
+    if (typeof tokens[0] === 'string') {
+        staticRouteLength = _.compact(tokens[0].split('/')).length;
+    }
+    
+    var regex = pathToRegexp(path);
+    
+    var requiredParamLength = _.filter(regex.keys, function (key) {
+        return !key.optional;
+    }).length;
+    
+    var optionalParamLength = _.filter(regex.keys, function (key) {
+        return key.optional;
+    }).length;
+    
+    var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength);
+    if (path.indexOf('/config') > 0) order = -10;
+
+    this.paths.push({
+        path: path,
+        order: order,
         handler: handler,
-        regex: pathToRegexp(path)
-    };
+        regex: regex
+    });
+
+    this.paths.sort(function (a,b) {
+        return b.order - a.order;
+    });
 };
 
 /**
@@ -50,7 +77,8 @@ Api.prototype.unuse = function (path) {
         indx = this.all.indexOf(path);
         return !!~indx && this.all.splice(indx, 1);
     }
-    delete this.paths[path];
+    var path = _.findWhere(this.paths, { path: path });
+    this.paths = _.without(this.paths, path);
 }
 
 /**
@@ -121,19 +149,18 @@ Api.prototype._match = function (path, req) {
     // always add params object to avoid need for checking later
     req.params = {};
 
-    Object.keys(paths).forEach(function (key) {
-        var match = paths[key].regex.exec(path);
-        if (!match) return;
-
-        var keys = paths[key].regex.keys;
-
-        handlers.push(paths[key].handler);
-
-        match.forEach(function (k, i) {
-            var keyOpts = keys[i] || {};
-            if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
-        });
-    });
+    for (i = 0; i < paths.length; i++) {
+        var match = paths[i].regex.exec(path);
+        
+        if (match) {
+            var keys = paths[i].regex.keys;
+            handlers.push(paths[i].handler);
+            match.forEach(function (k, i) {
+                var keyOpts = keys[i] || {};
+                if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
+            });
+        }
+    }
 
     return handlers;
 };
@@ -170,8 +197,9 @@ function notFound(api, req, res) {
         // along with the rest of the API, and call its
         // handler if it exists
 
-        if (api.paths.hasOwnProperty('/404')) {
-            api.paths['/404'].handler(req, res);
+        var path = _.findWhere(api.paths, { path: '/404' });
+        if (path) {
+            path.handler(req, res);
         }
         // otherwise, respond with default message
         else {
