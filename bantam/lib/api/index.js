@@ -29,29 +29,11 @@ Api.prototype.use = function (path, handler) {
         return this.all.push(path);
     }
 
-    var tokens = pathToRegexp.parse(path);
-
-    var staticRouteLength = 0;
-    if (typeof tokens[0] === 'string') {
-        staticRouteLength = _.compact(tokens[0].split('/')).length;
-    }
-    
     var regex = pathToRegexp(path);
-    
-    var requiredParamLength = _.filter(regex.keys, function (key) {
-        return !key.optional;
-    }).length;
-    
-    var optionalParamLength = _.filter(regex.keys, function (key) {
-        return key.optional;
-    }).length;
-    
-    var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength);
-    if (path.indexOf('/config') > 0) order = -10;
 
     this.paths.push({
         path: path,
-        order: order,
+        order: routePriority(path, regex.keys),
         handler: handler,
         regex: regex
     });
@@ -209,4 +191,27 @@ function notFound(api, req, res) {
             res.end("404: Ain't nothing here but you and me.");
         }
     }
+}
+
+function routePriority(path, keys) {
+
+    var tokens = pathToRegexp.parse(path);
+
+    var staticRouteLength = 0;
+    if (typeof tokens[0] === 'string') {
+        staticRouteLength = _.compact(tokens[0].split('/')).length;
+    }
+
+    var requiredParamLength = _.filter(keys, function (key) {
+        return !key.optional;
+    }).length;
+    
+    var optionalParamLength = _.filter(keys, function (key) {
+        return key.optional;
+    }).length;
+    
+    var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength);
+    if (path.indexOf('/config') > 0) order = -10;
+
+    return order;
 }

@@ -23,4 +23,29 @@ $(document).ready(function() {
     dateFormat:"DD/MM/YYYY - HH24:MI:SS"
   });
 
+  node.expandAll();
+
+  $('#pathTester').on('change keydown paste input', function () {
+
+    var input = $(this).val();
+    var testArray = input.split('.');
+    var selector = "";
+
+    for (var i = 0; i < testArray.length; i++) {
+      selector += "span:contains('" + testArray[i] + "') ";
+    };
+
+    console.log(selector);
+    var $found = el.result.find(selector);
+
+    // clear all
+    el.result.find('span').css("background", "none");
+
+    // highlight matches
+    $found.css("background", "red");
+
+    // clear all
+    if (input === "") el.result.find(selector).css("background", "none");
+  });
+
 });
