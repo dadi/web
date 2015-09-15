@@ -14,6 +14,7 @@ var Page = function (name, schema) {
   this.name = name;
   this.route = schema.route || { "path": '/' + name };
   this.template = schema.template || name + '.dust';
+  this.contentType = schema.contentType || 'text/html';
 
   this.settings = schema.settings;
   this.datasources = schema.datasources;

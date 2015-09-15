@@ -7,6 +7,7 @@ https://github.com/tinganho/connect-modrewrite
 
 var fs = require('fs');
 var url = require('url');
+var querystring = require('querystring');
 var modRewrite = require('connect-modrewrite');
 var toobusy = require('toobusy-js');
 var _ = require('underscore');
@@ -106,19 +107,6 @@ module.exports = function (server, options) {
 
   console.log("[ROUTER] Router loaded.");
 
-  // redirect url with trailing slash to non-trailing slash
-  // server.app.use(function (req, res, next) {
-  //   if (req.url.substr(-1) == '/' && req.url.length > 1) {
-  //     res.writeHead(301, {
-  //       Location : req.url.slice(0, -1)
-  //     });
-  //     res.end();
-  //   }
-  //   else {
-  //     next();
-  //   }
-  // });
-
   // middleware which blocks requests when we're too busy
 	server.app.use(function (req, res, next) {
 	  if (toobusy()) {
@@ -129,6 +117,7 @@ module.exports = function (server, options) {
 	  }
 	});
 
+  // add any loaded rewrite rules
   server.app.use(modRewrite(server.app.Router.rules));
 
   if (!_.isEmpty(server.app.Router.rules)) {

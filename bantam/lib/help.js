@@ -41,14 +41,14 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 }
 
 // helper that sends html response
-module.exports.sendBackHTML = function (successCode, res, next) {
+module.exports.sendBackHTML = function (successCode, contentType, res, next) {
     return function (err, results) {
         if (err) return next(err);
 
         res.statusCode = successCode;
 
         var resBody = results;
-        res.setHeader('content-type', 'text/html');
+        res.setHeader('content-type', contentType);
         res.setHeader('content-length', Buffer.byteLength(resBody));
 
         res.end(resBody);
