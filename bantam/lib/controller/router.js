@@ -7,6 +7,7 @@ https://github.com/tinganho/connect-modrewrite
 
 var fs = require('fs');
 var url = require('url');
+var querystring = require('querystring');
 var modRewrite = require('connect-modrewrite');
 var toobusy = require('toobusy-js');
 var _ = require('underscore');
@@ -116,6 +117,7 @@ module.exports = function (server, options) {
 	  }
 	});
 
+  // add any loaded rewrite rules
   server.app.use(modRewrite(server.app.Router.rules));
 
   if (!_.isEmpty(server.app.Router.rules)) {

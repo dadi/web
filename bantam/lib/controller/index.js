@@ -82,21 +82,26 @@ Controller.prototype.get = function (req, res, next) {
     // allow query string param to return data only
     var query = url.parse(req.url, true).query;
     var debug = query.debug && query.debug.toString() === 'true';
+    var json = query.json && query.json.toString() === 'true';
+
+    var statusCode = res.statusCode || 200;
 
     var statusCode = res.statusCode || 200;
     var done;
 
-    if (debug) {
+    if (json) {
       done = sendBackJSON(statusCode, res, next);
     }
     else {
-      done = sendBackHTML(statusCode, res, next);
+      done = sendBackHTML(statusCode, this.page.contentType, res, next);
     }
     
     var self = this;
 
     var data = {
-      "title": self.page.name
+      "title": self.page.name,
+      "debug": debug || false,
+      "json": json || false
     }
 
     // global values from config
@@ -119,7 +124,7 @@ Controller.prototype.get = function (req, res, next) {
       if (err) return next(err);
 
       try {
-        if (debug) {
+        if (json) {
           // Return the raw data
           return done(null, data);
         }

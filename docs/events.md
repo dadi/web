@@ -19,19 +19,19 @@ Events are assigned to pages in the page descriptor file.
 ```
 {
     "page": {
-        "name": "Car Reviews",
-        "description": "A collection of car reviews.",
-        "language": "en",
-        "cache": true
+      "name": "Car Reviews",
+      "description": "A collection of car reviews.",
+      "language": "en",
+      "cache": true
     },
     "route": "/car-reviews/:make/:model",
     "template": "car-reviews.dust",
     "datasources": [
-        "car-makes",
-        "car-models"
+      "car-makes",
+      "car-models"
     ],
     "events": [
-		""
+		  "myCustomEvent"
     ]
 }
 
