@@ -15,6 +15,8 @@ var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var serveStatic = require('serve-static')
+var serveFavicon = require('serve-favicon');
+var toobusy = require('toobusy-js');
 
 var configPath = path.resolve(__dirname + '/../../config.json');
 var config = require(configPath);
@@ -37,6 +39,9 @@ Server.prototype.start = function (options, done) {
     if (options.configPath) config = require(options.configPath);
 
     // add necessary middlewares in order below here...
+
+    app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
@@ -51,8 +56,9 @@ Server.prototype.start = function (options, done) {
 
     dust.isDebug = config.dust ? (config.dust.hasOwnProperty('debug') ? config.dust.debug : true) : true;
     dust.debugLevel = config.dust ? config.dust.debugLevel || "DEBUG" : "DEBUG";
+    dust.config.cache = config.dust ? (config.dust.hasOwnProperty('cache') ? config.dust.cache : true) : true;
     dust.config.whitespace = config.dust ? (config.dust.hasOwnProperty('whitespace') ? config.dust.whitespace : true) : true;
-
+    
     // request logging middleware
     app.use(function (req, res, next) {
         var start = Date.now();
@@ -74,33 +80,38 @@ Server.prototype.start = function (options, done) {
     var server = this.server = app.listen(config.server.port, config.server.host);
 
     server.on('listening', function (e) {
-      console.log('\nStarted Rosecomb on ' + config.server.host + ':' + config.server.port + "\n");
-      logger.prod('Started Rosecomb on ' + config.server.host + ':' + config.server.port);
 
-      var Slack = require('node-slack');
-      var slack = new Slack('https://hooks.slack.com/services/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', {});
+      var message = "\nStarted Rosecomb on " + config.server.host + ":" + config.server.port + "\n";
       
-      slack.send({
-        text: 'Started Rosecomb on ' + config.server.host + ':' + config.server.port,
-        username: 'Bantam',
-        icon_emoji: ':bantam:',
-        "attachments": [
-            {
-                "fallback": "Required text summary of the attachment that is shown by clients that understand attachments but choose not to show them.",
-                "text": "Optional text that should appear within the attachment",
-                "pretext": "Optional text that should appear above the formatted data",
-                "color": "good", // Can either be one of 'good', 'warning', 'danger', or any hex color code
-                // Fields are displayed in a table on the message
-                "fields": [
-                    {
-                        "title": "Required Field Title", // The title may not contain markup and will be escaped for you
-                        "value": "Text value of the field. May contain standard message markup and must be escaped as normal. May be multi-line.",
-                        "short": false // Optional flag indicating whether the `value` is short enough to be displayed side-by-side with other values
-                    }
-                ]
-            }
-        ]
-      });
+      console.log(message);
+      logger.prod(message);
+
+      if (config.useSlackIntegration) {
+        var Slack = require('node-slack');
+        var slack = new Slack('https://hooks.slack.com/services/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', {});
+
+        slack.send({
+          text: message,
+          username: 'Bantam',
+          icon_emoji: ':bantam:',
+          "attachments": [
+              {
+                  "fallback": "Required text summary of the attachment that is shown by clients that understand attachments but choose not to show them.",
+                  "text": "Optional text that should appear within the attachment",
+                  "pretext": "Optional text that should appear above the formatted data",
+                  "color": "good", // Can either be one of 'good', 'warning', 'danger', or any hex color code
+                  // Fields are displayed in a table on the message
+                  "fields": [
+                      {
+                          "title": "Required Field Title", // The title may not contain markup and will be escaped for you
+                          "value": "Text value of the field. May contain standard message markup and must be escaped as normal. May be multi-line.",
+                          "short": false // Optional flag indicating whether the `value` is short enough to be displayed side-by-side with other values
+                      }
+                  ]
+              }
+          ]
+        });
+      }
 
     });
 
@@ -111,14 +122,22 @@ Server.prototype.start = function (options, done) {
       }
     });
 
-    // load app specific routes
-    this.loadApi(options);
-
     // serve static files (css,js,fonts)
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
 
+    // load app specific routes
+    this.loadApi(options);
+
     this.readyState = 1;
+
+    process.on('SIGINT', function() {
+      server.close();
+      toobusy.shutdown();
+      console.log('\nServer stopped, process exiting.\n');
+      logger.prod('\nServer stopped, process exiting.\n');
+      process.exit();
+    });        
 
     // this is all sync, so callback isn't really necessary.
     done && done();

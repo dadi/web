@@ -3,6 +3,7 @@ var url = require('url');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var Q = require('q');
+var crypto = require('crypto');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
@@ -85,6 +86,7 @@ Controller.prototype.get = function (req, res, next) {
 
     var statusCode = res.statusCode || 200;
 
+    var statusCode = res.statusCode || 200;
     var done;
 
     if (json) {
@@ -94,7 +96,7 @@ Controller.prototype.get = function (req, res, next) {
       done = sendBackHTML(statusCode, res, next);
     }
     
-    self = this;
+    var self = this;
 
     var data = {
       "title": self.page.name,
@@ -119,7 +121,6 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     self.loadData(req, res, data, function(err, data) {
-      
       if (err) return next(err);
 
       try {
@@ -130,7 +131,13 @@ Controller.prototype.get = function (req, res, next) {
         else {
           // Render the compiled template
           var rendered = dust.render(pageTemplate, data, function(err, result) {
-            if (err) done(err, null);
+            if (err) {
+              err = new Error();
+              err.json = { "error": "Template rendering failed." };
+              err.statusCode = 500;
+              return done(err, null);
+            }
+
             return done(err, result);
           });
         }
@@ -157,12 +164,25 @@ function loadEventData(events, req, res, data, done) {
   var eventIdx = 0;
   
   _.each(events, function(value, key) {
+
+      // add a random value to the data obj so we can check if an
+      // event has sent back the obj - in which case we assign it back
+      // to itself
+      var checkValue = crypto.createHash('md5').update(new Date().toString()).digest("hex");
+      data.checkValue = checkValue;
       
       // run the event  
       events[key].run(req, res, data, function(result) {                
         
-        // add the result to our global data object
-        data[key] = result;
+        // if we get data back with the same checkValue property,
+        // reassign it to our global data object to avoid circular JSON
+        if (result && result.checkValue && result.checkValue === checkValue) {
+          data = result;
+        }
+        else if (result) {
+          // add the result to our global data object
+          data[key] = result;
+        }
 
         eventIdx++;
 
@@ -278,23 +298,17 @@ function processChained(chainedDatasources, data, done) {
         chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
       }
 
-      // if the datasource specified a query, add it to the existing filter by looking for the placeholder value
+      // if the datasource specified a query, add it to the existing filter 
+      // by looking for the placeholder value
       if (chainedDatasource.chained.outputParam.query) {
-        var placeholder = "{" + chainedDatasource.chained.datasource + "}";
-        var f = JSON.stringify(chainedDatasource.schema.datasource.filter);
-        //console.log(param);
-        param = [1,2,3];
-        if (_.isArray(param)) param = "[" + param + "]";
-        var query = JSON.stringify(chainedDatasource.chained.outputParam.query).replace("{param}", param);
-        console.log(query);
-        console.log(f);
-        chainedDatasource.schema.datasource.filter = f.replace('"' + placeholder + '"', query);
-        console.log(chainedDatasource.schema.datasource.filter);
-        chainedDatasource.schema.datasource.filter = JSON.parse(chainedDatasource.schema.datasource.filter);
-        console.log(chainedDatasource.schema.datasource.filter);
+        var placeholder = '"{' + chainedDatasource.chained.datasource + '}"';
+        var filter = JSON.stringify(chainedDatasource.schema.datasource.filter);
+        var q = JSON.stringify(chainedDatasource.chained.outputParam.query);
 
-        var x = JSON.stringify({ "primaryCategory": { "$in": [1,2,3] } });
-        console.log(JSON.parse(x));
+        q = q.replace("{param}", encodeURIComponent(param));
+        filter = filter.replace(placeholder, q);
+
+        chainedDatasource.schema.datasource.filter = JSON.parse(filter);
       }
 
       // rebuild the datasource endpoint with the new filters
@@ -303,7 +317,7 @@ function processChained(chainedDatasources, data, done) {
 
         chainedDatasource.endpoint = endpoint;
 
-        help.getData(chainedDatasource, function(result) {
+        help.getData(chainedDatasource, function(err, result) {
 
           if (result) {
             try {

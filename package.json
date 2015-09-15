@@ -18,9 +18,11 @@
     "moment": "^2.10.6",
     "mongodb": "1.4.7",
     "node-slack": "0.0.7",
-    "path-to-regexp": "^1.0.3",
+    "path-to-regexp": "^1.2.1",
     "q": "^1.4.1",
+    "serve-favicon": "^2.3.0",
     "serve-static": "^1.9.1",
+    "toobusy-js": "^0.4.2",
     "underscore": "1.6.0"
   },
   "devDependencies": {
