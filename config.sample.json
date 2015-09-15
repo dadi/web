@@ -36,6 +36,5 @@
         "debugLevel": "DEBUG",
         "whitespace": true 
     },
-    "feedback": false,
-    "useSlackIntegration": false
+    "feedback": false
 }
