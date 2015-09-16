@@ -92,9 +92,16 @@ Api.prototype.listener = function (req, res) {
     // get matching routes, and add req.params
     var matches = this._match(path, req);
 
+    var originalReqParams = req.params;
+    
     var doStack = function (i) {
         return function (err) {
             if (err) return errStack(0)(err);
+            
+            // add the original params back, in case a middleware
+            // has modified the current req.params
+            _.extend(req.params, originalReqParams);
+            
             stack[i](req, res, doStack(++i));
         };
     };
@@ -143,7 +150,7 @@ Api.prototype._match = function (path, req) {
             var keyOpts = keys[i] || {};
             if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
         });
-
+        
         break;
     }
 

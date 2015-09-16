@@ -195,7 +195,7 @@ function loadEventData(events, req, res, data, done) {
   });
 }
 
-Controller.prototype.loadData = function(req, res, data, done) {
+Controller.prototype.loadData = function(req, res, data, done) {  
   var idx = 0;
   var self = this;
 
