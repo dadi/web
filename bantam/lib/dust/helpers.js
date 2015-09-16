@@ -62,3 +62,16 @@ dust.helpers.soberMarkdown = function(chunk, context, bodies, params) {
     }
     return chunk;
 };
+
+/*
+* Returns the supplied 'str' parameter with any instanses of {...} resolved to {vartoreplace}
+* Usage: {@forceRender str="{body}" value="{vartoreplace}" /}
+*/
+dust.helpers.forceRender = function(chunk, context, bodies, params) {
+    str = dust.helpers.tap(params.str, chunk, context);
+    value = dust.helpers.tap(params.value, chunk, context);
+
+    str = str.replace(/{.*?}/gmi, value);
+
+    return chunk.write(str);
+}
