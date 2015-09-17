@@ -385,12 +385,19 @@ function processSearchParameters(key, datasource, params, query) {
     if (params.hasOwnProperty(obj.param)) {
       datasource.schema.datasource.filter[obj.field] = encodeURIComponent(params[obj.param]);
     }
+    else {
+      // param not found in request, remove it from DS filter
+      if (datasource.schema.datasource.filter[obj.field]) {
+        delete datasource.schema.datasource.filter[obj.field];
+      }
+    }
   });
 
   // rebuild the datasource endpoint with the new filters
   var d = new Datasource();
   d.buildEndpoint(datasource.schema, function(endpoint) {
     datasource.endpoint = endpoint;
+
     deferred.resolve();
   });
 

@@ -1,6 +1,6 @@
 {
   "rewrites" : [
-    "^(.*[^/])$ $1/ [L,R=301]"
-    "^/cars/(.*)$ /cars?makeId=$1"
+    ".(css|js|jpg|png|gif)$ - [L]", // don't change asset paths
+    "^(.*[^/])\\?(.*)?$ $1/?$2 [R=301,L]" // ensure trailing slash, and append querystring if provided
   ]
 }
