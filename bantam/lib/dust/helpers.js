@@ -62,3 +62,47 @@ dust.helpers.soberMarkdown = function(chunk, context, bodies, params) {
     }
     return chunk;
 };
+
+/*
+* Returns the supplied 'str' parameter with any instanses of {...} resolved to {vartoreplace}
+* Usage: {@forceRender str="{body}" value="{vartoreplace}" /}
+*/
+dust.helpers.forceRender = function(chunk, context, bodies, params) {
+    str = dust.helpers.tap(params.str, chunk, context);
+    value = dust.helpers.tap(params.value, chunk, context);
+
+    str = str.replace(/{.*?}/gmi, value);
+
+    return chunk.write(str);
+}
+
+/*
+* iter iterates over `items`, much like using `{#items}{/items}`,
+* but with the possiblity to loop over a subset, and in any direction
+* Usage:
+* ```
+* {@iter items=arrayOfItems from=0 to=12}
+*   run for each item, with the item as context
+* {/iter}
+*/
+dust.helpers.iter = function(chunk, context, bodies, params) {
+    params.items = params.items || [];
+    params.from = params.from || 0;
+    params.to = params.to === 0 ? 0 : params.to || params.items.length;
+    var direction;
+    if(params.from < params.to) {
+        direction = 1;
+    }
+    else {
+        direction = -1;
+    }
+    var counter = params.from;
+    while(counter !== params.to) {
+        if(params.items[counter]) {
+            chunk = chunk.render(bodies.block, context.push(params.items[counter]));
+        }
+        // TODO: $idx and $len should be made available
+        counter += direction;
+    }
+    return chunk;
+};
