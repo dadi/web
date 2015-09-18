@@ -74,22 +74,30 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
     var renderer = new marked.Renderer();
     renderer.link = function (href, title, text) {
         
-        console.log(href);
-        console.log(title);
-        console.log(text);
+        var attrArray = href.split('|');
+        var attrs = {};
 
-        var attrName = "";
-        var attrValue = "";
-        var pos = href.indexOf('|');
+        var first = attrArray.shift();
+        if (first) href = first;
 
-        if (pos > 0) {
-            attrValue = href.substr(pos + 1);
-            href = href.substr(0, pos);
-        }
+        for (var i = 0; i < attrArray.length; i++) {
+            var attr = attrArray[i];
+            var attrName = "";
+            var attrValue = "";
+            var pos = attr.indexOf('=');
+            if (pos > 0) {
+                attrName = attr.substr(0, pos);
+                attrValue = attr.substr(pos + 1);               
+            }
+            attrs[attrName] = attrValue;
+        };
+        
+        var attrString = "";
+        Object.keys(attrs).forEach(function (key) {
+            attrString = attrString + key + '="' + attrs[key] + '" ';
+        });
 
-        if (attrValue === 'nofollow') attrName = 'rel';
-
-        return '<a href="' + href + '" ' + attrName + '="' + attrValue + '" title="' + title + '">' + text + '</a>';
+        return '<a href="' + href + '" ' + attrString + ' title="' + title + '">' + text + '</a>';
     }
 
     if (bodies.block) {
