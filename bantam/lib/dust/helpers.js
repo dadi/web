@@ -29,7 +29,7 @@ dust.helpers.Trim = function(chunk, context, bodies, params) {
 dust.helpers.formatDate = function(chunk, context, bodies, params) {
     var data   = context.resolve(params.data),
         format = context.resolve(params.format);
-    return chunk.write(moment().format(format));
+    return chunk.write(moment(data).format(format));
 }
 
 /*
@@ -71,8 +71,26 @@ dust.helpers.formatNumber = function(chunk, context, bodies, params) {
 */
 dust.helpers.markdown = function(chunk, context, bodies, params) {
 
+    // get blacklisted URLs from the context
+    var blacklist = context.get("blacklist");
+    if (blacklist && blacklist.results) {
+        blacklist = blacklist.results;
+    }
+    else {
+        blacklist = [];
+    }
+
     var renderer = new marked.Renderer();
     renderer.link = function (href, title, text) {
+
+        for (var i = 0; i < blacklist.length; i++) {
+          var regexstring = blacklist[i].url.split("*").join('[.]');
+            if (href.match(regexstring)) {
+              if (href.indexOf('rel=nofollow') < 0) {
+                href = href + '|rel=nofollow';
+              }
+          }
+        }
         
         var attrArray = href.split('|');
         var attrs = {};
@@ -102,6 +120,7 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
 
     if (bodies.block) {
         return chunk.capture(bodies.block, context, function(string, chunk) {
+
             chunk.end(marked(string, { renderer: renderer }));
         });
     }
