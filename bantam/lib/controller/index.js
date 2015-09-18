@@ -266,7 +266,11 @@ function processChained(chainedDatasources, data, done) {
 
   _.each(chainedDatasources, function(chainedDatasource, chainedKey) {
     
-    if (data[chainedDatasource.chained.datasource]) {
+    if (!data[chainedDatasource.chained.datasource]) {
+      data[chainedDatasource.chained.datasource] = "Error: chained datasource " + chainedKey + " expected data at this node.";
+      return done(data);
+    }
+    else {
 
       // find the value of the parameter in the returned data
       // to use in the chained datasource
