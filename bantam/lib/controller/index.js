@@ -2,6 +2,7 @@ var fs = require('fs');
 var url = require('url');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
+var commonDustHelpers = require('common-dustjs-helpers');
 var Q = require('q');
 var crypto = require('crypto');
 var _ = require('underscore');
@@ -110,6 +111,9 @@ Controller.prototype.get = function (req, res, next) {
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);
 
+    // add common dust helpers
+    new commonDustHelpers.CommonDustjsHelpers().export_helpers_to(dust);
+    
     var pageTemplate = self.page.template.slice(0, self.page.template.indexOf('.'));
     var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(pageTemplate) > -1; });
 

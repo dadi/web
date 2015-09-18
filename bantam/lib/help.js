@@ -10,6 +10,13 @@ var DatasourceCache = require(__dirname + '/cache/datasource');
 
 var self = this;
 
+module.exports.htmlEncode = function(input) {
+    var encodedStr = input.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+        return '&#'+i.charCodeAt(0)+';';
+    });
+    return encodedStr;
+}
+
 // helper that sends json response
 module.exports.sendBackJSON = function (successCode, res, next) {
     return function (err, results) {

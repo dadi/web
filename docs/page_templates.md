@@ -37,6 +37,8 @@ Layouts
 
 #### Dust Helpers
 
+https://www.npmjs.com/package/common-dustjs-helpers
+
 ##### Truncate
 
 Returns the supplied 'data' parameter truncated using the supplied 'length' parameter 

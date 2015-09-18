@@ -1,14 +1,15 @@
 var dust = require('dustjs-linkedin');
 var markdown = require('markdown');
 var moment = require('moment');
+var help = require(__dirname + '/../help');
 
 /*
 * Returns the supplied 'data' parameter truncated using the supplied 'length' parameter 
 * Usage: {@Truncate data="{body}" length="250"/}
 */
 dust.helpers.Truncate = function(chunk, context, bodies, params) {
-    var data   = dust.helpers.tap(params.data, chunk, context),
-        length = dust.helpers.tap(params.length, chunk, context);
+    var data   = context.resolve(params.data),
+        length = context.resolve(params.length);
     return chunk.write(data.substr(0, length));
 }
 
@@ -17,7 +18,7 @@ dust.helpers.Truncate = function(chunk, context, bodies, params) {
 * Usage: {@Trim data="{body}"/}
 */
 dust.helpers.Trim = function(chunk, context, bodies, params) {
-    var data   = dust.helpers.tap(params.data, chunk, context);
+    var data   = context.resolve(params.data);
     return chunk.write(data.trim());
 }
 
@@ -26,9 +27,43 @@ dust.helpers.Trim = function(chunk, context, bodies, params) {
 * Usage: {@formatDate data="{body}" format="YYYY-MM-DDTh:mm:ss+01:00"/}
 */
 dust.helpers.formatDate = function(chunk, context, bodies, params) {
-    var data   = dust.helpers.tap(params.data, chunk, context),
-        format = dust.helpers.tap(params.format, chunk, context);
+    var data   = context.resolve(params.data),
+        format = context.resolve(params.format);
     return chunk.write(moment().format(format));
+}
+
+/*
+* Returns the supplied 'data' parameter formatted using the supplied parameters
+* See https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString
+* Params:
+*   localeString:   e.g. 'en-GB'
+*   style
+*   currency
+*   minimumFractionDigits
+*   
+*   options:        An object containing properties to determine how the formatting should be applied.
+*                   Unless above params exist, the default is: {style: 'decimal', minimumFractionDigits: 0}
+* Usage: 
+*     {@formatNumber data="12345" localeString="en-GB" /} => 12,345
+*     {@formatNumber data="12345" localeString="en-GB" style="currency" currency="GBP" minimumFractionDigits="0"/} => £12,345
+*/
+dust.helpers.formatNumber = function(chunk, context, bodies, params) {
+    var data         = context.resolve(params.data);
+    var localeString = context.resolve(params.localeString);
+    var style        = context.resolve(params.style);
+    var currency     = context.resolve(params.currency);
+    var fractionDigits = context.resolve(params.minimumFractionDigits);
+
+    var options      = {style: 'decimal', minimumFractionDigits: 0};
+    
+    if (style) options.style = style;
+    if (currency) options.currency = currency;
+    if (fractionDigits) options.minimumFractionDigits = fractionDigits;
+
+    if (data) {
+        var result = parseFloat(data).toLocaleString(localeString, options);
+        return chunk.write(help.htmlEncode(result));
+    }
 }
  
 /*
@@ -68,8 +103,8 @@ dust.helpers.soberMarkdown = function(chunk, context, bodies, params) {
 * Usage: {@forceRender str="{body}" value="{vartoreplace}" /}
 */
 dust.helpers.forceRender = function(chunk, context, bodies, params) {
-    str = dust.helpers.tap(params.str, chunk, context);
-    value = dust.helpers.tap(params.value, chunk, context);
+    str = context.resolve(params.str);
+    value = context.resolve(params.value);
 
     str = str.replace(/{.*?}/gmi, value);
 

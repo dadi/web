@@ -9,9 +9,10 @@
   "private": true,
   "dependencies": {
     "body-parser": "^1.11.0",
+    "common-dustjs-helpers": "^0.1.0",
     "connect-modrewrite": "^0.8.2",
-    "dustjs-helpers": "^1.5.0",
-    "dustjs-linkedin": "^2.5.1",
+    "dustjs-helpers": "^1.7.3",
+    "dustjs-linkedin": "^2.7.2",
     "json-stringify-safe": "^5.0.1",
     "json5": "0.2.0",
     "markdown": "^0.5.0",
