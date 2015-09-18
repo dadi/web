@@ -74,13 +74,18 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
     var renderer = new marked.Renderer();
     renderer.link = function (href, title, text) {
         
+        console.log(href);
+        console.log(title);
+        console.log(text);
+
         var attrName = "";
         var attrValue = "";
-        if (href.toLowerCase().indexOf('|') > 0) {
-            attrValue = href.substr(href.toLowerCase().indexOf('|') + 1);
-        }
+        var pos = href.indexOf('|');
 
-        href = href.substr(0, href.indexOf('|'));
+        if (pos > 0) {
+            attrValue = href.substr(pos + 1);
+            href = href.substr(0, pos);
+        }
 
         if (attrValue === 'nofollow') attrName = 'rel';
 
@@ -89,7 +94,7 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
 
     if (bodies.block) {
         return chunk.capture(bodies.block, context, function(string, chunk) {
-            chunk.end(marked(string));
+            chunk.end(marked(string, { renderer: renderer }));
         });
     }
     return chunk;
