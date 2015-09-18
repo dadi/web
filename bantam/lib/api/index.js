@@ -10,7 +10,7 @@ var Api = function () {
     this.errors = [];
 
     // always add default error handler in case the application doesn't define one
-    this.errors.push(defaultError());
+    this.errors.push(defaultError(this));
 
     // permanently bind context to listener
     this.listener = this.listener.bind(this);
@@ -164,18 +164,31 @@ module.exports = function () {
 module.exports.Api = Api;
 
 // Default error handler, in case application doesn't define error handling
-function defaultError() {
+function defaultError(api) {
     return function (err, req, res) {
+        
         logger.prod(err);
         res.statusCode = err.statusCode || 500;
-        if (err.json) {
-            var resBody = JSON.stringify(err.json);
-            res.setHeader('content-type', 'application/json');
-            res.setHeader('content-length', Buffer.byteLength(resBody));
-            return res.end(resBody);
-        }
 
-        res.end();
+        // look for an error page that has been loaded
+        // along with the rest of the API, and call its
+        // handler if it exists
+
+        var path = _.findWhere(api.paths, { path: '/' + res.statusCode });
+        if (path) {
+            path.handler(req, res);
+        }
+        // otherwise, respond with default message
+        else {
+            if (err.json) {
+                var resBody = JSON.stringify(err.json);
+                res.setHeader('content-type', 'application/json');
+                res.setHeader('content-length', Buffer.byteLength(resBody));
+                return res.end(resBody);
+            }
+
+            res.end();   
+        }
     }
 }
 

@@ -110,7 +110,10 @@ module.exports = function (server, options) {
   // middleware which blocks requests when we're too busy
 	server.app.use(function (req, res, next) {
 	  if (toobusy()) {
-	    res.send(503, "I'm busy right now, sorry.");
+	    var err = new Error();
+      err.statusCode = 503;
+      err.json = { 'error' : 'HTTP Error 503 - Service unavailable' };
+      next(err);
 	  }
 	  else {
 	    next();

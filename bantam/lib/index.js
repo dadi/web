@@ -298,6 +298,9 @@ Server.prototype.addComponent = function (options, reload) {
     });
 
     if (options.route.path === '/index') {
+
+        console.log("Loaded route " + options.route.path);
+        
         // configure "index" route
         this.app.use('/', function (req, res, next) {
             // map request method to controller method
