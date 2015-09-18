@@ -29,7 +29,7 @@ dust.helpers.Trim = function(chunk, context, bodies, params) {
 dust.helpers.formatDate = function(chunk, context, bodies, params) {
     var data   = context.resolve(params.data),
         format = context.resolve(params.format);
-    return chunk.write(moment(data).format(format));
+    return chunk.write(moment.unix(data).format(format));
 }
 
 /*
