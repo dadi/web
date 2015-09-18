@@ -1,5 +1,5 @@
 var dust = require('dustjs-linkedin');
-var markdown = require('markdown');
+var marked = require('marked');
 var moment = require('moment');
 var help = require(__dirname + '/../help');
 
@@ -70,9 +70,26 @@ dust.helpers.formatNumber = function(chunk, context, bodies, params) {
 * Returns the markdown content formatted as HTML
 */
 dust.helpers.markdown = function(chunk, context, bodies, params) {
+
+    var renderer = new marked.Renderer();
+    renderer.link = function (href, title, text) {
+        
+        var attrName = "";
+        var attrValue = "";
+        if (href.toLowerCase().indexOf('|') > 0) {
+            attrValue = href.substr(href.toLowerCase().indexOf('|') + 1);
+        }
+
+        href = href.substr(0, href.indexOf('|'));
+
+        if (attrValue === 'nofollow') attrName = 'rel';
+
+        return '<a href="' + href + '" ' + attrName + '="' + attrValue + '" title="' + title + '">' + text + '</a>';
+    }
+
     if (bodies.block) {
         return chunk.capture(bodies.block, context, function(string, chunk) {
-            chunk.end(markdown.parse(string));
+            chunk.end(marked(string));
         });
     }
     return chunk;
@@ -84,7 +101,7 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
 dust.helpers.soberMarkdown = function(chunk, context, bodies, params) {
     if (bodies.block) {
         return chunk.capture(bodies.block, context, function(string, chunk) {
-            var md = markdown.parse(string);
+            var md = marked(string);
             
             // Replace </p><p> with <br>
             var str = md.replace(/<\/p><p[^>]*>/igm, '<br>');
