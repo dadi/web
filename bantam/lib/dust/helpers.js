@@ -91,7 +91,9 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
     renderer.link = function (href, title, text) {
 
         for (var i = 0; i < blacklist.length; i++) {
-          var regexstring = blacklist[i].url.split("*").join('[.]');
+          var regexstring = blacklist[i].url.split("*").join('(.?)');
+                          console.log(href);
+
             if (href.match(regexstring)) {
               if (href.indexOf('rel=nofollow') < 0) {
                 href = href + '|rel=nofollow';
@@ -122,7 +124,11 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
             attrString = attrString + key + '="' + attrs[key] + '" ';
         });
 
-        return '<a href="' + href + '" ' + attrString + ' title="' + title + '">' + text + '</a>';
+        if (title.length > 0) {
+            title = ' title="' + title + '"';
+        }
+
+        return '<a href="' + href + '" ' + attrString + title'>' + text + '</a>';
     }
 
     if (bodies.block) {
