@@ -124,7 +124,7 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
             attrString = attrString + key + '="' + attrs[key] + '" ';
         });
 
-        if (title.length > 0) {
+        if (title && title.length > 0) {
             title = ' title="' + title + '"';
         }
 
