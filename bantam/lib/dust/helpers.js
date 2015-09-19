@@ -1,6 +1,7 @@
 var dust = require('dustjs-linkedin');
 var marked = require('marked');
 var moment = require('moment');
+var html_strip = require('htmlstrip-native');
 var help = require(__dirname + '/../help');
 
 /*
@@ -202,4 +203,24 @@ dust.helpers.iter = function(chunk, context, bodies, params) {
         counter += direction;
     }
     return chunk;
+};
+
+
+/* 
+* Strips HTML from passed content
+* Uses: https://github.com/zaro/node-htmlstrip-native
+*/
+dust.helpers.htmlstrip = function(chunk, context, bodies, params) {
+    return chunk.capture(bodies.block, context, function(data, chunk){
+        var options = {
+            include_script: false, // exclude the content of <script> tags
+            include_style: false, // exclude the content of <style> tags
+            compact_whitespace: false // compact consecutive '\s' whitespace into single char
+        };
+
+        data = html_strip.html_strip(data, options).trim();
+
+        chunk.write(data);
+        chunk.end();
+    });
 };
