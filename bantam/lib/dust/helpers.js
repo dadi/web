@@ -128,7 +128,7 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
             title = ' title="' + title + '"';
         }
 
-        return '<a href="' + href + '" ' + attrString + title'>' + text + '</a>';
+        return '<a href="' + href + '" ' + attrString + title + '>' + text + '</a>';
     }
 
     if (bodies.block) {
