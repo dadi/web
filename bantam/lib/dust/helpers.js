@@ -1,6 +1,8 @@
 var dust = require('dustjs-linkedin');
 var marked = require('marked');
 var moment = require('moment');
+var _ = require('underscore');
+var s = require('underscore.string');
 var html_strip = require('htmlstrip-native');
 var help = require(__dirname + '/../help');
 
@@ -29,13 +31,13 @@ dust.helpers.Trim = function(chunk, context, bodies, params) {
 * Usage: {@formatDate data="{body}" [unix="{lastModifiedAt}"] format="YYYY-MM-DDTh:mm:ss+01:00"/}
 */
 dust.helpers.formatDate = function(chunk, context, bodies, params) {
-    var format = dust.helpers.tap(params.format, chunk, context);
+    var format = context.resolve(params.format);
 
     if (params.unix) {
-        var unix = dust.helpers.tap(params.unix, chunk, context);
-        return chunk.write(moment.unix(unix / 1000).format(format));     
+        var unix = context.resolve(params.unix);
+        return chunk.write(moment.unix(unix / 1000).format(format));
     } else {
-        var data = dust.helpers.tap(params.data, chunk, context);
+        var data = context.resolve(params.data);
         return chunk.write(moment(data).format(format));
     }
 }
@@ -73,6 +75,25 @@ dust.helpers.formatNumber = function(chunk, context, bodies, params) {
         return chunk.write(help.htmlEncode(result));
     }
 }
+
+var addNoFollowIfRequired = function (href, blacklist, format) {
+
+  if (!format) format = 'md';
+
+  if (!blacklist) return href;
+
+  for (var i = 0; i < blacklist.length; i++) {
+    var regexstring = blacklist[i].url.split("*").join('(.?)');
+    if (href.match(regexstring)) {
+      if (href.indexOf('rel=nofollow') < 0) {
+        if (format === 'md') return href = href + '|rel=nofollow';
+        if (format === 'html') return href = 'href="' + href + '" rel="nofollow"';
+      }
+    }
+  }
+
+  return href;
+}
  
 /*
 * Returns the markdown content formatted as HTML
@@ -81,26 +102,12 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
 
     // get blacklisted URLs from the context
     var blacklist = context.get("blacklist");
-    if (blacklist && blacklist.results) {
-        blacklist = blacklist.results;
-    }
-    else {
-        blacklist = [];
-    }
+    if (blacklist) blacklist = blacklist.results;
 
     var renderer = new marked.Renderer();
     renderer.link = function (href, title, text) {
 
-        for (var i = 0; i < blacklist.length; i++) {
-          var regexstring = blacklist[i].url.split("*").join('(.?)');
-                          console.log(href);
-
-            if (href.match(regexstring)) {
-              if (href.indexOf('rel=nofollow') < 0) {
-                href = href + '|rel=nofollow';
-              }
-          }
-        }
+        href = addNoFollowIfRequired(href, blacklist);
         
         var attrArray = href.split('|');
         var attrs = {};
@@ -127,6 +134,9 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
 
         if (title && title.length > 0) {
             title = ' title="' + title + '"';
+        }
+        else {
+          title = '';
         }
 
         return '<a href="' + href + '" ' + attrString + title + '>' + text + '</a>';
@@ -224,3 +234,46 @@ dust.helpers.htmlstrip = function(chunk, context, bodies, params) {
         chunk.end();
     });
 };
+
+/* 
+* Adds rel=nofollow to links matching blacklisted entries
+* 
+*/
+dust.helpers.noFollow = function(chunk, context, bodies, params) {
+
+  if (!bodies.block) return chunk;
+
+  return chunk.capture(bodies.block, context, function (data, chunk){
+
+    data = s.unescapeHTML(data);
+    
+    // get blacklisted URLs from the context
+    var blacklist = context.get("blacklist");
+    if (blacklist) blacklist = blacklist.results
+  
+    var matches = data.match(/<a[\s]+([^>]+)>((?:.(?!\<\/a\>))*.)<\/a>/g);
+    _.each(matches, function (match) {
+      if (match.indexOf('nofollow') < 0) {
+        var attrPos = match.indexOf('href');
+        var href = match.substr(attrPos);
+        href = href.replace('href="', '')
+        href = s.strLeft(href, '"');
+
+        var originalHref = href;
+        var originalHrefFull = 'href="' + href + '"';
+
+        // test against blacklisted domains
+        href = addNoFollowIfRequired(href, blacklist, 'html');
+
+        if (href !== originalHref) data = data.replace(originalHrefFull, href);
+      }
+    });
+
+    chunk.write(data);
+    chunk.end();
+  });  
+
+}
+
+
+
