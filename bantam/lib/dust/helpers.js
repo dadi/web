@@ -34,17 +34,17 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
     var format = context.resolve(params.format);
 
     if (params.unix_sec) {
-        var unix = context.resolve(params.unix);
-        return chunk.write(moment.unix(unix).format(format));     
+        var unix_sec = context.resolve(params.unix_sec);
+        return chunk.write(moment.unix(unix_sec).format(format));     
     }
-    if (params.unix) {
+    else if (params.unix) {
         var unix = context.resolve(params.unix);
         return chunk.write(moment.unix(unix / 1000).format(format));
     } else {
         var data = context.resolve(params.data);
         return chunk.write(moment(data).format(format));
     }
-}
+} 
 
 /*
 * Returns the supplied 'data' parameter formatted using the supplied parameters
