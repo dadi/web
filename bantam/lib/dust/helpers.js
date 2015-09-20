@@ -34,7 +34,7 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
     var format = context.resolve(params.format);
 
     if (params.unix_sec) {
-        var unix = dust.helpers.tap(params.unix, chunk, context);
+        var unix = context.resolve(params.unix);
         return chunk.write(moment.unix(unix).format(format));     
     }
     if (params.unix) {
