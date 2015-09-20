@@ -25,12 +25,16 @@ dust.helpers.Trim = function(chunk, context, bodies, params) {
 
 /*
 * Returns the supplied 'data' parameter formatted using the supplied 'format' parameter 
-* Pass a unix epoch time (expects milliseconds) in the 'unix' parameter
+* Pass a unix epoch time (expects milliseconds) in the 'unix' parameter. For seconds use 'unix_sec'
 * Usage: {@formatDate data="{body}" [unix="{lastModifiedAt}"] format="YYYY-MM-DDTh:mm:ss+01:00"/}
 */
 dust.helpers.formatDate = function(chunk, context, bodies, params) {
     var format = dust.helpers.tap(params.format, chunk, context);
 
+    if (params.unix_sec) {
+        var unix = dust.helpers.tap(params.unix, chunk, context);
+        return chunk.write(moment.unix(unix).format(format));     
+    }
     if (params.unix) {
         var unix = dust.helpers.tap(params.unix, chunk, context);
         return chunk.write(moment.unix(unix / 1000).format(format));     
