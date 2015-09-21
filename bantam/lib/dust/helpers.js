@@ -214,3 +214,7 @@ dust.helpers.htmlstrip = function(chunk, context, bodies, params) {
         chunk.end();
     });
 };
+
+dust.filters.lowercase = function (value) {
+  return value.toLowerCase();
+}

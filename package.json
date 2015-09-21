@@ -8,6 +8,7 @@
   },
   "private": true,
   "dependencies": {
+    "async": "^1.4.2",
     "body-parser": "^1.11.0",
     "common-dustjs-helpers": "^0.1.0",
     "connect-modrewrite": "^0.8.2",
