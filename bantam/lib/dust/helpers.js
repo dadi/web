@@ -215,6 +215,21 @@ dust.helpers.htmlstrip = function(chunk, context, bodies, params) {
     });
 };
 
+/*
+* Default values for partials
+*/
+
+dust.helpers.defaultParam = function(chunk, context, bodies, params) {
+    var key = params.key,
+        value = params.value;
+
+    if(typeof context.get(key) === 'undefined') {
+        context.global[key] = value;
+    }
+};
+
+
+/* Temp - Whatcar project should use @downcase */
 dust.filters.lowercase = function (value) {
   return value.toLowerCase();
 }
