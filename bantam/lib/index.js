@@ -1,4 +1,4 @@
-var pkginfo = require('pkginfo').read(__dirname);
+//var pkginfo = require('pkginfo').read(__dirname);
 var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
@@ -82,7 +82,7 @@ Server.prototype.start = function (options, done) {
 
     server.on('listening', function (e) {
 
-      var message = "\n[BANTAM] Started Rosecomb (" + pkginfo.package.version + ") on " + config.server.host + ":" + config.server.port + "\n";
+      var message = "\n[BANTAM] Started Rosecomb (" + "pkginfo.package.version" + ") on " + config.server.host + ":" + config.server.port + "\n";
       message += "[BANTAM] Attached to Serama API on " + config.api.host + ":" + config.api.port;
 
       console.log(message);

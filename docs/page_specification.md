@@ -5,16 +5,21 @@
 ```js
 	{
 	    "page": {
-	        "name": "Car Reviews",
-	        "description": "A collection of car reviews.",
-	        "language": "en",
-	        "cache": true
+        "name": "Car Reviews",
+        "description": "A collection of car reviews.",
+        "language": "en"
 	    },
-	    "route": "/car-reviews/:make/:model", // route configuration (optional)
+	    "settings": {
+	      "cache": true
+	    },
+	    "route": {
+	    	"path": /car-reviews/:make/:model", // route configuration (optional)
+	    },
+	    "contentType": "application/xml" // (optional, default = text/html)
 	    "template": "car-reviews.dust", // template filename (optional)
 	    "datasources": [ // specifies attached data sources
-	        "car-makes",
-	        "car-models"
+        "car-makes",
+        "car-models"
 	    ],
 	    "events": [ ] // specifies optional attached events
 	}
