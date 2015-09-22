@@ -168,10 +168,13 @@ Server.prototype.loadApi = function (options) {
     var partialPath = this.partialPath = options.partialPath || __dirname + '/../../workspace/partials';
     var eventPath = this.eventPath = options.eventPath || __dirname + '/../../workspace/events';
 
+    var routesPath = this.routesPath = options.routesPath || __dirname + '/../../workspace/routes';
+
     options.datasourcePath = datasourcePath;
     options.pagePath = pagePath;
     options.partialPath = partialPath;
     options.eventPath = eventPath;
+    options.routesPath = routesPath;
 
     self.ensureDirectories(options);
     
@@ -196,6 +199,12 @@ Server.prototype.loadApi = function (options) {
 
     self.addMonitor(partialPath, function (partialFile) {
         self.dustCompile(options);
+    });
+
+    self.addMonitor(routesPath, function (file) {
+        if (self.app.Router) {
+            self.app.Router.loadRewrites(options);
+        }
     });
     
     logger.prod('Server load complete');

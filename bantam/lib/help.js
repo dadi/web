@@ -136,7 +136,7 @@ module.exports.getData = function(datasource, done) {
             });
         
             req.on('error', function(err) {
-    	       console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err);
+    	       console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err + "(" + datasource.endpoint + ")");
     	       return done('{ "error" : "Connection refused" }');
             });
         
