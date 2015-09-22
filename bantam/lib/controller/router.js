@@ -35,12 +35,18 @@ var Router = function (options) {
 
 Router.prototype.loadRewrites = function(options) {
   var self = this;
-  console.log(self.rules);
+  
   // load the rewrite specifications if they exist
   if (fs.existsSync(options.routePath + '/rewrites.json')) {
-    var rewrites = require(options.routePath + '/rewrites.json');
-    if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
-      self.rules = rewrites.rewrites;
+    var rewriteText = fs.readFileSync(options.routePath + '/rewrites.json');
+    try {
+      var rewrites = JSON.parse(rewriteText);
+      if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
+        self.rules = rewrites.rewrites;
+      }
+    }
+    catch (e) {
+
     }
   }
 
