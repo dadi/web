@@ -207,6 +207,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   
   // remove debug from query
   delete query.debug;
+  delete query.json;
 
   var path = url.parse(req.url).pathname.replace('/','');
 
