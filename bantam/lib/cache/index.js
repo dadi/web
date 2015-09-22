@@ -48,6 +48,7 @@ module.exports = function (server) {
         var cachepath = path.join(dir, filename + '.' + config.caching.extension);
 
         fs.stat(cachepath, function (err, stats) {
+
             if (err) {
                 if (err.code === 'ENOENT') {
                     return cacheResponse();
@@ -58,9 +59,11 @@ module.exports = function (server) {
             // check if ttl has elapsed
             var ttl = options.ttl || config.caching.ttl;
             var lastMod = stats && stats.mtime && stats.mtime.valueOf();
+
             if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) return cacheResponse();
 
             fs.readFile(cachepath, {encoding: cacheEncoding}, function (err, resBody) {
+
                 if (err) return next(err);
 
                 // there are only two possible types javascript or json
@@ -84,7 +87,8 @@ module.exports = function (server) {
             var data = '';
 
             res.write = function (chunk) {
-                if (chunk) data += chunk;
+                // with this line, we get cache files with duplicate content
+                //if (chunk) data += chunk;
                 _write.apply(res, arguments);
             };
 

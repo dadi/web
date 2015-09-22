@@ -1,3 +1,4 @@
+var pkginfo = require('pkginfo').read(__dirname);
 var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
@@ -81,8 +82,9 @@ Server.prototype.start = function (options, done) {
 
     server.on('listening', function (e) {
 
-      var message = "\nStarted Rosecomb on " + config.server.host + ":" + config.server.port + "\n";
-      
+      var message = "\n[BANTAM] Started Rosecomb (" + pkginfo.package.version + ") on " + config.server.host + ":" + config.server.port + "\n";
+      message += "[BANTAM] Attached to Serama API on " + config.api.host + ":" + config.api.port;
+
       console.log(message);
       logger.prod(message);
 
@@ -168,10 +170,13 @@ Server.prototype.loadApi = function (options) {
     var partialPath = this.partialPath = options.partialPath || __dirname + '/../../workspace/partials';
     var eventPath = this.eventPath = options.eventPath || __dirname + '/../../workspace/events';
 
+    var routesPath = this.routesPath = options.routesPath || __dirname + '/../../workspace/routes';
+
     options.datasourcePath = datasourcePath;
     options.pagePath = pagePath;
     options.partialPath = partialPath;
     options.eventPath = eventPath;
+    options.routesPath = routesPath;
 
     self.ensureDirectories(options);
     
@@ -196,6 +201,12 @@ Server.prototype.loadApi = function (options) {
 
     self.addMonitor(partialPath, function (partialFile) {
         self.dustCompile(options);
+    });
+
+    self.addMonitor(routesPath, function (file) {
+        if (self.app.Router) {
+            self.app.Router.loadRewrites(options);
+        }
     });
     
     logger.prod('Server load complete');

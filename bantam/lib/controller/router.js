@@ -25,19 +25,34 @@ var Router = function (options) {
   this.handlers = null;
   this.rules = [];
 
-  var self = this;
-
   // load the route constraint specifications if they exist
   if (fs.existsSync(options.routePath + '/constraints.js')) {
     this.handlers = require(options.routePath + '/constraints.js');
   }
 
+  this.loadRewrites(options);
+}
+
+Router.prototype.loadRewrites = function(options) {
+  var self = this;
+  
   // load the rewrite specifications if they exist
   if (fs.existsSync(options.routePath + '/rewrites.json')) {
-    var rewrites = require(options.routePath + '/rewrites.json');
-    if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
-      self.rules = rewrites.rewrites;
+    var rewriteText = fs.readFileSync(options.routePath + '/rewrites.json');
+    try {
+      var rewrites = JSON.parse(rewriteText);
+      if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
+        self.rules = rewrites.rewrites;
+      }
     }
+    catch (e) {
+
+    }
+  }
+
+  if (!_.isEmpty(self.rules)) {
+      console.log("[ROUTER] " + self.rules.length + " redirects loaded:");
+      console.log(self.rules);
   }
 
 }
@@ -122,12 +137,6 @@ module.exports = function (server, options) {
 
   // add any loaded rewrite rules
   server.app.use(modRewrite(server.app.Router.rules));
-
-  if (!_.isEmpty(server.app.Router.rules)) {
-      console.log("[ROUTER] " + server.app.Router.rules.length + " redirects loaded:");
-      console.log(server.app.Router.rules);
-  }
-
 };
 
 module.exports.Router = Router;

@@ -8,6 +8,7 @@
   },
   "private": true,
   "dependencies": {
+    "async": "^1.4.2",
     "body-parser": "^1.11.0",
     "common-dustjs-helpers": "^0.1.0",
     "connect-modrewrite": "^0.8.2",
@@ -21,6 +22,7 @@
     "mongodb": "1.4.7",
     "node-slack": "0.0.7",
     "path-to-regexp": "^1.2.1",
+    "pkginfo": "^0.3.0",
     "q": "^1.4.1",
     "serve-favicon": "^2.3.0",
     "serve-static": "^1.9.1",

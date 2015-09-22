@@ -40,9 +40,10 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
     else if (params.unix) {
         var unix = context.resolve(params.unix);
         return chunk.write(moment.unix(unix / 1000).format(format));
-    } else {
+    }
+    else {
         var data = context.resolve(params.data);
-        return chunk.write(moment(data).format(format));
+        return chunk.write(moment(data, format).format(format));
     }
 } 
 
@@ -214,7 +215,6 @@ dust.helpers.htmlstrip = function(chunk, context, bodies, params) {
     });
 };
 
-
 /*
 * Default values for partials
 */
@@ -227,3 +227,9 @@ dust.helpers.defaultParam = function(chunk, context, bodies, params) {
         context.global[key] = value;
     }
 };
+
+
+/* Temp - Whatcar project should use @downcase */
+dust.filters.lowercase = function (value) {
+  return value.toLowerCase();
+}
