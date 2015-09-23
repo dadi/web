@@ -41,7 +41,10 @@ Server.prototype.start = function (options, done) {
 
     // add necessary middlewares in order below here...
 
+    // serve static files (css,js,fonts)
     app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+    app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
+    app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
@@ -123,10 +126,6 @@ Server.prototype.start = function (options, done) {
         process.exit(0);
       }
     });
-
-    // serve static files (css,js,fonts)
-    app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
-    app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
 
     // load app specific routes
     this.loadApi(options);

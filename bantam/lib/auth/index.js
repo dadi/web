@@ -22,7 +22,7 @@ module.exports = function (server) {
           }
         }
 
-        console.log("[AUTH] Generating new access token...");
+        console.log("[AUTH] Generating new access token..." + req.url);
 
         var postData = {
           clientId : config.auth.clientId,

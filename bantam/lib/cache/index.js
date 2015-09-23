@@ -40,6 +40,7 @@ module.exports = function (server) {
         // allow query string param to bypass cache
         var query = url.parse(req.url, true).query;
         var noCache = query.cache && query.cache.toString().toLowerCase() === 'false';
+
         if (noCache) return next();
 
         // we build the filename with a hashed hex string so we can be unique
@@ -63,7 +64,6 @@ module.exports = function (server) {
             if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) return cacheResponse();
 
             fs.readFile(cachepath, {encoding: cacheEncoding}, function (err, resBody) {
-
                 if (err) return next(err);
 
                 // there are only two possible types javascript or json
@@ -72,7 +72,7 @@ module.exports = function (server) {
 
                 res.statusCode = 200;
                 res.setHeader('content-type', dataType);
-                res.setHeader('content-length', resBody.length);
+                res.setHeader('content-length', Buffer.byteLength(resBody));
 
                 res.end(resBody);
             });

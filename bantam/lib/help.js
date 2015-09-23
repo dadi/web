@@ -55,6 +55,7 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
         res.statusCode = successCode;
 
         var resBody = results;
+        //res.setHeader('Cache-Control', 'private, max-age=600');
         res.setHeader('content-type', contentType);
         res.setHeader('content-length', Buffer.byteLength(resBody));
 
@@ -89,15 +90,18 @@ module.exports.getData = function(datasource, done) {
 
     // TODO allow non-Serama endpoints    
     var datasourceCache = new DatasourceCache(datasource);
-    var cachedData = datasourceCache.getFromCache();
-    if (cachedData) return done(cachedData);
 
-    if (datasource.source.type === 'static') {
-        this.getStaticData(datasource, function(data) {
-            done(data);
-        });
-    }
-    else {
+    var self = this;
+
+    datasourceCache.getFromCache(function (cachedData) {
+
+        if (cachedData) return done(null, cachedData);
+
+        if (datasource.source.type === 'static') {
+            self.getStaticData(datasource, function(data) {
+                return done(null, data);
+            });
+        }
 
         var defaults = {
             host: datasource.source.host,
@@ -106,7 +110,7 @@ module.exports.getData = function(datasource, done) {
             method: 'GET'
         };
 
-        this.getHeaders(datasource, function(headers) {
+        self.getHeaders(datasource, function(headers) {
 
             var options = _.extend(defaults, headers);
 
@@ -136,8 +140,8 @@ module.exports.getData = function(datasource, done) {
             });
         
             req.on('error', function(err) {
-    	       console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err + "(" + datasource.endpoint + ")");
-    	       return done('{ "error" : "Connection refused" }');
+               console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err + "(" + datasource.endpoint + ")");
+               return done('{ "error" : "Connection refused" }');
             });
         
             try {
@@ -147,7 +151,7 @@ module.exports.getData = function(datasource, done) {
         
             }
         });
-    }
+    });
 };
 
 module.exports.getHeaders = function(datasource, done) {
