@@ -1,6 +1,7 @@
 var fs = require('fs');
 var _ = require('underscore');
 var logger = require(__dirname + '/../log');
+var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
 
 var Datasource = function (page, datasource, options, callback) {
   if (page) {
@@ -55,8 +56,27 @@ Datasource.prototype.loadDatasource = function(done) {
 Datasource.prototype.setAuthStrategy = function() {
   
   if (!this.schema.datasource.auth) return null;
+
+//  var authConfig = {};
+
+  // load the auth configuration file
+  // var authConfigPath = __dirname + '/../../../config.auth.json';
+  // if (fs.existsSync(authConfigPath)) {
+  //   try {
+  //     var body = fs.readFileSync(authConfigPath, {encoding: 'utf-8'});
+  //     authConfig = JSON.parse(body);
+  //   }
+  //   catch (err) {
+  //     throw new Error('Error loading datasource auth config "' + filepath + '". Is it valid JSON? ' + err);
+  //   }
+  // }
+    
+  // var authBlock = this.schema.datasource.auth;
+
+  // if (typeof authBlock === 'string' && authConfig[authBlock]) {
+  //   this.schema.datasource.auth = authConfig[authBlock];
+  // }
   
-  var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
   return new BearerAuthStrategy(this.schema.datasource.auth);
 };
 
@@ -99,17 +119,7 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri, done) 
   params.forEach(function(param) {
     for (key in param) {
       if (param.hasOwnProperty(key) && (typeof param[key] !== 'undefined')) {
-        if (key === "fields") {
-          //var fields = {};
-          //for (field in param[key]) {
-          //  fields[param[key][field]] = true;
-          //}
-          //query = query + key + "=" + JSON.stringify(fields) + "&";
-          query = query + key + "=" + param[key].join() + "&";
-        }
-        else {
-          query = query + key + "=" + (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) + "&";
-        }
+        query = query + key + "=" + (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) + "&";
       }
     }
 
