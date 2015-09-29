@@ -51,8 +51,7 @@ Router.prototype.loadRewrites = function(options) {
   }
 
   if (!_.isEmpty(self.rules)) {
-      console.log("[ROUTER] " + self.rules.length + " redirects loaded:");
-      console.log(self.rules);
+      console.log("[ROUTER] " + self.rules.length + " redirects loaded");
   }
 
 }
