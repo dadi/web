@@ -184,14 +184,19 @@ dust.helpers.iter = function(chunk, context, bodies, params) {
     else {
         direction = -1;
     }
-    var counter = params.from;
-    while(counter !== params.to) {
-        if(params.items[counter]) {
-            chunk = chunk.render(bodies.block, context.push(params.items[counter]));
+    var metaContext = {
+        $idx: params.from,
+        $len: params.items.length
+    };
+    context = context.push(metaContext);
+    while(metaContext.$idx !== params.to) {
+        if(params.items[metaContext.$idx]) {
+            chunk = chunk.render(bodies.block, context.push(params.items[metaContext.$idx]));
         }
-        // TODO: $idx and $len should be made available
-        counter += direction;
+        metaContext.$idx += direction;
     }
+    // pop metaContext
+    context.pop();
     return chunk;
 };
 
@@ -231,5 +236,8 @@ dust.helpers.defaultParam = function(chunk, context, bodies, params) {
 
 /* Temp - Whatcar project should use @downcase */
 dust.filters.lowercase = function (value) {
-  return value.toLowerCase();
-}
+    if(typeof value === 'string') {
+        return value.toLowerCase();
+    }
+    return value;
+};
