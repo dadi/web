@@ -13,9 +13,9 @@
 	      "cache": true
 	    },
 	    "route": {
-	    	"path": /car-reviews/:make/:model", // route configuration (optional)
+	    	"path": "/car-reviews/:make/:model", // route configuration (optional)
 	    },
-	    "contentType": "application/xml" // (optional, default = text/html)
+	    "contentType": "application/xml", // (optional, default = text/html)
 	    "template": "car-reviews.dust", // template filename (optional)
 	    "datasources": [ // specifies attached data sources
         "car-makes",

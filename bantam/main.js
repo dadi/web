@@ -6,6 +6,6 @@ app.start({
   pagePath: __dirname + '/../workspace/pages',
   partialPath: __dirname + '/../workspace/partials',
   eventPath: __dirname + '/../workspace/events',
-  routePath: __dirname + '/../workspace/routes',
+  routesPath: __dirname + '/../workspace/routes',
   publicPath: __dirname + '/../public'
 });
