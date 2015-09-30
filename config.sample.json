@@ -4,7 +4,7 @@
         "level": "DEBUG",
         "path": "./log",
         "filename": "rosecomb",
-        "dateFormat": "YYYY-MM-DD",
+        "dateFormat": "",
         "extension": "log",
         "messageFormat": "<%= label %> - <%= date %> - <%= message %>"
     },

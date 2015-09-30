@@ -26,8 +26,8 @@ var Router = function (options) {
   this.rules = [];
 
   // load the route constraint specifications if they exist
-  if (fs.existsSync(options.routePath + '/constraints.js')) {
-    this.handlers = require(options.routePath + '/constraints.js');
+  if (fs.existsSync(options.routesPath + '/constraints.js')) {
+    this.handlers = require(options.routesPath + '/constraints.js');
   }
 
   this.loadRewrites(options);
@@ -37,8 +37,8 @@ Router.prototype.loadRewrites = function(options) {
   var self = this;
   
   // load the rewrite specifications if they exist
-  if (fs.existsSync(options.routePath + '/rewrites.json')) {
-    var rewriteText = fs.readFileSync(options.routePath + '/rewrites.json');
+  if (fs.existsSync(options.routesPath + '/rewrites.json')) {
+    var rewriteText = fs.readFileSync(options.routesPath + '/rewrites.json');
     try {
       var rewrites = JSON.parse(rewriteText);
       if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
@@ -51,7 +51,8 @@ Router.prototype.loadRewrites = function(options) {
   }
 
   if (!_.isEmpty(self.rules)) {
-      console.log("[ROUTER] " + self.rules.length + " redirects loaded");
+      logger.prod("[ROUTER] " + self.rules.length + " redirects loaded.");
+      //console.log(self.rules);
   }
 
 }
@@ -67,7 +68,7 @@ Router.prototype.constrain = function(route, fn) {
   
   // check the specified function has been loaed from /workspace/routes/constraints.js
   if (!this.handlers[fn]) {
-    console.log("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
+    logger.prod("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
     return;
   }
 
@@ -119,7 +120,7 @@ module.exports = function (server, options) {
 
   server.app.Router = new Router(options);
 
-  console.log("[ROUTER] Router loaded.");
+  logger.prod("[ROUTER] Router loaded.");
 
   // middleware which blocks requests when we're too busy
 	server.app.use(function (req, res, next) {

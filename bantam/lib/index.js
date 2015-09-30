@@ -85,11 +85,14 @@ Server.prototype.start = function (options, done) {
 
     server.on('listening', function (e) {
 
-      var message = "\n[BANTAM] Started Rosecomb (" + "pkginfo.package.version" + ") on " + config.server.host + ":" + config.server.port + "\n";
-      message += "[BANTAM] Attached to Serama API on " + config.api.host + ":" + config.api.port;
+      var rosecombMessage = "[BANTAM] Started Rosecomb (" + "pkginfo.package.version" + ") on " + config.server.host + ":" + config.server.port;
+      var seramaMessage = "[BANTAM] Attached to Serama API on " + config.api.host + ":" + config.api.port;
 
-      console.log(message);
-      logger.prod(message);
+      console.log("\n" + rosecombMessage);
+      console.log(seramaMessage + "\n");
+      
+      logger.prod(rosecombMessage);
+      logger.prod(seramaMessage);
 
       if (config.useSlackIntegration) {
         var Slack = require('node-slack');
