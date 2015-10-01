@@ -1,6 +1,6 @@
 {
   "name": "rosecomb",
-  "version": "0.1.2-beta",
+  "version": "0.1.3-beta",
   "description": "Template layer for the Serama API",
   "scripts": {
     "test": "node_modules/.bin/mocha",
