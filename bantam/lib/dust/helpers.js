@@ -232,11 +232,15 @@ dust.helpers.defaultParam = function(chunk, context, bodies, params) {
     }
 };
 
+/*
+* Numbers with commas
+*/
 
-/* Temp - Whatcar project should use @downcase */
-dust.filters.lowercase = function (value) {
-    if(typeof value === 'string') {
-        return value.toLowerCase();
-    }
-    return value;
+dust.helpers.numberCommas = function(chunk, context, bodies, params) {
+    return chunk.capture(bodies.block, context, function(data, chunk){
+        data = data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+
+        chunk.write(data);
+        chunk.end();
+    });
 };
