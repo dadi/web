@@ -5,6 +5,7 @@ var url = require('url');
 var util = require('util');
 var _ = require('underscore');
 
+var logger = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
 var DatasourceCache = require(__dirname + '/cache/datasource');
 
@@ -130,8 +131,11 @@ module.exports.getData = function(datasource, done) {
                 if (res.statusCode === 404) {
                     var err = new Error();
                     err.statusCode = res.statusCode;
-                    err.json = { "error" : res.statusMessage + ": " + datasource.endpoint };
-                    return done(err);
+                    err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
+
+                    logger.prod('[DATA] ' + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+
+                    //return done(err);
                 }
         
                 return done(null, output);
@@ -180,26 +184,6 @@ module.exports.parseQuery = function (queryStr) {
     // handle case where queryStr is "null" or some other malicious string
     if (typeof ret !== 'object' || ret === null) ret = {};
     return ret;
-}
-
-/**
- * Recursively create directories.
- */
-module.exports.mkdirParent =  function(dirPath, mode, callback) {
-    if (fs.existsSync(path.resolve(dirPath))) return;
-
-    fs.mkdir(dirPath, mode, function(error) {
-        // When it fails because the parent doesn't exist, call it again
-        if (error && error.errno === 34) {
-          // Create all the parents recursively
-          self.mkdirParent(path.dirname(dirPath), mode, callback);
-          // And then finally the directory
-          self.mkdirParent(dirPath, mode, callback);
-        }
-
-        // Manually run the callback
-        callback && callback(error);
-    });
 }
 
 // creates a new function in the underscore.js namespace

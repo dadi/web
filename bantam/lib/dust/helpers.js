@@ -76,8 +76,7 @@ dust.helpers.formatNumber = function(chunk, context, bodies, params) {
     if (fractionDigits) options.minimumFractionDigits = fractionDigits;
 
     if (data) {
-        var result = parseFloat(data).toLocaleString(localeString, options);
-        return chunk.write(help.htmlEncode(result));
+        return chunk.write(data);
     }
 }
  

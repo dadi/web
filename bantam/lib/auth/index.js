@@ -22,7 +22,7 @@ module.exports = function (server) {
           }
         }
 
-        console.log("[AUTH] Generating new access token..." + req.url);
+        console.log('[AUTH] Generating new access token for "' + req.url + '"');
 
         var postData = {
           clientId : config.auth.clientId,
@@ -49,8 +49,8 @@ module.exports = function (server) {
           res.on('end', function() {
             
             if (!output) {
-              console.log('No token received, invalid credentials.');
-              logger.prod('No token received, invalid credentials.');
+              console.log('[AUTH] No token received, invalid credentials.');
+              logger.prod('[AUTH] No token received, invalid credentials.');
               
               res.statusCode = 401;
               return next();
@@ -60,14 +60,14 @@ module.exports = function (server) {
             token.authToken = tokenResponse;
             token.created_at = Math.floor(Date.now() / 1000);
 
-            console.log('Done.');
+            console.log('[AUTH] Token received.');
             return next();
           });
         });
 
         req.on('error', function(err) {
           console.log(err);
-          logger.prod('Error requesting accessToken from ' + options.hostname);
+          logger.prod('[AUTH] Error requesting accessToken from ' + options.hostname);
           next();
         });
         

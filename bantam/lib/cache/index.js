@@ -1,11 +1,12 @@
-var config = require(__dirname + '/../../../config');
-var help = require(__dirname + '/../help');
-var logger = require(__dirname + '/../log');
+var crypto = require('crypto');
 var fs = require('fs');
+var mkdirp = require('mkdirp');
 var path = require('path');
 var url = require('url');
-var crypto = require('crypto');
 var _ = require('underscore');
+
+var config = require(__dirname + '/../../../config');
+var logger = require(__dirname + '/../log');
 
 var cacheEncoding = 'utf8';
 var options = {};
@@ -13,7 +14,16 @@ var options = {};
 var dir = config.caching.directory;
 
 // create cache directory if it doesn't exist
-help.mkdirParent(path.resolve(dir), '777', function() {});
+mkdirp(dir, {}, function (err, made) {
+    if (err) {
+        console.log('[CACHE] ' + err);
+        logger.prod('[CACHE] ' + err);
+    }
+
+    if (made) {
+        logger.prod('[CACHE] Created cache directory ' + made);
+    }
+});
 
 function cachingEnabled(endpoints, requestUrl) {
 

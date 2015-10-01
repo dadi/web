@@ -1,9 +1,10 @@
-var config = require(__dirname + '/../../config').logging;
-var help = require(__dirname + '/help');
-var path = require('path');
 var fs = require('fs');
+var mkdirp = require('mkdirp');
 var moment = require('moment');
+var path = require('path');
 var _ = require('underscore');
+
+var config = require(__dirname + '/../../config').logging;
 
 var logPath = path.resolve(config.path + '/' + config.filename + '.' + config.extension);
 var logLevel = config.level;
@@ -20,8 +21,16 @@ var formatter = compile(config.messageFormat);
 var stream;
 
 // create log directory if it doesn't exist
-help.mkdirParent(config.path, function() {
-    fs.writeFileSync(logPath, 'LOG FILE CREATED\n================\n\n');
+mkdirp(config.path, {}, function(err, made) {
+    if (err) {
+        console.log('[LOGGER] ' + err);
+        module.exports.prod('[LOGGER] ' + err);
+    }
+
+    if (made) {
+        module.exports.prod('[LOGGER] Created log directory ' + made);
+        module.exports.prod('[LOGGER] Log file created.');
+    }
 });
 
 // create writeStream to log

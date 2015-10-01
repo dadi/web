@@ -2,6 +2,7 @@
 var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
+var mkdirp = require('mkdirp');
 var _ = require('underscore');
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
@@ -180,38 +181,41 @@ Server.prototype.loadApi = function (options) {
     options.eventPath = eventPath;
     options.routesPath = routesPath;
 
-    self.ensureDirectories(options);
-    
-    // load routes
-    self.updatePages(pagePath, options, false);
-    
-    // compile all dust templates
-    self.dustCompile(options);
+    self.ensureDirectories(options, function(text) {
 
-    self.addMonitor(datasourcePath, function (dsFile) {
-        self.updatePages(pagePath, options, true);
-    });
-
-    self.addMonitor(eventPath, function (eventFile) {
-        self.updatePages(pagePath, options, true);
-    });
-
-    self.addMonitor(pagePath, function (pageFile) {
-        self.updatePages(pagePath, options);
+        // load routes
+        self.updatePages(pagePath, options, false);
+        
+        // compile all dust templates
         self.dustCompile(options);
+
+        self.addMonitor(datasourcePath, function (dsFile) {
+            self.updatePages(pagePath, options, true);
+        });
+
+        self.addMonitor(eventPath, function (eventFile) {
+            self.updatePages(pagePath, options, true);
+        });
+
+        self.addMonitor(pagePath, function (pageFile) {
+            self.updatePages(pagePath, options);
+            self.dustCompile(options);
+        });
+
+        self.addMonitor(partialPath, function (partialFile) {
+            self.dustCompile(options);
+        });
+
+        self.addMonitor(routesPath, function (file) {
+            if (self.app.Router) {
+                self.app.Router.loadRewrites(options);
+            }
+        });
+        
+        logger.prod('[SERVER] Load complete.');
+
     });
 
-    self.addMonitor(partialPath, function (partialFile) {
-        self.dustCompile(options);
-    });
-
-    self.addMonitor(routesPath, function (file) {
-        if (self.app.Router) {
-            self.app.Router.loadRewrites(options);
-        }
-    });
-    
-    logger.prod('Server load complete');
 };
 
 Server.prototype.updatePages = function (directoryPath, options, reload) {
@@ -451,12 +455,34 @@ Server.prototype.dustCompile = function (options) {
  *  @return 
  *  @api public
  */
-Server.prototype.ensureDirectories = function (options) {
+Server.prototype.ensureDirectories = function (options, done) {
     var self = this;
 
-    // create cache directory if it doesn't exist
+    // create workspace directories if they don't exist
+    var idx = 0;
     _.each(options, function(dir) {
-        help.mkdirParent(path.resolve(dir), '777', function() {});
+        //if (!fs.existsSync(dir)) {
+            mkdirp(dir, {}, function (err, made) {
+
+                if (err) {
+                    console.log('[SERVER] ' + err);
+                    logger.prod('[SERVER] ' + err);
+                }
+
+                if (made) {
+                    logger.prod('[SERVER] Created workspace directory ' + made);
+                }
+
+                idx++;
+
+                if (idx === Object.keys(options).length) return done();
+            });
+        // }
+        // else {
+        //     idx++;    
+        // }
+
+        //if (idx === Object.keys(options).length) return done('done');
     });
 };
 
