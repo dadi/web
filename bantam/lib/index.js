@@ -139,8 +139,7 @@ Server.prototype.start = function (options, done) {
     process.on('SIGINT', function() {
       server.close();
       toobusy.shutdown();
-      console.log('\nServer stopped, process exiting.\n');
-      logger.prod('\nServer stopped, process exiting.\n');
+      logger.prod('[BANTAM] Server stopped, process exiting.');
       process.exit();
     });        
 

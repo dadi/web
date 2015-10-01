@@ -109,7 +109,7 @@ module.exports.stage = function (message, done) {
  */
 module.exports.prod = function (message, done) {
     if (levelMap[logLevel.toUpperCase()] < levelMap['PROD']) {
-        console.log(this.format({message: message}));
+        console.log(message);
         return;
     }
     module.exports._log(this.format({message: message}), done);
