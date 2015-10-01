@@ -10,9 +10,9 @@ var logPath = path.resolve(config.path + '/' + config.filename + '.' + config.ex
 var logLevel = config.level;
 
 var levelMap = {
-    'DEGBUG': 1,
+    'DEBUG': 1,
     'STAGE': 2,
-    'PRODUCTION': 3
+    'PROD': 3
 };
 
 // generate formatter function
@@ -77,38 +77,41 @@ module.exports.format = function (data) {
 };
 
 /**
- * Log debug message if running at debug level
+ * Log message if running at debug level
  *
  * @param {String} message
  * @return undefined
  * @api public
  */
 module.exports.debug = function (message, done) {
-    if (levelMap[config.level.toUpperCase()] < levelMap['DEBUG']) return;
+    if (levelMap[logLevel.toUpperCase()] < levelMap['DEBUG']) return;
     module.exports._log(this.format({message: message}), done);
 };
 
 /**
- * Log debug message if running at debug level
+ * Log message if running at stage level
  *
  * @param {String} message
  * @return undefined
  * @api public
  */
 module.exports.stage = function (message, done) {
-    if (levelMap[config.level.toUpperCase()] < levelMap['STAGE']) return;
+    if (levelMap[logLevel.toUpperCase()] < levelMap['STAGE']) return;
     module.exports._log(this.format({message: message}), done);
 };
 
 /**
- * Log debug message if running at debug level
+ * Log message if running at production level
  *
  * @param {String} message
  * @return undefined
  * @api public
  */
 module.exports.prod = function (message, done) {
-    if (levelMap[config.level.toUpperCase()] < levelMap['PROD']) return;
+    if (levelMap[logLevel.toUpperCase()] < levelMap['PROD']) {
+        console.log(this.format({message: message}));
+        return;
+    }
     module.exports._log(this.format({message: message}), done);
 };
 
