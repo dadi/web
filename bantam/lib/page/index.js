@@ -4,7 +4,7 @@ var Page = function (name, schema) {
 
   if (schema.route && typeof schema.route != 'object') {
     var newSchema = schema;
-    newSchema.route = { "path": schema.route };
+    newSchema.route = { "paths": [schema.route] };
     var message = "\nThe `route` property for pages has been extended to provide better routing functionality.\n";
     message += "Please modify the route property for page '" + name + "'. The schema should change to the below:\n\n";
     message += JSON.stringify(newSchema, null, 4) + "\n\n";
@@ -12,7 +12,22 @@ var Page = function (name, schema) {
   }
 
   this.name = name;
-  this.route = schema.route || { "path": '/' + name };
+  
+  if (schema.route) {
+    if (schema.route.path && typeof schema.route.path === 'string') {
+      this.route = { "paths": [schema.route.path] };  
+    }
+    else if (schema.route.paths && typeof schema.route.paths === 'string') {
+      this.route = { "paths": [schema.route.paths] };
+    }
+    else {
+      this.route = schema.route;  
+    }
+  }
+  else {
+    this.route = { "paths": ['/' + name] };
+  }
+  
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
 

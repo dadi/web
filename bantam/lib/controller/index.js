@@ -231,6 +231,8 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   _.each(primaryDatasources, function(datasource, key) {
 
+    console.log(req.params);
+
     processSearchParameters(key, datasource, req.params, query)
     .then(help.getData(datasource, function(err, result) {
         
@@ -371,10 +373,11 @@ function processSearchParameters(key, datasource, params, query) {
 
   // add ID filter if the current datasource matches the page name
   if (key.indexOf(datasource.page.name) >= 0) {
-
+    
     // remove page # from query
-    datasource.schema.datasource.page = queryOptions.page || 1;
+    datasource.schema.datasource.page = queryOptions.page || params.page || 1;
     delete queryOptions.page;
+    delete params.page;
     
     // add an ID filter if it was present in the querystring
     // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
