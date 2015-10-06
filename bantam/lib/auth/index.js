@@ -1,4 +1,5 @@
 var http = require('http');
+var url = require('url');
 var querystring = require('querystring');
 
 var config = require(__dirname + '/../../../config');
@@ -12,6 +13,10 @@ module.exports = function (server) {
 
     // Authorize
     server.app.use(function (req, res, next) {
+
+        // don't authenticate *.jpg GET requests
+        var path = url.parse(req.url).pathname;
+        if (path.split(".").pop() === 'jpg') return next();
 
         if (token.authToken.accessToken) {
           var now = Math.floor(Date.now() / 1000);

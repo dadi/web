@@ -276,7 +276,7 @@ Server.prototype.addComponent = function (options, reload) {
     if (reload) {
         _.each(options.route.paths, function (path) {
             this.removeComponent(path);
-        });
+        }, this);
     }
 
     var self = this;
