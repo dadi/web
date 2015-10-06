@@ -115,6 +115,8 @@ module.exports.getData = function(datasource, done) {
 
             var options = _.extend(defaults, headers);
 
+            console.log(options);
+
             req = http.request(options, function(res) {
               
               var output = '';
@@ -161,7 +163,7 @@ module.exports.getData = function(datasource, done) {
 module.exports.getHeaders = function(datasource, done) {
     var headers;
     if(datasource.authStrategy){
-        datasource.authStrategy.getToken(function(token){
+        datasource.authStrategy.getToken(function (token){
             done({headers: {'Authorization': 'Bearer ' + token}} );
         });
     }
