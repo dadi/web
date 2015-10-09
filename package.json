@@ -4,7 +4,7 @@
   "description": "Template layer for the Serama API",
   "scripts": {
     "test": "env NODE_ENV=test ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
-    "posttest": "./docs/coverage.js",
+    "posttest": "./scripts/coverage.js",
     "start": "node bantam/main --node_env=development"
   },
   "private": true,
