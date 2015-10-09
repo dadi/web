@@ -16,7 +16,7 @@
     },
     "server": {
         "host": "127.0.0.1",
-        "port": 3001
+        "port": 3020
     },
     "api": {
         "host": "127.0.0.1",
@@ -24,16 +24,16 @@
     },
     "auth": {
         "tokenUrl":"/token",
-        "clientId":"testClient",
+        "clientId":"rosecombClient",
         "secret":"superSecret"
     },
     "global" : {
         "baseUrl": "http://www.example.com"
     },
     "dust": {
-        "cache": false,
-        "debug": true,
-        "debugLevel": "DEBUG",
-        "whitespace": true 
+        "cache": true,
+        "debug": false,
+        "debugLevel": "INFO",
+        "whitespace": false
     }
 }
