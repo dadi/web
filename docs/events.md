@@ -46,7 +46,7 @@ var http = require("http");
 var querystring = require('querystring');
 
 /* optional Rosecomb includes */
-var config = require(__dirname + '/../../config.json');
+var config = require(__dirname + '/../../config.js');
 var help = require(__dirname + '/../../bantam/lib/help');
 
 // the `data` parameter contains the data already loaded by 

@@ -5,13 +5,13 @@ var path = require('path');
 var url = require('url');
 var _ = require('underscore');
 
-var config = require(__dirname + '/../../../config');
+var config = require(__dirname + '/../../../config.js');
 var logger = require(__dirname + '/../log');
 
 var cacheEncoding = 'utf8';
 var options = {};
 
-var dir = config.caching.directory;
+var dir = config.get('caching.directory');
 
 // create cache directory if it doesn't exist
 mkdirp(dir, {}, function (err, made) {
@@ -35,7 +35,7 @@ function cachingEnabled(endpoints, requestUrl) {
         options = endpoints[endpointKey].page.settings;
     }
 
-    return (config.caching.enabled && options.cache);
+    return (config.get('caching.enabled') && options.cache);
 }
 
 module.exports = function (server) {
@@ -56,7 +56,7 @@ module.exports = function (server) {
         // we build the filename with a hashed hex string so we can be unique
         // and avoid using file system reserved characters in the name
         var filename = crypto.createHash('sha1').update(req.url).digest('hex');
-        var cachepath = path.join(dir, filename + '.' + config.caching.extension);
+        var cachepath = path.join(dir, filename + '.' + config.get('caching.extension'));
 
         fs.stat(cachepath, function (err, stats) {
 
@@ -68,7 +68,7 @@ module.exports = function (server) {
             }
 
             // check if ttl has elapsed
-            var ttl = options.ttl || config.caching.ttl;
+            var ttl = options.ttl || config.get('caching.ttl');
             var lastMod = stats && stats.mtime && stats.mtime.valueOf();
 
             if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) return cacheResponse();

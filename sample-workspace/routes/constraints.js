@@ -1,4 +1,4 @@
-var config = require(__dirname + '/../../config.json');
+var config = require(__dirname + '/../../config.js');
 var help = require(__dirname + '/../../bantam/lib/help');
 
 module.exports.getCategories = function (req, res, callback) {  

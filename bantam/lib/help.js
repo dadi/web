@@ -115,8 +115,6 @@ module.exports.getData = function(datasource, done) {
 
             var options = _.extend(defaults, headers);
 
-            console.log(options);
-
             req = http.request(options, function(res) {
               
               var output = '';

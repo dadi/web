@@ -15,11 +15,11 @@
         "extension": "html"
     },
     "server": {
-        "host": "localhost",
-        "port": 3001
+        "host": "127.0.0.1",
+        "port": 3020
     },
     "api": {
-        "host": "localhost",
+        "host": "127.0.0.1",
         "port": 3000
     },
     "auth": {
@@ -31,10 +31,9 @@
         "baseUrl": "http://www.example.com"
     },
     "dust": {
-        "cache": false,
-        "debug": true,
-        "debugLevel": "DEBUG",
-        "whitespace": true 
-    },
-    "feedback": false
+        "cache": true,
+        "debug": false,
+        "debugLevel": "INFO",
+        "whitespace": false
+    }
 }

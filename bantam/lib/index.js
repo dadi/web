@@ -1,4 +1,5 @@
 //var pkginfo = require('pkginfo').read(__dirname);
+var colors = require('colors');
 var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
@@ -20,8 +21,7 @@ var serveStatic = require('serve-static')
 var serveFavicon = require('serve-favicon');
 var toobusy = require('toobusy-js');
 
-var configPath = path.resolve(__dirname + '/../../config.json');
-var config = require(configPath);
+var config = require(path.resolve(__dirname + '/../../config.js'));
 
 var Server = function () {
     this.components = {};
@@ -38,7 +38,8 @@ Server.prototype.start = function (options, done) {
     var app = this.app = api();
 
     // override config
-    if (options.configPath) config = require(options.configPath);
+    if (options.configPath)
+        config.loadFile(options.configPath);
 
     // add necessary middlewares in order below here...
 
@@ -59,10 +60,10 @@ Server.prototype.start = function (options, done) {
     // handle routing & redirects
     router(self, options);
 
-    dust.isDebug = config.dust ? (config.dust.hasOwnProperty('debug') ? config.dust.debug : true) : true;
-    dust.debugLevel = config.dust ? config.dust.debugLevel || "DEBUG" : "DEBUG";
-    dust.config.cache = config.dust ? (config.dust.hasOwnProperty('cache') ? config.dust.cache : true) : true;
-    dust.config.whitespace = config.dust ? (config.dust.hasOwnProperty('whitespace') ? config.dust.whitespace : true) : true;
+    dust.isDebug = config.get('dust.debug');
+    dust.debugLevel = config.get('dust.debugLevel');
+    dust.config.cache = config.get('dust.cache');
+    dust.config.whitespace = config.get('dust.whitespace');
     
     // request logging middleware
     app.use(function (req, res, next) {
@@ -82,15 +83,15 @@ Server.prototype.start = function (options, done) {
     });
 
     // start listening
-    var server = this.server = app.listen(config.server.port, config.server.host);
+    var server = this.server = app.listen(config.get('server.port'), config.get('server.host'));
 
     server.on('listening', function (e) {
 
-      var rosecombMessage = "[BANTAM] Started Rosecomb (" + "pkginfo.package.version" + ") on " + config.server.host + ":" + config.server.port;
-      var seramaMessage = "[BANTAM] Attached to Serama API on " + config.api.host + ":" + config.api.port;
+      var rosecombMessage = "[BANTAM] Started Rosecomb (" + "pkginfo.package.version" + ") on " + config.get('server.host') + ":" + config.get('server.port');
+      var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
 
-      console.log("\n" + rosecombMessage);
-      console.log(seramaMessage + "\n");
+      console.log("\n" + rosecombMessage.bold.white);
+      console.log(seramaMessage.bold.blue + "\n");
       
       logger.prod(rosecombMessage);
       logger.prod(seramaMessage);
@@ -126,7 +127,7 @@ Server.prototype.start = function (options, done) {
 
     server.on('error', function (e) {
       if (e.code == 'EADDRINUSE') {
-        console.log('Error ' + e.code + ': Address ' + config.server.host + ':' + config.server.port + ' is already in use, is something else listening on port ' + config.server.port + '?\n\n');
+        console.log('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
         process.exit(0);
       }
     });

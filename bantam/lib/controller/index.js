@@ -7,7 +7,7 @@ var Q = require('q');
 var crypto = require('crypto');
 var _ = require('underscore');
 
-var config = require(__dirname + '/../../../config');
+var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
 var logger = require(__dirname + '/../log');
 
@@ -106,7 +106,7 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     // global values from config
-    if (config.global) data.global = config.global; 
+    if (config.has('global')) data.global = config.get('global'); 
 
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);
