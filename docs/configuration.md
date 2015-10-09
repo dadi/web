@@ -102,7 +102,7 @@ whitespace      |                     |       true     | false
 
 The `global` section can be used for any application parameters that should be available for use in page templates, such as asset locations, 3rd party account identifiers, etc
 
-```
+```js
 "global" : {
   "baseUrl": "http://www.example.com"
 }
