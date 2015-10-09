@@ -110,7 +110,7 @@ The `global` section can be used for any application parameters that should be a
 
 In the above example `baseUrl` would be availabe to a page template and could be used in the following way:
 
-```
+```html
 <html>
 <body>
   <h1>Welcome to Rosecomb</h1>
