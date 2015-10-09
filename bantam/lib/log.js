@@ -7,7 +7,6 @@ var _ = require('underscore');
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
 var logPath = path.resolve(config.get('logging.path') + '/' + config.get('logging.filename') + '.' + config.get('logging.extension'));
-var logLevel = config.get('logging.level');
 
 var levelMap = {
     'DEBUG': 1,
@@ -46,6 +45,10 @@ stream.on('finish', function () {
     console.log(arguments);
 });
 
+module.exports.logLevel = function () {
+    return config.get('logging.level').toUpperCase();
+};
+
 /**
  * Log string to file system
  *
@@ -69,7 +72,6 @@ module.exports._log = function (message, done) {
  * @api public
  */
 module.exports.format = function (data) {
-
     // add default info
     data.date = moment().format(config.get('logging.dateFormat'));
     data.label = config.get('logging.level');
@@ -84,7 +86,7 @@ module.exports.format = function (data) {
  * @api public
  */
 module.exports.debug = function (message, done) {
-    if (levelMap[logLevel.toUpperCase()] < levelMap['DEBUG']) return;
+    if ((levelMap[module.exports.logLevel()] || 0) < levelMap['DEBUG']) return;
     module.exports._log(this.format({message: message}), done);
 };
 
@@ -96,7 +98,7 @@ module.exports.debug = function (message, done) {
  * @api public
  */
 module.exports.stage = function (message, done) {
-    if (levelMap[logLevel.toUpperCase()] < levelMap['STAGE']) return;
+    if ((levelMap[module.exports.logLevel()] || 0) < levelMap['STAGE']) return;
     module.exports._log(this.format({message: message}), done);
 };
 
@@ -108,7 +110,7 @@ module.exports.stage = function (message, done) {
  * @api public
  */
 module.exports.prod = function (message, done) {
-    if (levelMap[logLevel.toUpperCase()] < levelMap['PROD']) {
+    if ((levelMap[module.exports.logLevel()] || 0) < levelMap['PROD']) {
         console.log(message);
         return;
     }

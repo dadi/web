@@ -51,7 +51,7 @@
  Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
 enabled           |    |            true   | true       
-level           |    |           "DEBUG"    | "DEBUG", "INFO", "WARN"       
+level           |    |           "DEBUG"    | "DEBUG", "STAGE", "PROD"
 path           |    |               | "./log"
 filename           | |               | "rosecomb"      
 extension           |  |     | "log"
