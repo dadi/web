@@ -1,4 +1,6 @@
 #! /usr/bin/env node
+
+var fs = require('fs');
 var path = require('path');
 
 var coberturaBadger = require('istanbul-cobertura-badger');
@@ -21,6 +23,22 @@ coberturaBadger(opts, function parsingResults(err, badgeStatus) {
   if (err) {
     console.log("An error occurred: " + err.message);
   }
-  console.log("Coverage badge successfully generated at " + badgeStatus.badgeFile.filePath);
+
+  var readme = path.resolve(__dirname + '/../README.md');
+  var badgeUrl = badgeStatus.url; // e.g. http://img.shields.io/badge/coverage-60%-yellow.svg
+
+  // open the README.md and add this url
+  fs.readFile(readme, {encoding: 'utf-8'}, function (err, body) {
+      body = body.replace(/(!\[Coverage\]\()(.+?)(\))/g, function(whole, a, b, c) {
+        return a + badgeUrl + c;
+      });
+
+      fs.writeFile(readme, body, {encoding: 'utf-8'}, function (err) {
+        if (err) console.log(err.toString());
+
+        console.log("Coverage badge successfully added to " + readme);
+      });
+  })
+
   //console.log(badgeStatus);
 });
