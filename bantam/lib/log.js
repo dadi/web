@@ -1,3 +1,4 @@
+var colors = require('colors');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var moment = require('moment');
@@ -20,20 +21,22 @@ var formatter = compile(config.get('logging.messageFormat'));
 var stream;
 
 // create log directory if it doesn't exist
-mkdirp(config.get('logging.path'), {}, function(err, made) {
+mkdirp(path.resolve(config.get('logging.path')), {}, function(err, made) {
     if (err) {
         console.log('[LOGGER] ' + err);
         module.exports.prod('[LOGGER] ' + err);
     }
 
     if (made) {
-        module.exports.prod('[LOGGER] Created log directory ' + made);
-        module.exports.prod('[LOGGER] Log file created.');
+        module.exports.prod('[LOGGER] Log created at ' + made);
     }
 });
 
 // create writeStream to log
-stream = fs.createWriteStream(logPath, {encoding: 'utf8', flags: 'a'});
+var options = { flags: 'a',
+                encoding: 'utf8',
+                mode: 0666 }
+stream = fs.createWriteStream(logPath, options);
 
 stream.on('error', function (err) {
     console.log('stream error');
@@ -59,6 +62,7 @@ module.exports.logLevel = function () {
  */
 module.exports._log = function (message, done) {
     if (stream) {
+        console.log(message);
         stream.write(message);
     }
     done && done();
@@ -111,7 +115,7 @@ module.exports.stage = function (message, done) {
  */
 module.exports.prod = function (message, done) {
     if ((levelMap[module.exports.logLevel()] || 0) < levelMap['PROD']) {
-        console.log(message);
+        if (message) console.log(message.bold.white);
         return;
     }
     module.exports._log(this.format({message: message}), done);

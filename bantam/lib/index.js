@@ -87,14 +87,17 @@ Server.prototype.start = function (options, done) {
 
     server.on('listening', function (e) {
 
-      var rosecombMessage = "[BANTAM] Started Rosecomb (" + "pkginfo.package.version" + ") on " + config.get('server.host') + ":" + config.get('server.port');
+      var env = config.get('env');
+      var rosecombMessage = "[BANTAM] Started Rosecomb (" + 'pkginfo.package.version' + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
       var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
 
       console.log("\n" + rosecombMessage.bold.white);
       console.log(seramaMessage.bold.blue + "\n");
       
-      logger.prod(rosecombMessage);
-      logger.prod(seramaMessage);
+      if (env === 'production') {
+        logger.prod(rosecombMessage);
+        logger.prod(seramaMessage);
+      }
 
       if (config.useSlackIntegration) {
         var Slack = require('node-slack');
@@ -212,7 +215,7 @@ Server.prototype.loadApi = function (options) {
             }
         });
         
-        logger.prod('[SERVER] Load complete.');
+        logger.prod('\n[SERVER] Load complete.');
 
     });
 
@@ -294,7 +297,7 @@ Server.prototype.addComponent = function (options, reload) {
 
         if (path === '/index') {
 
-            console.log("Loaded route " + path);
+            logger.prod("[ROUTER] Loaded " + path);
             
             // configure "index" route
             this.app.use('/', function (req, res, next) {
@@ -307,7 +310,7 @@ Server.prototype.addComponent = function (options, reload) {
         }
         else {
 
-            console.log("Loaded route " + path);
+            logger.prod("[ROUTER] Loaded " + path);
 
             if (options.route.constraint) this.app.Router.constrain(path, options.route.constraint);
 

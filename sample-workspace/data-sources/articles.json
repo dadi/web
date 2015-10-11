@@ -3,7 +3,7 @@
 		"key": "articles",
 		"name": "Articles DS",
 		"source": {
-			"host": "localhost",
+			"host": "127.0.0.1",
 			"port": "3000",
 			"endpoint": "editorial/articles"
 		},

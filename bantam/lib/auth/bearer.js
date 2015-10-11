@@ -22,7 +22,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
     }
   }
 
-  console.log("[BEARER] Generating new access token...");
+  logger.debug("[BEARER] Generating new access token...");
 
   var postData = {
     clientId : self.config.credentials.clientId,
@@ -54,7 +54,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
       // console.log('output: ' + output);
 
       if (output === '') {
-        console.log('No token received, invalid credentials.');
+        logger.debug('No token received, invalid credentials.');
         logger.prod('No token received, invalid credentials.');
         
         res.statusCode = 401;
@@ -72,7 +72,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
   });
 
   req.on('error', function(err) {
-    console.log(err);
+    logger.debug('Error requesting accessToken from ' + options.hostname);
     logger.prod('Error requesting accessToken from ' + options.hostname);
     return;
   });
