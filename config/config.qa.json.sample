@@ -1,4 +1,7 @@
 {
+    "app": {
+        "name": "Bantam / Rosecomb"
+    },
     "logging": {
         "enabled": true,
         "level": "STAGE",

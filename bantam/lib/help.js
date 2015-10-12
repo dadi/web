@@ -9,6 +9,8 @@ var logger = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
 var DatasourceCache = require(__dirname + '/cache/datasource');
 
+var config = require(__dirname + '/../../config.js');
+
 var self = this;
 
 module.exports.htmlEncode = function(input) {
@@ -56,6 +58,9 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
         res.statusCode = successCode;
 
         var resBody = results;
+
+        res.setHeader('Server', config.get('app.name'));
+
         //res.setHeader('Cache-Control', 'private, max-age=600');
         res.setHeader('content-type', contentType);
         res.setHeader('content-length', Buffer.byteLength(resBody));

@@ -27,8 +27,9 @@ mkdirp(dir, {}, function (err, made) {
 
 function cachingEnabled(endpoints, requestUrl) {
 
+    requestUrl = url.parse(requestUrl, true).pathname;
     var endpointKey = _.find(_.keys(endpoints), function (k){ return k.indexOf(requestUrl) > -1; });
-
+    
     if (!endpointKey) return false;
 
     if (endpoints[endpointKey].page && endpoints[endpointKey].page.settings) {
@@ -47,12 +48,6 @@ module.exports = function (server) {
         // only cache GET requests
         if (!(req.method && req.method.toLowerCase() === 'get')) return next();
 
-        // allow query string param to bypass cache
-        var query = url.parse(req.url, true).query;
-        var noCache = query.cache && query.cache.toString().toLowerCase() === 'false';
-
-        if (noCache) return next();
-
         // we build the filename with a hashed hex string so we can be unique
         // and avoid using file system reserved characters in the name
         var filename = crypto.createHash('sha1').update(req.url).digest('hex');
@@ -62,9 +57,20 @@ module.exports = function (server) {
 
             if (err) {
                 if (err.code === 'ENOENT') {
+                    res.setHeader('X-Cache-Lookup', 'MISS');
                     return cacheResponse();
                 }
                 return next(err);
+            }
+
+            // allow query string param to bypass cache
+            var query = url.parse(req.url, true).query;
+            var noCache = query.cache && query.cache.toString().toLowerCase() === 'false';
+
+            if (noCache) {
+                res.setHeader('X-Cache', 'MISS');
+                res.setHeader('X-Cache-Lookup', 'HIT');
+                return next();
             }
 
             // check if ttl has elapsed
@@ -81,6 +87,9 @@ module.exports = function (server) {
                 var dataType = 'text/html';
 
                 res.statusCode = 200;
+
+                res.setHeader('Server', config.get('app.name'));
+                res.setHeader('X-Cache', 'HIT');
                 res.setHeader('content-type', dataType);
                 res.setHeader('content-length', Buffer.byteLength(resBody));
 
@@ -97,12 +106,13 @@ module.exports = function (server) {
             var data = '';
 
             res.write = function (chunk) {
-                // with this line, we get cache files with duplicate content
-                //if (chunk) data += chunk;
                 _write.apply(res, arguments);
             };
 
             res.end = function (chunk) {
+
+                res.setHeader('X-Cache', 'MISS');
+
                 // respond before attempting to cache
                 _end.apply(res, arguments);
 

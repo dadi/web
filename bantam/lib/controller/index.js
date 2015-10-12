@@ -231,8 +231,6 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   _.each(primaryDatasources, function(datasource, key) {
 
-    console.log(req.params);
-
     processSearchParameters(key, datasource, req.params, query)
     .then(help.getData(datasource, function(err, result) {
         

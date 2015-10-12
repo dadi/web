@@ -115,7 +115,8 @@ module.exports.stage = function (message, done) {
  */
 module.exports.prod = function (message, done) {
     if ((levelMap[module.exports.logLevel()] || 0) < levelMap['PROD']) {
-        if (message) console.log(message.bold.white);
+        if (message)
+            console.log(message);
         return;
     }
     module.exports._log(this.format({message: message}), done);
