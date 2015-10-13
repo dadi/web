@@ -27,6 +27,8 @@ module.exports.sendBackJSON = function (successCode, res, next) {
 
         var resBody = JSON.stringify(results, null, 4);
 
+        res.setHeader('Server', config.get('app.name'));
+
         res.statusCode = successCode;
         res.setHeader('content-type', 'application/json');
         res.setHeader('content-length', Buffer.byteLength(resBody));

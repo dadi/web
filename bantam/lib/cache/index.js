@@ -57,6 +57,7 @@ module.exports = function (server) {
 
             if (err) {
                 if (err.code === 'ENOENT') {
+                    res.setHeader('X-Cache', 'MISS');
                     res.setHeader('X-Cache-Lookup', 'MISS');
                     return cacheResponse();
                 }
@@ -90,6 +91,7 @@ module.exports = function (server) {
 
                 res.setHeader('Server', config.get('app.name'));
                 res.setHeader('X-Cache', 'HIT');
+                res.setHeader('X-Cache-Lookup', 'HIT');
                 res.setHeader('content-type', dataType);
                 res.setHeader('content-length', Buffer.byteLength(resBody));
 
@@ -110,8 +112,6 @@ module.exports = function (server) {
             };
 
             res.end = function (chunk) {
-
-                res.setHeader('X-Cache', 'MISS');
 
                 // respond before attempting to cache
                 _end.apply(res, arguments);
