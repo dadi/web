@@ -125,7 +125,12 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     self.loadData(req, res, data, function(err, data) {
-      if (err) return next(err);
+      
+      if (err) {
+        var e = new Error(err.json.message);
+        e.statusCode = err.statusCode;
+        if (next) return next(e);
+      }
 
       try {
         if (json) {
@@ -176,7 +181,11 @@ function loadEventData(events, req, res, data, done) {
       data.checkValue = checkValue;
       
       // run the event  
-      events[key].run(req, res, data, function(result) {                
+      events[key].run(req, res, data, function (err, result) {
+
+        if (err) {
+          return done(err, data);
+        }
         
         // if we get data back with the same checkValue property,
         // reassign it to our global data object to avoid circular JSON
@@ -193,7 +202,7 @@ function loadEventData(events, req, res, data, done) {
         // return the data if we're at the end of the events
         // array, we have all the responses to render the page
         if (eventIdx === Object.keys(events).length) {
-          return done(data);
+          return done(null, data);
         }
       });
   });
@@ -214,8 +223,8 @@ Controller.prototype.loadData = function(req, res, data, done) {
   // no datasources specified for this page
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
-    loadEventData(self.events, req, res, data, function(result) {
-      return done(null, result);
+    loadEventData(self.events, req, res, data, function (err, result) {
+      return done(err, result);
     });
   }
 
@@ -252,8 +261,8 @@ Controller.prototype.loadData = function(req, res, data, done) {
         if (idx === Object.keys(primaryDatasources).length) {
           processChained(chainedDatasources, data, query, function() {
 
-            loadEventData(self.events, req, res, data, function(result) {
-              done(null, result);
+            loadEventData(self.events, req, res, data, function (err, result) {
+              done(err, result);
             });
 
           });

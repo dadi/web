@@ -29,8 +29,8 @@ Event.prototype.loadEvent = function() {
 };
 
 Event.prototype.run = function(req, res, data, done) {
-  this.loadEvent()(req, res, data, function(result) {
-    done(result);
+  this.loadEvent()(req, res, data, function (err, result) {
+    return done(err, result);
   });
 };
 
