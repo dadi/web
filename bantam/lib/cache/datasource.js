@@ -3,7 +3,7 @@ var path = require('path');
 var url = require('url');
 var crypto = require('crypto');
 
-var config = require(__dirname + '/../../../config');
+var config = require(__dirname + '/../../../config.js');
 
 var cacheEncoding = 'utf8';
 var options = {};
@@ -17,7 +17,7 @@ var DatasourceCache = function (datasource) {
 };
 
 DatasourceCache.prototype.cachingEnabled = function() {
-  var enabled = config.caching.enabled && options.enabled;
+  var enabled = config.get('caching.enabled') && options.enabled;
     
   if (typeof enabled === 'undefined') {
     return false;
@@ -47,7 +47,7 @@ DatasourceCache.prototype.getFromCache = function (done) {
       }
 
       // check if ttl has elapsed
-      var ttl = options.ttl || config.caching.ttl;
+      var ttl = options.ttl || config.get('caching.ttl');
       var lastMod = stats && stats.mtime && stats.mtime.valueOf();
 
       if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) return done(false);

@@ -10,7 +10,7 @@
         "source": {
             "type": "remote",
             "protocol": "http",
-            "host": "localhost",
+            "host": "127.0.0.1",
             "port": "3000",
             "endpoint": "1.0/car-data/makes"
         },
@@ -22,7 +22,7 @@
         },
         "auth": {
             "type": "bearer",
-            "host": "localhost",
+            "host": "127.0.0.1",
             "port": "3000",
             "tokenUrl": "/token",
             "credentials": {

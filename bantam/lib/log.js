@@ -1,13 +1,13 @@
+var colors = require('colors');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var moment = require('moment');
 var path = require('path');
 var _ = require('underscore');
 
-var config = require(__dirname + '/../../config').logging;
+var config = require(path.resolve(__dirname + '/../../config.js'));
 
-var logPath = path.resolve(config.path + '/' + config.filename + '.' + config.extension);
-var logLevel = config.level;
+var logPath = path.resolve(config.get('logging.path') + '/' + config.get('logging.filename') + '.' + config.get('logging.extension'));
 
 var levelMap = {
     'DEBUG': 1,
@@ -16,25 +16,27 @@ var levelMap = {
 };
 
 // generate formatter function
-var formatter = compile(config.messageFormat);
+var formatter = compile(config.get('logging.messageFormat'));
 
 var stream;
 
 // create log directory if it doesn't exist
-mkdirp(config.path, {}, function(err, made) {
+mkdirp(path.resolve(config.get('logging.path')), {}, function(err, made) {
     if (err) {
         console.log('[LOGGER] ' + err);
         module.exports.prod('[LOGGER] ' + err);
     }
 
     if (made) {
-        module.exports.prod('[LOGGER] Created log directory ' + made);
-        module.exports.prod('[LOGGER] Log file created.');
+        module.exports.prod('[LOGGER] Log created at ' + made);
     }
 });
 
 // create writeStream to log
-stream = fs.createWriteStream(logPath, {encoding: 'utf8', flags: 'a'});
+var options = { flags: 'a',
+                encoding: 'utf8',
+                mode: 0666 }
+stream = fs.createWriteStream(logPath, options);
 
 stream.on('error', function (err) {
     console.log('stream error');
@@ -46,6 +48,10 @@ stream.on('finish', function () {
     console.log(arguments);
 });
 
+module.exports.logLevel = function () {
+    return config.get('logging.level').toUpperCase();
+};
+
 /**
  * Log string to file system
  *
@@ -56,6 +62,7 @@ stream.on('finish', function () {
  */
 module.exports._log = function (message, done) {
     if (stream) {
+        console.log(message);
         stream.write(message);
     }
     done && done();
@@ -69,10 +76,9 @@ module.exports._log = function (message, done) {
  * @api public
  */
 module.exports.format = function (data) {
-
     // add default info
-    data.date = moment().format(config.dateFormat);
-    data.label = config.level;
+    data.date = moment().format(config.get('logging.dateFormat'));
+    data.label = config.get('logging.level');
     return formatter(data) + '\n';
 };
 
@@ -84,7 +90,7 @@ module.exports.format = function (data) {
  * @api public
  */
 module.exports.debug = function (message, done) {
-    if (levelMap[logLevel.toUpperCase()] < levelMap['DEBUG']) return;
+    if ((levelMap[module.exports.logLevel()] || 0) < levelMap['DEBUG']) return;
     module.exports._log(this.format({message: message}), done);
 };
 
@@ -96,7 +102,7 @@ module.exports.debug = function (message, done) {
  * @api public
  */
 module.exports.stage = function (message, done) {
-    if (levelMap[logLevel.toUpperCase()] < levelMap['STAGE']) return;
+    if ((levelMap[module.exports.logLevel()] || 0) < levelMap['STAGE']) return;
     module.exports._log(this.format({message: message}), done);
 };
 
@@ -108,8 +114,9 @@ module.exports.stage = function (message, done) {
  * @api public
  */
 module.exports.prod = function (message, done) {
-    if (levelMap[logLevel.toUpperCase()] < levelMap['PROD']) {
-        console.log(message);
+    if ((levelMap[module.exports.logLevel()] || 0) < levelMap['PROD']) {
+        if (message)
+            console.log(message);
         return;
     }
     module.exports._log(this.format({message: message}), done);

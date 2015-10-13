@@ -2,14 +2,14 @@ var http = require('http');
 var url = require('url');
 var querystring = require('querystring');
 
-var config = require(__dirname + '/../../../config');
+var config = require(__dirname + '/../../../config.js');
 var logger = require(__dirname + '/../log');
 var token = require(__dirname + '/token');
 
 // This attaches middleware to the passed in app instance
 module.exports = function (server) {
 
-    var tokenRoute = config.auth.tokenUrl || '/token';
+    var tokenRoute = config.get('auth.tokenUrl') || '/token';
 
     // Authorize
     server.app.use(function (req, res, next) {
@@ -30,13 +30,13 @@ module.exports = function (server) {
         console.log('[AUTH] Generating new access token for "' + req.url + '"');
 
         var postData = {
-          clientId : config.auth.clientId,
-          secret : config.auth.secret
+          clientId : config.get('auth.clientId'),
+          secret : config.get('auth.secret')
         };
 
         var options = {
-          hostname: config.api.host,
-          port: config.api.port,
+          hostname: config.get('api.host'),
+          port: config.get('api.port'),
           path: tokenRoute,
           method: 'POST',
           headers: {
