@@ -152,6 +152,7 @@ Controller.prototype.get = function (req, res, next) {
         }
       }
       catch (e) {
+        console.log(e);
         var err = new Error(e.message);
         err.statusCode = 500;
         return next(err);
@@ -167,7 +168,7 @@ function loadEventData(events, req, res, data, done) {
   
   // return the global data object, no events to run
   if (0 === Object.keys(events).length) {
-    return done(data);
+    return done(null, data);
   }
 
   var eventIdx = 0;
