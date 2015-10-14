@@ -56,9 +56,9 @@ var Event = function (req, res, data, callback) {
 
   var result = {};
 
-  if (data['car-makes'] && data['car-makes']['results'] && data['car-makes']['results'][0]) {
+  if (data.car-makes && data.car-makes.results) {
     result = {
-      carMakeFromEvent: data['car-makes']['results'][0].name
+      carMakeFromEvent: data.car-makes.results[0].name
     };
   }
   else {
@@ -67,7 +67,8 @@ var Event = function (req, res, data, callback) {
     }; 
   }
   
-  callback(result);
+  // return a null error and the result
+  callback(null, result);
 };
 
 module.exports = function (req, res, data, callback) {

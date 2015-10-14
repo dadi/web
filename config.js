@@ -12,7 +12,7 @@ var conf = convict({
 	server: {
     host: {
       doc: "Rosecomb IP address",
-      format: 'ipaddress',
+      format: '*',
       default: '0.0.0.0'
     },
     port: {
@@ -24,7 +24,7 @@ var conf = convict({
 	api: {
     host: {
       doc: "Serama IP address",
-      format: 'ipaddress',
+      format: '*',
       default: '0.0.0.0'
     },
     port: {
@@ -137,18 +137,6 @@ var conf = convict({
     default: "development",
     env: "NODE_ENV",
     arg: "node_env"
-  },
-  ip: {
-    doc: "The IP address to bind.",
-    format: "ipaddress",
-    default: "127.0.0.1",
-    env: "IP_ADDRESS",
-  },
-  port: {
-    doc: "The port to bind.",
-    format: "port",
-    default: 0,
-    env: "PORT"
   }
 });
 
