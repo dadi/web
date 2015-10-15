@@ -125,7 +125,6 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     self.loadData(req, res, data, function(err, data) {
-      
       if (err) {
         var e = new Error(err.json.message);
         e.statusCode = err.statusCode;

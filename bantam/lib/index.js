@@ -211,7 +211,9 @@ Server.prototype.loadApi = function (options) {
 
         self.addMonitor(routesPath, function (file) {
             if (self.app.Router) {
-                self.app.Router.loadRewrites(options);
+                self.app.Router.loadRewrites(options, function() {
+                    self.app.Router.loadRewriteModule();
+                });
             }
         });
         
@@ -303,8 +305,11 @@ Server.prototype.addComponent = function (options, reload) {
             this.app.use('/', function (req, res, next) {
                 // map request method to controller method
                 var method = req.method && req.method.toLowerCase();
-                if (method && options.component[method]) return options.component[method](req, res, next);
+                
+                if (method && options.component[method]) {
 
+                    return options.component[method](req, res, next);
+                }
                 next();
             });        
         }
@@ -317,6 +322,7 @@ Server.prototype.addComponent = function (options, reload) {
             var self = this;
 
             this.app.use(path, function (req, res, next) {
+
                 self.app.Router.testConstraint(path, req, res, function (result) {
 
                     // test returned false, try the next matching route
@@ -325,7 +331,9 @@ Server.prototype.addComponent = function (options, reload) {
                     // map request method to controller method
                     var method = req.method && req.method.toLowerCase();
 
-                    if (method && options.component[method]) return options.component[method](req, res, next);
+                    if (method && options.component[method]) {
+                        return options.component[method](req, res, next);
+                    }
 
                     // no matching HTTP method found, try the next matching route
                     return next();

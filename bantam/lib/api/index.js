@@ -50,14 +50,27 @@ Api.prototype.use = function (path, handler) {
  *  @api public
  */
 Api.prototype.unuse = function (path) {
-    var indx;
+    var indx = 0;
     if (typeof path === 'function') {
         if (path.length === 4) {
             indx = this.errors.indexOf(path);
             return !!~indx && this.errors.splice(indx, 1);
         }
-        indx = this.all.indexOf(path);
-        return !!~indx && this.all.splice(indx, 1);
+
+        //console.log(this.all.length);
+
+        var functionStr = path.toString();
+        _.each(this.all, function (func) {
+            if (func.toString() === functionStr) {
+                return this.all.splice(indx, 1);
+            }
+            else {
+                indx++;
+            }
+        }, this);
+
+        // indx = this.all.indexOf(path);
+        // return !!~indx && this.all.splice(indx, 1);
     }
     var path = _.findWhere(this.paths, { path: path });
     this.paths = _.without(this.paths, path);
@@ -166,8 +179,8 @@ module.exports.Api = Api;
 // Default error handler, in case application doesn't define error handling
 function defaultError(api) {
     return function (err, req, res) {
-        
         logger.prod(err);
+
         res.statusCode = err.statusCode || 500;
 
         // look for an error page that has been loaded
@@ -175,11 +188,12 @@ function defaultError(api) {
         // handler if it exists
 
         var path = _.findWhere(api.paths, { path: '/' + res.statusCode });
+
         if (path) {
             path.handler(req, res);
         }
-        // otherwise, respond with default message
-        else {
+        else { // otherwise, respond with default message
+            
             if (err.json) {
                 var resBody = JSON.stringify(err.json);
                 res.setHeader('content-type', 'application/json');

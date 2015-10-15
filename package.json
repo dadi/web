@@ -9,6 +9,7 @@
   },
   "private": true,
   "dependencies": {
+    "JSONStream": "^1.0.6",
     "async": "^1.4.2",
     "body-parser": "^1.11.0",
     "common-dustjs-helpers": "^0.1.0",
@@ -16,6 +17,8 @@
     "convict": "^1.0.1",
     "dustjs-helpers": "^1.7.3",
     "dustjs-linkedin": "^2.7.2",
+    "etagify": "0.0.2",
+    "event-stream": "^3.3.1",
     "htmlstrip-native": "^0.1.1",
     "json-stringify-safe": "^5.0.1",
     "json5": "0.2.0",
@@ -29,6 +32,7 @@
     "q": "^1.4.1",
     "serve-favicon": "^2.3.0",
     "serve-static": "^1.9.1",
+    "stack-trace": "latest",
     "toobusy-js": "^0.4.2",
     "underscore": "1.6.0",
     "underscore.string": "^3.2.2"

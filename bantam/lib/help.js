@@ -57,12 +57,10 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
     return function (err, results) {
         if (err) return next(err);
 
-        res.statusCode = successCode;
-
         var resBody = results;
 
+        res.statusCode = successCode;
         res.setHeader('Server', config.get('app.name'));
-
         //res.setHeader('Cache-Control', 'private, max-age=600');
         res.setHeader('content-type', contentType);
         res.setHeader('content-length', Buffer.byteLength(resBody));

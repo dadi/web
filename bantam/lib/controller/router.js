@@ -6,6 +6,7 @@ https://github.com/tinganho/connect-modrewrite
 */
 
 var fs = require('fs');
+var es = require('event-stream');
 var url = require('url');
 var querystring = require('querystring');
 var modRewrite = require('connect-modrewrite');
@@ -16,7 +17,7 @@ var config = require(__dirname + '/../../../config');
 var help = require(__dirname + '/../help');
 var logger = require(__dirname + '/../log');
 
-var Router = function (options) {
+var Router = function (server, options) {
 
   this.data = {};
   this.params = {};
@@ -25,34 +26,40 @@ var Router = function (options) {
   this.handlers = null;
   this.rules = [];
 
+  this.server = server;
+
   // load the route constraint specifications if they exist
   if (fs.existsSync(options.routesPath + '/constraints.js')) {
     this.handlers = require(options.routesPath + '/constraints.js');
   }
 
-  this.loadRewrites(options);
+  var self = this;
+  this.loadRewrites(options, function() {
+    self.loadRewriteModule();
+  });
 }
 
-Router.prototype.loadRewrites = function(options) {
+Router.prototype.loadRewrites = function(options, done) {
   var self = this;
   
+  self.rules = [];
+  
   // load the rewrite specifications if they exist
-  if (fs.existsSync(options.routesPath + '/rewrites.json')) {
-    var rewriteText = fs.readFileSync(options.routesPath + '/rewrites.json');
-    try {
-      var rewrites = JSON.parse(rewriteText);
-      if (rewrites.rewrites && _.isArray(rewrites.rewrites)) { 
-        self.rules = rewrites.rewrites;
-      }
-    }
-    catch (e) {
+  var rewritePath = options.routesPath + '/rewrites.txt';
+  if (fs.existsSync(rewritePath)) {
 
-    }
-  }
+    var rules = [];
+    var stream = fs.createReadStream(rewritePath, {encoding: 'utf8'})
+      .pipe(es.split("\n"))
+      .pipe(es.mapSync(function(data) {
+        rules.push(data);
+      }));
 
-  if (!_.isEmpty(self.rules)) {
-      logger.prod("[ROUTER] " + self.rules.length + " redirects loaded.");
-      //console.log(self.rules);
+    stream.on('end', function() {
+      self.rules = rules.slice(0);
+      done();
+    });
+
   }
 
 }
@@ -111,6 +118,19 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
   }
 }
 
+Router.prototype.loadRewriteModule = function() {
+  // remove it from the stack
+  this.server.app.unuse(modRewrite(this.rules));
+
+  logger.prod("[ROUTER] Rewrite module unloaded.");
+
+  // add it to the stack
+  this.server.app.use(modRewrite(this.rules));
+  
+  logger.prod("[ROUTER] Rewrite module loaded.");
+  logger.prod("[ROUTER] " + this.rules.length + " rewrites/redirects loaded.");
+}
+
 var debugMode = function(req) {
   var query = url.parse(req.url, true).query;
   return (query.debug && query.debug.toString() === 'true');
@@ -118,25 +138,22 @@ var debugMode = function(req) {
 
 module.exports = function (server, options) {
 
-  server.app.Router = new Router(options);
-
-  logger.prod("[ROUTER] Router loaded.");
+  server.app.Router = new Router(server, options);
 
   // middleware which blocks requests when we're too busy
-	server.app.use(function (req, res, next) {
-	  if (toobusy()) {
-	    var err = new Error();
-      err.statusCode = 503;
-      err.json = { 'error' : 'HTTP Error 503 - Service unavailable' };
-      next(err);
-	  }
-	  else {
-	    next();
-	  }
-	});
+	// server.app.use(function (req, res, next) {
+	//   if (toobusy()) {
+	//     var err = new Error();
+ //      err.statusCode = 503;
+ //      err.json = { 'error' : 'HTTP Error 503 - Service unavailable' };
+ //      next(err);
+	//   }
+	//   else {
+	//     next();
+	//   }
+	// });
 
-  // add any loaded rewrite rules
-  server.app.use(modRewrite(server.app.Router.rules));
+  //server.app.Router.loadRewriteModule();
 };
 
 module.exports.Router = Router;
