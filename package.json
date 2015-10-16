@@ -34,7 +34,7 @@
     "serve-static": "^1.9.1",
     "stack-trace": "latest",
     "toobusy-js": "^0.4.2",
-    "underscore": "1.6.0",
+    "underscore": "^1.8.0",
     "underscore.string": "^3.2.2"
   },
   "devDependencies": {
