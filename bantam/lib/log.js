@@ -1,4 +1,3 @@
-var colors = require('colors');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var moment = require('moment');
