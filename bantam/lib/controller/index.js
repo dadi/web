@@ -106,7 +106,7 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     // global values from config
-    if (config.has('global')) data.global = config.get('global'); 
+    data.global = config.get('global') || {}; 
 
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);

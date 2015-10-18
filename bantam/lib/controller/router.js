@@ -52,7 +52,7 @@ Router.prototype.loadRewrites = function(options, done) {
     var stream = fs.createReadStream(rewritePath, {encoding: 'utf8'})
       .pipe(es.split("\n"))
       .pipe(es.mapSync(function(data) {
-        rules.push(data);
+        if (data !== "") rules.push(data);
       }));
 
     stream.on('end', function() {

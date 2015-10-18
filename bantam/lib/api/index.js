@@ -164,7 +164,7 @@ Api.prototype._match = function (path, req) {
             if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
         });
         
-        break;
+        //break;
     }
 
     return handlers;
