@@ -161,7 +161,7 @@ Api.prototype._match = function (path, req) {
 
         match.forEach(function (k, i) {
             var keyOpts = keys[i] || {};
-            if (match[i + 1] && keyOpts.name) req.params[keyOpts.name] = match[i + 1];
+            if (match[i + 1] && keyOpts.name && !req.params[keyOpts.name]) req.params[keyOpts.name] = match[i + 1];
         });
         
         //break;
