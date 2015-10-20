@@ -9,7 +9,7 @@ var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
 var Datasource = require(__dirname + '/../datasource');
 var Event = require(__dirname + '/../event');
@@ -78,6 +78,8 @@ Controller.prototype.attachEvents = function(done) {
 
 Controller.prototype.get = function (req, res, next) {
 
+    console.log(req.url);
+
     var settings = {};
 
     // allow query string param to return data only
@@ -140,7 +142,7 @@ Controller.prototype.get = function (req, res, next) {
           // Render the compiled template
           var rendered = dust.render(pageTemplate, data, function(err, result) {
             if (err) {
-              err = new Error();
+              err = new Error(err.message);
               err.json = { "error": "Template rendering failed." };
               err.statusCode = 500;
               return done(err, null);
@@ -151,10 +153,15 @@ Controller.prototype.get = function (req, res, next) {
         }
       }
       catch (e) {
-        console.log(e);
+        //console.log(e);
         var err = new Error(e.message);
         err.statusCode = 500;
-        return next(err);
+        if (next) {
+          return next(err);
+        }
+        else {
+          return done(err);
+        }
       }
     });
 };
@@ -202,6 +209,7 @@ function loadEventData(events, req, res, data, done) {
         // return the data if we're at the end of the events
         // array, we have all the responses to render the page
         if (eventIdx === Object.keys(events).length) {
+          console.log(data);
           return done(null, data);
         }
       });
@@ -296,8 +304,7 @@ function processChained(chainedDatasources, data, query, done) {
     }
     catch(e) {
       param = e;
-      logger.prod('Error processng chained datasource: ' + e);
-      console.log('Error processng chained datasource: ' + e);
+      log.error('Error processng chained datasource: ' + e);
     }
 
     // add or extend the filter property

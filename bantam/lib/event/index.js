@@ -1,7 +1,7 @@
 var fs = require('fs');
 
 var config = require(__dirname + '/../../../config');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
 var Event = function (pageName, eventName, options) {
   if (!pageName) throw new Error('Page name required');

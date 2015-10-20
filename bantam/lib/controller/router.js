@@ -15,7 +15,7 @@ var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
 var help = require(__dirname + '/../help');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
 var Router = function (server, options) {
 
@@ -75,7 +75,7 @@ Router.prototype.constrain = function(route, fn) {
   
   // check the specified function has been loaed from /workspace/routes/constraints.js
   if (!this.handlers[fn]) {
-    logger.prod("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
+    log.error("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
     return;
   }
 
@@ -122,13 +122,13 @@ Router.prototype.loadRewriteModule = function() {
   // remove it from the stack
   this.server.app.unuse(modRewrite(this.rules));
 
-  logger.prod("[ROUTER] Rewrite module unloaded.");
+  log.info("[ROUTER] Rewrite module unloaded.");
 
   // add it to the stack
   this.server.app.use(modRewrite(this.rules));
   
-  logger.prod("[ROUTER] Rewrite module loaded.");
-  logger.prod("[ROUTER] " + this.rules.length + " rewrites/redirects loaded.");
+  log.info("[ROUTER] Rewrite module loaded.");
+  log.info("[ROUTER] " + this.rules.length + " rewrites/redirects loaded.");
 }
 
 var debugMode = function(req) {

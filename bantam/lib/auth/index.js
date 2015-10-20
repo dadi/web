@@ -3,7 +3,7 @@ var url = require('url');
 var querystring = require('querystring');
 
 var config = require(__dirname + '/../../../config.js');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 var token = require(__dirname + '/token');
 
 // This attaches middleware to the passed in app instance
@@ -54,8 +54,7 @@ module.exports = function (server) {
           res.on('end', function() {
             
             if (!output) {
-              console.log('[AUTH] No token received, invalid credentials.');
-              logger.prod('[AUTH] No token received, invalid credentials.');
+              log.error('[AUTH] No token received, invalid credentials.');
               
               res.statusCode = 401;
               return next();
@@ -71,8 +70,8 @@ module.exports = function (server) {
         });
 
         req.on('error', function(err) {
-          console.log(err);
-          logger.prod('[AUTH] Error requesting accessToken from ' + options.hostname);
+          log.error(err);
+          log.error('[AUTH] Error requesting accessToken from ' + options.hostname);
           next();
         });
         

@@ -2,7 +2,7 @@ var http = require('http');
 var url = require('url');
 var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
 var Api = function () {
     this.paths = [];
@@ -179,7 +179,7 @@ module.exports.Api = Api;
 // Default error handler, in case application doesn't define error handling
 function defaultError(api) {
     return function (err, req, res) {
-        logger.prod(err);
+        log.error(err);
 
         res.statusCode = err.statusCode || 500;
 

@@ -1,6 +1,6 @@
 var fs = require('fs');
 var _ = require('underscore');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
 
 var Datasource = function (page, datasource, options, callback) {

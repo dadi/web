@@ -5,7 +5,7 @@ var url = require('url');
 var util = require('util');
 var _ = require('underscore');
 
-var logger = require(__dirname + '/log');
+var log = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
 var DatasourceCache = require(__dirname + '/cache/datasource');
 
@@ -121,6 +121,8 @@ module.exports.getData = function(datasource, done) {
             var options = _.extend(defaults, headers);
 
             req = http.request(options, function(res) {
+
+              log.info('[DATA] ' + options.path);
               
               var output = '';
      
@@ -138,7 +140,7 @@ module.exports.getData = function(datasource, done) {
                     err.statusCode = res.statusCode;
                     err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
 
-                    logger.prod('[DATA] ' + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                    log.info('[DATA] ' + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
 
                     //return done(err);
                 }
@@ -149,7 +151,7 @@ module.exports.getData = function(datasource, done) {
             });
         
             req.on('error', function(err) {
-               console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err + "(" + datasource.endpoint + ")");
+               log.error('[DATA] help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
                return done('{ "error" : "Connection refused" }');
             });
         

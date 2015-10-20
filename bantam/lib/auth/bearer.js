@@ -1,5 +1,5 @@
 var http = require('http');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
 var BearerAuthStrategy = function(options) {
   this.config = options;
@@ -22,7 +22,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
     }
   }
 
-  logger.debug("[BEARER] Generating new access token...");
+  log.info("[BEARER] Generating new access token...");
 
   var postData = {
     clientId : self.config.credentials.clientId,
@@ -54,8 +54,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
       // console.log('output: ' + output);
 
       if (output === '') {
-        logger.debug('No token received, invalid credentials.');
-        logger.prod('No token received, invalid credentials.');
+        log.info('No token received, invalid credentials.');
         
         res.statusCode = 401;
         return done();
@@ -72,8 +71,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
   });
 
   req.on('error', function(err) {
-    logger.debug('Error requesting accessToken from ' + options.hostname);
-    logger.prod('Error requesting accessToken from ' + options.hostname);
+    log.info('Error requesting accessToken from ' + options.hostname);
     return;
   });
 

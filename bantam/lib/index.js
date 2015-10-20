@@ -12,7 +12,7 @@ var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
-var logger = require(__dirname + '/log');
+var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
@@ -73,7 +73,7 @@ Server.prototype.start = function (options, done) {
             var duration = Date.now() - start;
 
             // log the request method and url, and the duration
-            logger.prod(req.method
+            log.info(req.method
                 + ' ' + req.url
                 + ' ' + res.statusCode
                 + ' ' + duration + 'ms');
@@ -95,8 +95,8 @@ Server.prototype.start = function (options, done) {
       console.log(seramaMessage.bold.blue + "\n");
       
       if (env === 'production') {
-        logger.prod(rosecombMessage);
-        logger.prod(seramaMessage);
+        log.info(rosecombMessage);
+        log.info(seramaMessage);
       }
 
       if (config.useSlackIntegration) {
@@ -130,7 +130,7 @@ Server.prototype.start = function (options, done) {
 
     server.on('error', function (e) {
       if (e.code == 'EADDRINUSE') {
-        console.log('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
+        log.error('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
         process.exit(0);
       }
     });
@@ -143,7 +143,7 @@ Server.prototype.start = function (options, done) {
     process.on('SIGINT', function() {
       server.close();
       toobusy.shutdown();
-      logger.prod('[BANTAM] Server stopped, process exiting.');
+      log.info('[BANTAM] Server stopped, process exiting.');
       process.exit();
     });        
 
@@ -217,7 +217,7 @@ Server.prototype.loadApi = function (options) {
             }
         });
         
-        logger.prod('\n[SERVER] Load complete.');
+        log.info('\n[SERVER] Load complete.');
 
     });
 
@@ -299,7 +299,7 @@ Server.prototype.addComponent = function (options, reload) {
 
         if (path === '/index') {
 
-            logger.prod("[ROUTER] Loaded " + path);
+            log.info("[ROUTER] Loaded " + path);
             
             // configure "index" route
             this.app.use('/', function (req, res, next) {
@@ -315,7 +315,7 @@ Server.prototype.addComponent = function (options, reload) {
         }
         else {
 
-            logger.prod("[ROUTER] Loaded " + path);
+            log.info("[ROUTER] Loaded " + path);
 
             if (options.route.constraint) this.app.Router.constrain(path, options.route.constraint);
 
@@ -460,8 +460,8 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
-            logger.prod(message);
-            console.log(message);
+            log.info(message);
+            //console.log(message);
         }
     });
 
@@ -477,7 +477,7 @@ Server.prototype.dustCompile = function (options) {
         
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
             
-            console.log("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
+            log.info("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
             
             var template =  fs.readFileSync(file, "utf8");
             
@@ -487,8 +487,8 @@ Server.prototype.dustCompile = function (options) {
             }
             catch (e) {
                 var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
-                logger.prod(message);
-                console.log(message);
+                log.info(message);
+                //console.log(message);
             }
         }
     });
@@ -505,8 +505,8 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
-            logger.prod(message);
-            console.log(message);
+            log.info(message);
+            //console.log(message);
             //throw new Error(message);
         }
     });
@@ -529,12 +529,12 @@ Server.prototype.ensureDirectories = function (options, done) {
             mkdirp(dir, {}, function (err, made) {
 
                 if (err) {
-                    console.log('[SERVER] ' + err);
-                    logger.prod('[SERVER] ' + err);
+                    //console.log('[SERVER] ' + err);
+                    log.error('[SERVER] ' + err);
                 }
 
                 if (made) {
-                    logger.prod('[SERVER] Created workspace directory ' + made);
+                    log.info('[SERVER] Created workspace directory ' + made);
                 }
 
                 idx++;

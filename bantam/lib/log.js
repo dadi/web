@@ -1,3 +1,4 @@
+var bunyan = require('bunyan');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var moment = require('moment');
@@ -47,6 +48,33 @@ stream.on('finish', function () {
     console.log(arguments);
 });
 
+var log = bunyan.createLogger({
+    name: 'rosecomb',
+    streams: [
+        {
+          level: 'info',
+          //path: logPath
+          stream: process.stdout            // log INFO and above to stdout
+        },
+        {
+          level: 'error',
+          path: logPath  // log ERROR and above to a file
+        }
+    ]
+});
+
+var self = module.exports = {
+
+    info: function info() {
+        log.info.apply(log, arguments);
+    },
+
+    error: function error() {
+        log.error.apply(log, arguments);
+    }
+
+}
+
 module.exports.logLevel = function () {
     return config.get('logging.level').toUpperCase();
 };
@@ -92,6 +120,10 @@ module.exports.debug = function (message, done) {
     if ((levelMap[module.exports.logLevel()] || 0) < levelMap['DEBUG']) return;
     module.exports._log(this.format({message: message}), done);
 };
+
+// module.exports.info = function (message) {
+//     log.info(message);
+// };
 
 /**
  * Log message if running at stage level
