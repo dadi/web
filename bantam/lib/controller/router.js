@@ -7,7 +7,6 @@ https://github.com/tinganho/connect-modrewrite
 
 var fs = require('fs');
 var es = require('event-stream');
-var lineReader = require('line-by-line');
 var url = require('url');
 var querystring = require('querystring');
 var modRewrite = require('connect-modrewrite');
@@ -52,32 +51,6 @@ var Router = function (server, options) {
     });
   }
 }
-
-// Router.prototype.loadRewrites = function(options, done) {
-//   var self = this;
-  
-//   self.rules = [];
-  
-//   // load the rewrite specifications if they exist
-//   var rewritePath = options.routesPath + '/rewrites.txt';
-
-//   var lr = new lineReader(rewritePath);
-//   var rules = [];
-
-//   lr.on('error', function (err) {
-//     log.error(err);
-//     done();
-//   });
-
-//   lr.on('line', function (line) {
-//     if (line !== "") rules.push(line);
-//   });
-
-//   lr.on('end', function () {
-//     self.rules = rules.slice(0);
-//     done();    
-//   });
-// }
 
 Router.prototype.loadRewrites = function(options, done) {
   
