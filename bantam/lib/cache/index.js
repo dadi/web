@@ -88,17 +88,22 @@ module.exports = function (server) {
             self.redisClient.exists(filename, function (err, exists) {
                 if (exists > 0) {
 
-                    //res.setHeader('X-Cache-Lookup', 'HIT');
+                    res.setHeader('X-Cache-Lookup', 'HIT');
 
-                    // if (noCache) {
-                    //     res.setHeader('X-Cache', 'MISS');
-                    //     return next();
-                    // }
+                    if (noCache) {
+                        console.log('noCache');
+                        res.setHeader('X-Cache', 'MISS');
+                        return next();
+                    }
                     
-                    // res.setHeader('X-Cache', 'HIT');
+                    res.setHeader('X-Cache', 'HIT');
+
+                    res.statusCode = 200;
+                    res.setHeader('Server', config.get('app.name'));
+                    res.setHeader('content-type', 'text/html');
                     
                     readStream = redisRStream(self.redisClient, filename);
-                    // readStream.pipe(res);
+                    readStream.pipe(res);
 
                 }
                 else {
@@ -111,6 +116,54 @@ module.exports = function (server) {
         else {
             readStream = fs.createReadStream(cachepath, {encoding: cacheEncoding});
             console.log('create');
+
+            readStream.on('error', function (err) {
+                console.log('error');
+                console.log(err);
+                res.setHeader('X-Cache', 'MISS');
+                res.setHeader('X-Cache-Lookup', 'MISS');
+
+                if (!noCache) {
+                    return cacheResponse();
+                }
+            });
+
+            if (noCache) {
+                console.log('noCache');
+                res.setHeader('X-Cache', 'MISS');
+                res.setHeader('X-Cache-Lookup', 'HIT');
+                return next();
+            }
+
+            // check if ttl has elapsed
+            try {
+                var stats = fs.statSync(cachepath);
+                var ttl = options.ttl || config.get('caching.ttl');
+                var lastMod = stats && stats.mtime && stats.mtime.valueOf();
+
+                if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
+                    console.log('lastMod');
+                    res.setHeader('X-Cache', 'MISS');
+                    res.setHeader('X-Cache-Lookup', 'HIT');
+                    return cacheResponse();
+                }
+            }
+            catch (err) {
+
+            }
+
+
+            console.log('ok');
+
+            res.statusCode = 200;
+
+            res.setHeader('X-Cache', 'HIT');
+            res.setHeader('X-Cache-Lookup', 'HIT');
+            
+            res.setHeader('Server', config.get('app.name'));
+            res.setHeader('content-type', 'text/html');
+
+            readStream.pipe(res);
         }
 
         // readStream.on('open', function (file) {
@@ -118,51 +171,51 @@ module.exports = function (server) {
         //     res.setHeader('X-Cache-Lookup', 'HIT');
         // });
         
-        readStream.on('error', function (err) {
-            console.log('error');
-            console.log(err);
-            res.setHeader('X-Cache', 'MISS');
-            res.setHeader('X-Cache-Lookup', 'MISS');
+        // readStream.on('error', function (err) {
+        //     console.log('error');
+        //     console.log(err);
+        //     res.setHeader('X-Cache', 'MISS');
+        //     res.setHeader('X-Cache-Lookup', 'MISS');
 
-            if (!noCache) {
-                return cacheResponse();
-            }
-        });
+        //     if (!noCache) {
+        //         return cacheResponse();
+        //     }
+        // });
 
-        if (noCache) {
-            console.log('noCache');
-            res.setHeader('X-Cache', 'MISS');
-            res.setHeader('X-Cache-Lookup', 'HIT');
-            return next();
-        }
+        // if (noCache) {
+        //     console.log('noCache');
+        //     res.setHeader('X-Cache', 'MISS');
+        //     res.setHeader('X-Cache-Lookup', 'HIT');
+        //     return next();
+        // }
 
-        // check if ttl has elapsed
-        try {
-            var stats = fs.statSync(cachepath);
-            var ttl = options.ttl || config.get('caching.ttl');
-            var lastMod = stats && stats.mtime && stats.mtime.valueOf();
+        // // check if ttl has elapsed
+        // try {
+        //     var stats = fs.statSync(cachepath);
+        //     var ttl = options.ttl || config.get('caching.ttl');
+        //     var lastMod = stats && stats.mtime && stats.mtime.valueOf();
 
-            if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
-                console.log('lastMod');
-                res.setHeader('X-Cache', 'MISS');
-                res.setHeader('X-Cache-Lookup', 'HIT');
-                return cacheResponse();
-            }
-        }
-        catch (err) {
+        //     if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
+        //         console.log('lastMod');
+        //         res.setHeader('X-Cache', 'MISS');
+        //         res.setHeader('X-Cache-Lookup', 'HIT');
+        //         return cacheResponse();
+        //     }
+        // }
+        // catch (err) {
 
-        }
+        // }
 
-        console.log('ok');
         
-        res.statusCode = 200;
-
-        res.setHeader('Server', config.get('app.name'));
-        res.setHeader('X-Cache', 'HIT');
-        res.setHeader('X-Cache-Lookup', 'HIT');
-        res.setHeader('content-type', 'text/html');
         
-        readStream.pipe(res);
+        //res.statusCode = 200;
+
+        // res.setHeader('Server', config.get('app.name'));
+        // res.setHeader('X-Cache', 'HIT');
+        // res.setHeader('X-Cache-Lookup', 'HIT');
+        // res.setHeader('content-type', 'text/html');
+        
+        // readStream.pipe(res);
 
             //fs.stat(cachepath, function (err, stats) {
 

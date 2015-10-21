@@ -23,6 +23,12 @@ DatasourceCache.prototype.cachingEnabled = function() {
     return false;
   }
 
+  var query = url.parse(this.datasource.endpoint, true).query;
+  
+  if (query.hasOwnProperty('cache') && query.cache === 'false') {
+    enabled = false;
+  }
+
   return enabled;
 };
 

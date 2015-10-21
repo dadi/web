@@ -249,33 +249,32 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
     processSearchParameters(key, datasource, req);
 
-    //.then(
-      help.getData(datasource, function(err, result) {
-        
-        if (err) return done(err);
+    help.getData(datasource, function(err, result) {
+      
+      if (err) return done(err);
 
-        if (result) {
-          try {
-            data[key] = (typeof result === 'object' ? result : JSON.parse(result));
-          }
-          catch (e) {
-            console.log(e);
-          }
+      if (result) {
+        try {
+          data[key] = (typeof result === 'object' ? result : JSON.parse(result));
         }
+        catch (e) {
+          console.log(e);
+        }
+      }
 
-        idx++;        
+      idx++;        
 
-        if (idx === Object.keys(primaryDatasources).length) {
-          processChained(chainedDatasources, data, query, function() {
+      if (idx === Object.keys(primaryDatasources).length) {
+        processChained(chainedDatasources, data, query, function() {
 
-            loadEventData(self.events, req, res, data, function (err, result) {
-              done(err, result);
-            });
-
+          loadEventData(self.events, req, res, data, function (err, result) {
+            done(err, result);
           });
-        }
-      })
-    //);
+
+        });
+      }
+    })
+
   });
 }
 
@@ -305,7 +304,7 @@ function processChained(chainedDatasources, data, query, done) {
     }
     catch(e) {
       param = e;
-      log.error('Error processng chained datasource: ' + e);
+      log.error('Error processing chained datasource: ' + e);
     }
 
     // add or extend the filter property

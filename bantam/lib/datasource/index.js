@@ -143,9 +143,12 @@ Datasource.prototype.processRequest = function (datasource, req) {
   delete query.json;
 
   // handle the cache flag
-  if (query.cache === 'false') {
+  if (query.hasOwnProperty('cache') && query.cache === 'false') {
     delete query.cache;
     this.schema.datasource.cache = false;
+  }
+  else {
+    this.schema.datasource.cache = true;
   }
 
   // if the current datasource matches the page name
