@@ -1,6 +1,6 @@
 {
     "app": {
-        "name": "Bantam / Rosecomb"
+        "name": "Bantam (Rosecomb)"
     },
     "logging": {
         "enabled": true,
@@ -12,10 +12,17 @@
         "messageFormat": "<%= label %> - <%= date %> - <%= message %>"
     },
     "caching": {
-        "enabled": true,
         "ttl": 300,
-        "directory": "./cache/rosecomb/",
-        "extension": "html"
+        "directory": {
+            "enabled": true,
+            "path": "./cache/rosecomb/",
+            "extension": "html"
+        },
+        "redis": {
+            "enabled": false,
+            "host": "",
+            "port": 6379
+        }
     },
     "server": {
         "host": "127.0.0.1",
@@ -38,5 +45,9 @@
         "debug": false,
         "debugLevel": "INFO",
         "whitespace": false
+    },
+    "rewrites": {
+        "datasource": "rewrites",
+        "path": ""
     }
 }

@@ -155,6 +155,18 @@ var conf = convict({
       default: "<%= label %> - <%= date %> - <%= message %>"
     }
   },
+  rewrites: {
+    datasource: {
+      doc: "",
+      format: String,
+      default: ""
+    },
+    path: {
+      doc: "",
+      format: String,
+      default: "workspace/routes/rewrites.txt"
+    }
+  },
   env: {
     doc: "The applicaton environment.",
     format: ["production", "development", "test", "qa"],

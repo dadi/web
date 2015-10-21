@@ -128,7 +128,7 @@ Controller.prototype.get = function (req, res, next) {
 
     self.loadData(req, res, data, function(err, data) {
       if (err) {
-        var e = new Error(err.json.message);
+        var e = new Error(err.json? err.json.message : err);
         e.statusCode = err.statusCode;
         if (next) return next(e);
       }
@@ -209,7 +209,6 @@ function loadEventData(events, req, res, data, done) {
         // return the data if we're at the end of the events
         // array, we have all the responses to render the page
         if (eventIdx === Object.keys(events).length) {
-          console.log(data);
           return done(null, data);
         }
       });
@@ -223,10 +222,10 @@ Controller.prototype.loadData = function(req, res, data, done) {
   var query = url.parse(req.url, true).query;
   
   // remove debug from query
-  delete query.debug;
-  delete query.json;
+  // delete query.debug;
+  // delete query.json;
 
-  var path = url.parse(req.url).pathname.replace('/','');
+  //var path = url.parse(req.url).pathname.replace('/','');
 
   // no datasources specified for this page
   // so start processing the attached events
@@ -248,8 +247,10 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   _.each(primaryDatasources, function(datasource, key) {
 
-    processSearchParameters(key, datasource, req.params, query)
-    .then(help.getData(datasource, function(err, result) {
+    processSearchParameters(key, datasource, req);
+
+    //.then(
+      help.getData(datasource, function(err, result) {
         
         if (err) return done(err);
 
@@ -274,7 +275,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
           });
         }
       })
-    );
+    //);
   });
 }
 
@@ -342,98 +343,106 @@ function processChained(chainedDatasources, data, query, done) {
       chainedDatasource.schema.datasource.filter = JSON.parse(filter);
     }
 
+    chainedDatasource.buildEndpoint(chainedDatasource.schema, function() {});
+
     // rebuild the datasource endpoint with the new filters
-    var d = new Datasource();
-    d.buildEndpoint(chainedDatasource.schema, function(endpoint) {
+    //var d = new Datasource();
+    // d.buildEndpoint(chainedDatasource.schema, function(endpoint) {
 
-      chainedDatasource.endpoint = endpoint;
+    //   chainedDatasource.endpoint = endpoint;
 
-      help.getData(chainedDatasource, function(err, result) {
+    help.getData(chainedDatasource, function(err, result) {
 
-        if (result) {
-          try {
-            data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result));
-          }
-          catch (e) {
-            console.log(e);
-          }
+      if (result) {
+        try {
+          data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result));
         }
-
-        idx++;
-
-        if (idx === Object.keys(chainedDatasources).length) {
-          return done(data);
+        catch (e) {
+          console.log(e);
         }
+      }
 
-      });
+      idx++;
+
+      if (idx === Object.keys(chainedDatasources).length) {
+        return done(data);
+      }
 
     });
+
+    //});
   });
 
 }
 
-function processSearchParameters(key, datasource, params, query) {
+function processSearchParameters(key, datasource, req) {
 
-  var deferred = Q.defer();
+  log.info(key + ': processSearchParameters()');
 
-  var queryOptions = _.clone(query);
-  if (queryOptions.cache === 'false') {
-    // remove cache from query
-    delete queryOptions.cache;
-    datasource.schema.datasource.cache = false;
-  }
+  //var deferred = Q.defer();
 
-  datasource.schema.datasource.filter = datasource.schema.datasource.filter || {};
+//   var query = url.parse(req.url, true).query;
 
-  // add ID filter if the current datasource matches the page name
-  if (key.indexOf(datasource.page.name) >= 0) {
+// //  var queryOptions = _.clone(query);
+//   if (query.cache === 'false') {
+//     // remove cache from query
+//     delete query.cache;
+//     datasource.schema.datasource.cache = false;
+//   }
+
+  //datasource.schema.datasource.filter = datasource.schema.datasource.filter || {};
+
+  // // add ID filter if the current datasource matches the page name
+  // if (key.indexOf(datasource.page.name) >= 0) {
     
-    // remove page # from query
-    datasource.schema.datasource.page = queryOptions.page || params.page || 1;
-    delete queryOptions.page;
-    delete params.page;
+  //   // remove page # from query
+  //   datasource.schema.datasource.page = query.page || req.params.page || 1;
+  //   delete query.page;
+  //   delete req.params.page;
     
-    // add an ID filter if it was present in the querystring
-    // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
-    if (params.id || queryOptions.id) {
-      datasource.schema.datasource.filter['_id'] = params.id || queryOptions.id;
-      delete queryOptions.id;
-    }
+  //   // add an ID filter if it was present in the querystring
+  //   // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
+  //   if (req.params.id || query.id) {
+  //     datasource.schema.datasource.filter['_id'] = req.params.id || query.id;
+  //     delete query.id;
+  //   }
 
-    // URI encode each filter value
-    _.each(queryOptions, function(value, key) {
-        if (key === 'filter') {
-          _.extend(datasource.schema.datasource.filter, JSON.parse(value));
-        }
-        else {
-          datasource.schema.datasource.filter[key] = encodeURIComponent(value);
-        }
-    });
-  }
+  //   // URI encode each filter value
+  //   _.each(query, function(value, key) {
+  //     if (key === 'filter') {
+  //       _.extend(datasource.schema.datasource.filter, JSON.parse(value));
+  //     }
+  //     else {
+  //       datasource.schema.datasource.filter[key] = encodeURIComponent(value);
+  //     }
+  //   });
+  // }
   
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
-  _.each(datasource.requestParams, function(obj) {
-    if (params.hasOwnProperty(obj.param)) {
-      datasource.schema.datasource.filter[obj.field] = encodeURIComponent(params[obj.param]);
-    }
-    else {
-      // param not found in request, remove it from DS filter
-      if (datasource.schema.datasource.filter[obj.field]) {
-        delete datasource.schema.datasource.filter[obj.field];
-      }
-    }
-  });
+  datasource.processRequest(key, req);
+  
+  // _.each(datasource.requestParams, function(obj) {
+  //   if (params.hasOwnProperty(obj.param)) {
+  //     datasource.schema.datasource.filter[obj.field] = encodeURIComponent(params[obj.param]);
+  //   }
+  //   else {
+  //     // param not found in request, remove it from DS filter
+  //     if (datasource.schema.datasource.filter[obj.field]) {
+  //       delete datasource.schema.datasource.filter[obj.field];
+  //     }
+  //   }
+  // });
 
   // rebuild the datasource endpoint with the new filters
-  var d = new Datasource();
-  d.buildEndpoint(datasource.schema, function(endpoint) {
-    datasource.endpoint = endpoint;
+  // var d = new Datasource();
+  // d.buildEndpoint(datasource.schema, function(endpoint) {
+  //   datasource.endpoint = endpoint;
 
-    deferred.resolve();
-  });
+    //deferred.resolve();
+  // });
 
-  return deferred.promise;
+  //return deferred.promise;
 }
 
 module.exports = function (page, options) {

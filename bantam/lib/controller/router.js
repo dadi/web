@@ -7,6 +7,7 @@ https://github.com/tinganho/connect-modrewrite
 
 var fs = require('fs');
 var es = require('event-stream');
+var lineReader = require('line-by-line');
 var url = require('url');
 var querystring = require('querystring');
 var modRewrite = require('connect-modrewrite');
@@ -17,6 +18,8 @@ var config = require(__dirname + '/../../../config');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
 
+var Datasource = require(__dirname + '/../datasource');
+
 var Router = function (server, options) {
 
   this.data = {};
@@ -26,41 +29,80 @@ var Router = function (server, options) {
   this.handlers = null;
   this.rules = [];
 
+  this.rewritesFile = config.get('rewrites.path');
+  this.rewritesDatasource = config.get('rewrites.datasource');
+
   this.server = server;
 
+  var self = this;
+
   // load the route constraint specifications if they exist
-  if (fs.existsSync(options.routesPath + '/constraints.js')) {
+  try {
+    delete require.cache[options.routesPath + '/constraints.js'];
     this.handlers = require(options.routesPath + '/constraints.js');
   }
+  catch (err) {
+    log.info('[ROUTER] No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
+  }
 
-  var self = this;
-  this.loadRewrites(options, function() {
-    self.loadRewriteModule();
-  });
+  // load the rewrites from the filesystem
+  if (this.rewritesFile && this.rewritesFile !== '') {
+    this.loadRewrites(options, function(err) {
+      if (!err) self.loadRewriteModule();
+    });
+  }
 }
 
+// Router.prototype.loadRewrites = function(options, done) {
+//   var self = this;
+  
+//   self.rules = [];
+  
+//   // load the rewrite specifications if they exist
+//   var rewritePath = options.routesPath + '/rewrites.txt';
+
+//   var lr = new lineReader(rewritePath);
+//   var rules = [];
+
+//   lr.on('error', function (err) {
+//     log.error(err);
+//     done();
+//   });
+
+//   lr.on('line', function (line) {
+//     if (line !== "") rules.push(line);
+//   });
+
+//   lr.on('end', function () {
+//     self.rules = rules.slice(0);
+//     done();    
+//   });
+// }
+
 Router.prototype.loadRewrites = function(options, done) {
-  var self = this;
+  
+  var rules = [];
+  var self = this;  
   
   self.rules = [];
   
-  // load the rewrite specifications if they exist
-  var rewritePath = options.routesPath + '/rewrites.txt';
-  if (fs.existsSync(rewritePath)) {
+  var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
-    var rules = [];
-    var stream = fs.createReadStream(rewritePath, {encoding: 'utf8'})
-      .pipe(es.split("\n"))
-      .pipe(es.mapSync(function(data) {
-        if (data !== "") rules.push(data);
-      }));
+  stream.pipe(es.split("\n"))
+        .pipe(es.mapSync(function (data) {
+          if (data !== "") rules.push(data);
+        })
+  );
 
-    stream.on('end', function() {
-      self.rules = rules.slice(0);
-      done();
-    });
+  stream.on('error', function (err) {
+    log.error('[ROUTER] No rewrites loaded, file not found (' + self.rewritesFile + ')');
+    done(err);
+  });
 
-  }
+  stream.on('end', function() {
+    self.rules = rules.slice(0);
+    done(null);
+  });
 
 }
 
@@ -73,7 +115,8 @@ Router.prototype.loadRewrites = function(options, done) {
  */
 Router.prototype.constrain = function(route, fn) {
   
-  // check the specified function has been loaed from /workspace/routes/constraints.js
+  // check the specified function has been 
+  // loaded from /workspace/routes/constraints.js
   if (!this.handlers[fn]) {
     log.error("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
     return;
@@ -138,6 +181,8 @@ var debugMode = function(req) {
 
 module.exports = function (server, options) {
 
+  var self = this;
+
   server.app.Router = new Router(server, options);
 
   // middleware which blocks requests when we're too busy
@@ -152,6 +197,40 @@ module.exports = function (server, options) {
 	//     next();
 	//   }
 	// });
+ 
+
+  server.app.use(function (req, res, next) {
+
+    if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
+
+    var datasource = new Datasource(null, server.app.Router.rewritesDatasource, options, function(err, ds) {
+      
+      if (err) {
+        log.error(err);
+        return next();
+      }
+
+      //console.log(ds);
+
+      help.getData(ds, function(err, result) {
+        
+        if (err) return done(err);
+
+        if (result) {
+          //console.log(result);
+
+          return next();
+          // try {
+          //   data[key] = (typeof result === 'object' ? result : JSON.parse(result));
+          // }
+          // catch (e) {
+          //   console.log(e);
+          // }
+        }
+      });
+
+    });
+  })
 
   //server.app.Router.loadRewriteModule();
 };

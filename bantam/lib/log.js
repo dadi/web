@@ -7,7 +7,7 @@ var _ = require('underscore');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
-var logPath = path.resolve(config.get('logging.path') + '/' + config.get('logging.filename') + '.' + config.get('logging.extension'));
+var logPath = path.resolve(config.get('logging.path') + '/' + config.get('logging.filename') + '.' + config.get('env') + '.' + config.get('logging.extension'));
 
 var levelMap = {
     'DEBUG': 1,
@@ -36,6 +36,7 @@ mkdirp(path.resolve(config.get('logging.path')), {}, function(err, made) {
 var options = { flags: 'a',
                 encoding: 'utf8',
                 mode: 0666 }
+
 stream = fs.createWriteStream(logPath, options);
 
 stream.on('error', function (err) {
@@ -45,7 +46,6 @@ stream.on('error', function (err) {
 
 stream.on('finish', function () {
     console.log('stream finish');
-    console.log(arguments);
 });
 
 var log = bunyan.createLogger({
@@ -71,6 +71,10 @@ var self = module.exports = {
 
     error: function error() {
         log.error.apply(log, arguments);
+    },
+
+    trace: function error() {
+        log.trace.apply(log, arguments);
     }
 
 }

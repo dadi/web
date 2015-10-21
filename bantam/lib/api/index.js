@@ -102,6 +102,8 @@ Api.prototype.listener = function (req, res) {
     var stack = this.all.slice(0);
     var path = url.parse(req.url).pathname;
 
+    req.paths = [];
+
     // get matching routes, and add req.params
     var matches = this._match(path, req);
 
@@ -110,6 +112,8 @@ Api.prototype.listener = function (req, res) {
     var doStack = function (i) {
         return function (err) {
             if (err) return errStack(0)(err);
+
+
             
             // add the original params back, in case a middleware
             // has modified the current req.params
@@ -155,6 +159,8 @@ Api.prototype._match = function (path, req) {
         var match = paths[i].regex.exec(path);
 
         if (!match) { continue; }
+
+        req.paths.push(paths[i].path);
 
         var keys = paths[i].regex.keys;
         handlers.push(paths[i].handler);
