@@ -168,7 +168,7 @@ module.exports.getData = function(datasource, done) {
 module.exports.getHeaders = function(datasource, done) {
     var headers;
     if(datasource.authStrategy){
-        datasource.authStrategy.getToken(function (token){
+        datasource.authStrategy.getToken(datasource, function (token){
             done({headers: {'Authorization': 'Bearer ' + token}} );
         });
     }
