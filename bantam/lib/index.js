@@ -231,7 +231,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
     try {
       var schema = require(obj.filepath);
     }
-    catch (e) {
+    catch (err) {
       log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
     }
 
