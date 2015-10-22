@@ -66,7 +66,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
   });
 
   req.on('error', function(err) {
-    log.info('[BEARER] Error requesting accessToken from %s for datasource %s', options.hostname, datasource);
+    log.info('[BEARER] Error requesting accessToken from %s for datasource %s', options.hostname, datasource.name);
     return;
   });
 
