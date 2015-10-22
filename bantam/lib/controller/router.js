@@ -232,7 +232,10 @@ module.exports = function (server, options) {
 
       help.getData(ds, function(err, result) {
         
-        if (err) return done(err);
+        if (err) {
+          log.error({err:err}, 'Error loading data in Router Rewrite module');
+          return next(err);
+        }
 
         if (result) {
           var results = JSON.parse(result);
