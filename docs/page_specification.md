@@ -47,7 +47,7 @@ Constraint functions must be added to `workspace/routes/constraints.js`. In the 
 
 _workspace/pages/movies.json_
 
-```
+```js
 "route": {
 	"paths": ["/movies/:content"],
 	"constraint": "nextIfNewsOrFeatures"
@@ -73,7 +73,7 @@ An  existing datasource can be used as the route constraint. The specified datas
 
 _workspace/pages/manufacturer.json_
 
-```
+```js
 "route": {
 	"paths": ["/:manufacturer"],
 	"constraint": "manufacturers"
@@ -96,9 +96,9 @@ _workspace/data-sources/manufacturers.json_
 		},
 		"count": 1,
 		"fields": { "name": 1, "_id": 0 },
-    "requestParams": [
-      { "param": "manufacturer", "field": "name" }
-    ]
+		"requestParams": [
+			{ "param": "manufacturer", "field": "name" }
+		]
 	}
 }
 
