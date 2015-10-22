@@ -232,7 +232,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
       var schema = require(obj.filepath);
     }
     catch (e) {
-      throw new Error('Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
+      log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
     }
 
     // With each page we create a controller, that acts as a component of the REST api.
@@ -480,8 +480,6 @@ Server.prototype.dustCompile = function (options) {
         catch (e) {
             var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
             log.info(message);
-            //console.log(message);
-            //throw new Error(message);
         }
     });
 };
