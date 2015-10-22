@@ -143,7 +143,6 @@ Controller.prototype.get = function (req, res, next) {
           var rendered = dust.render(pageTemplate, data, function(err, result) {
             if (err) {
               err = new Error(err.message);
-              err.json = { "error": "Template rendering failed." };
               err.statusCode = 500;
               return done(err, null);
             }

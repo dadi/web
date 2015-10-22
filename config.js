@@ -124,11 +124,6 @@ var conf = convict({
       format: Boolean,
       default: true
     },
-    level: {
-      doc: "",
-      format: String,
-      default: "DEBUG"
-    },
     path: {
       doc: "",
       format: String,
@@ -139,20 +134,10 @@ var conf = convict({
       format: String,
       default: "rosecomb"
     },
-    dateFormat: {
-      doc: "",
-      format: String,
-      default: ""
-    },
     extension: {
       doc: "",
       format: String,
       default: "log"
-    },
-    messageFormat: {
-      doc: "",
-      format: String,
-      default: "<%= label %> - <%= date %> - <%= message %>"
     }
   },
   rewrites: {

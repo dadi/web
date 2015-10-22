@@ -14,6 +14,7 @@
 	    },
 	    "route": {
 	    	"path": "/car-reviews/:make/:model", // route configuration (optional)
+	    	"constraint": "" // route constraint method (optional)
 	    },
 	    "contentType": "application/xml", // (optional, default = text/html)
 	    "template": "car-reviews.dust", // template filename (optional)
@@ -28,7 +29,17 @@
 
 #### Routing
 
-The `route` property is used to specify the URL for the page. The default value for this property is a route matching the page name. For example if the page name is `books` the route becomes `/books`.
+The `route.path` property is used to specify the URL for the page. The default value for this property is a route matching the page name. For example if the page name is `books` the route becomes `/books`.
+
+##### Route Constraints
+
+In the case of ambiguous routes it is possible to provide Rosecomb with a constraint method or datasource to check a matching route against some business logic or database records.
+
+###### Constraint Methods
+
+
+###### Constraint Datasources
+
 
 ##### Named Parameters
 It is possible to specify a route containing named parameters which can be utilised by the datasources attached to the page.

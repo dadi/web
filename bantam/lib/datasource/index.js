@@ -148,12 +148,12 @@ Datasource.prototype.processRequest = function (datasource, req) {
     this.schema.datasource.cache = false;
   }
   else {
-    this.schema.datasource.cache = true;
+    delete this.schema.datasource.cache;
   }
 
   // if the current datasource matches the page name
   // add some params from the query string or request params
-  if (datasource.indexOf(this.page.name) >= 0) {
+  if (this.page.name && datasource.indexOf(this.page.name) >= 0) {
     
     // handle pagination param
     this.schema.datasource.page = query.page || req.params.page || 1;

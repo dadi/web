@@ -60,11 +60,6 @@ Server.prototype.start = function (options, done) {
     // handle routing & redirects
     router(self, options);
 
-    dust.isDebug = config.get('dust.debug');
-    dust.debugLevel = config.get('dust.debugLevel');
-    dust.config.cache = config.get('dust.cache');
-    dust.config.whitespace = config.get('dust.whitespace');
-    
     // request logging middleware
     app.use(function (req, res, next) {
         var start = Date.now();
@@ -99,33 +94,6 @@ Server.prototype.start = function (options, done) {
         log.info(seramaMessage);
       }
 
-      if (config.useSlackIntegration) {
-        var Slack = require('node-slack');
-        var slack = new Slack('https://hooks.slack.com/services/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', {});
-
-        slack.send({
-          text: message,
-          username: 'Bantam',
-          icon_emoji: ':bantam:',
-          "attachments": [
-              {
-                  "fallback": "Required text summary of the attachment that is shown by clients that understand attachments but choose not to show them.",
-                  "text": "Optional text that should appear within the attachment",
-                  "pretext": "Optional text that should appear above the formatted data",
-                  "color": "good", // Can either be one of 'good', 'warning', 'danger', or any hex color code
-                  // Fields are displayed in a table on the message
-                  "fields": [
-                      {
-                          "title": "Required Field Title", // The title may not contain markup and will be escaped for you
-                          "value": "Text value of the field. May contain standard message markup and must be escaped as normal. May be multi-line.",
-                          "short": false // Optional flag indicating whether the `value` is short enough to be displayed side-by-side with other values
-                      }
-                  ]
-              }
-          ]
-        });
-      }
-
     });
 
     server.on('error', function (e) {
@@ -138,6 +106,13 @@ Server.prototype.start = function (options, done) {
     // load app specific routes
     this.loadApi(options);
 
+    // dust configuration
+    dust.isDebug = config.get('dust.debug');
+    dust.debugLevel = config.get('dust.debugLevel');
+    dust.config.cache = config.get('dust.cache');
+    dust.config.whitespace = config.get('dust.whitespace');
+    
+    
     this.readyState = 1;
 
     process.on('SIGINT', function() {
@@ -217,7 +192,7 @@ Server.prototype.loadApi = function (options) {
             }
         });
         
-        log.info('\n[SERVER] Load complete.');
+        log.info('[SERVER] Load complete.');
 
     });
 
@@ -247,7 +222,6 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
         filepath: pageFilepath
       }, options, reload);
 
-      //logger.prod('Page loaded: ' + page);
     });
 };
 
@@ -330,8 +304,6 @@ Server.prototype.addComponent = function (options, reload) {
 
                     // map request method to controller method
                     var method = req.method && req.method.toLowerCase();
-
-                    if (method === 'head') method = 'get';
 
                     if (method && options.component[method]) {
                         return options.component[method](req, res, next);

@@ -1,10 +1,7 @@
 /*
-
 REWRITE INFO:
 https://github.com/tinganho/connect-modrewrite
-
 */
-
 var fs = require('fs');
 var es = require('event-stream');
 var url = require('url');
@@ -80,22 +77,46 @@ Router.prototype.loadRewrites = function(options, done) {
 }
 
 /**
- *  Attaches a function from /workspace/routes/constraints.js to the specified route
+ *  Attaches a function from /workspace/routes/constraints.js or a datasource to the specified route
  *  @param {String} route
  *  @param {String} fn
  *  @return undefined
  *  @api public
  */
-Router.prototype.constrain = function(route, fn) {
+Router.prototype.constrain = function(route, constraint) {
   
-  // check the specified function has been 
-  // loaded from /workspace/routes/constraints.js
-  if (!this.handlers[fn]) {
-    log.error("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
-    return;
+  var self = this;
+  var c;
+  var message;
+
+  if (this.handlers[constraint]) {
+
+    // add constraint from /workspace/routes/constraints.js if it exists
+    c = this.handlers[constraint];
+    message = "[ROUTER] Added route constraint function '%s' for '%s'";
+  }
+  else {
+
+    // try to build a datasource from the provided constraint
+    var datasource = new Datasource(route, constraint, this.options, function(err, ds) {
+      if (err) {
+        log.error(err);
+      }
+
+      c = ds;
+      message = "[ROUTER] Added route constraint datasource '%s' for '%s'";
+    });
   }
 
-  this.constraints[route] = this.handlers[fn];
+  if (c) {
+    this.constraints[route] = c;
+    log.info(message, constraint, route);
+  }
+  else {
+    log.error("[ROUTER] Route constraint '" + constraint + "' not found. Is it defined in '/workspace/routes/constraints.js' or '/workspace/data-sources/'?");
+  }
+
+  return;
 }
 
 /**
@@ -107,25 +128,48 @@ Router.prototype.constrain = function(route, fn) {
  */
 Router.prototype.testConstraint = function(route, req, res, callback) {
 
-  var debug = debugMode(req);
-  
-  if (debug) {
-    console.log("[ROUTER] testConstraint: " + req.url);
-    console.log("[ROUTER] testConstraint: " + route);
-  }
+  console.log("[ROUTER] testConstraint: " + req.url);
+  console.log("[ROUTER] testConstraint: " + route);
 
-  // if there's a constraint handler for this route, run it
+  // if there's a constraint handler 
+  // for this route, run it
   if (this.constraints[route]) {
-    
-    if (debug) console.log("[ROUTER] testConstraint: found fn");
-    
-    this.constraints[route](req, res, function (result) {
-      
-      if (debug) console.log("[ROUTER] testConstraint: this route matches = " + result);
-      
-      // return the result
-      return callback(result);
-    });
+
+    if (typeof this.constraints[route] === 'function') {
+      this.constraints[route](req, res, function (result) {
+        // return the result
+        return callback(result);
+      });
+    }
+    else {
+      // datasource
+      var datasource = this.constraints[route];
+      datasource.processRequest(datasource.page.name, req);
+
+      help.getData(datasource, function(err, result) {
+        
+        if (err) {
+          return callback(err);
+        }
+
+        if (result) {
+          try {
+            var results = JSON.parse(result);
+            // console.log(results);
+            if (results && results.results && results.results.length > 0) {
+              return callback(true);
+            }
+            else {
+              return callback(false);  
+            }
+          }
+          catch (err) {
+            log.error(err);
+            return callback(false);
+          }
+        }
+      });
+    }
   }
   else {
     // no constraint against this route,
@@ -176,29 +220,45 @@ module.exports = function (server, options) {
 
     if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
 
-    var datasource = new Datasource(null, server.app.Router.rewritesDatasource, options, function(err, ds) {
+    var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
       
       if (err) {
         log.error(err);
         return next();
       }
 
-      //console.log(ds);
+      _.extend(ds.schema.datasource.filter, { "rule": req.url });
+      ds.processRequest(ds.page.name, req);
 
       help.getData(ds, function(err, result) {
         
         if (err) return done(err);
 
         if (result) {
-          //console.log(result);
+          var results = JSON.parse(result);
+          
+          if (results && results.results && results.results.length > 0) {
+            var rule = results.results[0];
+            var location;
+            if (/\:\/\//.test(rule.replacement)) {
+              location = req.url.replace(rule.rule, rule.replacement);
+            }
+            else {
+              location = 'http' + '://' + req.headers.host + req.url.replace(rule.rule, rule.replacement);
+            }
 
+            res.writeHead(rule.redirectType, {
+              Location : location
+            });
+
+            res.end();
+          }
+          else {
+            return next();
+          }
+        }
+        else {
           return next();
-          // try {
-          //   data[key] = (typeof result === 'object' ? result : JSON.parse(result));
-          // }
-          // catch (e) {
-          //   console.log(e);
-          // }
         }
       });
 
