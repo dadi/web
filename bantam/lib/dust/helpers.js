@@ -244,3 +244,16 @@ dust.helpers.numberCommas = function(chunk, context, bodies, params) {
         chunk.end();
     });
 };
+
+/*
+* Encode html to json valid
+*/
+
+dust.helpers.htmlEncode = function(chunk, context, bodies, params) {
+    return chunk.capture(bodies.block, context, function(data, chunk){
+        data = JSON.stringify(data.toString());
+
+        chunk.write(data);
+        chunk.end();
+    });
+};
