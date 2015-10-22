@@ -41,9 +41,13 @@ The `route.paths` property is used to specify the URLs that match the page. The 
 
 In the case of ambiguous routes it is possible to provide Rosecomb with a constraint function or datasource to check a matching route against some business logic or database records.
 
+Returning `true` from a constraint instructs Rosecomb that this is the correct route.
+
+Returning `false` from a constraint instructs Rosecomb to try the next matching route (or return a 404 if there are no further matching routes).
+
 ###### Constraint Functions
 
-Constraint functions must be added to `workspace/routes/constraints.js`. In the following example a route has a dynamic parameter `content`. The constraint function `nextIfNewsOrFeatures` will check the value of the `content` parameter and return `false` if it matches "news" or "features. Returning `false` from a constraint function instructs Rosecomb to try the next matching route (or return a 404 if there are no further matching routes).
+Constraint functions must be added to `workspace/routes/constraints.js`. In the following example a route has a dynamic parameter `content`. The constraint function `nextIfNewsOrFeatures` will check the value of the `content` parameter and return `false` if it matches "news" or "features. 
 
 _workspace/pages/movies.json_
 
