@@ -45,12 +45,16 @@ In the case of ambiguous routes it is possible to provide Rosecomb with a constr
 
 Constraint functions must be added to `workspace/routes/constraints.js`. In the following example a route has a dynamic parameter `content`. The constraint function `nextIfNewsOrFeatures` will check the value of the `content` parameter and return `false` if it matches "news" or "features. Returning `false` from a constraint function instructs Rosecomb to try the next matching route (or return a 404 if there are no further matching routes).
 
+_workspace/pages/movies.json_
+
 ```
 "route": {
 	"paths": ["/movies/:content"],
 	"constraint": "nextIfNewsOrFeatures"
 },
 ```
+
+_workspace/routes/constraints.js_
 
 ```js
 module.exports.nextIfNewsOrFeatures = function (req, res, callback) {  
