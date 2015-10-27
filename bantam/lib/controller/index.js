@@ -310,15 +310,15 @@ function processChained(chainedDatasources, data, query, done) {
     // add page # to filter
     chainedDatasource.schema.datasource.page = query.page || 1;
 
+    if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
+      param = parseInt(param);
+    }
+    else {
+      param = encodeURIComponent(param);
+    }
+
     // if there is a field to filter on, add the new parameter value to the filters
     if (chainedDatasource.chained.outputParam.field) {
-      if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
-        param = parseInt(param);
-      }
-      else {
-        param = encodeURIComponent(param);
-      }
-
       chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
     }
 
@@ -329,7 +329,12 @@ function processChained(chainedDatasources, data, query, done) {
       var filter = JSON.stringify(chainedDatasource.schema.datasource.filter);
       var q = JSON.stringify(chainedDatasource.chained.outputParam.query);
 
-      q = q.replace("{param}", encodeURIComponent(param));
+      if (typeof(param) != "number") {
+        param = '"' + param + '"';
+      }
+
+      q = q.replace(/"\{param\}"/i, param);
+
       filter = filter.replace(placeholder, q);
 
       chainedDatasource.schema.datasource.filter = JSON.parse(filter);
@@ -337,6 +342,7 @@ function processChained(chainedDatasources, data, query, done) {
 
     // rebuild the datasource endpoint with the new filters
     var d = new Datasource();
+
     d.buildEndpoint(chainedDatasource.schema, function(endpoint) {
 
       chainedDatasource.endpoint = endpoint;
