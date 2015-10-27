@@ -23,7 +23,7 @@ var Controller = function (page, options) {
 
   this.log = log.get().child({module: 'controller'});
   this.log.info('Controller logging started (' + (page.name || '') + ').');
-  
+
   this.page = page;
 
   this.options = options || {};
@@ -44,8 +44,8 @@ var Controller = function (page, options) {
   });
 };
 
-Controller.prototype.attachDatasources = function(done) {    
-  
+Controller.prototype.attachDatasources = function(done) {
+
   if (!this.page.datasources) return;
 
   var self = this;
@@ -60,12 +60,12 @@ Controller.prototype.attachDatasources = function(done) {
       i++;
       if (i == self.page.datasources.length) done(null);
     });
-    
+
   });
 };
 
 Controller.prototype.attachEvents = function(done) {
-  
+
   if (!this.page.events) return;
 
   var self = this;
@@ -92,7 +92,7 @@ Controller.prototype.get = function (req, res, next) {
     var json = config.get('allowJsonView') && query.json && query.json.toString() === 'true';
 
     var statusCode = res.statusCode || 200;
-    
+
     var done;
 
     if (json) {
@@ -101,7 +101,7 @@ Controller.prototype.get = function (req, res, next) {
     else {
       done = sendBackHTML(statusCode, this.page.contentType, res, next);
     }
-    
+
     var self = this;
 
     var data = {
@@ -111,14 +111,14 @@ Controller.prototype.get = function (req, res, next) {
     }
 
     // global values from config
-    data.global = config.get('global') || {}; 
+    data.global = config.get('global') || {};
 
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);
 
     // add common dust helpers
     new commonDustHelpers.CommonDustjsHelpers().export_helpers_to(dust);
-    
+
     var pageTemplate = self.page.template.slice(0, self.page.template.indexOf('.'));
     var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(pageTemplate) > -1; });
 
@@ -172,14 +172,14 @@ function hasAttachedDatasources(datasources) {
 }
 
 function loadEventData(events, req, res, data, done) {
-  
+
   // return the global data object, no events to run
   if (0 === Object.keys(events).length) {
     return done(null, data);
   }
 
   var eventIdx = 0;
-  
+
   _.each(events, function(value, key) {
 
       // add a random value to the data obj so we can check if an
@@ -187,14 +187,14 @@ function loadEventData(events, req, res, data, done) {
       // to itself
       var checkValue = crypto.createHash('md5').update(new Date().toString()).digest("hex");
       data.checkValue = checkValue;
-      
-      // run the event  
+
+      // run the event
       events[key].run(req, res, data, function (err, result) {
 
         if (err) {
           return done(err, data);
         }
-        
+
         // if we get data back with the same checkValue property,
         // reassign it to our global data object to avoid circular JSON
         if (result && result.checkValue && result.checkValue === checkValue) {
@@ -216,7 +216,7 @@ function loadEventData(events, req, res, data, done) {
   });
 }
 
-Controller.prototype.loadData = function(req, res, data, done) {  
+Controller.prototype.loadData = function(req, res, data, done) {
   var idx = 0;
   var self = this;
 
@@ -247,7 +247,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
     processSearchParameters(key, datasource, req);
 
     help.getData(datasource, function(err, result) {
-      
+
       if (err) return done(err);
 
       if (result) {
@@ -259,7 +259,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
         }
       }
 
-      idx++;        
+      idx++;
 
       if (idx === Object.keys(primaryDatasources).length) {
         processChained(chainedDatasources, data, query, function() {
@@ -276,7 +276,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 }
 
 function processChained(chainedDatasources, data, query, done) {
-  
+
   var idx = 0;
 
   if (0 === Object.keys(chainedDatasources).length) {
@@ -284,7 +284,7 @@ function processChained(chainedDatasources, data, query, done) {
   }
 
   _.each(chainedDatasources, function(chainedDatasource, chainedKey) {
-    
+
     if (!data[chainedDatasource.chained.datasource]) {
       var message = "Error: chained datasource " + chainedKey + " expected data at this node."
       data[chainedDatasource.chained.datasource] = message;
@@ -295,10 +295,10 @@ function processChained(chainedDatasources, data, query, done) {
     // find the value of the parameter in the returned data
     // to use in the chained datasource
     var param = "";
-    
+
     try {
-      param = 
-    chainedDatasource.chained.outputParam.param.split(".").reduce(function(o, x) { 
+      param =
+    chainedDatasource.chained.outputParam.param.split(".").reduce(function(o, x) {
       return o ? o[x] : "" }, data[chainedDatasource.chained.datasource]);
     }
     catch(e) {
@@ -306,7 +306,7 @@ function processChained(chainedDatasources, data, query, done) {
       this.log.error('Error processing chained datasource: ' + e);
     }
 
-    // cast the param value if needed 
+    // cast the param value if needed
     if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
       param = parseInt(param);
     }
@@ -325,12 +325,19 @@ function processChained(chainedDatasources, data, query, done) {
     // add page # to datasource options
     chainedDatasource.schema.datasource.page = query.page || 1;
 
+    if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
+      param = parseInt(param);
+    }
+    else {
+      param = encodeURIComponent(param);
+    }
+
     // if there is a field to filter on, add the new parameter value to the filters
     if (chainedDatasource.chained.outputParam.field) {
       chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
     }
 
-    // if the datasource specified a query, add it to the existing filter 
+    // if the datasource specified a query, add it to the existing filter
     // by looking for the placeholder value
     if (chainedDatasource.chained.outputParam.query) {
       var placeholder = '"{' + chainedDatasource.chained.datasource + '}"';
@@ -381,7 +388,7 @@ function processChained(chainedDatasources, data, query, done) {
 }
 
 function processSearchParameters(key, datasource, req) {
-  
+
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
   datasource.processRequest(key, req);
