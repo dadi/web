@@ -18,6 +18,9 @@ var Datasource = require(__dirname + '/../datasource');
 
 var Router = function (server, options) {
 
+  this.log = log.get().child({module: 'router'});
+  this.log.info('Router logging started.')
+
   this.data = {};
   this.params = {};
   this.constraints = {};
@@ -38,7 +41,7 @@ var Router = function (server, options) {
     this.handlers = require(options.routesPath + '/constraints.js');
   }
   catch (err) {
-    log.info('[ROUTER] No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
+    this.log.info('No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
   }
 
   // load the rewrites from the filesystem
@@ -65,7 +68,7 @@ Router.prototype.loadRewrites = function(options, done) {
   );
 
   stream.on('error', function (err) {
-    log.error('[ROUTER] No rewrites loaded, file not found (' + self.rewritesFile + ')');
+    this.log.error('No rewrites loaded, file not found (' + self.rewritesFile + ')');
     done(err);
   });
 
@@ -93,27 +96,27 @@ Router.prototype.constrain = function(route, constraint) {
 
     // add constraint from /workspace/routes/constraints.js if it exists
     c = this.handlers[constraint];
-    message = "[ROUTER] Added route constraint function '%s' for '%s'";
+    message = "Added route constraint function '%s' for '%s'";
   }
   else {
 
     // try to build a datasource from the provided constraint
     var datasource = new Datasource(route, constraint, this.options, function(err, ds) {
       if (err) {
-        log.error(err);
+        this.log.error(err);
       }
 
       c = ds;
-      message = "[ROUTER] Added route constraint datasource '%s' for '%s'";
+      message = "Added route constraint datasource '%s' for '%s'";
     });
   }
 
   if (c) {
     this.constraints[route] = c;
-    log.info(message, constraint, route);
+    this.log.info(message, constraint, route);
   }
   else {
-    log.error("[ROUTER] Route constraint '" + constraint + "' not found. Is it defined in '/workspace/routes/constraints.js' or '/workspace/data-sources/'?");
+    this.log.error("Route constraint '" + constraint + "' not found. Is it defined in '/workspace/routes/constraints.js' or '/workspace/data-sources/'?");
   }
 
   return;
@@ -164,7 +167,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
             }
           }
           catch (err) {
-            log.error(err);
+            this.log.error(err);
             return callback(false);
           }
         }
@@ -182,13 +185,13 @@ Router.prototype.loadRewriteModule = function() {
   // remove it from the stack
   this.server.app.unuse(modRewrite(this.rules));
 
-  log.info("[ROUTER] Rewrite module unloaded.");
+  this.log.info("Rewrite module unloaded.");
 
   // add it to the stack
   this.server.app.use(modRewrite(this.rules));
   
-  log.info("[ROUTER] Rewrite module loaded.");
-  log.info("[ROUTER] " + this.rules.length + " rewrites/redirects loaded.");
+  this.log.info("Rewrite module loaded.");
+  this.log.info(this.rules.length + " rewrites/redirects loaded.");
 }
 
 var debugMode = function(req) {
@@ -223,7 +226,7 @@ module.exports = function (server, options) {
     var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
       
       if (err) {
-        log.error(err);
+        this.log.error(err);
         return next();
       }
 
@@ -233,7 +236,7 @@ module.exports = function (server, options) {
       help.getData(ds, function(err, result) {
         
         if (err) {
-          log.error({err:err}, 'Error loading data in Router Rewrite module');
+          this.log.error({err:err}, 'Error loading data in Router Rewrite module');
           return next(err);
         }
 

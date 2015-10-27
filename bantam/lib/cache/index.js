@@ -12,20 +12,49 @@ var _ = require('underscore');
 var config = require(__dirname + '/../../../config.js');
 var log = require(__dirname + '/../log');
 
-var cacheEncoding = 'utf8';
-var options = {};
+var Cache = function(server) {
 
-var configEnabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled');
-var dir = config.get('caching.directory.path');
-var redisClient = null;
+    this.log = log.get().child({module: 'cache'});
+    this.log.info('Cache logging started.')
 
-var self = this;
+    this.server = server;
+    this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled');
+    this.dir = config.get('caching.directory.path');
+    this.redisClient = null;
+    this.encoding = 'utf8';
+    this.options = {};
 
-function cachingEnabled(endpoints, req) {
+    var self = this;
 
+    // create cache directory or initialise Redis
+    if (config.get('caching.directory.enabled')) {
+        mkdirp(self.dir, {}, function (err, made) {
+            if (err) self.log.error(err);
+            if (made) self.log.info('Created cache directory ' + made);
+        });
+    }
+    else if (config.get('caching.redis.enabled')) {
+        self.redisClient = self.initialiseRedisClient();
+
+        self.redisClient.on("error", function (err) {
+            this.log.error(err);
+        });
+    }
+}
+
+module.exports = function (server) {
+    return new Cache(server);
+};
+
+Cache.prototype.cachingEnabled = function(req) {
+
+    var endpoints = this.server.components;
     requestUrl = url.parse(req.url, true).pathname;
+    
     var endpointKey = _.find(_.keys(endpoints), function (k){ return k.indexOf(requestUrl) > -1; });
 
+    // check if there is a match in the loaded routes for the 
+    // current pages `route: { paths: ['xx','yy'] }` property
     if (!endpointKey) {
         var path = _.intersection(Object.keys(endpoints), req.paths); 
         if (path && path[0]) {
@@ -33,40 +62,31 @@ function cachingEnabled(endpoints, req) {
         }
     }
     
+    // not found in the loaded routes,
+    // let's not bother caching
     if (!endpointKey) return false;
 
     if (endpoints[endpointKey].page && endpoints[endpointKey].page.settings) {
-        options = endpoints[endpointKey].page.settings;
+        this.options = endpoints[endpointKey].page.settings;
+    }
+    else {
+        this.options.cache = false;    
     }
 
-    return (configEnabled && options.cache);
+    return (this.enabled && this.options.cache);
 }
 
-function initialiseRedisClient() {
+Cache.prototype.initialiseRedisClient = function() {
     return redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
 }
 
-module.exports = function (server) {
+Cache.prototype.init = function() {
+    
+    var self = this;
 
-    // create cache directory or initialise Redis
+    this.server.app.use(function (req, res, next) {
 
-    if (config.get('caching.directory.enabled')) {
-        mkdirp(dir, {}, function (err, made) {
-            if (err) log.error('[CACHE] ' + err);
-            if (made) log.info('[CACHE] Created cache directory ' + made);
-        });
-    }
-    else if (config.get('caching.redis.enabled')) {
-        self.redisClient = initialiseRedisClient();
-
-        self.redisClient.on("error", function (err) {
-            log.error(err);
-        });
-    }
-
-    server.app.use(function (req, res, next) {
-
-        if (!cachingEnabled(server.components, req)) return next();
+        if (!self.cachingEnabled(req)) return next();
 
         // only cache GET requests
         if (!(req.method && req.method.toLowerCase() === 'get')) return next();
@@ -75,7 +95,7 @@ module.exports = function (server) {
         // and avoid using file system reserved characters in the name
         var requestUrl = url.parse(req.url, true).pathname;
         var filename = crypto.createHash('sha1').update(requestUrl).digest('hex');
-        var cachepath = path.join(dir, filename + '.' + config.get('caching.directory.extension'));
+        var cachepath = path.join(self.dir, filename + '.' + config.get('caching.directory.extension'));
 
         // allow query string param to bypass cache
         var query = url.parse(req.url, true).query;
@@ -91,7 +111,7 @@ module.exports = function (server) {
                     res.setHeader('X-Cache-Lookup', 'HIT');
 
                     if (noCache) {
-                        console.log('noCache');
+                        //console.log('noCache');
                         res.setHeader('X-Cache', 'MISS');
                         return next();
                     }
@@ -100,7 +120,7 @@ module.exports = function (server) {
 
                     res.statusCode = 200;
                     res.setHeader('Server', config.get('app.name'));
-                    res.setHeader('content-type', 'text/html');
+                    res.setHeader('Content-Type', 'text/html');
                     
                     readStream = redisRStream(self.redisClient, filename);
                     readStream.pipe(res);
@@ -114,12 +134,12 @@ module.exports = function (server) {
             });
         }
         else {
-            readStream = fs.createReadStream(cachepath, {encoding: cacheEncoding});
-            console.log('create');
+            readStream = fs.createReadStream(cachepath, {encoding: this.encoding});
+            //console.log('create');
 
             readStream.on('error', function (err) {
-                console.log('error');
-                console.log(err);
+                //console.log('error');
+                //console.log(err);
                 res.setHeader('X-Cache', 'MISS');
                 res.setHeader('X-Cache-Lookup', 'MISS');
 
@@ -129,7 +149,7 @@ module.exports = function (server) {
             });
 
             if (noCache) {
-                console.log('noCache');
+                //console.log('noCache');
                 res.setHeader('X-Cache', 'MISS');
                 res.setHeader('X-Cache-Lookup', 'HIT');
                 return next();
@@ -138,11 +158,11 @@ module.exports = function (server) {
             // check if ttl has elapsed
             try {
                 var stats = fs.statSync(cachepath);
-                var ttl = options.ttl || config.get('caching.ttl');
+                var ttl = this.options.ttl || config.get('caching.ttl');
                 var lastMod = stats && stats.mtime && stats.mtime.valueOf();
 
                 if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
-                    console.log('lastMod');
+                    //console.log('lastMod');
                     res.setHeader('X-Cache', 'MISS');
                     res.setHeader('X-Cache-Lookup', 'HIT');
                     return cacheResponse();
@@ -153,7 +173,8 @@ module.exports = function (server) {
             }
 
 
-            console.log('ok');
+            //console.log('ok');
+            self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
 
             res.statusCode = 200;
 
@@ -161,7 +182,7 @@ module.exports = function (server) {
             res.setHeader('X-Cache-Lookup', 'HIT');
             
             res.setHeader('Server', config.get('app.name'));
-            res.setHeader('content-type', 'text/html');
+            res.setHeader('Content-Type', 'text/html');
 
             readStream.pipe(res);
         }
@@ -265,8 +286,6 @@ module.exports = function (server) {
 
         function cacheResponse() {
 
-            log.info('cacheResponse');
-
             // file is expired or does not exist, wrap res.end and res.write to save to cache
             var _end = res.end;
             var _write = res.write;
@@ -287,15 +306,13 @@ module.exports = function (server) {
                 // if response is not 200 don't cache
                 if (res.statusCode !== 200) return;
 
-                console.log('cacheResponse res.end()');
-
                 var stream = new Readable();
                 stream.push(data);
                 stream.push(null);
 
                 if (self.redisClient) {
                     self.redisClient.on("error", function (err) {
-                        log.error(err);
+                        self.log.error(err);
                     });
 
                     // save to redis
@@ -310,9 +327,6 @@ module.exports = function (server) {
                     
                     var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'});
                     stream.pipe(cacheFile);
-                    // fs.writeFile(cachepath, data, {encoding: cacheEncoding}, function (err) {
-                    //     if (err) log.error(err.toString());
-                    // });
                 }
             };
             return next();

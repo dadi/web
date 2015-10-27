@@ -26,6 +26,9 @@ var config = require(path.resolve(__dirname + '/../../config.js'));
 var Server = function () {
     this.components = {};
     this.monitors = {};
+
+    this.log = log.get().child({module: 'server'});
+    this.log.info('Server logging started.')
 };
 
 Server.prototype.start = function (options, done) {
@@ -51,15 +54,6 @@ Server.prototype.start = function (options, done) {
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
-    // caching layer
-    cache(self);
-
-    // authentication layer
-    auth(self);
-
-    // handle routing & redirects
-    router(self, options);
-
     // request logging middleware
     app.use(function (req, res, next) {
         var start = Date.now();
@@ -68,7 +62,7 @@ Server.prototype.start = function (options, done) {
             var duration = Date.now() - start;
 
             // log the request method and url, and the duration
-            log.info(req.method
+            log.info({module: 'router'}, req.method
                 + ' ' + req.url
                 + ' ' + res.statusCode
                 + ' ' + duration + 'ms');
@@ -76,6 +70,15 @@ Server.prototype.start = function (options, done) {
         };
         next();
     });
+
+    // caching layer
+    cache(self).init();
+
+    // authentication layer
+    auth(self);
+
+    // handle routing & redirects
+    router(self, options);
 
     // start listening
     var server = this.server = app.listen(config.get('server.port'), config.get('server.host'));
@@ -90,15 +93,15 @@ Server.prototype.start = function (options, done) {
       console.log(seramaMessage.bold.blue + "\n");
       
       if (env === 'production') {
-        log.info(rosecombMessage);
-        log.info(seramaMessage);
+        this.log.info(rosecombMessage);
+        this.log.info(seramaMessage);
       }
 
     });
 
     server.on('error', function (e) {
       if (e.code == 'EADDRINUSE') {
-        log.error('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
+        self.log.error('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
         process.exit(0);
       }
     });
@@ -118,7 +121,7 @@ Server.prototype.start = function (options, done) {
     process.on('SIGINT', function() {
       server.close();
       toobusy.shutdown();
-      log.info('[BANTAM] Server stopped, process exiting.');
+      self.log.info('Server stopped, process exiting.');
       process.exit();
     });        
 
@@ -192,7 +195,7 @@ Server.prototype.loadApi = function (options) {
             }
         });
         
-        log.info('[SERVER] Load complete.');
+        self.log.info('Load complete.');
 
     });
 
@@ -232,7 +235,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
       var schema = require(obj.filepath);
     }
     catch (err) {
-      log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
+      this.log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
     }
 
     // With each page we create a controller, that acts as a component of the REST api.
@@ -273,7 +276,7 @@ Server.prototype.addComponent = function (options, reload) {
 
         if (path === '/index') {
 
-            log.info("[ROUTER] Loaded " + path);
+            this.log.info("Loaded " + path);
             
             // configure "index" route
             this.app.use('/', function (req, res, next) {
@@ -289,7 +292,7 @@ Server.prototype.addComponent = function (options, reload) {
         }
         else {
 
-            log.info("[ROUTER] Loaded " + path);
+            this.log.info("Loaded " + path);
 
             if (options.route.constraint) this.app.Router.constrain(path, options.route.constraint);
 
@@ -434,8 +437,7 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
-            log.info(message);
-            //console.log(message);
+            self.log.info(message);
         }
     });
 
@@ -451,7 +453,7 @@ Server.prototype.dustCompile = function (options) {
         
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
             
-            log.info("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
+            self.log.info("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
             
             var template =  fs.readFileSync(file, "utf8");
             
@@ -461,8 +463,7 @@ Server.prototype.dustCompile = function (options) {
             }
             catch (e) {
                 var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
-                log.info(message);
-                //console.log(message);
+                self.log.info(message);
             }
         }
     });
@@ -479,7 +480,7 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
-            log.info(message);
+            self.log.info(message);
         }
     });
 };
@@ -501,12 +502,11 @@ Server.prototype.ensureDirectories = function (options, done) {
             mkdirp(dir, {}, function (err, made) {
 
                 if (err) {
-                    //console.log('[SERVER] ' + err);
-                    log.error('[SERVER] ' + err);
+                    this.log.error(err);
                 }
 
                 if (made) {
-                    log.info('[SERVER] Created workspace directory ' + made);
+                    this.log.info('Created workspace directory ' + made);
                 }
 
                 idx++;

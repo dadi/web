@@ -5,7 +5,10 @@ var log = require(__dirname + '/../log');
 var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
 
 var Datasource = function (page, datasource, options, callback) {
-  
+
+  this.log = log.get().child({module: 'datasource'});
+  this.log.info('Datasource logging started (' + datasource + ').')
+
   this.page = page;
   this.name = datasource;
   this.options = options || {};
@@ -50,7 +53,7 @@ Datasource.prototype.loadDatasource = function(done) {
     done(null, schema);
   }
   catch (err) {
-    log.error({'err': err}, 'Error loading datasource schema "' + filepath + '". Is it valid JSON?');
+    this.log.error({'err': err}, 'Error loading datasource schema "' + filepath + '". Is it valid JSON?');
     done(err);
   }
 };
@@ -137,10 +140,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
   var self = this;
 
   var query = url.parse(req.url, true).query;
-
-  // remove debug params from query
-  delete query.debug;
-  delete query.json;
 
   // handle the cache flag
   if (query.hasOwnProperty('cache') && query.cache === 'false') {

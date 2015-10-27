@@ -6,7 +6,7 @@ var BearerAuthStrategy = function(options) {
   this.tokenRoute = options.tokenUrl || '/token';
   this.token = {};
 
-  //console.log(this);
+  this.log = log.get().child({module: 'auth/bearer'});
 }
 
 BearerAuthStrategy.prototype.getToken = function(datasource, done) {
@@ -22,7 +22,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     }
   }
 
-  log.info('[BEARER] Generating new access token for datasource %s', datasource.name);
+  this.log.info('Generating new access token for datasource %s', datasource.name);
 
   var postData = {
     clientId : self.config.credentials.clientId,
@@ -51,7 +51,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     res.on('end', function() {
 
       if (output === '') {
-        log.info('[BEARER] No token received, invalid credentials for datasource %s', datasource.name);
+        self.log.info('No token received, invalid credentials for datasource %s', datasource.name);
         
         res.statusCode = 401;
         return done();
@@ -66,7 +66,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
   });
 
   req.on('error', function(err) {
-    log.info('[BEARER] Error requesting accessToken from %s for datasource %s', options.hostname, datasource.name);
+    self.log.info('Error requesting accessToken from %s for datasource %s', options.hostname, datasource.name);
     return;
   });
 
@@ -77,7 +77,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     req.end();
   }
   catch (e) {
-    console.log(e);
+    self.log.error(e);
   }
       
 };

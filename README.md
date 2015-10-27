@@ -1,6 +1,6 @@
 ![Rosecomb](rosecomb.png)
 
-![Build Status](http://img.shields.io/badge/Release-0.1.4_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)&nbsp;![Coverage](http://img.shields.io/badge/Coverage-71%-yellow.svg?style=flat-square)
+![Build Status](http://img.shields.io/badge/Release-0.1.5_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)&nbsp;![Coverage](http://img.shields.io/badge/Coverage-71%-yellow.svg?style=flat-square)
 
 ## Contents
 

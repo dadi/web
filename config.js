@@ -158,6 +158,16 @@ var conf = convict({
     default: "development",
     env: "NODE_ENV",
     arg: "node_env"
+  },
+  debug: {
+    doc: "Determines if debug mode is enabled.",
+    format: Boolean,
+    default: false
+  },
+  allowJsonView: {
+    doc: "Determines if json view mode is allowed.",
+    format: Boolean,
+    default: false
   }
 });
 

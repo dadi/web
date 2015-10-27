@@ -30,7 +30,7 @@ module.exports.sendBackJSON = function (successCode, res, next) {
         res.setHeader('Server', config.get('app.name'));
 
         res.statusCode = successCode;
-        res.setHeader('content-type', 'application/json');
+        res.setHeader('Content-Type', 'application/json');
         res.setHeader('content-length', Buffer.byteLength(resBody));
         res.end(resBody);
     }
@@ -46,7 +46,7 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 
         var resBody = JSON.stringify(results);
         resBody = callbackName + '(' + resBody + ');';
-        res.setHeader('content-type', 'text/javascript');
+        res.setHeader('Content-Type', 'text/javascript');
         res.setHeader('content-length', resBody.length);
         res.end(resBody);
     }
@@ -62,7 +62,7 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
         res.statusCode = successCode;
         res.setHeader('Server', config.get('app.name'));
         //res.setHeader('Cache-Control', 'private, max-age=600');
-        res.setHeader('content-type', contentType);
+        res.setHeader('Content-Type', contentType);
         res.setHeader('content-length', Buffer.byteLength(resBody));
 
         res.end(resBody);
@@ -94,6 +94,8 @@ module.exports.getStaticData = function(datasource, done) {
 
 module.exports.getData = function(datasource, done) {
 
+    this.log = log.get().child({module: 'helper'});
+
     // TODO allow non-Serama endpoints    
     var datasourceCache = new DatasourceCache(datasource);
 
@@ -122,7 +124,7 @@ module.exports.getData = function(datasource, done) {
 
             req = http.request(options, function(res) {
 
-              log.info('[DATA] ' + options.path);
+              self.log.info(options.path);
               
               var output = '';
      
@@ -140,9 +142,7 @@ module.exports.getData = function(datasource, done) {
                     err.statusCode = res.statusCode;
                     err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
 
-                    log.info('[DATA] ' + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
-
-                    //return done(err);
+                    self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
                 }
         
                 return done(null, output);
@@ -151,7 +151,7 @@ module.exports.getData = function(datasource, done) {
             });
         
             req.on('error', function(err) {
-               log.error('[DATA] help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
+               self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
                return done('{ "error" : "Connection refused" }');
             });
         

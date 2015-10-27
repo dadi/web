@@ -46,5 +46,7 @@
     "rewrites": {
         "datasource": "rewrites",
         "path": ""
-    }
+    },
+    "debug": false,
+    "allowJsonView": false
 }

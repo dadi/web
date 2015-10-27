@@ -20,6 +20,9 @@ var sendBackJSON = help.sendBackJSON;
 
 var Controller = function (page, options) {
   if (!page) throw new Error('Page instance required');
+
+  this.log = log.get().child({module: 'controller'});
+  this.log.info('Controller logging started (' + (page.name || '') + ').');
   
   this.page = page;
 
@@ -31,9 +34,8 @@ var Controller = function (page, options) {
   var self = this;
 
   this.attachDatasources(function(err) {
-    //console.log(self.datasources);
     if (err) {
-      console.log(err);
+      this.log.error(err);
     }
   });
 
@@ -76,20 +78,21 @@ Controller.prototype.attachEvents = function(done) {
   done();
 };
 
-Controller.prototype.get = function (req, res, next) {
+Controller.prototype.post = function (req, res, next) {
+  sendBackHTML(200, this.page.contentType, res, next)(null, "\n\nPOST Return\n\n");
+}
 
-    console.log(req.url);
+Controller.prototype.get = function (req, res, next) {
 
     var settings = {};
 
     // allow query string param to return data only
     var query = url.parse(req.url, true).query;
-    var debug = query.debug && query.debug.toString() === 'true';
-    var json = query.json && query.json.toString() === 'true';
+    var debug = config.get('debug');
+    var json = config.get('allowJsonView') && query.json && query.json.toString() === 'true';
 
     var statusCode = res.statusCode || 200;
-
-    var statusCode = res.statusCode || 200;
+    
     var done;
 
     if (json) {
@@ -152,7 +155,6 @@ Controller.prototype.get = function (req, res, next) {
         }
       }
       catch (e) {
-        //console.log(e);
         var err = new Error(e.message);
         err.statusCode = 500;
         if (next) {
@@ -219,10 +221,6 @@ Controller.prototype.loadData = function(req, res, data, done) {
   var self = this;
 
   var query = url.parse(req.url, true).query;
-  
-  // remove debug from query
-  // delete query.debug;
-  // delete query.json;
 
   //var path = url.parse(req.url).pathname.replace('/','');
 
@@ -288,7 +286,9 @@ function processChained(chainedDatasources, data, query, done) {
   _.each(chainedDatasources, function(chainedDatasource, chainedKey) {
     
     if (!data[chainedDatasource.chained.datasource]) {
-      data[chainedDatasource.chained.datasource] = "Error: chained datasource " + chainedKey + " expected data at this node.";
+      var message = "Error: chained datasource " + chainedKey + " expected data at this node."
+      data[chainedDatasource.chained.datasource] = message;
+      this.log.warn(message);
       return done(data);
     }
 
@@ -303,28 +303,30 @@ function processChained(chainedDatasources, data, query, done) {
     }
     catch(e) {
       param = e;
-      log.error('Error processing chained datasource: ' + e);
+      this.log.error('Error processing chained datasource: ' + e);
+    }
+
+    // cast the param value if needed 
+    if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
+      param = parseInt(param);
+    }
+    else {
+      param = encodeURIComponent(param);
     }
 
     // add or extend the filter property
     chainedDatasource.schema.datasource.filter = chainedDatasource.schema.datasource.filter || {};
 
+    // does the parent page require no cache?
     if (query.cache === 'false') {
       chainedDatasource.schema.datasource.cache = false;
     }
 
-    // add page # to filter
+    // add page # to datasource options
     chainedDatasource.schema.datasource.page = query.page || 1;
 
     // if there is a field to filter on, add the new parameter value to the filters
     if (chainedDatasource.chained.outputParam.field) {
-      if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
-        param = parseInt(param);
-      }
-      else {
-        param = encodeURIComponent(param);
-      }
-
       chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param;
     }
 
@@ -335,7 +337,12 @@ function processChained(chainedDatasources, data, query, done) {
       var filter = JSON.stringify(chainedDatasource.schema.datasource.filter);
       var q = JSON.stringify(chainedDatasource.chained.outputParam.query);
 
-      q = q.replace("{param}", encodeURIComponent(param));
+      if (typeof(param) != "number") {
+        param = '"' + param + '"';
+      }
+
+      q = q.replace(/"\{param\}"/i, param);
+
       filter = filter.replace(placeholder, q);
 
       chainedDatasource.schema.datasource.filter = JSON.parse(filter);
@@ -356,7 +363,7 @@ function processChained(chainedDatasources, data, query, done) {
           data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result));
         }
         catch (e) {
-          console.log(e);
+          this.log.error(e);
         }
       }
 
@@ -375,72 +382,11 @@ function processChained(chainedDatasources, data, query, done) {
 
 function processSearchParameters(key, datasource, req) {
 
-  log.info(key + ': processSearchParameters()');
-
-  //var deferred = Q.defer();
-
-//   var query = url.parse(req.url, true).query;
-
-// //  var queryOptions = _.clone(query);
-//   if (query.cache === 'false') {
-//     // remove cache from query
-//     delete query.cache;
-//     datasource.schema.datasource.cache = false;
-//   }
-
-  //datasource.schema.datasource.filter = datasource.schema.datasource.filter || {};
-
-  // // add ID filter if the current datasource matches the page name
-  // if (key.indexOf(datasource.page.name) >= 0) {
-    
-  //   // remove page # from query
-  //   datasource.schema.datasource.page = query.page || req.params.page || 1;
-  //   delete query.page;
-  //   delete req.params.page;
-    
-  //   // add an ID filter if it was present in the querystring
-  //   // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
-  //   if (req.params.id || query.id) {
-  //     datasource.schema.datasource.filter['_id'] = req.params.id || query.id;
-  //     delete query.id;
-  //   }
-
-  //   // URI encode each filter value
-  //   _.each(query, function(value, key) {
-  //     if (key === 'filter') {
-  //       _.extend(datasource.schema.datasource.filter, JSON.parse(value));
-  //     }
-  //     else {
-  //       datasource.schema.datasource.filter[key] = encodeURIComponent(value);
-  //     }
-  //   });
-  // }
+  this.log.info(key + ': processSearchParameters()');
   
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
   datasource.processRequest(key, req);
-  
-  // _.each(datasource.requestParams, function(obj) {
-  //   if (params.hasOwnProperty(obj.param)) {
-  //     datasource.schema.datasource.filter[obj.field] = encodeURIComponent(params[obj.param]);
-  //   }
-  //   else {
-  //     // param not found in request, remove it from DS filter
-  //     if (datasource.schema.datasource.filter[obj.field]) {
-  //       delete datasource.schema.datasource.filter[obj.field];
-  //     }
-  //   }
-  // });
-
-  // rebuild the datasource endpoint with the new filters
-  // var d = new Datasource();
-  // d.buildEndpoint(datasource.schema, function(endpoint) {
-  //   datasource.endpoint = endpoint;
-
-    //deferred.resolve();
-  // });
-
-  //return deferred.promise;
 }
 
 module.exports = function (page, options) {
