@@ -68,7 +68,7 @@ Router.prototype.loadRewrites = function(options, done) {
   );
 
   stream.on('error', function (err) {
-    this.log.error('No rewrites loaded, file not found (' + self.rewritesFile + ')');
+    self.log.error('No rewrites loaded, file not found (' + self.rewritesFile + ')');
     done(err);
   });
 
