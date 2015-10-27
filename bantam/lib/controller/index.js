@@ -381,8 +381,6 @@ function processChained(chainedDatasources, data, query, done) {
 }
 
 function processSearchParameters(key, datasource, req) {
-
-  this.log.info(key + ': processSearchParameters()');
   
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
