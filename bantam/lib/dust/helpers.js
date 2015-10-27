@@ -274,14 +274,13 @@ dust.helpers.url = (function() {
             throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
         }
         // Get the page
-        var pages = _.filter(_.pluck(core.components, 'page'), function(page) {
-            return (page && page.name === params.page);
+        var component = _.find(core.components, function(component) {
+            return ('page' in component && component.page.name === params.page);
         });
-        if(!pages.length) {
+        if(!component) {
             throw new Error('The @url helper could not find a page with the name "' + params.page + '".');
         }
-        var page = _.first(pages);
         // Get the route
-        return page.route.toPath(_.omit(params, 'page'));
+        return component.page.route.toPath(_.omit(params, 'page'));
     };
 }());
