@@ -262,20 +262,26 @@ dust.helpers.htmlEncode = function(chunk, context, bodies, params) {
 * Generate urls based on routes by sending in page names & parameters
 */
 
-dust.helpers.url = function(chunk, context, bodies, params) {
-    // Ensure a page name is input
-    if(typeof params.page === 'undefined') {
-        throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
-    }
-    // Get the page
-    var components = require(__dirname + '/../').components; // requiring it here is due to this file being loaded by the file it requires
-    var pages = _.filter(_.pluck(components, 'page'), function(page) {
-        return (page && page.name === params.page);
-    });
-    if(!pages.length) {
-        throw new Error('The @url helper could not find a page with the name "' + params.page + '".');
-    }
-    var page = _.first(pages);
-    // Get the route
-    return page.route.toPath(_.omit(params, 'page'));
-};
+dust.helpers.url = (function() {
+    var core;
+    return function(chunk, context, bodies, params) {
+        if(!core) {
+            // requiring core here is due to this file is loaded by the core, and so requiring it elsewhere won't work
+            core = require(__dirname + '/../');
+        }
+        // Ensure a page name is input
+        if(typeof params.page === 'undefined') {
+            throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
+        }
+        // Get the page
+        var pages = _.filter(_.pluck(core.components, 'page'), function(page) {
+            return (page && page.name === params.page);
+        });
+        if(!pages.length) {
+            throw new Error('The @url helper could not find a page with the name "' + params.page + '".');
+        }
+        var page = _.first(pages);
+        // Get the route
+        return page.route.toPath(_.omit(params, 'page'));
+    };
+}());
