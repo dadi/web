@@ -257,3 +257,40 @@ dust.helpers.htmlEncode = function(chunk, context, bodies, params) {
         chunk.end();
     });
 };
+
+/*
+* Generate urls based on routes by sending in page names & parameters
+*/
+
+dust.helpers.url = function(chunk, context, bodies, params) {
+    // Ensure a page name is input
+    if(typeof params.page === 'undefined') {
+        throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
+    }
+    // Get the page
+    var components = require(__dirname + '/../').components; // requiring it here is due to this file being loaded by the file it requires
+    var pages = _.filter(_.pluck(components, 'page'), function(page) {
+        return (page && page.name === params.page);
+    });
+    if(!pages.length) {
+        throw new Error('The @url helper could not find a page with the name "' + params.page + '".');
+    }
+    var page = _.first(pages);
+    // Get the route
+    var route = _.first(page.route.paths);
+    if(route[0] !== '/') {
+        throw new Error('The @url helper only supports generating urls for root-relative routes. The route "' + route + '" does not start with "/".')
+    }
+    // Substitute param patterns in route with params
+    params = _.omit(params, 'page');
+    var url = _.reduce(params, function(memo, val, key) {
+        return memo.replace(new RegExp(':' + key + '[\\?\\*\\+]?', 'g'), val);
+    }, route);
+    // Remove all optional parameters not already substituted
+    url = url.replace(/:[a-z_]+[\?\*]/g, '');
+    // Make sure all required params are filled
+    if(url.match(/:[a-z_]+[\+]?/g)) {
+        throw new Error('The @url helper did not receive enough input parameters to fill all required url parameters in the page url "' + url + '".');
+    }
+    return url;
+};
