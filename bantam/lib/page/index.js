@@ -1,3 +1,5 @@
+var pathToRegexp = require('path-to-regexp');
+
 var _pages = {};
 
 var Page = function (name, schema) {
@@ -28,6 +30,7 @@ var Page = function (name, schema) {
     this.route = { "paths": ['/' + name] };
   }
   
+  this.route.toPath = pathToRegexp.compile(this.route.paths[0]);
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
 

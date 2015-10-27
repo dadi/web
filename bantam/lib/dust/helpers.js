@@ -277,20 +277,5 @@ dust.helpers.url = function(chunk, context, bodies, params) {
     }
     var page = _.first(pages);
     // Get the route
-    var route = _.first(page.route.paths);
-    if(route[0] !== '/') {
-        throw new Error('The @url helper only supports generating urls for root-relative routes. The route "' + route + '" does not start with "/".')
-    }
-    // Substitute param patterns in route with params
-    params = _.omit(params, 'page');
-    var url = _.reduce(params, function(memo, val, key) {
-        return memo.replace(new RegExp(':' + key + '[\\?\\*\\+]?', 'g'), val);
-    }, route);
-    // Remove all optional parameters not already substituted
-    url = url.replace(/:[a-z_]+[\?\*]/g, '');
-    // Make sure all required params are filled
-    if(url.match(/:[a-z_]+[\+]?/g)) {
-        throw new Error('The @url helper did not receive enough input parameters to fill all required url parameters in the page url "' + url + '".');
-    }
-    return url;
+    return page.route.toPath(_.omit(params, 'page'));
 };
