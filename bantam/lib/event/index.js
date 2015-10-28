@@ -21,10 +21,10 @@ Event.prototype.loadEvent = function() {
   if (filepath && !fs.existsSync(filepath)) {
     throw new Error('Page "' + this.page + '" references event "' + this.name + '" which can\'t be found in "' + this.options.eventPath + '"');
   }
-  
+
   try {
     // get the event
-    return require(filepath);  
+    return require(filepath);
   }
   catch (err) {
     throw new Error('Error loading event "' + filepath + '". ' + err);
@@ -34,10 +34,15 @@ Event.prototype.loadEvent = function() {
 Event.prototype.run = function(req, res, data, done) {
   try {
     this.loadEvent()(req, res, data, function (err, result) {
+      if (err) {
+        this.log.error(err);
+      }
+
       return done(err, result);
     });
   }
   catch (err) {
+    this.log.error(err);
     return done(err, data);
   }
 };

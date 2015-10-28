@@ -109,11 +109,9 @@ Controller.prototype.get = function (req, res, next) {
     var data = {
       "title": self.page.name,
       "debug": debug || false,
-      "json": json || false
+      "json": json || false,
+      "global": config.get('global') || {}  // global values from config
     }
-
-    // global values from config
-    data.global = config.get('global') || {};
 
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);
@@ -224,8 +222,6 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   var query = url.parse(req.url, true).query;
 
-  //var path = url.parse(req.url).pathname.replace('/','');
-
   // no datasources specified for this page
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
@@ -315,9 +311,6 @@ function processChained(chainedDatasources, data, query, done) {
     else {
       param = encodeURIComponent(param);
     }
-
-    // add or extend the filter property
-    chainedDatasource.schema.datasource.filter = chainedDatasource.schema.datasource.filter || {};
 
     // does the parent page require no cache?
     if (query.cache === 'false') {
