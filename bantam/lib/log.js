@@ -9,6 +9,7 @@ var config = require(path.resolve(__dirname + '/../../config'));
 var options = config.get('logging');
 var enabled = options.enabled;
 var logPath = path.resolve(options.path + '/' + options.filename + '.' + config.get('env') + '.' + options.extension);
+var accessLogPath = path.resolve(options.path + '/' + options.filename + '.access.' + options.extension);
 
 // create log directory if it doesn't exist
 mkdirp(path.resolve(options.path), {}, function(err, made) {
@@ -23,10 +24,7 @@ mkdirp(path.resolve(options.path), {}, function(err, made) {
 
 var log = bunyan.createLogger({
     name: 'rosecomb',
-    serializers: {
-      err: bunyan.stdSerializers.err,
-      res: bunyan.stdSerializers.res
-    },
+    serializers: bunyan.stdSerializers,
     streams: [
       //{ level: 'debug', stream: process.stdout },
       { level: 'info', path: logPath },
@@ -34,7 +32,24 @@ var log = bunyan.createLogger({
     ]
 });
 
+var accessLog = bunyan.createLogger({
+    name: 'rosecomb',
+    serializers: bunyan.stdSerializers,
+    streams: [
+      {
+        type: 'rotating-file',
+        path: accessLogPath,
+        period: '1d',   // daily rotation
+        count: 3        // keep 7 back copies
+      }
+    ]
+});
+
 var self = module.exports = {
+
+    access: function access() {
+        if (enabled) accessLog.info.apply(accessLog, arguments);
+    },
 
     debug: function debug() {
         if (enabled) log.debug.apply(log, arguments);

@@ -45,7 +45,8 @@
     },
     "rewrites": {
         "datasource": "rewrites",
-        "path": ""
+        "path": "",
+        "forceTrailingSlash": false
     },
     "debug": true,
     "allowJsonView": true

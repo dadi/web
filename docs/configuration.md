@@ -6,12 +6,9 @@
 {
     "logging": {
         "enabled": true,
-        "level": "DEBUG",
         "path": "./log",
         "filename": "rosecomb",
-        "dateFormat": "",
-        "extension": "log",
-        "messageFormat": "<%= label %> - <%= date %> - <%= message %>"
+        "extension": "log"
     },
     "caching": {
         "ttl": 300,

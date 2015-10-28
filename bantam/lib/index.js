@@ -61,11 +61,15 @@ Server.prototype.start = function (options, done) {
         res.end = function () {
             var duration = Date.now() - start;
 
+            log.access({req: req});
+            log.access({res: res});
+
             // log the request method and url, and the duration
             log.info({module: 'router'}, req.method
                 + ' ' + req.url
                 + ' ' + res.statusCode
                 + ' ' + duration + 'ms');
+
             _end.apply(res, arguments);
         };
         next();
@@ -216,9 +220,6 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
 
         // file should be json file containing schema
         var name = page.slice(0, page.indexOf('.'));
-
-        // check for matching template file
-        //var templateFilepath = path.join(directoryPath, name) + ".dust";
 
       self.addRoute({
         name: name,
