@@ -246,6 +246,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
     var control = controller(p, options);
 
     this.addComponent({
+        key: schema.page.key,
         route: p.route,
         component: control,
         filepath: obj.filepath
@@ -256,7 +257,13 @@ Server.prototype.addComponent = function (options, reload) {
 
     if (!options.route) return;
 
+    // This is the key the component is indexed by
+    var componentKey = options.key || path.basename(options.filepath || '', '.json');
+
     if (reload) {
+        // In the case of being indexed by key
+        this.removeComponent[componentKey];
+        // In the case of being indexed by path
         _.each(options.route.paths, function (path) {
             this.removeComponent(path);
         }, this);
@@ -269,10 +276,13 @@ Server.prototype.addComponent = function (options, reload) {
 
     _.each(options.route.paths, function (path) {
 
-        // only add a route once
-        if (this.components[path]) return;
+        // Fall back to using the path as the componentKey if it's not been set
+        componentKey = componentKey || path;
 
-        this.components[path] = options.component;
+        // only add a route once
+        if (this.components[componentKey]) return;
+
+        this.components[componentKey] = options.component;
 
         if (path === '/index') {
 
@@ -396,9 +406,9 @@ Server.prototype.addComponent = function (options, reload) {
     // }
 };
 
-Server.prototype.removeComponent = function (route) {
-    this.app.unuse(route);
-    delete this.components[route];
+Server.prototype.removeComponent = function (key) {
+    this.app.unuse(key);
+    delete this.components[key];
 };
 
 Server.prototype.addMonitor = function (filepath, callback) {
