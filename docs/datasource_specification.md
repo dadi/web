@@ -120,7 +120,9 @@ See [Page Specification](page_specification.md) for custom routing information.
 It is often a requirement to query a datasource using data from another datasource. Rosecomb supports this through the use of chained datasources.
  
 Add the `chained` property to the datasource that relies on data loaded by another datasource.
- 
+
+_Simple field replacement_
+
 ```js
 "chained": {
   "datasource": "car-makes",
@@ -131,8 +133,22 @@ Add the `chained` property to the datasource that relies on data loaded by anoth
 }
 ```
 
+_Filter replacement_
+
+```js
+"filter": ["{capRangeByUrlModel}",{"$group":{"_id":{"fuelType":"$fuelType"}}}], 
+"chained": {
+  "datasource": "capRangeByUrlModel",
+  "outputParam": {
+    "param": "results.0.capRanId",
+    "type": "Number",
+    "query": {"$match":{"capRanId": "{param}"}}
+  }
+}
+```
+
 * `datasource` Should match the `key` property of the primary datasource.
-* `outputParam` The `param` value specifies where to locate the output value in the results returned by the primary datasource. The `field` value should match the MongoDB field to be queried. 
+* `outputParam` The `param` value specifies where to locate the output value in the results returned by the primary datasource. The `field` value should match the MongoDB field to be queried. The `type` value indicates how the `param` value should be treated (currently only "Number" is supported). The `query` property allows more advanced filtering, see below for more detail.  
 
 ###### For example
 
@@ -210,5 +226,19 @@ If your query parameter must be passed to the endpoint as an integer, add a `typ
             }
         }
      }
+}
+```
+
+###### Filter replacement
+
+```js
+"filter": ["{capRangeByUrlModel}",{"$group":{"_id":{"fuelType":"$fuelType"}}}], 
+"chained": {
+  "datasource": "capRangeByUrlModel",
+  "outputParam": {
+    "param": "results.0.capRanId",
+    "type": "Number",
+    "query": {"$match":{"capRanId": "{param}"}}
+  }
 }
 ```

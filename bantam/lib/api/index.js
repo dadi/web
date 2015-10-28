@@ -2,7 +2,7 @@ var http = require('http');
 var url = require('url');
 var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
 var Api = function () {
     this.paths = [];
@@ -102,19 +102,23 @@ Api.prototype.listener = function (req, res) {
     var stack = this.all.slice(0);
     var path = url.parse(req.url).pathname;
 
+    req.paths = [];
+
     // get matching routes, and add req.params
     var matches = this._match(path, req);
 
     var originalReqParams = req.params;
-    
+
     var doStack = function (i) {
         return function (err) {
             if (err) return errStack(0)(err);
-            
+
+
+
             // add the original params back, in case a middleware
             // has modified the current req.params
             _.extend(req.params, originalReqParams);
-            
+
             stack[i](req, res, doStack(++i));
         };
     };
@@ -156,6 +160,8 @@ Api.prototype._match = function (path, req) {
 
         if (!match) { continue; }
 
+        req.paths.push(paths[i].path);
+
         var keys = paths[i].regex.keys;
         handlers.push(paths[i].handler);
 
@@ -163,7 +169,7 @@ Api.prototype._match = function (path, req) {
             var keyOpts = keys[i] || {};
             if (match[i + 1] && keyOpts.name && !req.params[keyOpts.name]) req.params[keyOpts.name] = match[i + 1];
         });
-        
+
         //break;
     }
 
@@ -179,8 +185,7 @@ module.exports.Api = Api;
 // Default error handler, in case application doesn't define error handling
 function defaultError(api) {
     return function (err, req, res) {
-        logger.prod(err);
-
+      
         res.statusCode = err.statusCode || 500;
 
         // look for an error page that has been loaded
@@ -193,15 +198,18 @@ function defaultError(api) {
             path.handler(req, res);
         }
         else { // otherwise, respond with default message
-            
+
             if (err.json) {
                 var resBody = JSON.stringify(err.json);
-                res.setHeader('content-type', 'application/json');
-                res.setHeader('content-length', Buffer.byteLength(resBody));
-                return res.end(resBody);
+                res.setHeader('Content-Type', 'application/json');
+            }
+            else {
+              var resBody = err;
+              res.setHeader('Content-Type', 'text/plain');
             }
 
-            res.end();   
+            res.setHeader('content-length', Buffer.byteLength(resBody));
+            return res.end(resBody);
         }
     }
 }
@@ -239,11 +247,11 @@ function routePriority(path, keys) {
     var requiredParamLength = _.filter(keys, function (key) {
         return !key.optional;
     }).length;
-    
+
     var optionalParamLength = _.filter(keys, function (key) {
         return key.optional;
     }).length;
-    
+
     var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength);
     if (path.indexOf('/config') > 0) order = -10;
 

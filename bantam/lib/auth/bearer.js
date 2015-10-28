@@ -1,15 +1,15 @@
 var http = require('http');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
 var BearerAuthStrategy = function(options) {
   this.config = options;
   this.tokenRoute = options.tokenUrl || '/token';
   this.token = {};
 
-  //console.log(this);
+  this.log = log.get().child({module: 'auth/bearer'});
 }
 
-BearerAuthStrategy.prototype.getToken = function(done) {
+BearerAuthStrategy.prototype.getToken = function(datasource, done) {
 
   var self = this;
 
@@ -22,7 +22,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
     }
   }
 
-  logger.debug("[BEARER] Generating new access token...");
+  this.log.info('Generating new access token for datasource %s', datasource.name);
 
   var postData = {
     clientId : self.config.credentials.clientId,
@@ -49,13 +49,9 @@ BearerAuthStrategy.prototype.getToken = function(done) {
     res.setTimeout(10);
 
     res.on('end', function() {
-      
-      // console.log('end');
-      // console.log('output: ' + output);
 
       if (output === '') {
-        logger.debug('No token received, invalid credentials.');
-        logger.prod('No token received, invalid credentials.');
+        self.log.info('No token received, invalid credentials for datasource %s', datasource.name);
         
         res.statusCode = 401;
         return done();
@@ -64,16 +60,13 @@ BearerAuthStrategy.prototype.getToken = function(done) {
       var tokenResponse = JSON.parse(output);
       self.token.authToken = tokenResponse;
       self.token.created_at = Math.floor(Date.now() / 1000);
-
-      //console.log('Done.');
       
       return done(self.token.authToken.accessToken);
     });
   });
 
   req.on('error', function(err) {
-    logger.debug('Error requesting accessToken from ' + options.hostname);
-    logger.prod('Error requesting accessToken from ' + options.hostname);
+    self.log.info('Error requesting accessToken from %s for datasource %s', options.hostname, datasource.name);
     return;
   });
 
@@ -84,7 +77,7 @@ BearerAuthStrategy.prototype.getToken = function(done) {
     req.end();
   }
   catch (e) {
-    console.log(e);
+    self.log.error(e);
   }
       
 };

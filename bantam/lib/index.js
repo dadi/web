@@ -12,7 +12,7 @@ var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
-var logger = require(__dirname + '/log');
+var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
@@ -26,6 +26,9 @@ var config = require(path.resolve(__dirname + '/../../config.js'));
 var Server = function () {
     this.components = {};
     this.monitors = {};
+
+    this.log = log.get().child({module: 'server'});
+    this.log.info('Server logging started.')
 };
 
 Server.prototype.start = function (options, done) {
@@ -51,20 +54,6 @@ Server.prototype.start = function (options, done) {
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
-    // caching layer
-    cache(self);
-
-    // authentication layer
-    auth(self);
-
-    // handle routing & redirects
-    router(self, options);
-
-    dust.isDebug = config.get('dust.debug');
-    dust.debugLevel = config.get('dust.debugLevel');
-    dust.config.cache = config.get('dust.cache');
-    dust.config.whitespace = config.get('dust.whitespace');
-    
     // request logging middleware
     app.use(function (req, res, next) {
         var start = Date.now();
@@ -73,7 +62,7 @@ Server.prototype.start = function (options, done) {
             var duration = Date.now() - start;
 
             // log the request method and url, and the duration
-            logger.prod(req.method
+            log.info({module: 'router'}, req.method
                 + ' ' + req.url
                 + ' ' + res.statusCode
                 + ' ' + duration + 'ms');
@@ -81,6 +70,15 @@ Server.prototype.start = function (options, done) {
         };
         next();
     });
+
+    // caching layer
+    cache(self).init();
+
+    // authentication layer
+    auth(self);
+
+    // handle routing & redirects
+    router(self, options);
 
     // start listening
     var server = this.server = app.listen(config.get('server.port'), config.get('server.host'));
@@ -95,42 +93,15 @@ Server.prototype.start = function (options, done) {
       console.log(seramaMessage.bold.blue + "\n");
       
       if (env === 'production') {
-        logger.prod(rosecombMessage);
-        logger.prod(seramaMessage);
-      }
-
-      if (config.useSlackIntegration) {
-        var Slack = require('node-slack');
-        var slack = new Slack('https://hooks.slack.com/services/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', {});
-
-        slack.send({
-          text: message,
-          username: 'Bantam',
-          icon_emoji: ':bantam:',
-          "attachments": [
-              {
-                  "fallback": "Required text summary of the attachment that is shown by clients that understand attachments but choose not to show them.",
-                  "text": "Optional text that should appear within the attachment",
-                  "pretext": "Optional text that should appear above the formatted data",
-                  "color": "good", // Can either be one of 'good', 'warning', 'danger', or any hex color code
-                  // Fields are displayed in a table on the message
-                  "fields": [
-                      {
-                          "title": "Required Field Title", // The title may not contain markup and will be escaped for you
-                          "value": "Text value of the field. May contain standard message markup and must be escaped as normal. May be multi-line.",
-                          "short": false // Optional flag indicating whether the `value` is short enough to be displayed side-by-side with other values
-                      }
-                  ]
-              }
-          ]
-        });
+        this.log.info(rosecombMessage);
+        this.log.info(seramaMessage);
       }
 
     });
 
     server.on('error', function (e) {
       if (e.code == 'EADDRINUSE') {
-        console.log('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
+        self.log.error('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
         process.exit(0);
       }
     });
@@ -138,12 +109,19 @@ Server.prototype.start = function (options, done) {
     // load app specific routes
     this.loadApi(options);
 
+    // dust configuration
+    dust.isDebug = config.get('dust.debug');
+    dust.debugLevel = config.get('dust.debugLevel');
+    dust.config.cache = config.get('dust.cache');
+    dust.config.whitespace = config.get('dust.whitespace');
+    
+    
     this.readyState = 1;
 
     process.on('SIGINT', function() {
       server.close();
       toobusy.shutdown();
-      logger.prod('[BANTAM] Server stopped, process exiting.');
+      self.log.info('Server stopped, process exiting.');
       process.exit();
     });        
 
@@ -217,7 +195,7 @@ Server.prototype.loadApi = function (options) {
             }
         });
         
-        logger.prod('\n[SERVER] Load complete.');
+        self.log.info('Load complete.');
 
     });
 
@@ -247,7 +225,6 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
         filepath: pageFilepath
       }, options, reload);
 
-      //logger.prod('Page loaded: ' + page);
     });
 };
 
@@ -257,8 +234,8 @@ Server.prototype.addRoute = function (obj, options, reload) {
     try {
       var schema = require(obj.filepath);
     }
-    catch (e) {
-      throw new Error('Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
+    catch (err) {
+      this.log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
     }
 
     // With each page we create a controller, that acts as a component of the REST api.
@@ -299,7 +276,7 @@ Server.prototype.addComponent = function (options, reload) {
 
         if (path === '/index') {
 
-            logger.prod("[ROUTER] Loaded " + path);
+            this.log.info("Loaded " + path);
             
             // configure "index" route
             this.app.use('/', function (req, res, next) {
@@ -315,7 +292,7 @@ Server.prototype.addComponent = function (options, reload) {
         }
         else {
 
-            logger.prod("[ROUTER] Loaded " + path);
+            this.log.info("Loaded " + path);
 
             if (options.route.constraint) this.app.Router.constrain(path, options.route.constraint);
 
@@ -460,8 +437,7 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
-            logger.prod(message);
-            console.log(message);
+            self.log.info(message);
         }
     });
 
@@ -477,7 +453,7 @@ Server.prototype.dustCompile = function (options) {
         
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
             
-            console.log("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
+            self.log.info("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
             
             var template =  fs.readFileSync(file, "utf8");
             
@@ -487,8 +463,7 @@ Server.prototype.dustCompile = function (options) {
             }
             catch (e) {
                 var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
-                logger.prod(message);
-                console.log(message);
+                self.log.info(message);
             }
         }
     });
@@ -505,9 +480,7 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
-            logger.prod(message);
-            console.log(message);
-            //throw new Error(message);
+            self.log.info(message);
         }
     });
 };
@@ -529,12 +502,11 @@ Server.prototype.ensureDirectories = function (options, done) {
             mkdirp(dir, {}, function (err, made) {
 
                 if (err) {
-                    console.log('[SERVER] ' + err);
-                    logger.prod('[SERVER] ' + err);
+                    this.log.error(err);
                 }
 
                 if (made) {
-                    logger.prod('[SERVER] Created workspace directory ' + made);
+                    this.log.info('Created workspace directory ' + made);
                 }
 
                 idx++;

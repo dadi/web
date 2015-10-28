@@ -17,10 +17,12 @@ var Page = function (name, schema) {
   
   if (schema.route) {
     if (schema.route.path && typeof schema.route.path === 'string') {
-      this.route = { "paths": [schema.route.path] };  
+      this.route = { "paths": [schema.route.path] };
+      if (schema.route.constraint) this.route.constraint = schema.route.constraint;
     }
     else if (schema.route.paths && typeof schema.route.paths === 'string') {
       this.route = { "paths": [schema.route.paths] };
+      if (schema.route.constraint) this.route.constraint = schema.route.constraint;
     }
     else {
       this.route = schema.route;  

@@ -1,10 +1,7 @@
 /*
-
 REWRITE INFO:
 https://github.com/tinganho/connect-modrewrite
-
 */
-
 var fs = require('fs');
 var es = require('event-stream');
 var url = require('url');
@@ -15,9 +12,14 @@ var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
 var help = require(__dirname + '/../help');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
+
+var Datasource = require(__dirname + '/../datasource');
 
 var Router = function (server, options) {
+
+  this.log = log.get().child({module: 'router'});
+  this.log.info('Router logging started.')
 
   this.data = {};
   this.params = {};
@@ -26,60 +28,98 @@ var Router = function (server, options) {
   this.handlers = null;
   this.rules = [];
 
+  this.rewritesFile = config.get('rewrites.path');
+  this.rewritesDatasource = config.get('rewrites.datasource');
+
   this.server = server;
 
+  var self = this;
+
   // load the route constraint specifications if they exist
-  if (fs.existsSync(options.routesPath + '/constraints.js')) {
+  try {
+    delete require.cache[options.routesPath + '/constraints.js'];
     this.handlers = require(options.routesPath + '/constraints.js');
   }
+  catch (err) {
+    this.log.info('No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
+  }
 
-  var self = this;
-  this.loadRewrites(options, function() {
-    self.loadRewriteModule();
-  });
+  // load the rewrites from the filesystem
+  if (this.rewritesFile && this.rewritesFile !== '') {
+    this.loadRewrites(options, function(err) {
+      if (!err) self.loadRewriteModule();
+    });
+  }
 }
 
 Router.prototype.loadRewrites = function(options, done) {
-  var self = this;
+  
+  var rules = [];
+  var self = this;  
   
   self.rules = [];
   
-  // load the rewrite specifications if they exist
-  var rewritePath = options.routesPath + '/rewrites.txt';
-  if (fs.existsSync(rewritePath)) {
+  var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
-    var rules = [];
-    var stream = fs.createReadStream(rewritePath, {encoding: 'utf8'})
-      .pipe(es.split("\n"))
-      .pipe(es.mapSync(function(data) {
-        if (data !== "") rules.push(data);
-      }));
+  stream.pipe(es.split("\n"))
+        .pipe(es.mapSync(function (data) {
+          if (data !== "") rules.push(data);
+        })
+  );
 
-    stream.on('end', function() {
-      self.rules = rules.slice(0);
-      done();
-    });
+  stream.on('error', function (err) {
+    self.log.error('No rewrites loaded, file not found (' + self.rewritesFile + ')');
+    done(err);
+  });
 
-  }
+  stream.on('end', function() {
+    self.rules = rules.slice(0);
+    done(null);
+  });
 
 }
 
 /**
- *  Attaches a function from /workspace/routes/constraints.js to the specified route
+ *  Attaches a function from /workspace/routes/constraints.js or a datasource to the specified route
  *  @param {String} route
  *  @param {String} fn
  *  @return undefined
  *  @api public
  */
-Router.prototype.constrain = function(route, fn) {
+Router.prototype.constrain = function(route, constraint) {
   
-  // check the specified function has been loaed from /workspace/routes/constraints.js
-  if (!this.handlers[fn]) {
-    logger.prod("\n[ROUTER] Route constraint function '" + fn + "' not found. Is it defined in '/workspace/routes/constraints.js'?\n");
-    return;
+  var self = this;
+  var c;
+  var message;
+
+  if (this.handlers[constraint]) {
+
+    // add constraint from /workspace/routes/constraints.js if it exists
+    c = this.handlers[constraint];
+    message = "Added route constraint function '%s' for '%s'";
+  }
+  else {
+
+    // try to build a datasource from the provided constraint
+    var datasource = new Datasource(route, constraint, this.options, function(err, ds) {
+      if (err) {
+        this.log.error(err);
+      }
+
+      c = ds;
+      message = "Added route constraint datasource '%s' for '%s'";
+    });
   }
 
-  this.constraints[route] = this.handlers[fn];
+  if (c) {
+    this.constraints[route] = c;
+    this.log.info(message, constraint, route);
+  }
+  else {
+    this.log.error("Route constraint '" + constraint + "' not found. Is it defined in '/workspace/routes/constraints.js' or '/workspace/data-sources/'?");
+  }
+
+  return;
 }
 
 /**
@@ -91,25 +131,48 @@ Router.prototype.constrain = function(route, fn) {
  */
 Router.prototype.testConstraint = function(route, req, res, callback) {
 
-  var debug = debugMode(req);
-  
-  if (debug) {
-    console.log("[ROUTER] testConstraint: " + req.url);
-    console.log("[ROUTER] testConstraint: " + route);
-  }
+  console.log("[ROUTER] testConstraint: " + req.url);
+  console.log("[ROUTER] testConstraint: " + route);
 
-  // if there's a constraint handler for this route, run it
+  // if there's a constraint handler 
+  // for this route, run it
   if (this.constraints[route]) {
-    
-    if (debug) console.log("[ROUTER] testConstraint: found fn");
-    
-    this.constraints[route](req, res, function (result) {
-      
-      if (debug) console.log("[ROUTER] testConstraint: this route matches = " + result);
-      
-      // return the result
-      return callback(result);
-    });
+
+    if (typeof this.constraints[route] === 'function') {
+      this.constraints[route](req, res, function (result) {
+        // return the result
+        return callback(result);
+      });
+    }
+    else {
+      // datasource
+      var datasource = this.constraints[route];
+      datasource.processRequest(datasource.page.name, req);
+
+      help.getData(datasource, function(err, result) {
+        
+        if (err) {
+          return callback(err);
+        }
+
+        if (result) {
+          try {
+            var results = JSON.parse(result);
+            // console.log(results);
+            if (results && results.results && results.results.length > 0) {
+              return callback(true);
+            }
+            else {
+              return callback(false);  
+            }
+          }
+          catch (err) {
+            this.log.error(err);
+            return callback(false);
+          }
+        }
+      });
+    }
   }
   else {
     // no constraint against this route,
@@ -122,13 +185,13 @@ Router.prototype.loadRewriteModule = function() {
   // remove it from the stack
   this.server.app.unuse(modRewrite(this.rules));
 
-  logger.prod("[ROUTER] Rewrite module unloaded.");
+  this.log.info("Rewrite module unloaded.");
 
   // add it to the stack
   this.server.app.use(modRewrite(this.rules));
   
-  logger.prod("[ROUTER] Rewrite module loaded.");
-  logger.prod("[ROUTER] " + this.rules.length + " rewrites/redirects loaded.");
+  this.log.info("Rewrite module loaded.");
+  this.log.info(this.rules.length + " rewrites/redirects loaded.");
 }
 
 var debugMode = function(req) {
@@ -137,6 +200,8 @@ var debugMode = function(req) {
 }
 
 module.exports = function (server, options) {
+
+  var self = this;
 
   server.app.Router = new Router(server, options);
 
@@ -152,6 +217,59 @@ module.exports = function (server, options) {
 	//     next();
 	//   }
 	// });
+ 
+
+  server.app.use(function (req, res, next) {
+
+    if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
+
+    var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
+      
+      if (err) {
+        this.log.error(err);
+        return next();
+      }
+
+      _.extend(ds.schema.datasource.filter, { "rule": req.url });
+      ds.processRequest(ds.page.name, req);
+
+      help.getData(ds, function(err, result) {
+        
+        if (err) {
+          this.log.error({err:err}, 'Error loading data in Router Rewrite module');
+          return next(err);
+        }
+
+        if (result) {
+          var results = JSON.parse(result);
+          
+          if (results && results.results && results.results.length > 0) {
+            var rule = results.results[0];
+            var location;
+            if (/\:\/\//.test(rule.replacement)) {
+              location = req.url.replace(rule.rule, rule.replacement);
+            }
+            else {
+              location = 'http' + '://' + req.headers.host + req.url.replace(rule.rule, rule.replacement);
+            }
+
+            res.writeHead(rule.redirectType, {
+              Location : location
+            });
+
+            res.end();
+          }
+          else {
+            return next();
+          }
+        }
+        else {
+          return next();
+        }
+      });
+
+    });
+  })
 
   //server.app.Router.loadRewriteModule();
 };
