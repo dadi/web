@@ -91,10 +91,10 @@ Server.prototype.start = function (options, done) {
 
       console.log("\n" + rosecombMessage.bold.white);
       console.log(seramaMessage.bold.blue + "\n");
-      
+
       if (env === 'production') {
-        this.log.info(rosecombMessage);
-        this.log.info(seramaMessage);
+        self.log.info(rosecombMessage);
+        self.log.info(seramaMessage);
       }
 
     });
@@ -114,8 +114,8 @@ Server.prototype.start = function (options, done) {
     dust.debugLevel = config.get('dust.debugLevel');
     dust.config.cache = config.get('dust.cache');
     dust.config.whitespace = config.get('dust.whitespace');
-    
-    
+
+
     this.readyState = 1;
 
     process.on('SIGINT', function() {
@@ -123,7 +123,7 @@ Server.prototype.start = function (options, done) {
       toobusy.shutdown();
       self.log.info('Server stopped, process exiting.');
       process.exit();
-    });        
+    });
 
     // this is all sync, so callback isn't really necessary.
     done && done();
@@ -166,7 +166,7 @@ Server.prototype.loadApi = function (options) {
 
         // load routes
         self.updatePages(pagePath, options, false);
-        
+
         // compile all dust templates
         self.dustCompile(options);
 
@@ -194,7 +194,7 @@ Server.prototype.loadApi = function (options) {
                 });
             }
         });
-        
+
         self.log.info('Load complete.');
 
     });
@@ -277,18 +277,18 @@ Server.prototype.addComponent = function (options, reload) {
         if (path === '/index') {
 
             this.log.info("Loaded " + path);
-            
+
             // configure "index" route
             this.app.use('/', function (req, res, next) {
                 // map request method to controller method
                 var method = req.method && req.method.toLowerCase();
-                
+
                 if (method && options.component[method]) {
 
                     return options.component[method](req, res, next);
                 }
                 next();
-            });        
+            });
         }
         else {
 
@@ -358,7 +358,7 @@ Server.prototype.addComponent = function (options, reload) {
     // if (options.route.path === '/index') {
 
     //     console.log("Loaded route " + options.route.path);
-        
+
     //     // configure "index" route
     //     this.app.use('/', function (req, res, next) {
     //         // map request method to controller method
@@ -366,7 +366,7 @@ Server.prototype.addComponent = function (options, reload) {
     //         if (method && options.component[method]) return options.component[method](req, res, next);
 
     //         next();
-    //     });        
+    //     });
     // }
     // else {
 
@@ -448,15 +448,15 @@ Server.prototype.dustCompile = function (options) {
     }).filter(function (file) {
         return path.extname(file) === '.dust';
     }).forEach(function (file) {
-        
+
         var pageTemplateName = path.basename(file, '.dust');
-        
+
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
-            
+
             self.log.info("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
-            
+
             var template =  fs.readFileSync(file, "utf8");
-            
+
             try {
                 var compiled = dust.compile(template, pageTemplateName, true);
                 dust.loadSource(compiled);
@@ -467,7 +467,7 @@ Server.prototype.dustCompile = function (options) {
             }
         }
     });
-    
+
     var partials = fs.readdirSync(partialPath);
     partials.forEach(function (partial) {
         //Load the template from file
@@ -487,9 +487,9 @@ Server.prototype.dustCompile = function (options) {
 
 /**
  *  Create workspace directories if they don't already exist
- *  
+ *
  *  @param {Object} options Object containing workspace paths
- *  @return 
+ *  @return
  *  @api public
  */
 Server.prototype.ensureDirectories = function (options, done) {
@@ -515,7 +515,7 @@ Server.prototype.ensureDirectories = function (options, done) {
             });
         // }
         // else {
-        //     idx++;    
+        //     idx++;
         // }
 
         //if (idx === Object.keys(options).length) return done('done');
@@ -523,8 +523,8 @@ Server.prototype.ensureDirectories = function (options, done) {
 };
 
 /**
- *  Expose VERB type methods for adding routes and middlewares 
- *  
+ *  Expose VERB type methods for adding routes and middlewares
+ *
  *  @param {String} [route] optional
  *  @param {function} callback, any number of callback to be called in order
  *  @return undefined
