@@ -244,3 +244,43 @@ dust.helpers.numberCommas = function(chunk, context, bodies, params) {
         chunk.end();
     });
 };
+
+/*
+* Encode html to json valid
+*/
+
+dust.helpers.htmlEncode = function(chunk, context, bodies, params) {
+    return chunk.capture(bodies.block, context, function(data, chunk){
+        data = JSON.stringify(data.toString());
+
+        chunk.write(data);
+        chunk.end();
+    });
+};
+
+/*
+* Generate urls based on routes by sending in page names & parameters
+*/
+
+dust.helpers.url = (function() {
+    var core;
+    return function(chunk, context, bodies, params) {
+        if(!core) {
+            // requiring core here is due to this file is loaded by the core, and so requiring it elsewhere won't work
+            core = require(__dirname + '/../');
+        }
+        // Ensure a page name is input
+        if(typeof params.page === 'undefined') {
+            throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
+        }
+        // Get the page
+        var component = _.find(core.components, function(component) {
+            return ('page' in component && component.page.name === params.page);
+        });
+        if(!component) {
+            throw new Error('The @url helper could not find a page with the name "' + params.page + '".');
+        }
+        // Get the route
+        return component.page.route.toPath(_.omit(params, 'page'));
+    };
+}());
