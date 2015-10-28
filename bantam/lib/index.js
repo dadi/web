@@ -318,82 +318,7 @@ Server.prototype.addComponent = function (options, reload) {
             });
         }
     }, this);
-    //this.components[options.route.path] = options.component;
 
-    // this.app.use(options.route.path + '/config', function (req, res, next) {
-    //     var method = req.method && req.method.toLowerCase();
-
-    //     // send schema
-    //     if (method === 'get' && options.filepath) {
-
-    //         // only allow getting collection endpoints
-    //         if (options.filepath.slice(-5) === '.json') {
-    //             return help.sendBackJSON(200, res, next)(null, require(options.filepath));
-    //         }
-    //         // continue
-    //     }
-
-    //     // set schema
-    //     if (method === 'post' && options.filepath) {
-    //         return fs.writeFile(options.filepath, req.body, function (err) {
-    //             help.sendBackJSON(200, res, next)(err, {result: 'success'});
-    //         });
-    //     }
-
-    //     // delete schema
-    //     if (method === 'delete' && options.filepath) {
-
-    //         // only allow removing collection type endpoints
-    //         if (options.filepath.slice(-5) === '.json') {
-    //             return fs.unlink(options.filepath, function (err) {
-    //                 help.sendBackJSON(200, res, next)(err, {result: 'success'});
-    //             });
-    //         }
-    //         // continue
-    //     }
-
-    //     next();
-    // });
-
-    // if (options.route.path === '/index') {
-
-    //     console.log("Loaded route " + options.route.path);
-
-    //     // configure "index" route
-    //     this.app.use('/', function (req, res, next) {
-    //         // map request method to controller method
-    //         var method = req.method && req.method.toLowerCase();
-    //         if (method && options.component[method]) return options.component[method](req, res, next);
-
-    //         next();
-    //     });
-    // }
-    // else {
-
-    //     console.log("Loaded route " + options.route.path);
-
-    //     if (options.route.constraint) this.app.Router.constrain(options.route.path, options.route.constraint);
-
-    //     var self = this;
-
-    //     this.app.use(options.route.path, function (req, res, next) {
-    //         // console.log("testing: " + req.url);
-    //         // console.log("testing: " + options.route.path);
-    //         self.app.Router.testConstraint(options.route.path, req, res, function (result) {
-
-    //             // test returned false, try the next matching route
-    //             if (!result) return next();
-
-    //             // map request method to controller method
-    //             var method = req.method && req.method.toLowerCase();
-
-    //             if (method && options.component[method]) return options.component[method](req, res, next);
-
-    //             // no matching HTTP method found, try the next matching route
-    //             return next();
-    //         });
-    //     });
-    // }
 };
 
 Server.prototype.removeComponent = function (route) {
@@ -502,11 +427,11 @@ Server.prototype.ensureDirectories = function (options, done) {
             mkdirp(dir, {}, function (err, made) {
 
                 if (err) {
-                    this.log.error(err);
+                    self.log.error(err);
                 }
 
                 if (made) {
-                    this.log.info('Created workspace directory ' + made);
+                    self.log.info('Created workspace directory ' + made);
                 }
 
                 idx++;
