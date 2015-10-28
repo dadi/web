@@ -14,10 +14,17 @@
         "messageFormat": "<%= label %> - <%= date %> - <%= message %>"
     },
     "caching": {
-        "enabled": true,
         "ttl": 300,
-        "directory": "./cache/rosecomb/",
-        "extension": "html"
+        "directory": {
+            "enabled": true,
+            "path": "./cache/rosecomb/",
+            "extension": "html"
+        },
+        "redis": {
+            "enabled": false,
+            "host": "",
+            "port": 6379
+        }
     },
     "server": {
         "host": "127.0.0.1",
@@ -40,7 +47,9 @@
         "debug": false,
         "debugLevel": "INFO",
         "whitespace": false
-    }
+    },
+    "debug": true,
+    "allowJsonView": true
 }
 ```
 
@@ -62,10 +71,15 @@ messageFormat           |   |               | "<%= label %> - <%= date %> - <%= 
 
  Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
-enabled           | Sets caching enabled or disabled   | enabled              | enabled
 ttl           |    |               |  300      
-directory           | The directory to use for storing cache files, relative to the root of the application   |               | "./cache/rosecomb"
-extension           | The file extension to use for cache files   |    "html"           |  "html"
+directory           | Configuration block for caching using a local filesystem directory   |               |
+directory.enabled           | Sets directory caching enabled or disabled. Either directory or redis caching must be enabled for caching to work.   | true              | true
+directory.path           | The directory to use for storing cache files, relative to the root of the application   |    "./cache/rosecomb"           |  "./cache/rosecomb"
+directory.extension           | The file extension to use for cache files   |    "html"           |  "html"
+redis           | Configuration block for caching using a Redis caching service   |               |
+redis.enabled           | Sets directory caching enabled or disabled. Either directory or redis caching must be enabled for caching to work.   | false              | true
+redis.host           | The host for the Redis caching service   |    ""           |  "project.stimkl.oh.0001.euw1.cache.amazonaws.com"
+redis.port           | The port for the Redis caching service   |    6379           |  6379
 
 ###### Section: `auth`
 

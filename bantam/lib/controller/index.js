@@ -78,11 +78,13 @@ Controller.prototype.attachEvents = function(done) {
   done();
 };
 
-Controller.prototype.post = function (req, res, next) {
-  sendBackHTML(200, this.page.contentType, res, next)(null, "\n\nPOST Return\n\n");
-}
+// Controller.prototype.post = function (req, res, next) {
+//   sendBackHTML(200, this.page.contentType, res, next)(null, "\n\nPOST Return\n\n");
+// }
 
 Controller.prototype.get = function (req, res, next) {
+
+    this.log.debug({req:req});
 
     var settings = {};
 

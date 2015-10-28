@@ -5,8 +5,8 @@
 ## Contents
 
 * [Overview](#overview)
-* [Pages](docs/page_specification.md) 
-* [Data sources](docs/datasource_specification.md) 
+* [Pages](docs/page_specification.md)
+* [Data sources](docs/datasource_specification.md)
 * [Setup and installation](#setup-and-installation)
 * [Configuration](#configuration)
 * [Running the demo application](#running-the-demo-application)
@@ -56,7 +56,7 @@ Pages are the main template files. Templating is based around the [DustJS](http:
 
 Partials are reusable template files that may be referenced from the main page templates. Partials may also contain *DustJS* code.
 
-Pages and partials have access to the data loaded in data sources and events. 
+Pages and partials have access to the data loaded in data sources and events.
 
 ###### Error Pages
 
@@ -68,7 +68,7 @@ workspace/pages/404.json
 workspace/pages/404.dust
 ```
 
-404 templates have access to data source and event data in the same way as standard pages. 
+404 templates have access to data source and event data in the same way as standard pages.
 
 
 ### File structure
@@ -84,7 +84,7 @@ workspace/pages/404.dust
 ### Setup and installation
 
 	[sudo] npm install
-	
+
 ### Configuration
 
 #### File structure
@@ -127,12 +127,13 @@ If a request is made to Rosecomb running on `http://localhost:3000/articles` the
 
 The `docs/` directory contains additional documentation on the component parts of the system:
 
-* [Configuration](docs/configuration.md) 
-* [Data sources](docs/datasource_specification.md) 
-* [Events](docs/events.md) 
-* [Pages](docs/page_specification.md) 
-* [Page Templates](docs/page_templates.md) 
-* [Routing](docs/routing.md) 
+* [Configuration](docs/configuration.md)
+* [Data sources](docs/datasource_specification.md)
+* [Events](docs/events.md)
+* [Pages](docs/page_specification.md)
+* [Page Templates](docs/page_templates.md)
+* [Routing](docs/routing.md)
+* [Logging](docs/logging.md)
 
 Feel free to contact the Bantam core development team on team@bant.am with questions.
 
@@ -191,4 +192,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
