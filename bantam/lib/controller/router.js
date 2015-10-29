@@ -270,7 +270,7 @@ module.exports = function (server, options) {
     // force a trailing slash
     server.app.use(function (req, res, next) {
       var parsed = url.parse(req.url, true);
-      if (/\/$/.test(parsed.pathname) === false) {
+      if (/^([^.]*[^/])$/.test(parsed.pathname) === true) {
         var location = 'http' + '://' + req.headers.host + parsed.pathname + '/' + parsed.search;
         res.writeHead(301, {
           Location : location
