@@ -205,6 +205,8 @@ function defaultError(api) {
                 res.setHeader('Content-Type', 'application/json');
             }
             else {
+              console.log(err);
+              console.log(typeof err);
               resBody = err;
               res.setHeader('Content-Type', 'text/plain');
             }
