@@ -206,8 +206,7 @@ function defaultError(api) {
             }
             else {
               console.log(err);
-              console.log(typeof err);
-              resBody = err;
+              resBody = err.toString();
               res.setHeader('Content-Type', 'text/plain');
             }
 
