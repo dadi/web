@@ -286,7 +286,7 @@ function processChained(chainedDatasources, data, query, done) {
     if (!data[chainedDatasource.chained.datasource]) {
       var message = "Error: chained datasource " + chainedKey + " expected data at this node."
       data[chainedDatasource.chained.datasource] = message;
-      this.log.warn(message);
+      self.log.warn(message);
       return done(data);
     }
 
