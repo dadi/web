@@ -276,6 +276,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 function processChained(chainedDatasources, data, query, done) {
 
   var idx = 0;
+  var self = this;
 
   if (0 === Object.keys(chainedDatasources).length) {
     return done(data);
