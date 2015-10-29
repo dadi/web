@@ -171,7 +171,7 @@ function hasAttachedDatasources(datasources) {
   return (typeof datasources === 'object' && Object.keys(datasources).length > 0);
 }
 
-function loadEventData(events, req, res, data, done) {
+Controller.prototype.loadEventData = function (events, req, res, data, done) {
 
   // return the global data object, no events to run
   if (0 === Object.keys(events).length) {
@@ -225,7 +225,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   // no datasources specified for this page
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
-    loadEventData(self.events, req, res, data, function (err, result) {
+    self.loadEventData(self.events, req, res, data, function (err, result) {
       return done(err, result);
     });
   }
