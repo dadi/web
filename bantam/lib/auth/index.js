@@ -17,7 +17,7 @@ module.exports = function (server) {
         var self = this;
 
         this.log = log.get().child({module: 'auth'});
-        
+
         // don't authenticate *.jpg GET requests
         var path = url.parse(req.url).pathname;
         if (path.split(".").pop() === 'jpg') return next();
@@ -48,7 +48,7 @@ module.exports = function (server) {
           }
         };
 
-        var req = http.request(options, function(res) {            
+        var req = http.request(options, function(res) {
           var output = '';
 
           res.on('data', function(chunk) {
@@ -56,10 +56,10 @@ module.exports = function (server) {
           });
 
           res.on('end', function() {
-            
+
             if (!output) {
               self.log.error('No token received, invalid credentials.');
-              
+
               res.statusCode = 401;
               return next();
             }
@@ -74,11 +74,11 @@ module.exports = function (server) {
         });
 
         req.on('error', function(err) {
-          this.log.error(err);
-          this.log.error('Error requesting accessToken from ' + options.hostname);
+          self.log.error(err);
+          self.log.error('Error requesting accessToken from ' + options.hostname);
           next();
         });
-        
+
         // write data to request body
         req.write(JSON.stringify(postData));
 
@@ -87,7 +87,7 @@ module.exports = function (server) {
         }
         catch (e) {
         }
-        
+
     });
 
 };
