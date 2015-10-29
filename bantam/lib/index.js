@@ -68,7 +68,7 @@ Server.prototype.start = function (options, done) {
               + ' ' + moment().format()
               + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
               + ' ' + res.statusCode
-              + ' ' + res._headers['content-length']
+              + ' ' + (res._headers ? res._headers['content-length'] : '')
               + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
               + ' ' + req.headers["user-agent"]
             );
