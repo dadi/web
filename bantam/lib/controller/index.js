@@ -260,9 +260,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
       idx++;
 
       if (idx === Object.keys(primaryDatasources).length) {
-        processChained(chainedDatasources, data, query, function() {
+        self.processChained(chainedDatasources, data, query, function() {
 
-          loadEventData(self.events, req, res, data, function (err, result) {
+          self.loadEventData(self.events, req, res, data, function (err, result) {
             done(err, result);
           });
 
@@ -273,7 +273,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   });
 }
 
-function processChained(chainedDatasources, data, query, done) {
+Controller.prototype.processChained = function (chainedDatasources, data, query, done) {
 
   var idx = 0;
   var self = this;
