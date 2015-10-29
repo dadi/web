@@ -6,7 +6,9 @@
         "enabled": true,
         "path": "./log",
         "filename": "rosecomb",
-        "extension": "log"
+        "extension": "log",
+        "accessLogFileRotationPeriod": "1d",
+        "accessLogFileRetentionCount": 7
     },
     "caching": {
         "ttl": 300,

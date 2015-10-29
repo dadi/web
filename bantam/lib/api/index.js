@@ -185,7 +185,7 @@ module.exports.Api = Api;
 // Default error handler, in case application doesn't define error handling
 function defaultError(api) {
     return function (err, req, res) {
-      
+
         res.statusCode = err.statusCode || 500;
 
         // look for an error page that has been loaded
@@ -199,16 +199,17 @@ function defaultError(api) {
         }
         else { // otherwise, respond with default message
 
+            var resBody = '';
             if (err.json) {
-                var resBody = JSON.stringify(err.json);
+                resBody = JSON.stringify(err.json);
                 res.setHeader('Content-Type', 'application/json');
             }
             else {
-              var resBody = err;
+              resBody = err;
               res.setHeader('Content-Type', 'text/plain');
             }
 
-            res.setHeader('content-length', Buffer.byteLength(resBody));
+            res.setHeader('Content-Length', Buffer.byteLength(resBody));
             return res.end(resBody);
         }
     }

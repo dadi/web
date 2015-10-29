@@ -20,6 +20,7 @@ var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var serveStatic = require('serve-static')
 var serveFavicon = require('serve-favicon');
 var toobusy = require('toobusy-js');
+var moment = require('moment');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
@@ -61,8 +62,16 @@ Server.prototype.start = function (options, done) {
         res.end = function () {
             var duration = Date.now() - start;
 
-            log.access({req: req});
-            log.access({res: res});
+            log.access(
+              (req.connection.remoteAddress || '')
+              + ' -'
+              + ' ' + moment().format()
+              + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
+              + ' ' + res.statusCode
+              + ' ' + res._headers['content-length']
+              + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
+              + ' ' + req.headers["user-agent"]
+            );
 
             // log the request method and url, and the duration
             log.info({module: 'router'}, req.method

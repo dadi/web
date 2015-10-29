@@ -138,6 +138,16 @@ var conf = convict({
       doc: "",
       format: String,
       default: "log"
+    },
+    accessLogFileRotationPeriod: {
+      doc: "The period of time that should elapse before rotating the log file",
+      format: String,
+      default: "1d"  // daily rotation
+    },
+    accessLogFileRetentionCount: {
+      doc: "The number of rotated log files to keep",
+      format: Number,
+      default: 7    // keep 7 back copies
     }
   },
   rewrites: {

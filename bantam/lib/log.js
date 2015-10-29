@@ -39,8 +39,8 @@ var accessLog = bunyan.createLogger({
       {
         type: 'rotating-file',
         path: accessLogPath,
-        period: '1d',   // daily rotation
-        count: 3        // keep 7 back copies
+        period: options.accessLogFileRotationPeriod,
+        count: options.accessLogFileRetentionCount
       }
     ]
 });
