@@ -1,6 +1,7 @@
 var dust = require('dustjs-linkedin');
 var marked = require('marked');
 var moment = require('moment');
+var pluralist = require('pluralist');
 var _ = require('underscore');
 var s = require('underscore.string');
 var html_strip = require('htmlstrip-native');
@@ -244,3 +245,26 @@ dust.helpers.numberCommas = function(chunk, context, bodies, params) {
         chunk.end();
     });
 };
+
+dust.helpers.plural = function(chunk, context, bodies, params) {
+    var options = {
+        val: params.val,
+        value: params.value,
+        auto: params.auto,
+        one: params.one,
+        many: params.many,
+        str: params.str
+    }
+    if (options.val) {
+       if(typeof context.get(options.val) !== 'undefined') {
+            var multiple = Boolean(Number(context.get(options.val)) - 1);
+            if (options.auto) {
+                return chunk.write( multiple ? pluralist.plural(options.str).anglicised_plural : pluralist.singular(options.str).singular_suffix );
+            } else if (options.one && options.many) {
+                return chunk.write( multiple ? options.many : options.one );
+            }
+       }
+    } else if (options.str) {
+        return chunk.write(options.str);
+    } else return chunk.write("");
+}
