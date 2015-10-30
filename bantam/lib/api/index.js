@@ -26,6 +26,7 @@ var Api = function () {
  *  @api public
  */
 Api.prototype.use = function (path, handler) {
+
     if (typeof path === 'function') {
         if (path.length === 4) return this.errors.push(path);
         return this.all.push(path);
@@ -58,8 +59,6 @@ Api.prototype.unuse = function (path) {
             indx = this.errors.indexOf(path);
             return !!~indx && this.errors.splice(indx, 1);
         }
-
-        //console.log(this.all.length);
 
         var functionStr = path.toString();
         _.each(this.all, function (func) {
