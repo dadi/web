@@ -9,6 +9,8 @@ var Api = function () {
     this.all = [];
     this.errors = [];
 
+    this.log = log.get().child({module: 'api'});
+
     // always add default error handler in case the application doesn't define one
     this.errors.push(defaultError(this));
 
@@ -98,6 +100,8 @@ Api.prototype.listen = function (port, host, backlog, done) {
  */
 Api.prototype.listener = function (req, res) {
 
+    var self = this;
+
     // clone the middleware stack
     var stack = this.all.slice(0);
     var path = url.parse(req.url).pathname;
@@ -113,13 +117,17 @@ Api.prototype.listener = function (req, res) {
         return function (err) {
             if (err) return errStack(0)(err);
 
-
-
             // add the original params back, in case a middleware
             // has modified the current req.params
             _.extend(req.params, originalReqParams);
 
-            stack[i](req, res, doStack(++i));
+            try {
+              stack[i](req, res, doStack(++i));
+            }
+            catch (err) {
+              self.log.error(err);
+              return errStack(0)(err);
+            }
         };
     };
 
@@ -184,6 +192,7 @@ module.exports.Api = Api;
 
 // Default error handler, in case application doesn't define error handling
 function defaultError(api) {
+
     return function (err, req, res) {
 
         res.statusCode = err.statusCode || 500;
@@ -205,7 +214,6 @@ function defaultError(api) {
                 res.setHeader('Content-Type', 'application/json');
             }
             else {
-              console.log(err);
               resBody = err.toString();
               res.setHeader('Content-Type', 'text/plain');
             }

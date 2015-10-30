@@ -8,6 +8,7 @@ var _ = require('underscore');
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
 var page = require(__dirname + '/page');
+var middleware = require(__dirname + '/middleware');
 var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
@@ -62,6 +63,7 @@ Server.prototype.start = function (options, done) {
         res.end = function () {
             var duration = Date.now() - start;
 
+            // write to the access log first
             log.access(
               (req.connection.remoteAddress || '')
               + ' -'
@@ -83,6 +85,8 @@ Server.prototype.start = function (options, done) {
         };
         next();
     });
+
+    this.initialiseMiddleware(options);
 
     // caching layer
     cache(self).init();
@@ -214,6 +218,40 @@ Server.prototype.loadApi = function (options) {
 
 };
 
+Server.prototype.initialiseMiddleware = function (options) {
+
+    options || (options = {});
+
+    var middlewarePath = this.middlewarePath = options.middlewarePath || __dirname + '/../../workspace/middleware';
+    options.middlewarePath = middlewarePath;
+
+    var middlewares = this.loadMiddleware(middlewarePath, options);
+    _.each(middlewares, function(middleware) {
+      middleware.init(this.app);
+    }, this);
+}
+
+Server.prototype.loadMiddleware = function (directoryPath, options) {
+
+    if (!fs.existsSync(directoryPath)) return;
+
+    var self = this;
+    var files = fs.readdirSync(directoryPath);
+
+    var middlewares = [];
+
+    files.forEach(function (file) {
+        if (file.indexOf('.js') < 0) return;
+
+        var filepath = path.join(directoryPath, file);
+        var name = file.slice(0, file.indexOf('.'));
+        var m = new middleware(name, options);
+        middlewares.push(m);
+    });
+
+    return middlewares;
+};
+
 Server.prototype.updatePages = function (directoryPath, options, reload) {
 
     if (!fs.existsSync(directoryPath)) return;
@@ -323,7 +361,11 @@ Server.prototype.addComponent = function (options, reload) {
                     }
 
                     // no matching HTTP method found, try the next matching route
-                    return next();
+                    if (next) {
+                      return next();
+                    } else {
+                      return help.sendBackJSON(404, res, next)(null, require(options.filepath));
+                    }
                 });
             });
         }
