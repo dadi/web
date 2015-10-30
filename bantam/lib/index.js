@@ -51,7 +51,7 @@ Server.prototype.start = function (options, done) {
     // serve static files (css,js,fonts)
     app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
-    app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
+    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d' }));
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());

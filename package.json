@@ -14,7 +14,6 @@
     "bunyan": "^1.5.1",
     "colors": "latest",
     "common-dustjs-helpers": "^0.1.0",
-    "connect-modrewrite": "^0.8.2",
     "convict": "^1.0.1",
     "dustjs-helpers": "^1.7.3",
     "dustjs-linkedin": "^2.7.2",
