@@ -14,7 +14,7 @@ var Page = function (name, schema) {
   }
 
   this.name = name;
-  
+
   if (schema.route) {
     if (schema.route.path && typeof schema.route.path === 'string') {
       this.route = { "paths": [schema.route.path] };
@@ -25,13 +25,13 @@ var Page = function (name, schema) {
       if (schema.route.constraint) this.route.constraint = schema.route.constraint;
     }
     else {
-      this.route = schema.route;  
+      this.route = schema.route;
     }
   }
   else {
     this.route = { "paths": ['/' + name] };
   }
-  
+
   this.route.toPath = pathToRegexp.compile(this.route.paths[0]);
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';

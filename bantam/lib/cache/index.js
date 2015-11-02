@@ -51,23 +51,14 @@ Cache.prototype.cachingEnabled = function(req) {
     var endpoints = this.server.components;
     requestUrl = url.parse(req.url, true).pathname;
 
-    var endpointKey = _.find(_.keys(endpoints), function (k){ return k.indexOf(requestUrl) > -1; });
+    // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
+    var endpoint = _.find(endpoints, function (endpoint){ return !_.isEmpty(_.intersection(endpoint.page.route.paths, req.paths)); });
 
-    // check if there is a match in the loaded routes for the
-    // current pages `route: { paths: ['xx','yy'] }` property
-    if (!endpointKey) {
-        var path = _.intersection(Object.keys(endpoints), req.paths);
-        if (path && path[0]) {
-            endpointKey = path[0];
-        }
-    }
+    // not found in the loaded routes, let's not bother caching
+    if (!endpoint) return false;
 
-    // not found in the loaded routes,
-    // let's not bother caching
-    if (!endpointKey) return false;
-
-    if (endpoints[endpointKey].page && endpoints[endpointKey].page.settings) {
-        this.options = endpoints[endpointKey].page.settings;
+    if (endpoint.page && endpoint.page.settings) {
+        this.options = endpoint.page.settings;
     }
     else {
         this.options.cache = false;

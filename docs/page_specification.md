@@ -5,6 +5,7 @@
 ```js
 	{
 	    "page": {
+				"key": "reviews",
         "name": "Car Reviews",
         "description": "A collection of car reviews.",
         "language": "en"
@@ -47,7 +48,7 @@ Returning `false` from a constraint instructs Rosecomb to try the next matching 
 
 ###### Constraint Functions
 
-Constraint functions must be added to `workspace/routes/constraints.js`. In the following example a route has a dynamic parameter `content`. The constraint function `nextIfNewsOrFeatures` will check the value of the `content` parameter and return `false` if it matches "news" or "features. 
+Constraint functions must be added to `workspace/routes/constraints.js`. In the following example a route has a dynamic parameter `content`. The constraint function `nextIfNewsOrFeatures` will check the value of the `content` parameter and return `false` if it matches "news" or "features.
 
 _workspace/pages/movies.json_
 
@@ -132,7 +133,7 @@ URL       | Named Parameters
 
 ##### Optional Parameters
 
-Parameters can be made optional by adding a question mark (?). 
+Parameters can be made optional by adding a question mark (?).
 
 For example the route `/cars/:make/:page?` will match requests in both the following formats:
 
