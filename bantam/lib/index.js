@@ -8,11 +8,12 @@ var _ = require('underscore');
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
 var page = require(__dirname + '/page');
+var middleware = require(__dirname + '/middleware');
 var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
-var logger = require(__dirname + '/log');
+var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
@@ -20,12 +21,16 @@ var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var serveStatic = require('serve-static')
 var serveFavicon = require('serve-favicon');
 var toobusy = require('toobusy-js');
+var moment = require('moment');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
 var Server = function () {
     this.components = {};
     this.monitors = {};
+
+    this.log = log.get().child({module: 'server'});
+    this.log.info('Server logging started.')
 };
 
 Server.prototype.start = function (options, done) {
@@ -46,25 +51,11 @@ Server.prototype.start = function (options, done) {
     // serve static files (css,js,fonts)
     app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
-    app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
+    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d' }));
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
-    // caching layer
-    cache(self);
-
-    // authentication layer
-    auth(self);
-
-    // handle routing & redirects
-    router(self, options);
-
-    dust.isDebug = config.get('dust.debug');
-    dust.debugLevel = config.get('dust.debugLevel');
-    dust.config.cache = config.get('dust.cache');
-    dust.config.whitespace = config.get('dust.whitespace');
-    
     // request logging middleware
     app.use(function (req, res, next) {
         var start = Date.now();
@@ -72,15 +63,39 @@ Server.prototype.start = function (options, done) {
         res.end = function () {
             var duration = Date.now() - start;
 
+            // write to the access log first
+            log.access(
+              (req.connection.remoteAddress || '')
+              + ' -'
+              + ' ' + moment().format()
+              + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
+              + ' ' + res.statusCode
+              + ' ' + (res._headers ? res._headers['content-length'] : '')
+              + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
+              + ' ' + req.headers["user-agent"]
+            );
+
             // log the request method and url, and the duration
-            logger.prod(req.method
+            log.info({module: 'router'}, req.method
                 + ' ' + req.url
                 + ' ' + res.statusCode
                 + ' ' + duration + 'ms');
+
             _end.apply(res, arguments);
         };
         next();
     });
+
+    this.initialiseMiddleware(options);
+
+    // caching layer
+    cache(self).init();
+
+    // authentication layer
+    auth(self);
+
+    // handle routing & redirects
+    router(self, options);
 
     // start listening
     var server = this.server = app.listen(config.get('server.port'), config.get('server.host'));
@@ -93,44 +108,17 @@ Server.prototype.start = function (options, done) {
 
       console.log("\n" + rosecombMessage.bold.white);
       console.log(seramaMessage.bold.blue + "\n");
-      
+
       if (env === 'production') {
-        logger.prod(rosecombMessage);
-        logger.prod(seramaMessage);
-      }
-
-      if (config.useSlackIntegration) {
-        var Slack = require('node-slack');
-        var slack = new Slack('https://hooks.slack.com/services/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', {});
-
-        slack.send({
-          text: message,
-          username: 'Bantam',
-          icon_emoji: ':bantam:',
-          "attachments": [
-              {
-                  "fallback": "Required text summary of the attachment that is shown by clients that understand attachments but choose not to show them.",
-                  "text": "Optional text that should appear within the attachment",
-                  "pretext": "Optional text that should appear above the formatted data",
-                  "color": "good", // Can either be one of 'good', 'warning', 'danger', or any hex color code
-                  // Fields are displayed in a table on the message
-                  "fields": [
-                      {
-                          "title": "Required Field Title", // The title may not contain markup and will be escaped for you
-                          "value": "Text value of the field. May contain standard message markup and must be escaped as normal. May be multi-line.",
-                          "short": false // Optional flag indicating whether the `value` is short enough to be displayed side-by-side with other values
-                      }
-                  ]
-              }
-          ]
-        });
+        self.log.info(rosecombMessage);
+        self.log.info(seramaMessage);
       }
 
     });
 
     server.on('error', function (e) {
       if (e.code == 'EADDRINUSE') {
-        console.log('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
+        self.log.error('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
         process.exit(0);
       }
     });
@@ -138,14 +126,21 @@ Server.prototype.start = function (options, done) {
     // load app specific routes
     this.loadApi(options);
 
+    // dust configuration
+    dust.isDebug = config.get('dust.debug');
+    dust.debugLevel = config.get('dust.debugLevel');
+    dust.config.cache = config.get('dust.cache');
+    dust.config.whitespace = config.get('dust.whitespace');
+
+
     this.readyState = 1;
 
     process.on('SIGINT', function() {
       server.close();
       toobusy.shutdown();
-      logger.prod('[BANTAM] Server stopped, process exiting.');
+      self.log.info('Server stopped, process exiting.');
       process.exit();
-    });        
+    });
 
     // this is all sync, so callback isn't really necessary.
     done && done();
@@ -188,7 +183,7 @@ Server.prototype.loadApi = function (options) {
 
         // load routes
         self.updatePages(pagePath, options, false);
-        
+
         // compile all dust templates
         self.dustCompile(options);
 
@@ -216,11 +211,45 @@ Server.prototype.loadApi = function (options) {
                 });
             }
         });
-        
-        logger.prod('\n[SERVER] Load complete.');
+
+        self.log.info('Load complete.');
 
     });
 
+};
+
+Server.prototype.initialiseMiddleware = function (options) {
+
+    options || (options = {});
+
+    var middlewarePath = this.middlewarePath = options.middlewarePath || __dirname + '/../../workspace/middleware';
+    options.middlewarePath = middlewarePath;
+
+    var middlewares = this.loadMiddleware(middlewarePath, options);
+    _.each(middlewares, function(middleware) {
+      middleware.init(this.app);
+    }, this);
+}
+
+Server.prototype.loadMiddleware = function (directoryPath, options) {
+
+    if (!fs.existsSync(directoryPath)) return;
+
+    var self = this;
+    var files = fs.readdirSync(directoryPath);
+
+    var middlewares = [];
+
+    files.forEach(function (file) {
+        if (file.indexOf('.js') < 0) return;
+
+        var filepath = path.join(directoryPath, file);
+        var name = file.slice(0, file.indexOf('.'));
+        var m = new middleware(name, options);
+        middlewares.push(m);
+    });
+
+    return middlewares;
 };
 
 Server.prototype.updatePages = function (directoryPath, options, reload) {
@@ -239,15 +268,11 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
         // file should be json file containing schema
         var name = page.slice(0, page.indexOf('.'));
 
-        // check for matching template file
-        //var templateFilepath = path.join(directoryPath, name) + ".dust";
-
       self.addRoute({
         name: name,
         filepath: pageFilepath
       }, options, reload);
 
-      //logger.prod('Page loaded: ' + page);
     });
 };
 
@@ -257,8 +282,9 @@ Server.prototype.addRoute = function (obj, options, reload) {
     try {
       var schema = require(obj.filepath);
     }
-    catch (e) {
-      throw new Error('Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
+    catch (err) {
+      this.log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
+      throw err;
     }
 
     // With each page we create a controller, that acts as a component of the REST api.
@@ -269,6 +295,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
     var control = controller(p, options);
 
     this.addComponent({
+        key: schema.page.key,
         route: p.route,
         component: control,
         filepath: obj.filepath
@@ -279,7 +306,13 @@ Server.prototype.addComponent = function (options, reload) {
 
     if (!options.route) return;
 
+    // This is the key the component is indexed by
+    var componentKey = options.key || path.basename(options.filepath || '', '.json');
+
     if (reload) {
+        // In the case of being indexed by key
+        this.removeComponent[componentKey];
+        // In the case of being indexed by path
         _.each(options.route.paths, function (path) {
             this.removeComponent(path);
         }, this);
@@ -292,30 +325,33 @@ Server.prototype.addComponent = function (options, reload) {
 
     _.each(options.route.paths, function (path) {
 
-        // only add a route once
-        if (this.components[path]) return;
+        // Fall back to using the path as the componentKey if it's not been set
+        componentKey = componentKey || path;
 
-        this.components[path] = options.component;
+        // only add a route once
+        if (this.components[componentKey]) return;
+
+        this.components[componentKey] = options.component;
 
         if (path === '/index') {
 
-            logger.prod("[ROUTER] Loaded " + path);
-            
+            this.log.info("Loaded " + path);
+
             // configure "index" route
             this.app.use('/', function (req, res, next) {
                 // map request method to controller method
                 var method = req.method && req.method.toLowerCase();
-                
+
                 if (method && options.component[method]) {
 
                     return options.component[method](req, res, next);
                 }
                 next();
-            });        
+            });
         }
         else {
 
-            logger.prod("[ROUTER] Loaded " + path);
+            this.log.info("Loaded " + path);
 
             if (options.route.constraint) this.app.Router.constrain(path, options.route.constraint);
 
@@ -336,92 +372,20 @@ Server.prototype.addComponent = function (options, reload) {
                     }
 
                     // no matching HTTP method found, try the next matching route
-                    return next();
+                    if (next) {
+                      return next();
+                    } else {
+                      return help.sendBackJSON(404, res, next)(null, require(options.filepath));
+                    }
                 });
             });
         }
     }, this);
-    //this.components[options.route.path] = options.component;
-
-    // this.app.use(options.route.path + '/config', function (req, res, next) {
-    //     var method = req.method && req.method.toLowerCase();
-
-    //     // send schema
-    //     if (method === 'get' && options.filepath) {
-
-    //         // only allow getting collection endpoints
-    //         if (options.filepath.slice(-5) === '.json') {
-    //             return help.sendBackJSON(200, res, next)(null, require(options.filepath));
-    //         }
-    //         // continue
-    //     }
-
-    //     // set schema
-    //     if (method === 'post' && options.filepath) {
-    //         return fs.writeFile(options.filepath, req.body, function (err) {
-    //             help.sendBackJSON(200, res, next)(err, {result: 'success'});
-    //         });
-    //     }
-
-    //     // delete schema
-    //     if (method === 'delete' && options.filepath) {
-
-    //         // only allow removing collection type endpoints
-    //         if (options.filepath.slice(-5) === '.json') {
-    //             return fs.unlink(options.filepath, function (err) {
-    //                 help.sendBackJSON(200, res, next)(err, {result: 'success'});
-    //             });
-    //         }
-    //         // continue
-    //     }
-
-    //     next();
-    // });
-
-    // if (options.route.path === '/index') {
-
-    //     console.log("Loaded route " + options.route.path);
-        
-    //     // configure "index" route
-    //     this.app.use('/', function (req, res, next) {
-    //         // map request method to controller method
-    //         var method = req.method && req.method.toLowerCase();
-    //         if (method && options.component[method]) return options.component[method](req, res, next);
-
-    //         next();
-    //     });        
-    // }
-    // else {
-
-    //     console.log("Loaded route " + options.route.path);
-
-    //     if (options.route.constraint) this.app.Router.constrain(options.route.path, options.route.constraint);
-
-    //     var self = this;
-
-    //     this.app.use(options.route.path, function (req, res, next) {
-    //         // console.log("testing: " + req.url);
-    //         // console.log("testing: " + options.route.path);
-    //         self.app.Router.testConstraint(options.route.path, req, res, function (result) {
-
-    //             // test returned false, try the next matching route
-    //             if (!result) return next();
-
-    //             // map request method to controller method
-    //             var method = req.method && req.method.toLowerCase();
-
-    //             if (method && options.component[method]) return options.component[method](req, res, next);
-
-    //             // no matching HTTP method found, try the next matching route
-    //             return next();
-    //         });
-    //     });
-    // }
 };
 
-Server.prototype.removeComponent = function (route) {
-    this.app.unuse(route);
-    delete this.components[route];
+Server.prototype.removeComponent = function (key) {
+    this.app.unuse(key);
+    delete this.components[key];
 };
 
 Server.prototype.addMonitor = function (filepath, callback) {
@@ -460,8 +424,7 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
-            logger.prod(message);
-            console.log(message);
+            self.log.info(message);
         }
     });
 
@@ -472,27 +435,26 @@ Server.prototype.dustCompile = function (options) {
     }).filter(function (file) {
         return path.extname(file) === '.dust';
     }).forEach(function (file) {
-        
+
         var pageTemplateName = path.basename(file, '.dust');
-        
+
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
-            
-            console.log("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
-            
+
+            self.log.info("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
+
             var template =  fs.readFileSync(file, "utf8");
-            
+
             try {
                 var compiled = dust.compile(template, pageTemplateName, true);
                 dust.loadSource(compiled);
             }
             catch (e) {
                 var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
-                logger.prod(message);
-                console.log(message);
+                self.log.info(message);
             }
         }
     });
-    
+
     var partials = fs.readdirSync(partialPath);
     partials.forEach(function (partial) {
         //Load the template from file
@@ -505,18 +467,16 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
-            logger.prod(message);
-            console.log(message);
-            //throw new Error(message);
+            self.log.info(message);
         }
     });
 };
 
 /**
  *  Create workspace directories if they don't already exist
- *  
+ *
  *  @param {Object} options Object containing workspace paths
- *  @return 
+ *  @return
  *  @api public
  */
 Server.prototype.ensureDirectories = function (options, done) {
@@ -529,12 +489,11 @@ Server.prototype.ensureDirectories = function (options, done) {
             mkdirp(dir, {}, function (err, made) {
 
                 if (err) {
-                    console.log('[SERVER] ' + err);
-                    logger.prod('[SERVER] ' + err);
+                    self.log.error(err);
                 }
 
                 if (made) {
-                    logger.prod('[SERVER] Created workspace directory ' + made);
+                    self.log.info('Created workspace directory ' + made);
                 }
 
                 idx++;
@@ -543,7 +502,7 @@ Server.prototype.ensureDirectories = function (options, done) {
             });
         // }
         // else {
-        //     idx++;    
+        //     idx++;
         // }
 
         //if (idx === Object.keys(options).length) return done('done');
@@ -551,8 +510,8 @@ Server.prototype.ensureDirectories = function (options, done) {
 };
 
 /**
- *  Expose VERB type methods for adding routes and middlewares 
- *  
+ *  Expose VERB type methods for adding routes and middlewares
+ *
  *  @param {String} [route] optional
  *  @param {function} callback, any number of callback to be called in order
  *  @return undefined

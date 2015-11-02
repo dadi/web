@@ -2,102 +2,188 @@ var crypto = require('crypto');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
+var redis = require('redis');
+var redisRStream = require('redis-rstream');
+var redisWStream = require('redis-wstream');
+var Readable = require('stream').Readable;
 var url = require('url');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config.js');
-var logger = require(__dirname + '/../log');
+var log = require(__dirname + '/../log');
 
-var cacheEncoding = 'utf8';
-var options = {};
+var Cache = function(server) {
 
-var dir = config.get('caching.directory');
+    this.log = log.get().child({module: 'cache'});
+    this.log.info('Cache logging started.')
 
-// create cache directory if it doesn't exist
-mkdirp(dir, {}, function (err, made) {
-    if (err) {
-        console.log('[CACHE] ' + err);
-        logger.prod('[CACHE] ' + err);
+    this.server = server;
+    this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled');
+    this.dir = config.get('caching.directory.path');
+    this.redisClient = null;
+    this.encoding = 'utf8';
+    this.options = {};
+
+    var self = this;
+
+    // create cache directory or initialise Redis
+    if (config.get('caching.directory.enabled')) {
+        mkdirp(self.dir, {}, function (err, made) {
+            if (err) self.log.error(err);
+            if (made) self.log.info('Created cache directory ' + made);
+        });
     }
+    else if (config.get('caching.redis.enabled')) {
+        self.redisClient = self.initialiseRedisClient();
 
-    if (made) {
-        logger.prod('[CACHE] Created cache directory ' + made);
+        self.redisClient.on("error", function (err) {
+            this.log.error(err);
+        });
     }
-});
-
-function cachingEnabled(endpoints, requestUrl) {
-
-    requestUrl = url.parse(requestUrl, true).pathname;
-    var endpointKey = _.find(_.keys(endpoints), function (k){ return k.indexOf(requestUrl) > -1; });
-    
-    if (!endpointKey) return false;
-
-    if (endpoints[endpointKey].page && endpoints[endpointKey].page.settings) {
-        options = endpoints[endpointKey].page.settings;
-    }
-
-    return (config.get('caching.enabled') && options.cache);
 }
 
 module.exports = function (server) {
+    return new Cache(server);
+};
 
-    server.app.use(function (req, res, next) {
+Cache.prototype.cachingEnabled = function(req) {
 
-        if (!cachingEnabled(server.components, req.url)) return next();
+    var endpoints = this.server.components;
+    requestUrl = url.parse(req.url, true).pathname;
+
+    // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
+    var endpoint = _.find(endpoints, function (endpoint){ return !_.isEmpty(_.intersection(endpoint.page.route.paths, req.paths)); });
+
+    // not found in the loaded routes, let's not bother caching
+    if (!endpoint) return false;
+
+    if (endpoint.page && endpoint.page.settings) {
+        this.options = endpoint.page.settings;
+    }
+    else {
+        this.options.cache = false;
+    }
+
+    return (this.enabled && this.options.cache);
+}
+
+Cache.prototype.initialiseRedisClient = function() {
+    return redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
+}
+
+Cache.prototype.init = function() {
+
+    var self = this;
+
+    this.server.app.use(function (req, res, next) {
+
+        if (!self.cachingEnabled(req)) return next();
 
         // only cache GET requests
         if (!(req.method && req.method.toLowerCase() === 'get')) return next();
 
         // we build the filename with a hashed hex string so we can be unique
         // and avoid using file system reserved characters in the name
-        var filename = crypto.createHash('sha1').update(req.url).digest('hex');
-        var cachepath = path.join(dir, filename + '.' + config.get('caching.extension'));
+        var requestUrl = url.parse(req.url, true).pathname;
+        var filename = crypto.createHash('sha1').update(requestUrl).digest('hex');
+        var cachepath = path.join(self.dir, filename + '.' + config.get('caching.directory.extension'));
 
-        fs.stat(cachepath, function (err, stats) {
+        // allow query string param to bypass cache
+        var query = url.parse(req.url, true).query;
+        var noCache = query.cache && query.cache.toString().toLowerCase() === 'false';
 
-            if (err) {
-                if (err.code === 'ENOENT') {
+        var readStream;
+
+        if (self.redisClient) {
+
+            self.redisClient.exists(filename, function (err, exists) {
+                if (exists > 0) {
+
+                    res.setHeader('X-Cache-Lookup', 'HIT');
+
+                    if (noCache) {
+                        //console.log('noCache');
+                        res.setHeader('X-Cache', 'MISS');
+                        return next();
+                    }
+
+                    res.setHeader('X-Cache', 'HIT');
+
+                    res.statusCode = 200;
+                    res.setHeader('Server', config.get('app.name'));
+                    res.setHeader('Content-Type', 'text/html');
+
+                    readStream = redisRStream(self.redisClient, filename);
+                    readStream.pipe(res);
+
+                }
+                else {
                     res.setHeader('X-Cache', 'MISS');
                     res.setHeader('X-Cache-Lookup', 'MISS');
                     return cacheResponse();
                 }
-                return next(err);
-            }
+            });
+        }
+        else {
+            readStream = fs.createReadStream(cachepath, {encoding: this.encoding});
 
-            // allow query string param to bypass cache
-            var query = url.parse(req.url, true).query;
-            var noCache = query.cache && query.cache.toString().toLowerCase() === 'false';
-
-            if (noCache) {
+            readStream.on('error', function (err) {
                 res.setHeader('X-Cache', 'MISS');
-                res.setHeader('X-Cache-Lookup', 'HIT');
-                return next();
-            }
+                res.setHeader('X-Cache-Lookup', 'MISS');
 
-            // check if ttl has elapsed
-            var ttl = options.ttl || config.get('caching.ttl');
-            var lastMod = stats && stats.mtime && stats.mtime.valueOf();
+                if (!noCache) {
+                    return cacheResponse();
+                }
+            });
 
-            if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) return cacheResponse();
+            var data = '';
+            readStream.on('data', function(chunk) {
+              if (chunk) data += chunk;
+            });
 
-            fs.readFile(cachepath, {encoding: cacheEncoding}, function (err, resBody) {
-                if (err) return next(err);
+            readStream.on('end', function () {
+              if (noCache) {
+                  //console.log('noCache');
+                  res.setHeader('X-Cache', 'MISS');
+                  res.setHeader('X-Cache-Lookup', 'HIT');
+                  return next();
+              }
 
-                // there are only two possible types javascript or json
-                //var dataType = query.callback ? 'text/javascript' : 'application/json';
-                var dataType = 'text/html';
+              // check if ttl has elapsed
+              try {
+                  var stats = fs.statSync(cachepath);
+                  var ttl = self.options.ttl || config.get('caching.ttl');
+                  var lastMod = stats && stats.mtime && stats.mtime.valueOf();
+                  if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
+                      console.log('lastMod');
+                      res.setHeader('X-Cache', 'MISS');
+                      res.setHeader('X-Cache-Lookup', 'HIT');
+                      return cacheResponse();
+                  }
+              }
+              catch (err) {
 
+              }
+
+              //console.log('ok');
+              self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
+
+              fs.stat(cachepath, function (err, stat) {
                 res.statusCode = 200;
-
                 res.setHeader('Server', config.get('app.name'));
+                res.setHeader('Content-Type', 'text/html');
+                res.setHeader('Content-Length', stat.size);
                 res.setHeader('X-Cache', 'HIT');
                 res.setHeader('X-Cache-Lookup', 'HIT');
-                res.setHeader('content-type', dataType);
-                res.setHeader('content-length', Buffer.byteLength(resBody));
 
-                res.end(resBody);
+                var stream = new Readable();
+                stream.push(data);
+                stream.push(null);
+
+                stream.pipe(res);
+              });
             });
-        });
+        }
 
         function cacheResponse() {
 
@@ -121,10 +207,28 @@ module.exports = function (server) {
                 // if response is not 200 don't cache
                 if (res.statusCode !== 200) return;
 
-                // TODO: do we need to grab a lock here?
-                fs.writeFile(cachepath, data, {encoding: cacheEncoding}, function (err) {
-                    if (err) logger.prod(err.toString());
-                });
+                var stream = new Readable();
+                stream.push(data);
+                stream.push(null);
+
+                if (self.redisClient) {
+                    self.redisClient.on("error", function (err) {
+                        self.log.error(err);
+                    });
+
+                    // save to redis
+                    stream.pipe(redisWStream(self.redisClient, filename)).on('finish', function () {
+                        if (config.get('caching.ttl')) {
+                            self.redisClient.expire(filename, config.get('caching.ttl'));
+                        }
+                    });
+                }
+                else {
+                    // TODO: do we need to grab a lock here?
+
+                    var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'});
+                    stream.pipe(cacheFile);
+                }
             };
             return next();
         }

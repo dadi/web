@@ -5,10 +5,9 @@ var pluralist = require('pluralist');
 var _ = require('underscore');
 var s = require('underscore.string');
 var html_strip = require('htmlstrip-native');
-var help = require(__dirname + '/../help');
 
 /*
-* Returns the supplied 'data' parameter truncated using the supplied 'length' parameter 
+* Returns the supplied 'data' parameter truncated using the supplied 'length' parameter
 * Usage: {@Truncate data="{body}" length="250"/}
 */
 dust.helpers.Truncate = function(chunk, context, bodies, params) {
@@ -27,7 +26,7 @@ dust.helpers.Trim = function(chunk, context, bodies, params) {
 }
 
 /*
-* Returns the supplied 'data' parameter formatted using the supplied 'format' parameter 
+* Returns the supplied 'data' parameter formatted using the supplied 'format' parameter
 * Pass a unix epoch time (expects milliseconds) in the 'unix' parameter. For seconds use 'unix_sec'
 * Usage: {@formatDate data="{body}" [unix="{lastModifiedAt}"] format="YYYY-MM-DDTh:mm:ss+01:00"/}
 */
@@ -36,7 +35,7 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
 
     if (params.unix_sec) {
         var unix_sec = context.resolve(params.unix_sec);
-        return chunk.write(moment.unix(unix_sec).format(format));     
+        return chunk.write(moment.unix(unix_sec).format(format));
     }
     else if (params.unix) {
         var unix = context.resolve(params.unix);
@@ -46,7 +45,7 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
         var data = context.resolve(params.data);
         return chunk.write(moment(data, format).format(format));
     }
-} 
+}
 
 /*
 * Returns the supplied 'data' parameter formatted using the supplied parameters
@@ -56,10 +55,10 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
 *   style
 *   currency
 *   minimumFractionDigits
-*   
+*
 *   options:        An object containing properties to determine how the formatting should be applied.
 *                   Unless above params exist, the default is: {style: 'decimal', minimumFractionDigits: 0}
-* Usage: 
+* Usage:
 *     {@formatNumber data="12345" localeString="en-GB" /} => 12,345
 *     {@formatNumber data="12345" localeString="en-GB" style="currency" currency="GBP" minimumFractionDigits="0"/} => £12,345
 */
@@ -71,7 +70,7 @@ dust.helpers.formatNumber = function(chunk, context, bodies, params) {
     var fractionDigits = context.resolve(params.minimumFractionDigits);
 
     var options      = {style: 'decimal', minimumFractionDigits: 0};
-    
+
     if (style) options.style = style;
     if (currency) options.currency = currency;
     if (fractionDigits) options.minimumFractionDigits = fractionDigits;
@@ -80,7 +79,7 @@ dust.helpers.formatNumber = function(chunk, context, bodies, params) {
         return chunk.write(data);
     }
 }
- 
+
 /*
 * Returns the markdown content formatted as HTML
 */
@@ -88,7 +87,7 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
 
     var renderer = new marked.Renderer();
     renderer.link = function (href, title, text) {
-        
+
         var attrArray = href.split('|');
         var attrs = {};
 
@@ -102,11 +101,11 @@ dust.helpers.markdown = function(chunk, context, bodies, params) {
             var pos = attr.indexOf('=');
             if (pos > 0) {
                 attrName = attr.substr(0, pos);
-                attrValue = attr.substr(pos + 1);               
+                attrValue = attr.substr(pos + 1);
             }
             attrs[attrName] = attrValue;
         };
-        
+
         var attrString = "";
         Object.keys(attrs).forEach(function (key) {
             attrString = attrString + key + '="' + attrs[key] + '" ';
@@ -138,13 +137,13 @@ dust.helpers.soberMarkdown = function(chunk, context, bodies, params) {
     if (bodies.block) {
         return chunk.capture(bodies.block, context, function(string, chunk) {
             var md = marked(string);
-            
+
             // Replace </p><p> with <br>
             var str = md.replace(/<\/p><p[^>]*>/igm, '<br>');
 
             // Remove wrapping <p></p> tags
             str = str.replace(/<p[^>]*>(.*?)<\/p>/igm, "$1");
-            
+
             chunk.end(str);
         });
     }
@@ -172,6 +171,7 @@ dust.helpers.forceRender = function(chunk, context, bodies, params) {
 * {@iter items=arrayOfItems from=0 to=12}
 *   run for each item, with the item as context
 * {/iter}
+* ```
 */
 dust.helpers.iter = function(chunk, context, bodies, params) {
     params.items = params.items || [];
@@ -201,7 +201,7 @@ dust.helpers.iter = function(chunk, context, bodies, params) {
 };
 
 
-/* 
+/*
 * Strips HTML from passed content
 * Uses: https://github.com/zaro/node-htmlstrip-native
 */
@@ -249,22 +249,74 @@ dust.helpers.numberCommas = function(chunk, context, bodies, params) {
 dust.helpers.plural = function(chunk, context, bodies, params) {
     var options = {
         val: params.val,
-        value: params.value,
         auto: params.auto,
         one: params.one,
-        many: params.many,
-        str: params.str
+        many: params.many
     }
-    if (options.val) {
-       if(typeof context.get(options.val) !== 'undefined') {
+
+    if(typeof context.get(options.val) !== 'undefined') {
             var multiple = Boolean(Number(context.get(options.val)) - 1);
             if (options.auto) {
-                return chunk.write( multiple ? pluralist.plural(options.str).anglicised_plural : pluralist.singular(options.str).singular_suffix );
+                return chunk.write( multiple ? pluralist.plural(options.auto).anglicised_plural : pluralist.singular(options.auto).singular_suffix );
             } else if (options.one && options.many) {
                 return chunk.write( multiple ? options.many : options.one );
             }
-       }
-    } else if (options.str) {
-        return chunk.write(options.str);
+    } else if (options.auto) {
+        return chunk.write(options.auto);
     } else return chunk.write("");
 }
+/*
+* Encode html to json valid
+*/
+dust.helpers.htmlEncode = function(chunk, context, bodies, params) {
+    return chunk.capture(bodies.block, context, function(data, chunk){
+        data = JSON.stringify(data.toString());
+
+        chunk.write(data);
+        chunk.end();
+    });
+};
+
+/*
+* Generate URLs based on routes by sending in page names & parameters
+* Usage:
+* ```
+* {@url page="pagename" param="val" otherparam=variableval/}
+* ```
+*/
+dust.helpers.url = (function() {
+    var core;
+    return function(chunk, context, bodies, params) {
+        if(!core) {
+            // requiring core here is due to this file is loaded by the core, and so requiring it elsewhere won't work
+            core = require(__dirname + '/../');
+        }
+        // Ensure a page name is input
+        if(typeof params.page === 'undefined') {
+            throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
+        }
+        // Get the page
+        var component = core.components[params.page];
+        if(!component) {
+            throw new Error('The @url helper could not find a page with the key "' + params.page + '".');
+        }
+        // Get the route
+        return component.page.route.toPath(_.omit(params, 'page'));
+    };
+}());
+
+/*
+* Use the Underscore.JS Slugify method to generate a URL friendly string
+* Usage:
+* ```
+* {@slugify}{title}{/slugify}
+* ```
+*/
+dust.helpers.slugify = function(chunk, context, bodies, params) {
+    return chunk.capture(bodies.block, context, function(data, chunk){
+        data = s.slugify(data);
+
+        chunk.write(data);
+        chunk.end();
+    });
+};

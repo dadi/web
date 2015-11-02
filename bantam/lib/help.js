@@ -5,7 +5,7 @@ var url = require('url');
 var util = require('util');
 var _ = require('underscore');
 
-var logger = require(__dirname + '/log');
+var log = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
 var DatasourceCache = require(__dirname + '/cache/datasource');
 
@@ -30,7 +30,7 @@ module.exports.sendBackJSON = function (successCode, res, next) {
         res.setHeader('Server', config.get('app.name'));
 
         res.statusCode = successCode;
-        res.setHeader('content-type', 'application/json');
+        res.setHeader('Content-Type', 'application/json');
         res.setHeader('content-length', Buffer.byteLength(resBody));
         res.end(resBody);
     }
@@ -46,7 +46,7 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 
         var resBody = JSON.stringify(results);
         resBody = callbackName + '(' + resBody + ');';
-        res.setHeader('content-type', 'text/javascript');
+        res.setHeader('Content-Type', 'text/javascript');
         res.setHeader('content-length', resBody.length);
         res.end(resBody);
     }
@@ -55,15 +55,18 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 // helper that sends html response
 module.exports.sendBackHTML = function (successCode, contentType, res, next) {
     return function (err, results) {
-        if (err) return next(err);
+
+        if (err) {
+          return next(err);
+        }
 
         var resBody = results;
 
         res.statusCode = successCode;
         res.setHeader('Server', config.get('app.name'));
         //res.setHeader('Cache-Control', 'private, max-age=600');
-        res.setHeader('content-type', contentType);
-        res.setHeader('content-length', Buffer.byteLength(resBody));
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Length', Buffer.byteLength(resBody));
 
         res.end(resBody);
     }
@@ -72,7 +75,7 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
 module.exports.getStaticData = function(datasource, done) {
 
     var data = datasource.source.data;
-    
+
     if (_.isArray(data)) {
         var sortField = datasource.schema.datasource.sort.field;
         var sortDir = datasource.schema.datasource.sort.order;
@@ -94,7 +97,9 @@ module.exports.getStaticData = function(datasource, done) {
 
 module.exports.getData = function(datasource, done) {
 
-    // TODO allow non-Serama endpoints    
+    this.log = log.get().child({module: 'helper'});
+
+    // TODO allow non-Serama endpoints
     var datasourceCache = new DatasourceCache(datasource);
 
     var self = this;
@@ -121,13 +126,15 @@ module.exports.getData = function(datasource, done) {
             var options = _.extend(defaults, headers);
 
             req = http.request(options, function(res) {
-              
+
+              self.log.info(options.path);
+
               var output = '';
-     
+
               res.on('data', function(chunk) {
                 output += chunk;
               });
-        
+
               res.on('end', function() {
 
                 // if response is not 200 don't cache
@@ -138,26 +145,24 @@ module.exports.getData = function(datasource, done) {
                     err.statusCode = res.statusCode;
                     err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
 
-                    logger.prod('[DATA] ' + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
-
-                    //return done(err);
+                    self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
                 }
-        
+
                 return done(null, output);
               });
-        
+
             });
-        
+
             req.on('error', function(err) {
-               console.log("help.getData error (" + JSON.stringify(req._headers)  + "): "+ err + "(" + datasource.endpoint + ")");
+               self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
                return done('{ "error" : "Connection refused" }');
             });
-        
+
             try {
                 req.end();
             }
             catch (e) {
-        
+
             }
         });
     });
@@ -166,7 +171,7 @@ module.exports.getData = function(datasource, done) {
 module.exports.getHeaders = function(datasource, done) {
     var headers;
     if(datasource.authStrategy){
-        datasource.authStrategy.getToken(function (token){
+        datasource.authStrategy.getToken(datasource, function (token){
             done({headers: {'Authorization': 'Bearer ' + token}} );
         });
     }
@@ -192,14 +197,14 @@ module.exports.parseQuery = function (queryStr) {
 }
 
 // creates a new function in the underscore.js namespace
-// allowing us to pluck multiple properties - used to return only the 
+// allowing us to pluck multiple properties - used to return only the
 // fields we require from an array of objects
 _.mixin({selectFields: function() {
         var args = _.rest(arguments, 1)[0];
         return _.map(arguments[0], function(item) {
             var obj = {};
             _.each(args.split(','), function(arg) {
-                obj[arg] = item[arg]; 
+                obj[arg] = item[arg];
             });
             return obj;
         });

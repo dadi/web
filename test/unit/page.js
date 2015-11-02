@@ -28,14 +28,28 @@ describe('Page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
     delete schema.route;
-    page(name, schema).route.should.eql( { 'paths': ['/test'] } );
+    page(name, schema).route.paths.should.eql( ['/test'] );
     done();
   });
 
   it('should attach specified `route` to page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    page(name, schema).route.should.eql( { 'paths': ['/car-reviews/:make/:model'] } );
+    page(name, schema).route.paths.should.eql( ['/car-reviews/:make/:model'] );
+    done();
+  });
+
+  it('should generate `toPath` method for page path', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+    p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
+
+    p.route.toPath.should.be.a.Function;
+
+    var url = p.route.toPath({ make: 'bmw', model: '2-series'});
+    url.should.eql('/car-reviews/bmw/2-series');
+    
     done();
   });
 
@@ -104,7 +118,7 @@ describe('Page', function (done) {
     schema.route = "/test";
 
     should.throws(function() { page(name, schema) }, Error);
-    
+
     done();
   });
 

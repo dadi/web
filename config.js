@@ -51,25 +51,49 @@ var conf = convict({
     }
   },
   caching: {
-    enabled: {
-      doc: "Determines if caching is enabled",
-      format: Boolean,
-      default: true
-    },
     ttl: {
       doc: "",
       format: Number,
       default: 300
     },
     directory: {
-      doc: "",
-      format: String,
-      default: "./cache/rosecomb/"
+      enabled: {
+        doc: "",
+        format: Boolean,
+        default: true
+      },
+      path: {
+        doc: "",
+        format: String,
+        default: "./cache/rosecomb"
+      },
+      extension: {
+        doc: "",
+        format: String,
+        default: "html"
+      }
     },
-    extension: {
-      doc: "",
-      format: String,
-      default: "html"
+    redis: {
+      enabled: {
+        doc: "",
+        format: Boolean,
+        default: false
+      },
+      host: {
+        doc: "",
+        format: String,
+        default: "tresting.qvhlji.ng.0001.euw1.cache.amazonaws.com"
+      },
+      port: {
+        doc: "port to bind",
+        format: 'port',
+        default: 6379
+      },
+      password: {
+        doc: "",
+        format: String,
+        default: ""
+      }
     }
   },
   dust: {
@@ -100,11 +124,6 @@ var conf = convict({
       format: Boolean,
       default: true
     },
-    level: {
-      doc: "",
-      format: String,
-      default: "DEBUG"
-    },
     path: {
       doc: "",
       format: String,
@@ -115,20 +134,37 @@ var conf = convict({
       format: String,
       default: "rosecomb"
     },
-    dateFormat: {
-      doc: "",
-      format: String,
-      default: ""
-    },
     extension: {
       doc: "",
       format: String,
       default: "log"
     },
-    messageFormat: {
+    accessLogFileRotationPeriod: {
+      doc: "The period of time that should elapse before rotating the log file",
+      format: String,
+      default: "1d"  // daily rotation
+    },
+    accessLogFileRetentionCount: {
+      doc: "The number of rotated log files to keep",
+      format: Number,
+      default: 7    // keep 7 back copies
+    }
+  },
+  rewrites: {
+    datasource: {
       doc: "",
       format: String,
-      default: "<%= label %> - <%= date %> - <%= message %>"
+      default: ""
+    },
+    path: {
+      doc: "",
+      format: String,
+      default: "workspace/routes/rewrites.txt"
+    },
+    forceTrailingSlash: {
+      doc: "",
+      format: Boolean,
+      default: false
     }
   },
   env: {
@@ -137,6 +173,16 @@ var conf = convict({
     default: "development",
     env: "NODE_ENV",
     arg: "node_env"
+  },
+  debug: {
+    doc: "Determines if debug mode is enabled.",
+    format: Boolean,
+    default: false
+  },
+  allowJsonView: {
+    doc: "Determines if json view mode is allowed.",
+    format: Boolean,
+    default: false
   }
 });
 

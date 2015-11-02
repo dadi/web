@@ -17,10 +17,16 @@ var DatasourceCache = function (datasource) {
 };
 
 DatasourceCache.prototype.cachingEnabled = function() {
-  var enabled = config.get('caching.enabled') && options.enabled;
+  var enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled');
     
   if (typeof enabled === 'undefined') {
     return false;
+  }
+
+  var query = url.parse(this.datasource.endpoint, true).query;
+  
+  if (query.hasOwnProperty('cache') && query.cache === 'false') {
+    enabled = false;
   }
 
   return enabled;

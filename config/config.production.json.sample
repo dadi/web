@@ -1,21 +1,27 @@
 {
     "app": {
-        "name": "Bantam / Rosecomb"
+        "name": "Bantam (Rosecomb)"
     },
     "logging": {
         "enabled": true,
-        "level": "PROD",
         "path": "./log",
         "filename": "rosecomb",
-        "dateFormat": "",
         "extension": "log",
-        "messageFormat": "<%= label %> - <%= date %> - <%= message %>"
+        "accessLogFileRotationPeriod": "1d",
+        "accessLogFileRetentionCount": 7
     },
     "caching": {
-        "enabled": true,
         "ttl": 300,
-        "directory": "./cache/rosecomb/",
-        "extension": "html"
+        "directory": {
+            "enabled": true,
+            "path": "./cache/rosecomb/",
+            "extension": "html"
+        },
+        "redis": {
+            "enabled": false,
+            "host": "",
+            "port": 6379
+        }
     },
     "server": {
         "host": "127.0.0.1",
@@ -38,5 +44,12 @@
         "debug": false,
         "debugLevel": "INFO",
         "whitespace": false
-    }
+    },
+    "rewrites": {
+        "datasource": "rewrites",
+        "path": "",
+        "forceTrailingSlash": false
+    },
+    "debug": false,
+    "allowJsonView": false
 }
