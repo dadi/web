@@ -35,7 +35,8 @@ var Controller = function (page, options) {
 
   this.attachDatasources(function(err) {
     if (err) {
-      this.log.error(err);
+      self.log.fatal(err);
+      throw err;
     }
   });
 
