@@ -25,14 +25,12 @@ Middleware.prototype.load = function() {
   }
 };
 
-//Middleware.prototype.init = function(app, log, req, res, next) {
 Middleware.prototype.init = function(app) {
   try {
     this.load()(app);
   }
   catch (err) {
     this.log.error(err);
-    return done(err, data);
   }
 };
 
