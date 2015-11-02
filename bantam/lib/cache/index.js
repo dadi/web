@@ -50,27 +50,18 @@ Cache.prototype.cachingEnabled = function(req) {
 
     var endpoints = this.server.components;
     requestUrl = url.parse(req.url, true).pathname;
-    
-    var endpointKey = _.find(_.keys(endpoints), function (k){ return k.indexOf(requestUrl) > -1; });
 
-    // check if there is a match in the loaded routes for the 
-    // current pages `route: { paths: ['xx','yy'] }` property
-    if (!endpointKey) {
-        var path = _.intersection(Object.keys(endpoints), req.paths); 
-        if (path && path[0]) {
-            endpointKey = path[0];
-        }
-    }
-    
-    // not found in the loaded routes,
-    // let's not bother caching
-    if (!endpointKey) return false;
+    // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
+    var endpoint = _.find(endpoints, function (endpoint){ return !_.isEmpty(_.intersection(endpoint.page.route.paths, req.paths)); });
 
-    if (endpoints[endpointKey].page && endpoints[endpointKey].page.settings) {
-        this.options = endpoints[endpointKey].page.settings;
+    // not found in the loaded routes, let's not bother caching
+    if (!endpoint) return false;
+
+    if (endpoint.page && endpoint.page.settings) {
+        this.options = endpoint.page.settings;
     }
     else {
-        this.options.cache = false;    
+        this.options.cache = false;
     }
 
     return (this.enabled && this.options.cache);
@@ -81,7 +72,7 @@ Cache.prototype.initialiseRedisClient = function() {
 }
 
 Cache.prototype.init = function() {
-    
+
     var self = this;
 
     this.server.app.use(function (req, res, next) {
@@ -115,13 +106,13 @@ Cache.prototype.init = function() {
                         res.setHeader('X-Cache', 'MISS');
                         return next();
                     }
-                    
+
                     res.setHeader('X-Cache', 'HIT');
 
                     res.statusCode = 200;
                     res.setHeader('Server', config.get('app.name'));
                     res.setHeader('Content-Type', 'text/html');
-                    
+
                     readStream = redisRStream(self.redisClient, filename);
                     readStream.pipe(res);
 
@@ -180,7 +171,7 @@ Cache.prototype.init = function() {
 
             res.setHeader('X-Cache', 'HIT');
             res.setHeader('X-Cache-Lookup', 'HIT');
-            
+
             res.setHeader('Server', config.get('app.name'));
             res.setHeader('Content-Type', 'text/html');
 
@@ -191,7 +182,7 @@ Cache.prototype.init = function() {
         //     console.log('open');
         //     res.setHeader('X-Cache-Lookup', 'HIT');
         // });
-        
+
         // readStream.on('error', function (err) {
         //     console.log('error');
         //     console.log(err);
@@ -227,15 +218,15 @@ Cache.prototype.init = function() {
 
         // }
 
-        
-        
+
+
         //res.statusCode = 200;
 
         // res.setHeader('Server', config.get('app.name'));
         // res.setHeader('X-Cache', 'HIT');
         // res.setHeader('X-Cache-Lookup', 'HIT');
         // res.setHeader('content-type', 'text/html');
-        
+
         // readStream.pipe(res);
 
             //fs.stat(cachepath, function (err, stats) {
@@ -266,7 +257,7 @@ Cache.prototype.init = function() {
 
             //         // there are only two possible types javascript or json
             //         //var dataType = query.callback ? 'text/javascript' : 'application/json';
-                    
+
             //         console.log(cachepath);
 
             //         var dataType = 'text/html';
@@ -324,7 +315,7 @@ Cache.prototype.init = function() {
                 }
                 else {
                     // TODO: do we need to grab a lock here?
-                    
+
                     var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'});
                     stream.pipe(cacheFile);
                 }
