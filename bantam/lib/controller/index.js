@@ -133,7 +133,7 @@ Controller.prototype.get = function (req, res, next) {
     self.loadData(req, res, data, function(err, data) {
       if (err) {
         var e = new Error(err.json? err.json.message : err);
-        e.statusCode = err.statusCode;
+        e.statusCode = err.statusCode || 500;
         if (next) return next(e);
       }
 
@@ -172,7 +172,7 @@ function hasAttachedDatasources(datasources) {
   return (typeof datasources === 'object' && Object.keys(datasources).length > 0);
 }
 
-function loadEventData(events, req, res, data, done) {
+Controller.prototype.loadEventData = function (events, req, res, data, done) {
 
   // return the global data object, no events to run
   if (0 === Object.keys(events).length) {
@@ -226,7 +226,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   // no datasources specified for this page
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
-    loadEventData(self.events, req, res, data, function (err, result) {
+    self.loadEventData(self.events, req, res, data, function (err, result) {
       return done(err, result);
     });
   }
@@ -261,9 +261,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
       idx++;
 
       if (idx === Object.keys(primaryDatasources).length) {
-        processChained(chainedDatasources, data, query, function() {
+        self.processChained(chainedDatasources, data, query, function() {
 
-          loadEventData(self.events, req, res, data, function (err, result) {
+          self.loadEventData(self.events, req, res, data, function (err, result) {
             done(err, result);
           });
 
@@ -274,9 +274,10 @@ Controller.prototype.loadData = function(req, res, data, done) {
   });
 }
 
-function processChained(chainedDatasources, data, query, done) {
+Controller.prototype.processChained = function (chainedDatasources, data, query, done) {
 
   var idx = 0;
+  var self = this;
 
   if (0 === Object.keys(chainedDatasources).length) {
     return done(data);
@@ -287,7 +288,7 @@ function processChained(chainedDatasources, data, query, done) {
     if (!data[chainedDatasource.chained.datasource]) {
       var message = "Error: chained datasource " + chainedKey + " expected data at this node."
       data[chainedDatasource.chained.datasource] = message;
-      this.log.warn(message);
+      self.log.warn(message);
       return done(data);
     }
 

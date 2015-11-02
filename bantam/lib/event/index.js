@@ -32,17 +32,18 @@ Event.prototype.loadEvent = function() {
 };
 
 Event.prototype.run = function(req, res, data, done) {
+  var self = this;
   try {
     this.loadEvent()(req, res, data, function (err, result) {
       if (err) {
-        this.log.error(err);
+        self.log.error(err);
       }
 
       return done(err, result);
     });
   }
   catch (err) {
-    this.log.error(err);
+    self.log.error(err);
     return done(err, data);
   }
 };

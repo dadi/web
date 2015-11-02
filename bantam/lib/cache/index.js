@@ -126,11 +126,8 @@ Cache.prototype.init = function() {
         }
         else {
             readStream = fs.createReadStream(cachepath, {encoding: this.encoding});
-            //console.log('create');
 
             readStream.on('error', function (err) {
-                //console.log('error');
-                //console.log(err);
                 res.setHeader('X-Cache', 'MISS');
                 res.setHeader('X-Cache-Lookup', 'MISS');
 
@@ -139,141 +136,54 @@ Cache.prototype.init = function() {
                 }
             });
 
-            if (noCache) {
-                //console.log('noCache');
-                res.setHeader('X-Cache', 'MISS');
+            var data = '';
+            readStream.on('data', function(chunk) {
+              if (chunk) data += chunk;
+            });
+
+            readStream.on('end', function () {
+              if (noCache) {
+                  //console.log('noCache');
+                  res.setHeader('X-Cache', 'MISS');
+                  res.setHeader('X-Cache-Lookup', 'HIT');
+                  return next();
+              }
+
+              // check if ttl has elapsed
+              try {
+                  var stats = fs.statSync(cachepath);
+                  var ttl = self.options.ttl || config.get('caching.ttl');
+                  var lastMod = stats && stats.mtime && stats.mtime.valueOf();
+                  if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
+                      console.log('lastMod');
+                      res.setHeader('X-Cache', 'MISS');
+                      res.setHeader('X-Cache-Lookup', 'HIT');
+                      return cacheResponse();
+                  }
+              }
+              catch (err) {
+
+              }
+
+              //console.log('ok');
+              self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
+
+              fs.stat(cachepath, function (err, stat) {
+                res.statusCode = 200;
+                res.setHeader('Server', config.get('app.name'));
+                res.setHeader('Content-Type', 'text/html');
+                res.setHeader('Content-Length', stat.size);
+                res.setHeader('X-Cache', 'HIT');
                 res.setHeader('X-Cache-Lookup', 'HIT');
-                return next();
-            }
 
-            // check if ttl has elapsed
-            try {
-                var stats = fs.statSync(cachepath);
-                var ttl = this.options.ttl || config.get('caching.ttl');
-                var lastMod = stats && stats.mtime && stats.mtime.valueOf();
+                var stream = new Readable();
+                stream.push(data);
+                stream.push(null);
 
-                if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
-                    //console.log('lastMod');
-                    res.setHeader('X-Cache', 'MISS');
-                    res.setHeader('X-Cache-Lookup', 'HIT');
-                    return cacheResponse();
-                }
-            }
-            catch (err) {
-
-            }
-
-
-            //console.log('ok');
-            self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
-
-            res.statusCode = 200;
-
-            res.setHeader('X-Cache', 'HIT');
-            res.setHeader('X-Cache-Lookup', 'HIT');
-
-            res.setHeader('Server', config.get('app.name'));
-            res.setHeader('Content-Type', 'text/html');
-
-            readStream.pipe(res);
+                stream.pipe(res);
+              });
+            });
         }
-
-        // readStream.on('open', function (file) {
-        //     console.log('open');
-        //     res.setHeader('X-Cache-Lookup', 'HIT');
-        // });
-
-        // readStream.on('error', function (err) {
-        //     console.log('error');
-        //     console.log(err);
-        //     res.setHeader('X-Cache', 'MISS');
-        //     res.setHeader('X-Cache-Lookup', 'MISS');
-
-        //     if (!noCache) {
-        //         return cacheResponse();
-        //     }
-        // });
-
-        // if (noCache) {
-        //     console.log('noCache');
-        //     res.setHeader('X-Cache', 'MISS');
-        //     res.setHeader('X-Cache-Lookup', 'HIT');
-        //     return next();
-        // }
-
-        // // check if ttl has elapsed
-        // try {
-        //     var stats = fs.statSync(cachepath);
-        //     var ttl = options.ttl || config.get('caching.ttl');
-        //     var lastMod = stats && stats.mtime && stats.mtime.valueOf();
-
-        //     if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
-        //         console.log('lastMod');
-        //         res.setHeader('X-Cache', 'MISS');
-        //         res.setHeader('X-Cache-Lookup', 'HIT');
-        //         return cacheResponse();
-        //     }
-        // }
-        // catch (err) {
-
-        // }
-
-
-
-        //res.statusCode = 200;
-
-        // res.setHeader('Server', config.get('app.name'));
-        // res.setHeader('X-Cache', 'HIT');
-        // res.setHeader('X-Cache-Lookup', 'HIT');
-        // res.setHeader('content-type', 'text/html');
-
-        // readStream.pipe(res);
-
-            //fs.stat(cachepath, function (err, stats) {
-
-                // if (err) {
-                //     if (err.code === 'ENOENT') {
-                //         res.setHeader('X-Cache', 'MISS');
-                //         res.setHeader('X-Cache-Lookup', 'MISS');
-                //         return cacheResponse();
-                //     }
-                //     return next(err);
-                // }
-
-                // if (noCache) {
-                //     res.setHeader('X-Cache', 'MISS');
-                //     res.setHeader('X-Cache-Lookup', 'HIT');
-                //     return next();
-                // }
-
-                // check if ttl has elapsed
-            //     var ttl = options.ttl || config.get('caching.ttl');
-            //     var lastMod = stats && stats.mtime && stats.mtime.valueOf();
-
-            //     if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) return cacheResponse();
-
-            //     readStream = fs.createReadStream(cachepath, {encoding: cacheEncoding});, function (err, resBody) {
-            //         if (err) return next(err);
-
-            //         // there are only two possible types javascript or json
-            //         //var dataType = query.callback ? 'text/javascript' : 'application/json';
-
-            //         console.log(cachepath);
-
-            //         var dataType = 'text/html';
-
-            //         res.statusCode = 200;
-
-            //         res.setHeader('Server', config.get('app.name'));
-            //         res.setHeader('X-Cache', 'HIT');
-            //         res.setHeader('X-Cache-Lookup', 'HIT');
-            //         res.setHeader('content-type', dataType);
-            //         res.setHeader('content-length', Buffer.byteLength(resBody));
-
-            //         res.end(resBody);
-            //     });
-            // });
-        //}
 
         function cacheResponse() {
 

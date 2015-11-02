@@ -6,13 +6,14 @@ var fs = require('fs');
 var es = require('event-stream');
 var url = require('url');
 var querystring = require('querystring');
-var modRewrite = require('connect-modrewrite');
+//var modRewrite = require('connect-modrewrite');
 var toobusy = require('toobusy-js');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
+var rewrite = require(__dirname + '/rewrite');
 
 var Datasource = require(__dirname + '/../datasource');
 
@@ -43,22 +44,15 @@ var Router = function (server, options) {
   catch (err) {
     this.log.info('No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
   }
-
-  // load the rewrites from the filesystem
-  if (this.rewritesFile && this.rewritesFile !== '') {
-    this.loadRewrites(options, function(err) {
-      if (!err) self.loadRewriteModule();
-    });
-  }
 }
 
 Router.prototype.loadRewrites = function(options, done) {
-  
+
   var rules = [];
-  var self = this;  
-  
+  var self = this;
+
   self.rules = [];
-  
+
   var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
   stream.pipe(es.split("\n"))
@@ -87,7 +81,7 @@ Router.prototype.loadRewrites = function(options, done) {
  *  @api public
  */
 Router.prototype.constrain = function(route, constraint) {
-  
+
   var self = this;
   var c;
   var message;
@@ -134,7 +128,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
   console.log("[ROUTER] testConstraint: " + req.url);
   console.log("[ROUTER] testConstraint: " + route);
 
-  // if there's a constraint handler 
+  // if there's a constraint handler
   // for this route, run it
   if (this.constraints[route]) {
 
@@ -150,7 +144,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
       datasource.processRequest(datasource.page.name, req);
 
       help.getData(datasource, function(err, result) {
-        
+
         if (err) {
           return callback(err);
         }
@@ -163,7 +157,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
               return callback(true);
             }
             else {
-              return callback(false);  
+              return callback(false);
             }
           }
           catch (err) {
@@ -182,21 +176,8 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
 }
 
 Router.prototype.loadRewriteModule = function() {
-  // remove it from the stack
-  this.server.app.unuse(modRewrite(this.rules));
-
-  this.log.info("Rewrite module unloaded.");
-
-  // add it to the stack
-  this.server.app.use(modRewrite(this.rules));
-  
-  this.log.info("Rewrite module loaded.");
+  this.log.info("Rewrite module reload.");
   this.log.info(this.rules.length + " rewrites/redirects loaded.");
-}
-
-var debugMode = function(req) {
-  var query = url.parse(req.url, true).query;
-  return (query.debug && query.debug.toString() === 'true');
 }
 
 module.exports = function (server, options) {
@@ -217,61 +198,93 @@ module.exports = function (server, options) {
 	//     next();
 	//   }
 	// });
- 
 
-  server.app.use(function (req, res, next) {
+  // load the rewrites from the filesystem
+  server.app.Router.loadRewrites(options, function(err) {
 
-    if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
+    this.shouldCall = true;
+    var rewriteFunction = rewrite(server.app.Router.rules);
 
-    var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
-      
-      if (err) {
-        this.log.error(err);
-        return next();
-      }
+    server.app.use(function(req, res, next) {
+      this.shouldCall = rewriteFunction.call(server.app.Router, req, res, next);
+      if (!res.finished) next();
+    });
 
-      _.extend(ds.schema.datasource.filter, { "rule": req.url });
-      ds.processRequest(ds.page.name, req);
+    server.app.use(function (req, res, next) {
 
-      help.getData(ds, function(err, result) {
-        
+      if (!this.shouldCall) return next();
+
+      console.log('processing ' + req.url);
+
+      if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
+
+      var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
+
         if (err) {
-          this.log.error({err:err}, 'Error loading data in Router Rewrite module');
-          return next(err);
+          this.log.error(err);
+          return next();
         }
 
-        if (result) {
-          var results = JSON.parse(result);
-          
-          if (results && results.results && results.results.length > 0) {
-            var rule = results.results[0];
-            var location;
-            if (/\:\/\//.test(rule.replacement)) {
-              location = req.url.replace(rule.rule, rule.replacement);
+        _.extend(ds.schema.datasource.filter, { "rule": req.url });
+        ds.processRequest(ds.page.name, req);
+
+        help.getData(ds, function(err, result) {
+
+          if (err) {
+            this.log.error({err:err}, 'Error loading data in Router Rewrite module');
+            return next(err);
+          }
+
+          if (result) {
+            var results = JSON.parse(result);
+
+            if (results && results.results && results.results.length > 0) {
+              var rule = results.results[0];
+              var location;
+              if (/\:\/\//.test(rule.replacement)) {
+                location = req.url.replace(rule.rule, rule.replacement);
+              }
+              else {
+                location = 'http' + '://' + req.headers.host + req.url.replace(rule.rule, rule.replacement);
+              }
+
+              res.writeHead(rule.redirectType, {
+                Location : location
+              });
+
+              res.end();
             }
             else {
-              location = 'http' + '://' + req.headers.host + req.url.replace(rule.rule, rule.replacement);
+              return next();
             }
-
-            res.writeHead(rule.redirectType, {
-              Location : location
-            });
-
-            res.end();
           }
           else {
             return next();
           }
+        });
+      });
+    });
+
+    if (config.get('rewrites.forceTrailingSlash')) {
+      // force a trailing slash
+      server.app.use(function (req, res, next) {
+        var parsed = url.parse(req.url, true);
+        if (/^([^.]*[^/])$/.test(parsed.pathname) === true) {
+          var location = 'http' + '://' + req.headers.host + parsed.pathname + '/' + parsed.search;
+          res.writeHead(301, {
+            Location : location
+          });
+          res.end();
         }
         else {
           return next();
         }
       });
+    }
 
-    });
-  })
 
-  //server.app.Router.loadRewriteModule();
+  });
+
 };
 
 module.exports.Router = Router;

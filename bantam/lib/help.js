@@ -55,7 +55,10 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 // helper that sends html response
 module.exports.sendBackHTML = function (successCode, contentType, res, next) {
     return function (err, results) {
-        if (err) return next(err);
+
+        if (err) {
+          return next(err);
+        }
 
         var resBody = results;
 
@@ -63,7 +66,7 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
         res.setHeader('Server', config.get('app.name'));
         //res.setHeader('Cache-Control', 'private, max-age=600');
         res.setHeader('Content-Type', contentType);
-        res.setHeader('content-length', Buffer.byteLength(resBody));
+        res.setHeader('Content-Length', Buffer.byteLength(resBody));
 
         res.end(resBody);
     }
@@ -72,7 +75,7 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
 module.exports.getStaticData = function(datasource, done) {
 
     var data = datasource.source.data;
-    
+
     if (_.isArray(data)) {
         var sortField = datasource.schema.datasource.sort.field;
         var sortDir = datasource.schema.datasource.sort.order;
@@ -96,7 +99,7 @@ module.exports.getData = function(datasource, done) {
 
     this.log = log.get().child({module: 'helper'});
 
-    // TODO allow non-Serama endpoints    
+    // TODO allow non-Serama endpoints
     var datasourceCache = new DatasourceCache(datasource);
 
     var self = this;
@@ -125,13 +128,13 @@ module.exports.getData = function(datasource, done) {
             req = http.request(options, function(res) {
 
               self.log.info(options.path);
-              
+
               var output = '';
-     
+
               res.on('data', function(chunk) {
                 output += chunk;
               });
-        
+
               res.on('end', function() {
 
                 // if response is not 200 don't cache
@@ -144,22 +147,22 @@ module.exports.getData = function(datasource, done) {
 
                     self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
                 }
-        
+
                 return done(null, output);
               });
-        
+
             });
-        
+
             req.on('error', function(err) {
                self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
                return done('{ "error" : "Connection refused" }');
             });
-        
+
             try {
                 req.end();
             }
             catch (e) {
-        
+
             }
         });
     });
@@ -194,14 +197,14 @@ module.exports.parseQuery = function (queryStr) {
 }
 
 // creates a new function in the underscore.js namespace
-// allowing us to pluck multiple properties - used to return only the 
+// allowing us to pluck multiple properties - used to return only the
 // fields we require from an array of objects
 _.mixin({selectFields: function() {
         var args = _.rest(arguments, 1)[0];
         return _.map(arguments[0], function(item) {
             var obj = {};
             _.each(args.split(','), function(arg) {
-                obj[arg] = item[arg]; 
+                obj[arg] = item[arg];
             });
             return obj;
         });

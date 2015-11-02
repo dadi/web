@@ -9,6 +9,8 @@ var Api = function () {
     this.all = [];
     this.errors = [];
 
+    this.log = log.get().child({module: 'api'});
+
     // always add default error handler in case the application doesn't define one
     this.errors.push(defaultError(this));
 
@@ -24,6 +26,7 @@ var Api = function () {
  *  @api public
  */
 Api.prototype.use = function (path, handler) {
+
     if (typeof path === 'function') {
         if (path.length === 4) return this.errors.push(path);
         return this.all.push(path);
@@ -56,8 +59,6 @@ Api.prototype.unuse = function (path) {
             indx = this.errors.indexOf(path);
             return !!~indx && this.errors.splice(indx, 1);
         }
-
-        //console.log(this.all.length);
 
         var functionStr = path.toString();
         _.each(this.all, function (func) {
@@ -98,6 +99,8 @@ Api.prototype.listen = function (port, host, backlog, done) {
  */
 Api.prototype.listener = function (req, res) {
 
+    var self = this;
+
     // clone the middleware stack
     var stack = this.all.slice(0);
     var path = url.parse(req.url).pathname;
@@ -113,13 +116,17 @@ Api.prototype.listener = function (req, res) {
         return function (err) {
             if (err) return errStack(0)(err);
 
-
-
             // add the original params back, in case a middleware
             // has modified the current req.params
             _.extend(req.params, originalReqParams);
 
-            stack[i](req, res, doStack(++i));
+            try {
+              stack[i](req, res, doStack(++i));
+            }
+            catch (err) {
+              self.log.error(err);
+              return errStack(0)(err);
+            }
         };
     };
 
@@ -184,8 +191,9 @@ module.exports.Api = Api;
 
 // Default error handler, in case application doesn't define error handling
 function defaultError(api) {
+
     return function (err, req, res) {
-      
+
         res.statusCode = err.statusCode || 500;
 
         // look for an error page that has been loaded
@@ -199,16 +207,17 @@ function defaultError(api) {
         }
         else { // otherwise, respond with default message
 
+            var resBody = '';
             if (err.json) {
-                var resBody = JSON.stringify(err.json);
+                resBody = JSON.stringify(err.json);
                 res.setHeader('Content-Type', 'application/json');
             }
             else {
-              var resBody = err;
+              resBody = err.toString();
               res.setHeader('Content-Type', 'text/plain');
             }
 
-            res.setHeader('content-length', Buffer.byteLength(resBody));
+            res.setHeader('Content-Length', Buffer.byteLength(resBody));
             return res.end(resBody);
         }
     }

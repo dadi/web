@@ -8,6 +8,7 @@ var _ = require('underscore');
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
 var page = require(__dirname + '/page');
+var middleware = require(__dirname + '/middleware');
 var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
@@ -20,6 +21,7 @@ var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var serveStatic = require('serve-static')
 var serveFavicon = require('serve-favicon');
 var toobusy = require('toobusy-js');
+var moment = require('moment');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
@@ -49,7 +51,7 @@ Server.prototype.start = function (options, done) {
     // serve static files (css,js,fonts)
     app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
-    app.use(serveStatic(options.publicPath || 'public' , { 'index': false }));
+    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d' }));
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
@@ -61,15 +63,30 @@ Server.prototype.start = function (options, done) {
         res.end = function () {
             var duration = Date.now() - start;
 
+            // write to the access log first
+            log.access(
+              (req.connection.remoteAddress || '')
+              + ' -'
+              + ' ' + moment().format()
+              + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
+              + ' ' + res.statusCode
+              + ' ' + (res._headers ? res._headers['content-length'] : '')
+              + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
+              + ' ' + req.headers["user-agent"]
+            );
+
             // log the request method and url, and the duration
             log.info({module: 'router'}, req.method
                 + ' ' + req.url
                 + ' ' + res.statusCode
                 + ' ' + duration + 'ms');
+
             _end.apply(res, arguments);
         };
         next();
     });
+
+    this.initialiseMiddleware(options);
 
     // caching layer
     cache(self).init();
@@ -93,8 +110,8 @@ Server.prototype.start = function (options, done) {
       console.log(seramaMessage.bold.blue + "\n");
 
       if (env === 'production') {
-        this.log.info(rosecombMessage);
-        this.log.info(seramaMessage);
+        self.log.info(rosecombMessage);
+        self.log.info(seramaMessage);
       }
 
     });
@@ -201,6 +218,40 @@ Server.prototype.loadApi = function (options) {
 
 };
 
+Server.prototype.initialiseMiddleware = function (options) {
+
+    options || (options = {});
+
+    var middlewarePath = this.middlewarePath = options.middlewarePath || __dirname + '/../../workspace/middleware';
+    options.middlewarePath = middlewarePath;
+
+    var middlewares = this.loadMiddleware(middlewarePath, options);
+    _.each(middlewares, function(middleware) {
+      middleware.init(this.app);
+    }, this);
+}
+
+Server.prototype.loadMiddleware = function (directoryPath, options) {
+
+    if (!fs.existsSync(directoryPath)) return;
+
+    var self = this;
+    var files = fs.readdirSync(directoryPath);
+
+    var middlewares = [];
+
+    files.forEach(function (file) {
+        if (file.indexOf('.js') < 0) return;
+
+        var filepath = path.join(directoryPath, file);
+        var name = file.slice(0, file.indexOf('.'));
+        var m = new middleware(name, options);
+        middlewares.push(m);
+    });
+
+    return middlewares;
+};
+
 Server.prototype.updatePages = function (directoryPath, options, reload) {
 
     if (!fs.existsSync(directoryPath)) return;
@@ -216,9 +267,6 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
 
         // file should be json file containing schema
         var name = page.slice(0, page.indexOf('.'));
-
-        // check for matching template file
-        //var templateFilepath = path.join(directoryPath, name) + ".dust";
 
       self.addRoute({
         name: name,
@@ -324,7 +372,11 @@ Server.prototype.addComponent = function (options, reload) {
                     }
 
                     // no matching HTTP method found, try the next matching route
-                    return next();
+                    if (next) {
+                      return next();
+                    } else {
+                      return help.sendBackJSON(404, res, next)(null, require(options.filepath));
+                    }
                 });
             });
         }
@@ -437,11 +489,11 @@ Server.prototype.ensureDirectories = function (options, done) {
             mkdirp(dir, {}, function (err, made) {
 
                 if (err) {
-                    this.log.error(err);
+                    self.log.error(err);
                 }
 
                 if (made) {
-                    this.log.info('Created workspace directory ' + made);
+                    self.log.info('Created workspace directory ' + made);
                 }
 
                 idx++;
