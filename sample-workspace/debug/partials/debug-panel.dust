@@ -1,0 +1,11 @@
+{?debug}
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Quicksand" />
+<link rel="stylesheet" type="text/css" href="../assets/css/pretty-json.css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.1/jquery.min.js" ></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" ></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.2.3/backbone-min.js" ></script>
+<script type="text/javascript" src="../assets/js/pretty-json-min.js" ></script>
+<script type="text/javascript" src="../assets/js/main.js" ></script>
+<div id="source" style="display: none; background: red;">{@contextDump/}</div>
+<div id="debug"></div>
+{/debug}

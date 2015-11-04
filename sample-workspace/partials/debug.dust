@@ -1,4 +1,0 @@
-{?debug}
-<div id="source" style="display: none; background: red;">{@contextDump/}</div>
-<div id="debug"></div>
-{/debug}

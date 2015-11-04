@@ -26,7 +26,7 @@ var Router = function (server, options) {
   this.params = {};
   this.constraints = {};
   this.options = options;
-  this.handlers = null;
+  this.handlers = [];
   this.rules = [];
 
   this.rewritesFile = config.get('rewrites.path');

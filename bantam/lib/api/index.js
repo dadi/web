@@ -114,6 +114,7 @@ Api.prototype.listener = function (req, res) {
 
     var doStack = function (i) {
         return function (err) {
+
             if (err) return errStack(0)(err);
 
             // add the original params back, in case a middleware
@@ -193,7 +194,8 @@ module.exports.Api = Api;
 function defaultError(api) {
 
     return function (err, req, res) {
-
+        console.log('defaultError')
+        console.log(err);
         res.statusCode = err.statusCode || 500;
 
         // look for an error page that has been loaded

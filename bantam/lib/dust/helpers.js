@@ -1,6 +1,7 @@
 var dust = require('dustjs-linkedin');
 var marked = require('marked');
 var moment = require('moment');
+var pluralist = require('pluralist');
 var _ = require('underscore');
 var s = require('underscore.string');
 var html_strip = require('htmlstrip-native');
@@ -245,6 +246,25 @@ dust.helpers.numberCommas = function(chunk, context, bodies, params) {
     });
 };
 
+dust.helpers.plural = function(chunk, context, bodies, params) {
+    var options = {
+        val: params.val,
+        auto: params.auto,
+        one: params.one,
+        many: params.many
+    }
+
+    if(typeof context.get(options.val) !== 'undefined') {
+            var multiple = Boolean(Number(context.get(options.val)) - 1);
+            if (options.auto) {
+                return chunk.write( multiple ? pluralist.plural(options.auto).anglicised_plural : pluralist.singular(options.auto).singular_suffix );
+            } else if (options.one && options.many) {
+                return chunk.write( multiple ? options.many : options.one );
+            }
+    } else if (options.auto) {
+        return chunk.write(options.auto);
+    } else return chunk.write("");
+}
 /*
 * Encode html to json valid
 */

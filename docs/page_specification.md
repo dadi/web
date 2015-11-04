@@ -11,7 +11,9 @@
         "language": "en"
 	    },
 	    "settings": {
-	      "cache": true
+	      "cache": true,
+				"beautify": false,
+				"keepWhitespace": false
 	    },
 	    "route": {
 	    	"paths": ["/car-reviews/:make/:model"],

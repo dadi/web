@@ -5,6 +5,7 @@ var dustHelpers = require('dustjs-helpers');
 var commonDustHelpers = require('common-dustjs-helpers');
 var Q = require('q');
 var crypto = require('crypto');
+var beautify_html = require('js-beautify').html;
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config.js');
@@ -143,12 +144,23 @@ Controller.prototype.get = function (req, res, next) {
           return done(null, data);
         }
         else {
+          dust.config.whitespace = self.page.keepWhitespace;
+
           // Render the compiled template
-          var rendered = dust.render(pageTemplate, data, function(err, result) {
+          dust.render(pageTemplate, data, function(err, result) {
             if (err) {
               err = new Error(err.message);
               err.statusCode = 500;
               return done(err, null);
+            }
+
+            if (self.page.beautify) {
+              try {
+                result = beautify_html(result);
+              }
+              catch (err) {
+                result = err;
+              }
             }
 
             return done(err, result);

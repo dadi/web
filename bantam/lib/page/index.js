@@ -36,9 +36,12 @@ var Page = function (name, schema) {
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
 
-  this.settings = schema.settings;
+  this.settings = schema.settings || {};
   this.datasources = schema.datasources;
   this.events = schema.events;
+
+  this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : true;
+  this.keepWhitespace = this.settings.hasOwnProperty('keepWhitespace') ? this.settings.keepWhitespace : false;
 
   _pages[name] = this;
 };

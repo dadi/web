@@ -51,6 +51,11 @@ Cache.prototype.cachingEnabled = function(req) {
     var endpoints = this.server.components;
     requestUrl = url.parse(req.url, true).pathname;
 
+    var query = url.parse(req.url, true).query;
+    if (query.hasOwnProperty('json') && query.json === 'true') {
+      return false;
+    }
+
     // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
     var endpoint = _.find(endpoints, function (endpoint){ return !_.isEmpty(_.intersection(endpoint.page.route.paths, req.paths)); });
 

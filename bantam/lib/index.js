@@ -1,10 +1,19 @@
-var pkginfo = require('pkginfo').read(__dirname);
+
+var version = require('../../package.json').version;
+
 var colors = require('colors');
 var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
 var mkdirp = require('mkdirp');
+var serveStatic = require('serve-static')
+var serveFavicon = require('serve-favicon');
+var toobusy = require('toobusy-js');
+var moment = require('moment');
+var dust = require('dustjs-linkedin');
+var dustHelpers = require('dustjs-helpers');
 var _ = require('underscore');
+
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
 var page = require(__dirname + '/page');
@@ -15,13 +24,7 @@ var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
 var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
-var dust = require('dustjs-linkedin');
-var dustHelpers = require('dustjs-helpers');
 var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
-var serveStatic = require('serve-static')
-var serveFavicon = require('serve-favicon');
-var toobusy = require('toobusy-js');
-var moment = require('moment');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
@@ -52,6 +55,7 @@ Server.prototype.start = function (options, done) {
     app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d' }));
+    app.use(serveStatic(__dirname + '/../../workspace/debug' , { 'index': false }));
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
@@ -103,7 +107,7 @@ Server.prototype.start = function (options, done) {
     server.on('listening', function (e) {
 
       var env = config.get('env');
-      var rosecombMessage = "[BANTAM] Started Rosecomb (" + pkginfo.package.version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+      var rosecombMessage = "[BANTAM] Started Rosecomb (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
       var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
 
       console.log("\n" + rosecombMessage.bold.white);
@@ -131,7 +135,6 @@ Server.prototype.start = function (options, done) {
     dust.debugLevel = config.get('dust.debugLevel');
     dust.config.cache = config.get('dust.cache');
     dust.config.whitespace = config.get('dust.whitespace');
-
 
     this.readyState = 1;
 
@@ -166,6 +169,7 @@ Server.prototype.loadApi = function (options) {
 
     var self = this;
 
+    var workspacePath = this.workspacePath = options.workspacePath || __dirname + '/../../workspace';
     var datasourcePath = this.datasourcePath = options.datasourcePath || __dirname + '/../../workspace/data-sources';
     var pagePath = this.pagePath = options.pagePath || __dirname + '/../../workspace/pages';
     var partialPath = this.partialPath = options.partialPath || __dirname + '/../../workspace/partials';
@@ -178,6 +182,7 @@ Server.prototype.loadApi = function (options) {
     options.partialPath = partialPath;
     options.eventPath = eventPath;
     options.routesPath = routesPath;
+    options.workspacePath = workspacePath;
 
     self.ensureDirectories(options, function(text) {
 
@@ -306,32 +311,22 @@ Server.prototype.addComponent = function (options, reload) {
 
     if (!options.route) return;
 
-    // This is the key the component is indexed by
-    var componentKey = options.key || path.basename(options.filepath || '', '.json');
-
-    if (reload) {
-        // In the case of being indexed by key
-        this.removeComponent[componentKey];
-        // In the case of being indexed by path
-        _.each(options.route.paths, function (path) {
-            this.removeComponent(path);
-        }, this);
-    }
-
     var self = this;
-
-    // // only add a route once
-    // if (this.components[options.route.path]) return;
 
     _.each(options.route.paths, function (path) {
 
         // Fall back to using the path as the componentKey if it's not been set
-        componentKey = componentKey || path;
+        var componentKey = options.key || path;
+
+        if (reload) {
+            this.removeComponent[componentKey];
+        }
 
         // only add a route once
         if (this.components[componentKey]) return;
 
         this.components[componentKey] = options.component;
+
 
         if (path === '/index') {
 
@@ -368,13 +363,14 @@ Server.prototype.addComponent = function (options, reload) {
                     var method = req.method && req.method.toLowerCase();
 
                     if (method && options.component[method]) {
-                        return options.component[method](req, res, next);
+                      return options.component[method](req, res, next);
                     }
 
                     // no matching HTTP method found, try the next matching route
                     if (next) {
                       return next();
-                    } else {
+                    }
+                    else {
                       return help.sendBackJSON(404, res, next)(null, require(options.filepath));
                     }
                 });
@@ -470,6 +466,16 @@ Server.prototype.dustCompile = function (options) {
             self.log.info(message);
         }
     });
+
+    // handle templates that are requested but not found in the cache
+    dust.onLoad = function(templateName, opts, callback) {
+      // `templateName` is the name of the template requested by dust.render / dust.stream
+      // or via a partial include, like {> "hello-world" /}
+      // `options` can be set as part of a Context. They will be explored later
+      fs.readFile(options.workspacePath + '/' + templateName + '.dust', { encoding: 'utf8' }, function (err, data) {
+        callback(null, data);
+      });
+    }
 };
 
 /**
@@ -485,27 +491,14 @@ Server.prototype.ensureDirectories = function (options, done) {
     // create workspace directories if they don't exist
     var idx = 0;
     _.each(options, function(dir) {
-        //if (!fs.existsSync(dir)) {
-            mkdirp(dir, {}, function (err, made) {
+      mkdirp(dir, {}, function (err, made) {
+        if (err) self.log.error(err);
+        if (made) self.log.info('Created workspace directory ' + made);
 
-                if (err) {
-                    self.log.error(err);
-                }
+        idx++;
 
-                if (made) {
-                    self.log.info('Created workspace directory ' + made);
-                }
-
-                idx++;
-
-                if (idx === Object.keys(options).length) return done();
-            });
-        // }
-        // else {
-        //     idx++;
-        // }
-
-        //if (idx === Object.keys(options).length) return done('done');
+        if (idx === Object.keys(options).length) return done();
+      });
     });
 };
 

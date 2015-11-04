@@ -57,6 +57,7 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
     return function (err, results) {
 
         if (err) {
+          console.log(err);
           return next(err);
         }
 
