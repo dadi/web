@@ -6,6 +6,7 @@ var commonDustHelpers = require('common-dustjs-helpers');
 var Q = require('q');
 var crypto = require('crypto');
 var beautify_html = require('js-beautify').html;
+var perfy = require('perfy');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config.js');
@@ -86,6 +87,8 @@ Controller.prototype.attachEvents = function(done) {
 
 Controller.prototype.get = function (req, res, next) {
 
+    perfy.start('get', false);
+
     this.log.debug({req:req});
 
     var settings = {};
@@ -138,6 +141,14 @@ Controller.prototype.get = function (req, res, next) {
         if (next) return next(e);
       }
 
+      perfy.end('get');
+
+      data.stats = [];
+      _.each(perfy.names(), function(key) {
+        if (perfy.result(key)) data.stats.push({key:key, value: perfy.result(key).summary});
+      });
+      perfy.destroyAll();
+
       try {
         if (json) {
           // Return the raw data
@@ -168,6 +179,7 @@ Controller.prototype.get = function (req, res, next) {
         }
       }
       catch (e) {
+        console.log(e)
         var err = new Error(e.message);
         err.statusCode = 500;
         if (next) {
@@ -195,6 +207,8 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 
   _.each(events, function(value, key) {
 
+      perfy.start('event: ' + key, false);
+
       // add a random value to the data obj so we can check if an
       // event has sent back the obj - in which case we assign it back
       // to itself
@@ -203,6 +217,8 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 
       // run the event
       events[key].run(req, res, data, function (err, result) {
+
+        if (perfy.exists('event: ' + key)) perfy.end('event: ' + key);
 
         if (err) {
           return done(err, data);
@@ -235,10 +251,14 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   var query = url.parse(req.url, true).query;
 
+  perfy.start('load data', false);
+
   // no datasources specified for this page
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
     self.loadEventData(self.events, req, res, data, function (err, result) {
+
+      if (perfy.exists('load data')) perfy.end('load data');
       return done(err, result);
     });
   }
@@ -257,8 +277,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
     processSearchParameters(key, datasource, req);
 
+    perfy.start('datasource: ' + datasource.name, false);
     help.getData(datasource, function(err, result) {
-
+      if (perfy.exists('datasource: ' + datasource.name)) perfy.end('datasource: ' + datasource.name);
       if (err) return done(err);
 
       if (result) {
@@ -276,6 +297,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
         self.processChained(chainedDatasources, data, query, function() {
 
           self.loadEventData(self.events, req, res, data, function (err, result) {
+            if (perfy.exists('load data')) perfy.end('load data');
             done(err, result);
           });
 
@@ -296,6 +318,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
   }
 
   _.each(chainedDatasources, function(chainedDatasource, chainedKey) {
+
+    perfy.start('datasource: ' + chainedDatasource.name + ' (chained)', false);
 
     if (!data[chainedDatasource.chained.datasource]) {
       var message = "Error: chained datasource " + chainedKey + " expected data at this node."
@@ -373,6 +397,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
     //   chainedDatasource.endpoint = endpoint;
 
     help.getData(chainedDatasource, function(err, result) {
+
+      if (perfy.exists('datasource: ' + chainedDatasource.name + ' (chained)')) perfy.end('datasource: ' + chainedDatasource.name + ' (chained)');
 
       if (result) {
         try {

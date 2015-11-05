@@ -1,6 +1,7 @@
 var http = require('http');
 var url = require('url');
 var querystring = require('querystring');
+var perfy = require('perfy');
 
 var config = require(__dirname + '/../../../config.js');
 var log = require(__dirname + '/../log');
@@ -32,6 +33,7 @@ module.exports = function (server) {
         }
 
         this.log.info('Generating new access token for "' + req.url + '"');
+        perfy.start('auth', false);
 
         var postData = {
           clientId : config.get('auth.clientId'),
@@ -67,6 +69,8 @@ module.exports = function (server) {
             var tokenResponse = JSON.parse(output);
             token.authToken = tokenResponse;
             token.created_at = Math.floor(Date.now() / 1000);
+
+            perfy.end('auth');
 
             self.log.info('Token received.');
             return next();

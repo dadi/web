@@ -28,6 +28,7 @@
     "mongodb": "1.4.7",
     "node-slack": "0.0.7",
     "path-to-regexp": "^1.2.1",
+    "perfy": "^1.1.0",
     "pluralist": "^1.0.2",
     "q": "^1.4.1",
     "qs": "^5.2.0",

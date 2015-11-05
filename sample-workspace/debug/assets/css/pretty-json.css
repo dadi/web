@@ -5,26 +5,31 @@
 /* eof common */
 
 /* node */
-.node-content-wrapper{
-    font-family: 'Quicksand', sans-serif;
-    background-color:#fff;
+.node-content-wrapper, .node-container {
+    font-family: 'Consolas', sans-serif;
+    font-size: 10px;
+    background-color:#162A40;
 }
+
 .node-content-wrapper ul{
-    border-left:1px dotted #ccc;
+    border-left:1px dotted #2F3F72;
     list-style:none;
-    padding-left:25px;
+    padding-left:15px;
     margin:0px;
+    color:#DECCD0;
 }
 .node-content-wrapper ul li{
     list-style:none;
-    border-bottom:0; 
+    border-bottom:0;
     padding-bottom:0
 }
 .node-hgl-path{
     background-color:#fefbdf;
 }
 .node-bracket{
+    color:#DECCD0;
     font-weight:bold;
+    font-size: 10px;
     display:inline-block;
     cursor:pointer;
 }
@@ -40,7 +45,7 @@
     height:100%;
 }
 
-.title{ color:#ccc;}
+.title{ color:#DECCFF;}
 .string{ color:#080;}
 .number{ color:#ccaa00;}
 .boolean{ color:#1979d3;}

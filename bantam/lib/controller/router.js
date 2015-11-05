@@ -8,6 +8,7 @@ var url = require('url');
 var querystring = require('querystring');
 //var modRewrite = require('connect-modrewrite');
 var toobusy = require('toobusy-js');
+var perfy = require('perfy');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
@@ -133,17 +134,22 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
   if (this.constraints[route]) {
 
     if (typeof this.constraints[route] === 'function') {
+      perfy.start('router - constraint', false);
       this.constraints[route](req, res, function (result) {
         // return the result
+        perfy.end('router - constraint');
         return callback(result);
       });
     }
     else {
       // datasource
       var datasource = this.constraints[route];
+      perfy.start('router - constraint ' + datasource, false);
       datasource.processRequest(datasource.page.name, req);
 
       help.getData(datasource, function(err, result) {
+
+        perfy.end('router - constraint ' + datasource);
 
         if (err) {
           return callback(err);
