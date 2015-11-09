@@ -72,7 +72,7 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream != '') {
   });
 }
 
-if (options.slack.enabled) {
+if (options.slack.enabled && config.get('env') !== 'test' && config.get('env') !== 'development') {
   log.addStream({
     name: 'Slack Log Stream',
     stream: new BunyanSlack ({
