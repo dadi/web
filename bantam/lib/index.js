@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var mkdirp = require('mkdirp');
 var serveStatic = require('serve-static')
 var serveFavicon = require('serve-favicon');
+var compress = require('compression');
 var toobusy = require('toobusy-js');
 var moment = require('moment');
 var dust = require('dustjs-linkedin');
@@ -54,11 +55,15 @@ Server.prototype.start = function (options, done) {
     // serve static files (css,js,fonts)
     app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
-    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d' }));
+    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
     app.use(serveStatic(__dirname + '/../../workspace/debug' , { 'index': false }));
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
+
+    if (config.get('headers.useGzipCompression')) {
+      app.use(compress());
+    }
 
     // request logging middleware
     app.use(function (req, res, next) {
@@ -148,6 +153,14 @@ Server.prototype.start = function (options, done) {
     // this is all sync, so callback isn't really necessary.
     done && done();
 };
+
+function setCustomCacheControl(res, path) {
+  _.each(config.get('headers.cacheControl'), function (value, key) {
+    if (serveStatic.mime.lookup(path) === key && value != '') {
+      res.setHeader('Cache-Control', value);
+    }
+  });
+}
 
 // this is mostly needed for tests
 Server.prototype.stop = function (done) {
