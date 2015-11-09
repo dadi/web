@@ -1,16 +1,35 @@
 {
-    "app": {
-        "name": "Bantam (Rosecomb)"
+  "app": {
+    "name": "Project Name Here"
+  },
+  "logging": {
+    "enabled": true,
+    "path": "./log",
+    "filename": "rosecomb",
+    "extension": "log",
+    "accessLog": {
+      "enabled": true,
+      "fileRotationPeriod": "1d",
+      "fileRetentionCount": 14,
+      "kinesisStream": ""
     },
-    "logging": {
-        "enabled": true,
-        "path": "./log",
-        "filename": "rosecomb",
-        "extension": "log",
-        "accessLogFileRotationPeriod": "1d",
-        "accessLogFileRetentionCount": 7
-    },
-    "caching": {
+    "slack": {
+      "enabled": false,
+      "webhook_url": "https://hooks.slack.com/services/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",
+      "channel": "#rosecomb-status",
+      "username": "Rosecomb",
+      "icon_emoji": ":scream_cat:"
+    }
+  },
+  "headers": {
+    "useGzipCompression": true,
+    "cacheControl": {
+      "text/css": "public, max-age=86400",
+      "text/javascript": "public, max-age=86400",
+      "application/javascript": "public, max-age=86400"
+    }
+  },
+  "caching": {
         "ttl": 300,
         "directory": {
             "enabled": true,
