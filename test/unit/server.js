@@ -27,6 +27,8 @@ describe('Server', function (done) {
     var schema = help.getPageSchema();
     var page = Page(name, schema);
 
+    Server.components = {};
+
     Server.addComponent({
         key: page.key,
         route: page.route,

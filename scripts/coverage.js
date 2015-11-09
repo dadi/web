@@ -16,13 +16,15 @@ var opts = {
   }
 };
 
-//console.log(opts);
+console.log(opts);
 
 // Load the badge for the report$
 coberturaBadger(opts, function parsingResults(err, badgeStatus) {
   if (err) {
     console.log("An error occurred: " + err.message);
   }
+
+  console.log(badgeStatus);
 
   var readme = path.resolve(__dirname + '/../README.md');
   var badgeUrl = badgeStatus.url; // e.g. http://img.shields.io/badge/coverage-60%-yellow.svg

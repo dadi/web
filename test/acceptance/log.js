@@ -13,8 +13,8 @@ const STREAM_NAME = 'rosecomb_test';
 const REGION = 'us-east-1';
 
 AWS.config.region = REGION;
-// AWS.config.accessKeyId = 'AKIAI45YB4R2EP4DWMFQ';
-// AWS.config.secretAccessKey = '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';
+// AWS.config.accessKeyId = read from environment variables or ~/.aws/credentials
+// AWS.config.secretAccessKey = read from environment variables or ~/.aws/credentials
 
 var kinesis;
 
@@ -60,17 +60,32 @@ describe('Logger', function (done) {
   });
 
   after(function(done) {
-    // delete
-    kinesis.deleteStream({StreamName: STREAM_NAME}, function(err, data) {
+
+    kinesis.listStreams({}, function(err, data) {
       if (err) {
         console.log(err, err.stack); // an error occurred
-        done();
+        log.error(err);
       }
-      else {
-        setTimeout(function() {
-          log.info('Stream deleted: ' + STREAM_NAME);           // successful response
-          done();
-        }, 500);
+
+      var streams = data.StreamNames;
+
+      // console.log(streams)
+
+      if (streams.length) {
+
+        // delete
+        kinesis.deleteStream({StreamName: STREAM_NAME}, function(err, data) {
+          if (err) {
+            console.log(err, err.stack); // an error occurred
+            done();
+          }
+          else {
+            setTimeout(function() {
+              log.info('Stream deleted: ' + STREAM_NAME);           // successful response
+              done();
+            }, 500);
+          }
+        })
       }
     })
   })
@@ -84,6 +99,8 @@ describe('Logger', function (done) {
       }
 
       var streams = data.StreamNames;
+
+      // console.log(streams)
 
       if (streams.length) {
 
