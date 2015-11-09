@@ -25,10 +25,10 @@ describe('Logger', function (done) {
   it('should use bunyan log.debug when log.debug is called', function (done) {
 
     var message = 'Hello';
-    
+
     var logger = log.get();
     var method = sinon.spy(logger, 'debug');
-    
+
     log.debug(message);
     logger.debug.restore();
 
@@ -37,30 +37,30 @@ describe('Logger', function (done) {
     done();
   });
 
-  it('should use bunyan log.info when log.stage is called', function (done) {
+  it('should use bunyan log.warn when log.stage is called', function (done) {
 
     var message = 'Hello';
-    
+
     var logger = log.get();
-    var method = sinon.spy(logger, 'info');
-    
+    var method = sinon.spy(logger, 'warn');
+
     log.stage(message);
-    logger.info.restore();
+    logger.warn.restore();
 
     method.called.should.eql(true);
 
     done();
   });
 
-  it('should use bunyan log.info when log.prod is called', function (done) {
+  it('should use bunyan log.warn when log.prod is called', function (done) {
 
     var message = 'Hello';
-    
+
     var logger = log.get();
-    var method = sinon.spy(logger, 'info');
-    
+    var method = sinon.spy(logger, 'warn');
+
     log.prod(message);
-    logger.info.restore();
+    logger.warn.restore();
 
     method.called.should.eql(true);
 

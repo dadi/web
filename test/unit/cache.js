@@ -143,6 +143,58 @@ describe('Cache', function (done) {
     done();
   });
 
+  it('should not cache if the url key can be found in the loaded keys but ?json=true exists in the query', function (done) {
+
+    var server = sinon.mock(Server);
+    server.object.app = api();
+
+    server.object.components['actualUrl'] = {
+      page: {
+        route: {
+          paths: ['/actualUrl']
+        },
+        xxx: {
+          cache: false
+        }
+      }
+    };
+
+    var req = {
+      paths: ['/actualUrl'],
+      url: 'http://www.example.com/actualUrl?json=true'
+    }
+
+    cache(server.object).cachingEnabled(req).should.eql(false);
+
+    done();
+  });
+
+  it('should cache if the url key can be found in the loaded keys and ?json=false exists in the query', function (done) {
+
+    var server = sinon.mock(Server);
+    server.object.app = api();
+
+    server.object.components['actualUrl'] = {
+      page: {
+        route: {
+          paths: ['/actualUrl']
+        },
+        xxx: {
+          cache: false
+        }
+      }
+    };
+
+    var req = {
+      paths: ['/actualUrl'],
+      url: 'http://www.example.com/actualUrl?json=false'
+    }
+
+    cache(server.object).cachingEnabled(req).should.eql(true);
+
+    done();
+  });
+
   it('should not cache if the url key can be found in the loaded keys but it does not allow caching', function (done) {
 
     var server = sinon.mock(Server);
