@@ -17,7 +17,7 @@ var _ = require('underscore');
 
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
-var page = require(__dirname + '/page');
+var Page = require(__dirname + '/page');
 var middleware = require(__dirname + '/middleware');
 var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
@@ -284,7 +284,7 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
     var pages = fs.readdirSync(directoryPath);
 
     pages.forEach(function (page) {
-        if (path.extname(page) !=- '.json') return;
+        if (path.extname(page) !== '.json') return;
 
         // parse the url out of the directory structure
         var pageFilepath = path.join(directoryPath, page);
@@ -314,13 +314,13 @@ Server.prototype.addRoute = function (obj, options, reload) {
     // With each page we create a controller, that acts as a component of the REST api.
     // We then add the component to the api by adding a route to the app and mapping
     // `req.method` to component methods
-    var p = page(obj.name, schema);
+    var page = Page(obj.name, schema);
 
-    var control = controller(p, options);
+    var control = controller(page, options);
 
     this.addComponent({
-        key: schema.page.key,
-        route: p.route,
+        key: page.key,
+        route: page.route,
         component: control,
         filepath: obj.filepath
     }, reload);
@@ -330,22 +330,32 @@ Server.prototype.addComponent = function (options, reload) {
 
     if (!options.route) return;
 
+    if (reload) {
+        _.each(options.route.paths, function (path) {
+            this.removeComponent(path);
+        }, this);
+    }
+
     var self = this;
 
     _.each(options.route.paths, function (path) {
 
         // Fall back to using the path as the componentKey if it's not been set
-        var componentKey = options.key || path;
-
-        if (reload) {
-            this.removeComponent[componentKey];
-        }
+        // var componentKey = options.key || path;
+        //
+        // if (reload) {
+        //     this.removeComponent[componentKey];
+        // }
 
         // only add a route once
-        if (this.components[componentKey]) return;
+        //if (this.components[componentKey]) return;
 
-        this.components[componentKey] = options.component;
+        //this.components[componentKey] = options.component;
 
+        // only add a route once
+        if (this.components[path]) return;
+
+        this.components[path] = options.component;
 
         if (path === '/index') {
 
@@ -398,9 +408,15 @@ Server.prototype.addComponent = function (options, reload) {
     }, this);
 };
 
-Server.prototype.removeComponent = function (key) {
-    this.app.unuse(key);
-    delete this.components[key];
+Server.prototype.removeComponent = function (route) {
+    this.app.unuse(route);
+    delete this.components[route];
+};
+
+Server.prototype.getComponent = function (key) {
+  return _.find(this.components, function (component) {
+    return component.page.key === "test";
+  });
 };
 
 Server.prototype.addMonitor = function (filepath, callback) {
