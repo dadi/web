@@ -1,4 +1,6 @@
 var bunyan = require('bunyan');
+var BunyanSlack = require('bunyan-slack');
+var KinesisStream = require('aws-kinesis-writable');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
@@ -32,23 +34,91 @@ var log = bunyan.createLogger({
     ]
 });
 
-var accessLog = bunyan.createLogger({
-    name: 'rosecomb',
-    serializers: bunyan.stdSerializers,
-    streams: [
-      {
-        type: 'rotating-file',
-        path: accessLogPath,
-        period: options.accessLogFileRotationPeriod,
-        count: options.accessLogFileRetentionCount
+var accessLog;
+if (options.accessLog.enabled) {
+  accessLog = bunyan.createLogger({
+      name: 'rosecomb_access',
+      serializers: bunyan.stdSerializers,
+      streams: [
+        {
+          type: 'rotating-file',
+          path: accessLogPath,
+          period: options.accessLog.fileRotationPeriod,
+          count: options.accessLog.fileRetentionCount
+        }
+      ]
+  });
+}
+
+if (options.accessLog.enabled && options.accessLog.kinesisStream != '') {
+  // Create a log stream
+  accessLog.addStream(
+    {
+      name: 'Kinesis Log Stream',
+      level: 'info',
+      stream: new KinesisStream ({
+        // accessKeyId: 'AKIAI45YB4R2EP4DWMFQ',
+        // secretAccessKey: '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',
+        region:          'eu-west-1',
+        streamName:      options.accessLog.kinesisStream,
+        partitionKey:    'Rosecomb'
+      })
+    }
+  );
+  var logStream = _.findWhere(accessLog.streams, { 'name' : 'Kinesis Log Stream' });
+  logStream.stream.on('error', function (err) {
+    console.log(err);
+    log.warn(err);
+  });
+}
+
+if (options.slack.enabled) {
+  log.addStream({
+    name: 'Slack Log Stream',
+    stream: new BunyanSlack ({
+      webhook_url: options.slack.webhook_url,
+      //icon_url: "your_icon_url",
+      channel: options.slack.channel,
+      username: options.slack.username,
+      icon_emoji: options.slack.icon_emoji,
+      customFormatter: function(record, levelName) {
+        return {
+          attachments: [{
+            fallback: "Required plain-text summary of the attachment.",
+            color: 'danger',
+            pretext: "",
+            author_name: config.get('app.name') + ": error in module '" + record.module + "'",
+            author_link: "",
+            author_icon: ":bantam:",
+            // title: "Slack API Documentation",
+            // title_link: "https://api.slack.com/",
+            text: record.err.stack,
+            fields: [{
+              title: "Host: " + record.hostname,
+              value: ":clock4: " + record.time,
+              short: true
+            }]
+          }]
+        };
       }
-    ]
-});
+    }, function (error){
+        console.log(error);
+    }),
+    level: 'error'
+  });
+}
 
 var self = module.exports = {
 
     access: function access() {
-        if (enabled) accessLog.info.apply(accessLog, arguments);
+        if (enabled && options.accessLog.enabled) {
+          try {
+            accessLog.info.apply(accessLog, arguments);
+          }
+          catch (err) {
+            log.error(err);
+          }
+        }
     },
 
     debug: function debug() {
@@ -73,6 +143,10 @@ var self = module.exports = {
 
     get: function get() {
         return log;
+    },
+
+    getAccessLog: function getAccessLog() {
+        return accessLog;
     }
 
 }
@@ -84,9 +158,11 @@ var self = module.exports = {
  * @return undefined
  * @api public
  */
-module.exports.stage = util.deprecate(function (message, done) {
-    module.exports.info(message);
+module.exports.stage = function() {
+  util.deprecate(function (message, done) {
+    //module.exports.info(message);
 }, module.exports.warn('log.stage() is deprecated and will be removed in a future release. Use log.debug(), log.info(), log.warn(), log.error(), log.trace() instead.'));
+}
 
 /**
  * DEPRECATED Log message if running at production level
@@ -95,6 +171,8 @@ module.exports.stage = util.deprecate(function (message, done) {
  * @return undefined
  * @api public
  */
-module.exports.prod = util.deprecate(function (message, done) {
-    module.exports.info(message);
+module.exports.prod = function() {
+  util.deprecate(function (message, done) {
+    //module.exports.info(message);
 }, module.exports.warn('log.prod() is deprecated and will be removed in a future release. Use log.debug(), log.info(), log.warn(), log.error(), log.trace() instead.'));
+}
