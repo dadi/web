@@ -1,6 +1,6 @@
 {
   "name": "rosecomb",
-  "version": "0.1.5-beta",
+  "version": "0.1.6-beta",
   "description": "Template layer for the Serama API",
   "scripts": {
     "test": "env NODE_ENV=test ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",

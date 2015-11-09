@@ -53,7 +53,13 @@ Server.prototype.start = function (options, done) {
     // add necessary middlewares in order below here...
 
     // serve static files (css,js,fonts)
-    app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+    try {
+      app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+    }
+    catch (err) {
+      // file not found
+    }
+
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
     app.use(serveStatic(__dirname + '/../../workspace/debug' , { 'index': false }));
@@ -278,7 +284,7 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
     var pages = fs.readdirSync(directoryPath);
 
     pages.forEach(function (page) {
-        if (page.indexOf('.json') < 0) return;
+        if (path.extname(page) !=- '.json') return;
 
         // parse the url out of the directory structure
         var pageFilepath = path.join(directoryPath, page);
