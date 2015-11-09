@@ -4,11 +4,31 @@
 
 ```js
 {
+    "app": {
+      "name": "Project Name Here"
+    },
     "logging": {
         "enabled": true,
         "path": "./log",
         "filename": "rosecomb",
-        "extension": "log"
+        "extension": "log",
+        "accessLog": {
+          "enabled": true,
+          "fileRotationPeriod": "1d",
+          "fileRetentionCount": 14,
+          "kinesisStream": "rosecomb_test"
+        },
+        "slack": {
+          "enabled": true,
+          "webhook_url": "https://hooks.slack.com/services/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",
+          "channel": "#rosecomb-status"
+        }
+    },
+    "headers": {
+      "useGzipCompression": true,
+      "cacheControl": {
+        "text/css": "public, max-age=86400"
+      }
     },
     "caching": {
         "ttl": 300,
@@ -45,6 +65,11 @@
         "debugLevel": "INFO",
         "whitespace": false
     },
+    "rewrites": {
+      "datasource": "rewrites",
+      "path": "workspace/routes/rewrites.txt",
+      "forceTrailingSlash": true
+    },
     "debug": true,
     "allowJsonView": true
 }
@@ -56,13 +81,30 @@
 
  Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
-enabled           |    |            true   | true       
-level           |    |           "DEBUG"    | "DEBUG", "STAGE", "PROD"
-path           |    |               | "./log"
-filename           | |               | "rosecomb"      
-extension           |  |     | "log"
-dateFormat           |    |               | "YYYY-MM-DD"
-messageFormat           |   |               | "<%= label %> - <%= date %> - <%= message %>"
+enabled           | If true, logging is enabled using the following settings.   |            true   | true       
+path           | The absolute or relative path to the directory for log files.   |       "./log"        | "/data/app/log"
+filename           | |    "rosecomb"           | "Your Application Name"      
+extension           |  |  "log"   | "log"
+
+###### Section: `logging.accessLog`
+
+Property       | Description                 | Default value  |  Example
+:---------------|:----------------------------|:---------------|:--------------
+enabled           | If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `rosecomb.access.log`.   |            true   | true       
+fileRotationPeriod           | The period at which to rotate the access log file. This is a string of the format '$number$scope' where '$scope' is one of 'ms', 'h', 'd', 'w', 'm', 'y'. The following names can be used 'hourly' (= '1h'), 'daily (= '1d'), 'weekly' ('1w'), 'monthly' ('1m'), 'yearly' ('1y').   |       "1d"        | "daily"
+fileRetentionCount           | The number of rotated log files to keep. |    7           | 14
+kinesisStream           | An AWS Kinesis stream to write to log records to. |  ""   | "rosecomb_aws_kinesis"
+
+###### Section: `logging.slack`
+
+Property       | Description                 | Default value  |  Example
+:---------------|:----------------------------|:---------------|:--------------
+enabled           | If true, error logs are sent to the specified Slack channel.   |    false   | true       
+webhook_url           | The web hook URL you have configured for your Slack integration.   |       ""        | "https://hooks.slack.com/services/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"
+channel           | The Slack channel to post errors to. |    "#rosecomb-status"           | ""
+username           | The username to display when posting errors to Slack. |  "Rosecomb"   | "Your Application Name"
+icon_emoji         | The emoji to display when posting errors to Slack. |  ":scream_cat:"   | ":thumbsdown::skin-tone-5:"
+
 
 ###### Section: `caching`
 

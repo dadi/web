@@ -76,7 +76,7 @@ module.exports.nextIfNewsOrFeatures = function (req, res, callback) {
 
 ###### Constraint Datasources
 
-An  existing datasource can be used as the route constraint. The specified datasource must exist in `workspace/data-sources/`. The following examples have some missing properties for brevity.
+An existing datasource can be used as the route constraint. The specified datasource must exist in `workspace/data-sources/`. The following examples have some missing properties for brevity.
 
 _workspace/pages/manufacturer.json_
 

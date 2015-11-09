@@ -189,22 +189,22 @@ var conf = convict({
         default: false
       },
       webhook_url:  {
-        doc: "",
+        doc: "The web hook URL you have configured for your Slack integration.",
         format: String,
         default: ""
       },
       channel:  {
-        doc: "",
+        doc: "The Slack channel to post errors to.",
         format: String,
         default: "#rosecomb-status"
       },
       username: {
-        doc: "",
+        doc: "The username to display when posting errors to Slack.",
         format: String,
         default: "Rosecomb"
       },
       icon_emoji: {
-        doc: "",
+        doc: "The emoji to display when posting errors to Slack.",
         format: String,
         default: ":scream_cat:"
       }

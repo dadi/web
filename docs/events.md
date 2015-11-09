@@ -47,9 +47,8 @@ var querystring = require('querystring');
 
 /* optional Rosecomb includes */
 var config = require(__dirname + '/../../config.js');
-var help = require(__dirname + '/../../bantam/lib/help');
 
-// the `data` parameter contains the data already loaded by 
+// the `data` parameter contains the data already loaded by
 // the page's datasources and any previous events that have fired
 
 var Event = function (req, res, data, callback) {
@@ -64,9 +63,9 @@ var Event = function (req, res, data, callback) {
   else {
     result = {
       carMakeFromEvent: "No make found in supplied data."
-    }; 
+    };
   }
-  
+
   // return a null error and the result
   callback(null, result);
 };
