@@ -141,7 +141,7 @@ Controller.prototype.get = function (req, res, next) {
         if (next) return next(e);
       }
 
-      perfy.end('get');
+      if (perfy.exists('get')) perfy.end('get');
 
       data.stats = [];
       _.each(perfy.names(), function(key) {
