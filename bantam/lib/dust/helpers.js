@@ -287,21 +287,24 @@ dust.helpers.htmlEncode = function(chunk, context, bodies, params) {
 dust.helpers.url = (function() {
     var core;
     return function(chunk, context, bodies, params) {
-        if(!core) {
+        if (!core) {
             // requiring core here is due to this file is loaded by the core, and so requiring it elsewhere won't work
             core = require(__dirname + '/../');
         }
+
         // Ensure a page name is input
-        if(typeof params.page === 'undefined') {
+        if (typeof params.page === 'undefined') {
             throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
         }
+
         // Get the page
-        var component = core.components[params.page];
-        if(!component) {
+        var component = core.getComponent(params.page);
+        if (!component) {
             throw new Error('The @url helper could not find a page with the key "' + params.page + '".');
         }
+
         // Get the route
-        return component.page.route.toPath(_.omit(params, 'page'));
+        return component.page.toPath(_.omit(params, 'page'));
     };
 }());
 

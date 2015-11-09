@@ -32,7 +32,8 @@ var Page = function (name, schema) {
     this.route = { "paths": ['/' + name] };
   }
 
-  this.route.toPath = pathToRegexp.compile(this.route.paths[0]);
+  this.key = schema.key || name;
+  //this.route.toPath = pathToRegexp.compile(this.route.paths[0]);
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
 
@@ -40,11 +41,32 @@ var Page = function (name, schema) {
   this.datasources = schema.datasources;
   this.events = schema.events;
 
-  this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : true;
-  this.keepWhitespace = this.settings.hasOwnProperty('keepWhitespace') ? this.settings.keepWhitespace : false;
+  this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
+  this.keepWhitespace = this.settings.hasOwnProperty('keepWhitespace') ? this.settings.keepWhitespace : true;
 
   _pages[name] = this;
 };
+
+Page.prototype.toPath = function (params) {
+
+  var error, url;
+
+  this.route.paths.forEach(function (path) {
+
+      try {
+        url = pathToRegexp.compile(path)(params);
+        error = null;
+      }
+      catch (err) {
+        error = err;
+      }
+
+  });
+
+  if (!url && error) throw error;
+
+  return url;
+}
 
 // exports
 module.exports = function (name, schema) {
