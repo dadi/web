@@ -53,7 +53,7 @@ Cache.prototype.cachingEnabled = function(req) {
     requestUrl = url.parse(req.url, true).pathname;
 
     var query = url.parse(req.url, true).query;
-    if (query.hasOwnProperty('json') && query.json === 'true') {
+    if (query.hasOwnProperty('json') && query.json !== 'false') {
       return false;
     }
 
@@ -125,7 +125,7 @@ Cache.prototype.init = function() {
                     res.setHeader('X-Cache', 'HIT');
 
                     res.statusCode = 200;
-                    res.setHeader('Server', config.get('app.name'));
+                    res.setHeader('Server', config.get('server.name'));
                     res.setHeader('Content-Type', 'text/html');
 
                     perfy.end('cache - find');
@@ -187,7 +187,7 @@ Cache.prototype.init = function() {
 
               fs.stat(cachepath, function (err, stat) {
                 res.statusCode = 200;
-                res.setHeader('Server', config.get('app.name'));
+                res.setHeader('Server', config.get('server.name'));
                 res.setHeader('Content-Type', 'text/html');
                 res.setHeader('Content-Length', stat.size);
                 res.setHeader('X-Cache', 'HIT');
