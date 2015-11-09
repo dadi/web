@@ -194,8 +194,9 @@ module.exports.Api = Api;
 function defaultError(api) {
 
     return function (err, req, res) {
-        console.log('defaultError')
-        console.log(err);
+
+        api.log.error(err);
+
         res.statusCode = err.statusCode || 500;
 
         // look for an error page that has been loaded
