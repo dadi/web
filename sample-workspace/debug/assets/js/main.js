@@ -11,7 +11,6 @@ $(document).ready(function() {
 
   try {
   	data = JSON.parse(json);
-    data.ads = '[removed]';
     delete data.stats;
     console.log(data);
   }
