@@ -44,6 +44,7 @@ Event.prototype.run = function(req, res, data, done) {
   }
   catch (err) {
     self.log.error(err);
+    self.log.info(err);
     return done(err, data);
   }
 };
