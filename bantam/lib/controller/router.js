@@ -126,12 +126,18 @@ Router.prototype.constrain = function(route, constraint) {
  */
 Router.prototype.testConstraint = function(route, req, res, callback) {
 
-  console.log("[ROUTER] testConstraint: " + req.url);
-  console.log("[ROUTER] testConstraint: " + route);
+  if (!this.constraints[route]) {
+    // no constraint against this route,
+    // let's use it
+    return callback(true);
+  }
 
   // if there's a constraint handler
   // for this route, run it
   if (this.constraints[route]) {
+
+    console.log("[ROUTER] testConstraint: " + req.url);
+    console.log("[ROUTER] testConstraint: " + route);
 
     if (typeof this.constraints[route] === 'function') {
       perfy.start('router - constraint', false);
@@ -173,11 +179,6 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
         }
       });
     }
-  }
-  else {
-    // no constraint against this route,
-    // let's use it
-    return callback(true);
   }
 }
 

@@ -49,9 +49,6 @@ module.exports = function (server) {
 
 Cache.prototype.cachingEnabled = function(req) {
 
-    var endpoints = this.server.components;
-    requestUrl = url.parse(req.url, true).pathname;
-
     var query = url.parse(req.url, true).query;
     if (query.hasOwnProperty('json') && query.json !== 'false') {
       return false;
@@ -60,6 +57,9 @@ Cache.prototype.cachingEnabled = function(req) {
     if (config.get('debug')) {
       return false;
     }
+
+    var endpoints = this.server.components;
+    var requestUrl = url.parse(req.url, true).pathname;
 
     // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
     var endpoint = _.find(endpoints, function (endpoint){ return !_.isEmpty(_.intersection(endpoint.page.route.paths, req.paths)); });
@@ -93,7 +93,7 @@ Cache.prototype.init = function() {
         if (!enabled) return next();
 
         // only cache GET requests
-        if (!(req.method && req.method.toLowerCase() === 'get')) return next();
+        if (req.method && req.method.toLowerCase() !== 'get') return next();
 
         // we build the filename with a hashed hex string so we can be unique
         // and avoid using file system reserved characters in the name
