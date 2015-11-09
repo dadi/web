@@ -70,7 +70,7 @@ describe('Cache', function (done) {
     var server = sinon.mock(Server);
     server.object.app = api();
 
-    server.object.components['actualUrl'] = {
+    server.object.components['/actualUrl'] = {
       page: {
         route: {
           paths: ['/actualUrl']
@@ -96,7 +96,7 @@ describe('Cache', function (done) {
     var server = sinon.mock(Server);
     server.object.app = api();
 
-    server.object.components['actualUrl'] = {
+    server.object.components['/actualUrl'] = {
       page: {
         route: {
           paths: ['/actualUrl']
@@ -122,7 +122,7 @@ describe('Cache', function (done) {
     var server = sinon.mock(Server);
     server.object.app = api();
 
-    server.object.components['actualUrl'] = {
+    server.object.components['/actualUrl'] = {
       page: {
         route: {
           paths: ['/actualUrl']
@@ -148,7 +148,7 @@ describe('Cache', function (done) {
     var server = sinon.mock(Server);
     server.object.app = api();
 
-    server.object.components['actualUrl'] = {
+    server.object.components['/actualUrl'] = {
       page: {
         route: {
           paths: ['/actualUrl']
@@ -174,13 +174,13 @@ describe('Cache', function (done) {
     var server = sinon.mock(Server);
     server.object.app = api();
 
-    server.object.components['actualUrl'] = {
+    server.object.components['/actualUrl'] = {
       page: {
         route: {
           paths: ['/actualUrl']
         },
-        xxx: {
-          cache: false
+        settings: {
+          cache: true
         }
       }
     };
