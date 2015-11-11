@@ -260,16 +260,23 @@ dust.helpers.plural = function(chunk, context, bodies, params) {
         many: params.many
     }
 
-    if(typeof context.get(options.val) !== 'undefined') {
-            var multiple = Boolean(Number(context.get(options.val)) - 1);
-            if (options.auto) {
-                return chunk.write( multiple ? pluralist.plural(options.auto).anglicised_plural : pluralist.singular(options.auto).singular_suffix );
-            } else if (options.one && options.many) {
-                return chunk.write( multiple ? options.many : options.one );
-            }
-    } else if (options.auto) {
-        return chunk.write(options.auto);
-    } else return chunk.write("");
+    if (typeof options.val !== 'undefined') {
+      var multiple = Boolean(Number(options.val) - 1);
+
+      if (typeof options.auto !== 'undefined') {
+        return chunk.write( multiple ? pluralist.plural(options.auto).anglicised_plural : pluralist.singular(options.auto).singular_suffix );
+      }
+      else if (options.one && options.many) {
+        var str = multiple ? options.many : options.one;
+        return chunk.write( str );
+      }
+    }
+    else if (options.auto) {
+      return chunk.write(options.auto);
+    }
+    else {
+      return chunk.write("");
+    }
 }
 /*
 * Encode html to json valid

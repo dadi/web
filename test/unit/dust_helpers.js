@@ -151,17 +151,41 @@ describe('Dust Helpers', function (done) {
       });
     });
 
-    // it('should return pluralized term', function (done) {
-    //
-    //   var tmpl = "{@plural val=\"5\" one=\"book\" many=\"books\" /}";
-    //   var expected = "books";
-    //
-    //   dust.renderSource(tmpl, {   }, function (err, out) {
-    //     if (err) done(err);
-    //     out.should.eql(expected);
-    //     done();
-    //   });
-    // });
+    it('should return pluralized term', function (done) {
+
+      var tmpl = "{@plural val=\"5\" auto=\"book\" /}";
+      var expected = "books";
+
+      dust.renderSource(tmpl, {   }, function (err, out) {
+        if (err) done(err);
+        out.should.eql(expected);
+        done();
+      });
+    });
+
+    it('should return singular term given overrides', function (done) {
+
+      var tmpl = "{@plural val=\"1\" one=\"book\" many=\"books\" /}";
+      var expected = "book";
+
+      dust.renderSource(tmpl, {   }, function (err, out) {
+        if (err) done(err);
+        out.should.eql(expected);
+        done();
+      });
+    });
+
+    it('should return pluralized term given overrides', function (done) {
+
+      var tmpl = "{@plural val=\"5\" one=\"book\" many=\"books\" /}";
+      var expected = "books";
+
+      dust.renderSource(tmpl, {   }, function (err, out) {
+        if (err) done(err);
+        out.should.eql(expected);
+        done();
+      });
+    });
   });
 
   // @numberCommas
