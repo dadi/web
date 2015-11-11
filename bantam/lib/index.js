@@ -142,7 +142,7 @@ Server.prototype.start = function (options, done) {
     server.on('listening', function (e) {
 
       var env = config.get('env');
-      var rosecombMessage = "[BANTAM] Started Rosecomb (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+      var rosecombMessage = "[BANTAM] Started " + config.get('app.name') + " (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
       var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
 
       console.log("\n" + rosecombMessage.bold.white);

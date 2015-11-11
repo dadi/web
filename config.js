@@ -6,7 +6,7 @@ var conf = convict({
     name: {
       doc: "The applicaton name",
       format: String,
-      default: "Bantam (Rosecomb)"
+      default: "Rosecomb (Repo Default)"
     }
   },
 	server: {
