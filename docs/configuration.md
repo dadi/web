@@ -29,7 +29,7 @@
         },
         "redis": {
             "enabled": false,
-            "host": "",
+            "host": "project.stimkl.oh.0001.euw1.cache.amazonaws.com",
             "port": 6379
         }
     },
@@ -115,7 +115,7 @@ directory.path           | The directory to use for storing cache files, relativ
 directory.extension           | The file extension to use for cache files   |    "html"           |  "html"
 redis           | Configuration block for caching using a Redis caching service   |               |
 redis.enabled           | If true, cache files will be stored in the Redis cache store using the settings below. Either directory or redis caching must be enabled for caching to work.   | false              | true
-redis.host           | The host for the Redis caching service   |    ""           |  "project.stimkl.oh.0001.euw1.cache.amazonaws.com"
+redis.host           | The host for the Redis caching service   |    ""           |  See example config above.
 redis.port           | The port for the Redis caching service   |    6379           |  6379
 
 
@@ -141,8 +141,8 @@ cacheControl           |    									|       true     | true
 :---------------|:----------------------------|:---------------|:--------------
 enabled           | If true, logging is enabled using the following settings.   |            true   | true       
 path           | The absolute or relative path to the directory for log files.   |       "./log"        | "/data/app/log"
-filename           | |    "rosecomb"           | "Your Application Name"      
-extension           |  |  "log"   | "log"
+filename           | The filename to use for the log files. The name you choose will be given a suffix indicating the current application environment. |    "rosecomb"           | "your_application_name"      
+extension           | The extension to use for the log files.  |  "log"   | "txt"
 
 ###### Section: `logging.accessLog`
 
@@ -158,10 +158,10 @@ kinesisStream           | An AWS Kinesis stream to write to log records to. |  "
 Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
 enabled           | If true, error logs are sent to the specified Slack channel.   |    false   | true       
-webhook_url           | The web hook URL you have configured for your Slack integration.   |       ""        | "https://hooks.slack.com/services/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"
+webhook_url           | The web hook URL you have configured for your Slack integration.   |       ""        | See example config above.
 channel           | The Slack channel to post errors to. |    "#rosecomb-status"           | ""
 username           | The username to display when posting errors to Slack. |  "Rosecomb"   | "Your Application Name"
-icon_emoji         | The emoji to display when posting errors to Slack. |  ":scream_cat:"   | ":thumbsdown::skin-tone-5:"
+icon_emoji         | The emoji to display when posting errors to Slack. |  ":scream_cat:"   | ":thumbsdown:"
 
 ###### Section: `rewrites`
 
