@@ -2,6 +2,7 @@ var sinon = require('sinon');
 var api = require(__dirname + '/../../bantam/lib/api');
 var Server = require(__dirname + '/../../bantam/lib');
 var should = require('should');
+var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
 var page = require(__dirname + '/../../bantam/lib/page');
 var help = require(__dirname + '/help');
@@ -216,6 +217,32 @@ describe('Page', function (done) {
     p.settings.should.exist;
     p.settings.cache.should.exist;
     p.settings.cache.should.be.true;
+
+    done();
+  });
+
+  it('should throw error if `cache` setting is incorrect', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+
+    schema.page.cache = schema.settings.cache;
+    delete schema.settings.cache;
+
+    should.throws(function() { page(name, schema) }, Error);
+
+    done();
+  });
+
+  it('should not throw error if `cache` setting is not specified', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+
+    delete schema.settings.cache;
+
+    var p = page(name, schema);
+
+    p.key.should.eql(name);
+
     done();
   });
 
@@ -243,6 +270,69 @@ describe('Page', function (done) {
     schema.route = "/test";
 
     should.throws(function() { page(name, schema) }, Error);
+
+    done();
+  });
+
+  it('should allow finding page by name', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+
+    var found = page(name);
+    found.should.equal(p);
+
+    done();
+  });
+
+  it('should generate correct url for specific page paths', function (done) {
+
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+
+    var paths = [];
+    paths.push('/buy');
+    paths.push('/buy/how-we-do-it');
+    paths.push('/buy/testimonials');
+    paths.push('/buy/saved-offers');
+    paths.push('/buy/choose-by-category/:category?');
+    paths.push('/buy/choose-by-make/:make?');
+    paths.push('/buy/choose-by-price/:price?');
+    paths.push('/buy/choose-model');
+    paths.push('/buy/:make/:model/:body');
+    paths.push('/buy/configure/:make?/:model?');
+    paths.push('/buy/offers/:make/:model/:capId/:postcode?');
+    paths.push('/buy/offers/:make/:model/:capId/:offer-id/accept/');
+    paths.push('/buy/offers/:make/:model/:capId/:offer-id/details/');
+    paths.push('/buy/offers/:make/:model/:capId/:offer-id/options/');
+    paths.push('/contact-us');
+    paths.push('/map');
+
+    paths.forEach(function (path) {
+      p.route.paths = [path];
+
+      var tokens = pathToRegexp.parse(path);
+      var parts = {};
+
+      //console.log(tokens);
+      tokens.forEach(function (token) {
+
+        if (typeof token === 'object') {
+          parts[token.name] = 'whatever';
+        }
+      })
+
+      //console.log(path)
+
+      var url = p.toPath(parts);
+      var expected = pathToRegexp.compile(path)(parts)
+
+      //console.log(url)
+
+      url.should.eql(expected);
+
+    })
 
     done();
   });

@@ -1,5 +1,6 @@
 public
 workspace
+!test/workspace
 
 # Config
 config.json
@@ -25,7 +26,7 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
-scripts/coverage*
+scripts/coverage.svg
 
 test/kinesis-test-db
 

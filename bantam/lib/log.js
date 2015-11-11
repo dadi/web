@@ -59,6 +59,8 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream != '') {
       stream: new KinesisStream ({
         // accessKeyId: read from environment variables or ~/.aws/credentials,
         // secretAccessKey: read from environment variables or ~/.aws/credentials,
+        // accessKeyId: "AKIAI45YB4R2EP4DWMFQ",
+        // secretAccessKey: "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",
         region:          'eu-west-1',
         streamName:      options.accessLog.kinesisStream,
         partitionKey:    'Rosecomb'

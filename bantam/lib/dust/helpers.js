@@ -174,21 +174,27 @@ dust.helpers.forceRender = function(chunk, context, bodies, params) {
 * ```
 */
 dust.helpers.iter = function(chunk, context, bodies, params) {
+
     params.items = params.items || [];
     params.from = params.from || 0;
     params.to = params.to === 0 ? 0 : params.to || params.items.length;
+
     var direction;
     if(params.from < params.to) {
         direction = 1;
     }
     else {
         direction = -1;
+        // to reach the beginning of the array we need to go to -1
+        params.to--;
     }
+
     var metaContext = {
         $idx: params.from,
         $len: params.items.length
     };
     context = context.push(metaContext);
+
     while(metaContext.$idx !== params.to) {
         if(params.items[metaContext.$idx]) {
             chunk = chunk.render(bodies.block, context.push(params.items[metaContext.$idx]));

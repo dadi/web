@@ -415,7 +415,7 @@ Server.prototype.removeComponent = function (route) {
 
 Server.prototype.getComponent = function (key) {
   return _.find(this.components, function (component) {
-    return component.page.key === "test";
+    return component.page.key === key;
   });
 };
 

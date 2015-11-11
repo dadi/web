@@ -228,7 +228,8 @@ module.exports = function (server, options) {
       var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
 
         if (err) {
-          this.log.error(err);
+          //self.log.error(err);
+          console.log(err);
           return next();
         }
 
