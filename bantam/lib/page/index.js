@@ -4,6 +4,8 @@ var _pages = {};
 
 var Page = function (name, schema) {
 
+  schema.settings = schema.settings || {};
+
   this.name = name;
   this.key = schema.key || name;
   this.template = schema.template || name + '.dust';

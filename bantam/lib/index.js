@@ -37,6 +37,23 @@ var Server = function () {
     this.log.info('Server logging started.')
 };
 
+var validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/;
+// matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
+var privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/;
+
+var getClientIpAddress = function (input) {
+  var ips = input.split(',');
+  var result = '';
+  _.each(ips, function (ip) {
+    if (ip.match(validIpAddress)) {
+      if (!ip.match(privateIpAddress)) {
+        result = ip;
+      }
+    }
+  });
+  return result.trim();
+}
+
 Server.prototype.start = function (options, done) {
     var self = this;
 
@@ -78,17 +95,24 @@ Server.prototype.start = function (options, done) {
         res.end = function () {
             var duration = Date.now() - start;
 
+            //console.log(res);
+
+            var clientIpAddress = req.connection.remoteAddress;
+            if (req.headers.hasOwnProperty('x-forwarded-for')) {
+              clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for']);
+            }
+
+            var accessRecord = (clientIpAddress || '')
+            + ' -'
+            + ' ' + moment().format()
+            + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
+            + ' ' + res.statusCode
+            + ' ' + (res._headers ? res._headers['content-length'] : '')
+            + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
+            + ' ' + req.headers["user-agent"]
+
             // write to the access log first
-            log.access(
-              (req.connection.remoteAddress || '')
-              + ' -'
-              + ' ' + moment().format()
-              + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
-              + ' ' + res.statusCode
-              + ' ' + (res._headers ? res._headers['content-length'] : '')
-              + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
-              + ' ' + req.headers["user-agent"]
-            );
+            log.access(accessRecord);
 
             // log the request method and url, and the duration
             log.info({module: 'router'}, req.method
@@ -265,7 +289,7 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
     var middlewares = [];
 
     files.forEach(function (file) {
-        if (file.indexOf('.js') < 0) return;
+        if (path.extname(file) !== '.js') return;
 
         var filepath = path.join(directoryPath, file);
         var name = file.slice(0, file.indexOf('.'));
@@ -339,18 +363,6 @@ Server.prototype.addComponent = function (options, reload) {
     var self = this;
 
     _.each(options.route.paths, function (path) {
-
-        // Fall back to using the path as the componentKey if it's not been set
-        // var componentKey = options.key || path;
-        //
-        // if (reload) {
-        //     this.removeComponent[componentKey];
-        // }
-
-        // only add a route once
-        //if (this.components[componentKey]) return;
-
-        //this.components[componentKey] = options.component;
 
         // only add a route once
         if (this.components[path]) return;
