@@ -89,7 +89,7 @@ Cache.prototype.init = function() {
 
         perfy.start('cache - check enabled', false);
         var enabled = self.cachingEnabled(req);
-        perfy.end('cache - check enabled');
+        if (perfy.exists('cache - check enabled')) perfy.end('cache - check enabled');
         if (!enabled) return next();
 
         // only cache GET requests
@@ -128,7 +128,7 @@ Cache.prototype.init = function() {
                     res.setHeader('Server', config.get('server.name'));
                     res.setHeader('Content-Type', 'text/html');
 
-                    perfy.end('cache - find');
+                    if (perfy.exists('cache - find')) perfy.end('cache - find');
                     readStream = redisRStream(self.redisClient, filename);
                     readStream.pipe(res);
 
@@ -183,7 +183,7 @@ Cache.prototype.init = function() {
 
               //console.log('ok');
               self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
-              perfy.end('cache - find');
+              if (perfy.exists('cache - find')) perfy.end('cache - find');
 
               fs.stat(cachepath, function (err, stat) {
                 res.statusCode = 200;
@@ -240,7 +240,7 @@ Cache.prototype.init = function() {
                         if (config.get('caching.ttl')) {
                             self.redisClient.expire(filename, config.get('caching.ttl'));
                         }
-                        perfy.end('cache - store');
+                        if (perfy.exists('cache - store')) perfy.end('cache - store');
                     });
                 }
                 else {
@@ -249,7 +249,7 @@ Cache.prototype.init = function() {
                     var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'});
                     stream.pipe(cacheFile);
 
-                    perfy.end('cache - store');
+                    if (perfy.exists('cache - store')) perfy.end('cache - store');
                 }
             };
             return next();

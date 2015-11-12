@@ -127,6 +127,11 @@ Server.prototype.start = function (options, done) {
 
     this.initialiseMiddleware(options);
 
+    var virtualDirs = config.get('virtualDirectories');
+    _.each(virtualDirs, function (dir) {
+      app.use(serveStatic(__dirname + '/../../' + dir.path , { 'index': dir.index, 'redirect': dir.forceTrailingSlash }));
+    })
+
     // caching layer
     cache(self).init();
 

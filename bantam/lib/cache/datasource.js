@@ -36,11 +36,6 @@ DatasourceCache.prototype.cachingEnabled = function() {
     enabled = false;
   }
 
-  // var query = url.parse(req.url, true).query;
-  // if (query.hasOwnProperty('json') && query.json === 'true') {
-  //   return false;
-  // }
-
   return enabled;
 };
 
