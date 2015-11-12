@@ -14,6 +14,7 @@
     - Addition of AWS Kinesis and Slack logging options	(see example files or config.js)
     - Don't log to slack in test mode
   * Config:
+    - Add support for serving content from virtual directories (see example files or config.js)
     - Add support for Gzip compression (see example files or config.js)
     - Add support for configurable cache control headers (see example files or config.js)
     - Add application name (see example files or config.js)
