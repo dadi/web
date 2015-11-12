@@ -26,7 +26,7 @@ var Datasource = function (page, datasource, options, callback) {
     self.schema.datasource.filter = self.schema.datasource.filter || {};
 
     if (self.source.type === 'static') {
-      callback(self);
+      callback(null, self);
     }
 
     self.requestParams = schema.datasource.requestParams || [];

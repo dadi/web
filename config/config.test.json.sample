@@ -1,74 +1,74 @@
 {
-    "app": {
-      "name": "Project Name Here"
-    },
-    "logging": {
+  "app": {
+    "name": "Project Name Here"
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 3020
+  },
+  "api": {
+    "host": "127.0.0.1",
+    "port": 3000
+  },
+  "auth": {
+    "tokenUrl":"/token",
+    "clientId":"rosecombClient",
+    "secret":"superSecret"
+  },
+  "logging": {
+    "enabled": true,
+    "path": "./log",
+    "filename": "rosecomb",
+    "extension": "log",
+    "accessLog": {
       "enabled": true,
-      "path": "./log",
-      "filename": "rosecomb",
-      "extension": "log",
-      "accessLog": {
-        "enabled": true,
-        "fileRotationPeriod": "1d",
-        "fileRetentionCount": 14,
-        "kinesisStream": ""
-      },
-      "slack": {
-        "enabled": false,
-        "webhook_url": "https://hooks.slack.com/services/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",
-        "channel": "#rosecomb-status",
-        "username": "Rosecomb",
-        "icon_emoji": ":scream_cat:"
-      }
+      "fileRotationPeriod": "1d",
+      "fileRetentionCount": 14,
+      "kinesisStream": ""
     },
-    "headers": {
-      "useGzipCompression": true,
-      "cacheControl": {
-        "text/css": "public, max-age=86400",
-        "text/javascript": "public, max-age=86400",
-        "application/javascript": "public, max-age=86400"
-      }
+    "slack": {
+      "enabled": false,
+      "webhook_url": "https://hooks.slack.com/services/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",
+      "channel": "#rosecomb-status",
+      "username": "Rosecomb",
+      "icon_emoji": ":scream_cat:"
+    }
+  },
+  "headers": {
+    "useGzipCompression": true,
+    "cacheControl": {
+      "text/css": "public, max-age=86400",
+      "text/javascript": "public, max-age=86400",
+      "application/javascript": "public, max-age=86400"
+    }
+  },
+  "caching": {
+    "ttl": 300,
+    "directory": {
+      "enabled": true,
+      "path": "./cache/rosecomb/",
+      "extension": "html"
     },
-    "caching": {
-        "ttl": 300,
-        "directory": {
-            "enabled": true,
-            "path": "./cache/rosecomb/",
-            "extension": "html"
-        },
-        "redis": {
-            "enabled": false,
-            "host": "",
-            "port": 6379
-        }
-    },
-    "server": {
-        "host": "127.0.0.1",
-        "port": 3020
-    },
-    "api": {
-        "host": "127.0.0.1",
-        "port": 3000
-    },
-    "auth": {
-        "tokenUrl":"/token",
-        "clientId":"rosecombClient",
-        "secret":"superSecret"
-    },
-    "global" : {
-        "baseUrl": "http://www.example.com"
-    },
-    "dust": {
-        "cache": true,
-        "debug": false,
-        "debugLevel": "INFO",
-        "whitespace": false
-    },
-    "rewrites": {
-        "datasource": "rewrites",
-        "path": "",
-        "forceTrailingSlash": false
-    },
+    "redis": {
+      "enabled": false,
+      "host": "",
+      "port": 6379
+    }
+  },
+  "global" : {
+    "baseUrl": "http://www.example.com"
+  },
+  "dust": {
+    "cache": true,
     "debug": false,
-    "allowJsonView": false
+    "debugLevel": "INFO",
+    "whitespace": false
+  },
+  "rewrites": {
+    "datasource": "rewrites",
+    "path": "",
+    "forceTrailingSlash": false
+  },
+  "debug": false,
+  "allowJsonView": false
 }

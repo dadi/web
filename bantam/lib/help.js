@@ -110,7 +110,7 @@ module.exports.getData = function(datasource, done) {
         if (cachedData) return done(null, cachedData);
 
         if (datasource.source.type === 'static') {
-            self.getStaticData(datasource, function(data) {
+            return self.getStaticData(datasource, function(data) {
                 return done(null, data);
             });
         }
@@ -158,7 +158,7 @@ module.exports.getData = function(datasource, done) {
 
             req.on('error', function(err) {
                self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
-               return done('{ "error" : "Connection refused" }');
+               return done('{ "error" : "Connection refused" }', {});
             });
 
             try {

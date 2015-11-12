@@ -142,7 +142,7 @@ Server.prototype.start = function (options, done) {
     server.on('listening', function (e) {
 
       var env = config.get('env');
-      var rosecombMessage = "[BANTAM] Started " + config.get('app.name') + " (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+      var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
       var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
 
       console.log("\n" + rosecombMessage.bold.white);
@@ -157,7 +157,9 @@ Server.prototype.start = function (options, done) {
 
     server.on('error', function (e) {
       if (e.code == 'EADDRINUSE') {
-        self.log.error('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
+        var message = 'Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n';
+        console.log(message);
+        self.log.error(message);
         process.exit(0);
       }
     });

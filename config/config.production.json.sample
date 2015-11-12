@@ -2,6 +2,19 @@
   "app": {
     "name": "Project Name Here"
   },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 3020
+  },
+  "api": {
+    "host": "127.0.0.1",
+    "port": 3000
+  },
+  "auth": {
+    "tokenUrl":"/token",
+    "clientId":"rosecombClient",
+    "secret":"superSecret"
+  },
   "logging": {
     "enabled": true,
     "path": "./log",
@@ -30,45 +43,32 @@
     }
   },
   "caching": {
-        "ttl": 300,
-        "directory": {
-            "enabled": true,
-            "path": "./cache/rosecomb/",
-            "extension": "html"
-        },
-        "redis": {
-            "enabled": false,
-            "host": "",
-            "port": 6379
-        }
+    "ttl": 300,
+    "directory": {
+      "enabled": true,
+      "path": "./cache/rosecomb/",
+      "extension": "html"
     },
-    "server": {
-        "host": "127.0.0.1",
-        "port": 3020
-    },
-    "api": {
-        "host": "127.0.0.1",
-        "port": 3000
-    },
-    "auth": {
-        "tokenUrl":"/token",
-        "clientId":"rosecombClient",
-        "secret":"superSecret"
-    },
-    "global" : {
-        "baseUrl": "http://www.example.com"
-    },
-    "dust": {
-        "cache": true,
-        "debug": false,
-        "debugLevel": "INFO",
-        "whitespace": false
-    },
-    "rewrites": {
-        "datasource": "rewrites",
-        "path": "",
-        "forceTrailingSlash": false
-    },
+    "redis": {
+      "enabled": false,
+      "host": "",
+      "port": 6379
+    }
+  },
+  "global" : {
+    "baseUrl": "http://www.example.com"
+  },
+  "dust": {
+    "cache": true,
     "debug": false,
-    "allowJsonView": false
+    "debugLevel": "INFO",
+    "whitespace": false
+  },
+  "rewrites": {
+    "datasource": "rewrites",
+    "path": "",
+    "forceTrailingSlash": false
+  },
+  "debug": false,
+  "allowJsonView": false
 }

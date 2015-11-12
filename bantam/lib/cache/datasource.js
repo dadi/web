@@ -27,6 +27,10 @@ DatasourceCache.prototype.cachingEnabled = function() {
     return false;
   }
 
+  if (this.datasource.source.type === 'static') {
+    return false;
+  }
+
   var query = url.parse(this.datasource.endpoint, true).query;
   if (query.hasOwnProperty('cache') && query.cache === 'false') {
     enabled = false;
