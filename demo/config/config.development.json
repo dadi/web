@@ -1,0 +1,33 @@
+{
+  "app": {
+    "name": "Rosecomb Demo App"
+  },
+  "server": {
+      "host": "127.0.0.1",
+      "port": 3100
+  },
+  "api": {
+      "host": "127.0.0.1",
+      "port": 3001
+  },
+  "auth": {
+      "tokenUrl":"/token",
+      "clientId":"testClient",
+      "secret":"superSecret"
+  },
+  "logging": {
+      "enabled": true,
+      "path": "./log",
+      "filename": "rosecomb",
+      "extension": "log"
+  },
+  "caching": {
+      "ttl": 300,
+      "directory": {
+        "enabled": false,
+        "path": "./cache/rosecomb/",
+        "extension": "html"
+      }
+  },
+  "debug": true
+}

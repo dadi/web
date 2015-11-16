@@ -174,21 +174,27 @@ dust.helpers.forceRender = function(chunk, context, bodies, params) {
 * ```
 */
 dust.helpers.iter = function(chunk, context, bodies, params) {
+
     params.items = params.items || [];
     params.from = params.from || 0;
     params.to = params.to === 0 ? 0 : params.to || params.items.length;
+
     var direction;
     if(params.from < params.to) {
         direction = 1;
     }
     else {
         direction = -1;
+        // to reach the beginning of the array we need to go to -1
+        params.to--;
     }
+
     var metaContext = {
         $idx: params.from,
         $len: params.items.length
     };
     context = context.push(metaContext);
+
     while(metaContext.$idx !== params.to) {
         if(params.items[metaContext.$idx]) {
             chunk = chunk.render(bodies.block, context.push(params.items[metaContext.$idx]));
@@ -254,16 +260,23 @@ dust.helpers.plural = function(chunk, context, bodies, params) {
         many: params.many
     }
 
-    if(typeof context.get(options.val) !== 'undefined') {
-            var multiple = Boolean(Number(context.get(options.val)) - 1);
-            if (options.auto) {
-                return chunk.write( multiple ? pluralist.plural(options.auto).anglicised_plural : pluralist.singular(options.auto).singular_suffix );
-            } else if (options.one && options.many) {
-                return chunk.write( multiple ? options.many : options.one );
-            }
-    } else if (options.auto) {
-        return chunk.write(options.auto);
-    } else return chunk.write("");
+    if (typeof options.val !== 'undefined') {
+      var multiple = Boolean(Number(options.val) - 1);
+
+      if (typeof options.auto !== 'undefined') {
+        return chunk.write( multiple ? pluralist.plural(options.auto).anglicised_plural : pluralist.singular(options.auto).singular_suffix );
+      }
+      else if (options.one && options.many) {
+        var str = multiple ? options.many : options.one;
+        return chunk.write( str );
+      }
+    }
+    else if (options.auto) {
+      return chunk.write(options.auto);
+    }
+    else {
+      return chunk.write("");
+    }
 }
 /*
 * Encode html to json valid
@@ -287,21 +300,24 @@ dust.helpers.htmlEncode = function(chunk, context, bodies, params) {
 dust.helpers.url = (function() {
     var core;
     return function(chunk, context, bodies, params) {
-        if(!core) {
+        if (!core) {
             // requiring core here is due to this file is loaded by the core, and so requiring it elsewhere won't work
             core = require(__dirname + '/../');
         }
+
         // Ensure a page name is input
-        if(typeof params.page === 'undefined') {
+        if (typeof params.page === 'undefined') {
             throw new Error('The @url helper needs a page to work. Please send it in as a string (double quote marks if not referencing a variable).');
         }
+
         // Get the page
-        var component = core.components[params.page];
-        if(!component) {
+        var component = core.getComponent(params.page);
+        if (!component) {
             throw new Error('The @url helper could not find a page with the key "' + params.page + '".');
         }
+
         // Get the route
-        return component.page.route.toPath(_.omit(params, 'page'));
+        return component.page.toPath(_.omit(params, 'page'));
     };
 }());
 

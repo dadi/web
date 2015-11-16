@@ -27,7 +27,7 @@ module.exports.sendBackJSON = function (successCode, res, next) {
 
         var resBody = JSON.stringify(results, null, 4);
 
-        res.setHeader('Server', config.get('app.name'));
+        res.setHeader('Server', config.get('server.name'));
 
         res.statusCode = successCode;
         res.setHeader('Content-Type', 'application/json');
@@ -64,7 +64,7 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
         var resBody = results;
 
         res.statusCode = successCode;
-        res.setHeader('Server', config.get('app.name'));
+        res.setHeader('Server', config.get('server.name'));
         //res.setHeader('Cache-Control', 'private, max-age=600');
         res.setHeader('Content-Type', contentType);
         res.setHeader('Content-Length', Buffer.byteLength(resBody));
@@ -110,7 +110,7 @@ module.exports.getData = function(datasource, done) {
         if (cachedData) return done(null, cachedData);
 
         if (datasource.source.type === 'static') {
-            self.getStaticData(datasource, function(data) {
+            return self.getStaticData(datasource, function(data) {
                 return done(null, data);
             });
         }
@@ -126,9 +126,9 @@ module.exports.getData = function(datasource, done) {
 
             var options = _.extend(defaults, headers);
 
-            req = http.request(options, function(res) {
+            self.log.info("GET datasource '" + datasource.schema.datasource.key + "': " + options.path);
 
-              self.log.info(options.path);
+            req = http.request(options, function(res) {
 
               var output = '';
 
@@ -146,8 +146,10 @@ module.exports.getData = function(datasource, done) {
                     err.statusCode = res.statusCode;
                     err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
 
-                    self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                    //self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
                 }
+
+                self.log.info("GOT datasource '" + datasource.schema.datasource.key + "': " + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
 
                 return done(null, output);
               });
@@ -156,7 +158,7 @@ module.exports.getData = function(datasource, done) {
 
             req.on('error', function(err) {
                self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
-               return done('{ "error" : "Connection refused" }');
+               return done('{ "error" : "Connection refused" }', {});
             });
 
             try {

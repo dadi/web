@@ -49,17 +49,17 @@ module.exports = function (server) {
 
 Cache.prototype.cachingEnabled = function(req) {
 
-    var endpoints = this.server.components;
-    requestUrl = url.parse(req.url, true).pathname;
-
     var query = url.parse(req.url, true).query;
-    if (query.hasOwnProperty('json') && query.json === 'true') {
+    if (query.hasOwnProperty('json') && query.json !== 'false') {
       return false;
     }
 
     if (config.get('debug')) {
       return false;
     }
+
+    var endpoints = this.server.components;
+    var requestUrl = url.parse(req.url, true).pathname;
 
     // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
     var endpoint = _.find(endpoints, function (endpoint){ return !_.isEmpty(_.intersection(endpoint.page.route.paths, req.paths)); });
@@ -89,11 +89,11 @@ Cache.prototype.init = function() {
 
         perfy.start('cache - check enabled', false);
         var enabled = self.cachingEnabled(req);
-        perfy.end('cache - check enabled');
+        if (perfy.exists('cache - check enabled')) perfy.end('cache - check enabled');
         if (!enabled) return next();
 
         // only cache GET requests
-        if (!(req.method && req.method.toLowerCase() === 'get')) return next();
+        if (req.method && req.method.toLowerCase() !== 'get') return next();
 
         // we build the filename with a hashed hex string so we can be unique
         // and avoid using file system reserved characters in the name
@@ -125,10 +125,10 @@ Cache.prototype.init = function() {
                     res.setHeader('X-Cache', 'HIT');
 
                     res.statusCode = 200;
-                    res.setHeader('Server', config.get('app.name'));
+                    res.setHeader('Server', config.get('server.name'));
                     res.setHeader('Content-Type', 'text/html');
 
-                    perfy.end('cache - find');
+                    if (perfy.exists('cache - find')) perfy.end('cache - find');
                     readStream = redisRStream(self.redisClient, filename);
                     readStream.pipe(res);
 
@@ -183,11 +183,11 @@ Cache.prototype.init = function() {
 
               //console.log('ok');
               self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
-              perfy.end('cache - find');
+              if (perfy.exists('cache - find')) perfy.end('cache - find');
 
               fs.stat(cachepath, function (err, stat) {
                 res.statusCode = 200;
-                res.setHeader('Server', config.get('app.name'));
+                res.setHeader('Server', config.get('server.name'));
                 res.setHeader('Content-Type', 'text/html');
                 res.setHeader('Content-Length', stat.size);
                 res.setHeader('X-Cache', 'HIT');
@@ -240,7 +240,7 @@ Cache.prototype.init = function() {
                         if (config.get('caching.ttl')) {
                             self.redisClient.expire(filename, config.get('caching.ttl'));
                         }
-                        perfy.end('cache - store');
+                        if (perfy.exists('cache - store')) perfy.end('cache - store');
                     });
                 }
                 else {
@@ -249,7 +249,7 @@ Cache.prototype.init = function() {
                     var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'});
                     stream.pipe(cacheFile);
 
-                    perfy.end('cache - store');
+                    if (perfy.exists('cache - store')) perfy.end('cache - store');
                 }
             };
             return next();

@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var mkdirp = require('mkdirp');
 var serveStatic = require('serve-static')
 var serveFavicon = require('serve-favicon');
+var compress = require('compression');
 var toobusy = require('toobusy-js');
 var moment = require('moment');
 var dust = require('dustjs-linkedin');
@@ -16,7 +17,7 @@ var _ = require('underscore');
 
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
-var page = require(__dirname + '/page');
+var Page = require(__dirname + '/page');
 var middleware = require(__dirname + '/middleware');
 var api = require(__dirname + '/api');
 var auth = require(__dirname + '/auth');
@@ -36,6 +37,23 @@ var Server = function () {
     this.log.info('Server logging started.')
 };
 
+var validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/;
+// matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
+var privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/;
+
+var getClientIpAddress = function (input) {
+  var ips = input.split(',');
+  var result = '';
+  _.each(ips, function (ip) {
+    if (ip.match(validIpAddress)) {
+      if (!ip.match(privateIpAddress)) {
+        result = ip;
+      }
+    }
+  });
+  return result.trim();
+}
+
 Server.prototype.start = function (options, done) {
     var self = this;
 
@@ -52,13 +70,23 @@ Server.prototype.start = function (options, done) {
     // add necessary middlewares in order below here...
 
     // serve static files (css,js,fonts)
-    app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+    try {
+      app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+    }
+    catch (err) {
+      // file not found
+    }
+
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
-    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d' }));
+    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
     app.use(serveStatic(__dirname + '/../../workspace/debug' , { 'index': false }));
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
+
+    if (config.get('headers.useGzipCompression')) {
+      app.use(compress());
+    }
 
     // request logging middleware
     app.use(function (req, res, next) {
@@ -67,17 +95,24 @@ Server.prototype.start = function (options, done) {
         res.end = function () {
             var duration = Date.now() - start;
 
+            //console.log(res);
+
+            var clientIpAddress = req.connection.remoteAddress;
+            if (req.headers.hasOwnProperty('x-forwarded-for')) {
+              clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for']);
+            }
+
+            var accessRecord = (clientIpAddress || '')
+            + ' -'
+            + ' ' + moment().format()
+            + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
+            + ' ' + res.statusCode
+            + ' ' + (res._headers ? res._headers['content-length'] : '')
+            + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
+            + ' ' + req.headers["user-agent"]
+
             // write to the access log first
-            log.access(
-              (req.connection.remoteAddress || '')
-              + ' -'
-              + ' ' + moment().format()
-              + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
-              + ' ' + res.statusCode
-              + ' ' + (res._headers ? res._headers['content-length'] : '')
-              + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
-              + ' ' + req.headers["user-agent"]
-            );
+            log.access(accessRecord);
 
             // log the request method and url, and the duration
             log.info({module: 'router'}, req.method
@@ -91,6 +126,11 @@ Server.prototype.start = function (options, done) {
     });
 
     this.initialiseMiddleware(options);
+
+    var virtualDirs = config.get('virtualDirectories');
+    _.each(virtualDirs, function (dir) {
+      app.use(serveStatic(__dirname + '/../../' + dir.path , { 'index': dir.index, 'redirect': dir.forceTrailingSlash }));
+    })
 
     // caching layer
     cache(self).init();
@@ -107,7 +147,7 @@ Server.prototype.start = function (options, done) {
     server.on('listening', function (e) {
 
       var env = config.get('env');
-      var rosecombMessage = "[BANTAM] Started Rosecomb (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+      var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
       var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
 
       console.log("\n" + rosecombMessage.bold.white);
@@ -122,7 +162,9 @@ Server.prototype.start = function (options, done) {
 
     server.on('error', function (e) {
       if (e.code == 'EADDRINUSE') {
-        self.log.error('Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n');
+        var message = 'Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n';
+        console.log(message);
+        self.log.error(message);
         process.exit(0);
       }
     });
@@ -148,6 +190,14 @@ Server.prototype.start = function (options, done) {
     // this is all sync, so callback isn't really necessary.
     done && done();
 };
+
+function setCustomCacheControl(res, path) {
+  _.each(config.get('headers.cacheControl'), function (value, key) {
+    if (serveStatic.mime.lookup(path) === key && value != '') {
+      res.setHeader('Cache-Control', value);
+    }
+  });
+}
 
 // this is mostly needed for tests
 Server.prototype.stop = function (done) {
@@ -246,7 +296,7 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
     var middlewares = [];
 
     files.forEach(function (file) {
-        if (file.indexOf('.js') < 0) return;
+        if (path.extname(file) !== '.js') return;
 
         var filepath = path.join(directoryPath, file);
         var name = file.slice(0, file.indexOf('.'));
@@ -265,7 +315,7 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
     var pages = fs.readdirSync(directoryPath);
 
     pages.forEach(function (page) {
-        if (page.indexOf('.json') < 0) return;
+        if (path.extname(page) !== '.json') return;
 
         // parse the url out of the directory structure
         var pageFilepath = path.join(directoryPath, page);
@@ -295,13 +345,13 @@ Server.prototype.addRoute = function (obj, options, reload) {
     // With each page we create a controller, that acts as a component of the REST api.
     // We then add the component to the api by adding a route to the app and mapping
     // `req.method` to component methods
-    var p = page(obj.name, schema);
+    var page = Page(obj.name, schema);
 
-    var control = controller(p, options);
+    var control = controller(page, options);
 
     this.addComponent({
-        key: schema.page.key,
-        route: p.route,
+        key: page.key,
+        route: page.route,
         component: control,
         filepath: obj.filepath
     }, reload);
@@ -311,22 +361,20 @@ Server.prototype.addComponent = function (options, reload) {
 
     if (!options.route) return;
 
+    if (reload) {
+        _.each(options.route.paths, function (path) {
+            this.removeComponent(path);
+        }, this);
+    }
+
     var self = this;
 
     _.each(options.route.paths, function (path) {
 
-        // Fall back to using the path as the componentKey if it's not been set
-        var componentKey = options.key || path;
-
-        if (reload) {
-            this.removeComponent[componentKey];
-        }
-
         // only add a route once
-        if (this.components[componentKey]) return;
+        if (this.components[path]) return;
 
-        this.components[componentKey] = options.component;
-
+        this.components[path] = options.component;
 
         if (path === '/index') {
 
@@ -379,9 +427,15 @@ Server.prototype.addComponent = function (options, reload) {
     }, this);
 };
 
-Server.prototype.removeComponent = function (key) {
-    this.app.unuse(key);
-    delete this.components[key];
+Server.prototype.removeComponent = function (route) {
+    this.app.unuse(route);
+    delete this.components[route];
+};
+
+Server.prototype.getComponent = function (key) {
+  return _.find(this.components, function (component) {
+    return component.page.key === key;
+  });
 };
 
 Server.prototype.addMonitor = function (filepath, callback) {

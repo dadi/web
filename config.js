@@ -6,7 +6,7 @@ var conf = convict({
     name: {
       doc: "The applicaton name",
       format: String,
-      default: "Bantam (Rosecomb)"
+      default: "Rosecomb (Repo Default)"
     }
   },
 	server: {
@@ -19,6 +19,11 @@ var conf = convict({
       doc: "port to bind",
       format: 'port',
       default: 8080
+    },
+    name: {
+      doc: "The server name.",
+      format: String,
+      default: "Bantam (Rosecomb)"
     }
   },
 	api: {
@@ -118,36 +123,91 @@ var conf = convict({
       default: false
     }
   },
+  headers: {
+    useGzipCompression: {
+      doc: "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
+      format: Boolean,
+      default: false
+    },
+    cacheControl: {
+      doc: "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
+      format: Object,
+      default: {
+        "text/css": "public, max-age=86400",
+        "text/javascript": "public, max-age=86400",
+        "application/javascript": "public, max-age=86400"
+      }
+    }
+  },
   logging: {
   	enabled: {
-      doc: "Determines if logging is enabled",
+      doc: "If true, logging is enabled using the following settings.",
       format: Boolean,
       default: true
     },
     path: {
-      doc: "",
+      doc: "The absolute or relative path to the directory for log files.",
       format: String,
       default: "./log"
     },
     filename: {
-      doc: "",
+      doc: "The name to use for the log file, without extension.",
       format: String,
       default: "rosecomb"
     },
     extension: {
-      doc: "",
+      doc: "The extension to use for the log file.",
       format: String,
       default: "log"
     },
-    accessLogFileRotationPeriod: {
-      doc: "The period of time that should elapse before rotating the log file",
-      format: String,
-      default: "1d"  // daily rotation
+    accessLog: {
+      enabled: {
+        doc: "If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `rosecomb.access.log`.",
+        format: Boolean,
+        default: true
+      },
+      fileRotationPeriod: {
+        doc: "The period at which to rotate the access log file. This is a string of the format '$number$scope' where '$scope' is one of 'ms' (milliseconds), 'h' (hours), 'd' (days), 'w' (weeks), 'm' (months), 'y' (years). The following names can be used 'hourly' (= '1h'), 'daily (= '1d'), 'weekly' ('1w'), 'monthly' ('1m'), 'yearly' ('1y').",
+        format: String,
+        default: "1d"  // daily rotation
+      },
+      fileRetentionCount: {
+        doc: "The number of rotated log files to keep.",
+        format: Number,
+        default: 7    // keep 7 back copies
+      },
+      kinesisStream: {
+        doc: "An AWS Kinesis stream to write to log records to.",
+        format: String,
+        default: ""
+      }
     },
-    accessLogFileRetentionCount: {
-      doc: "The number of rotated log files to keep",
-      format: Number,
-      default: 7    // keep 7 back copies
+    slack: {
+      enabled: {
+        doc: "If true, error logs are sent to the specified Slack channel.",
+        format: Boolean,
+        default: false
+      },
+      webhook_url:  {
+        doc: "The web hook URL you have configured for your Slack integration.",
+        format: String,
+        default: ""
+      },
+      channel:  {
+        doc: "The Slack channel to post errors to.",
+        format: String,
+        default: "#rosecomb-status"
+      },
+      username: {
+        doc: "The username to display when posting errors to Slack.",
+        format: String,
+        default: "Rosecomb"
+      },
+      icon_emoji: {
+        doc: "The emoji to display when posting errors to Slack.",
+        format: String,
+        default: ":scream_cat:"
+      }
     }
   },
   rewrites: {
@@ -174,13 +234,18 @@ var conf = convict({
     env: "NODE_ENV",
     arg: "node_env"
   },
+  virtualDirectories: {
+    doc: "Allows specifying folders relative to the root of the application where additional static content may reside. An array entry should like look { path: 'data/legacy_features', index: 'default.html', forceTrailingSlash: false } ",
+    format: Array,
+    default: []
+  },
   debug: {
-    doc: "Determines if debug mode is enabled.",
+    doc: "If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.",
     format: Boolean,
     default: false
   },
   allowJsonView: {
-    doc: "Determines if json view mode is allowed.",
+    doc: "If true, allows appending ?json=true to the querystring to view the raw JSON output for each page.",
     format: Boolean,
     default: false
   }

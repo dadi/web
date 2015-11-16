@@ -1,4 +1,6 @@
+public
 workspace
+!test/workspace
 
 # Config
 config.json
@@ -24,6 +26,9 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+scripts/coverage.svg
+
+test/kinesis-test-db
 
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt

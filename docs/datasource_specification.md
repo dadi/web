@@ -56,9 +56,9 @@
 key           | Name of datasource this is used in the page descriptor to attach a datasource   |               | books       
 name           | This is the name of the datasource, it will be displayed on the front-end of the gui   |               | Books       
 paginate           |    | true              | true
-count           | Number of items to return from the endpoint    | 20              | 5       
+count           | Number of items to return from the endpoint per page. If set to '0' then all results will be returned    | 20              | 5       
 sort           | An array of fields to order the result set by |     | [ { "field": "title", "order": "asc" } ]
-search           |    |               | 
+search           |    |               |
 filter           | A JSON object containing a MongoDB query  |               | { "SaleDate" : { "$ne" : null} }
 fields           | Limit fields to return   |               | ["title", "author"]
 requestParams           | An array of parameters the datasource can accept from the querystring   |               | [ { "param": "author", "field": "author_id" } ]
@@ -116,9 +116,9 @@ The Serama query becomes `{ "name" : "Ford" }`.
 See [Page Specification](page_specification.md) for custom routing information.
 
 #### Chaining datasources
- 
+
 It is often a requirement to query a datasource using data from another datasource. Rosecomb supports this through the use of chained datasources.
- 
+
 Add the `chained` property to the datasource that relies on data loaded by another datasource.
 
 _Simple field replacement_
@@ -136,7 +136,7 @@ _Simple field replacement_
 _Filter replacement_
 
 ```js
-"filter": ["{capRangeByUrlModel}",{"$group":{"_id":{"fuelType":"$fuelType"}}}], 
+"filter": ["{capRangeByUrlModel}",{"$group":{"_id":{"fuelType":"$fuelType"}}}],
 "chained": {
   "datasource": "capRangeByUrlModel",
   "outputParam": {
@@ -189,7 +189,7 @@ The result of this datasource will be:
 ```
 
 To query the models collection based on the above data being returned, add a `chained` property to the models datasource specifying `makes` as the primary datasource:
- 
+
 ```
 {
     "datasource": {
@@ -232,7 +232,7 @@ If your query parameter must be passed to the endpoint as an integer, add a `typ
 ###### Filter replacement
 
 ```js
-"filter": ["{capRangeByUrlModel}",{"$group":{"_id":{"fuelType":"$fuelType"}}}], 
+"filter": ["{capRangeByUrlModel}",{"$group":{"_id":{"fuelType":"$fuelType"}}}],
 "chained": {
   "datasource": "capRangeByUrlModel",
   "outputParam": {

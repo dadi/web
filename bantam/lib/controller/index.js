@@ -115,7 +115,7 @@ Controller.prototype.get = function (req, res, next) {
       "title": self.page.name,
       "debug": debug || false,
       "json": json || false,
-      "global": config.get('global') || {}  // global values from config
+      "global": config.has('global') ? config.get('global') : {}  // global values from config
     }
 
     // add id component from the request
@@ -141,7 +141,7 @@ Controller.prototype.get = function (req, res, next) {
         if (next) return next(e);
       }
 
-      perfy.end('get');
+      if (perfy.exists('get')) perfy.end('get');
 
       data.stats = [];
       _.each(perfy.names(), function(key) {
