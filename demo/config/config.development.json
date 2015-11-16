@@ -4,7 +4,7 @@
   },
   "server": {
       "host": "127.0.0.1",
-      "port": 3100
+      "port": 5000
   },
   "api": {
       "host": "127.0.0.1",
@@ -29,5 +29,5 @@
         "extension": "html"
       }
   },
-  "debug": true
+  "debug": false
 }

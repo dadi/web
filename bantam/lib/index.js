@@ -79,7 +79,10 @@ Server.prototype.start = function (options, done) {
 
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
-    app.use(serveStatic(__dirname + '/../../workspace/debug' , { 'index': false }));
+
+    if (config.get('debug')) {
+      app.use(serveStatic(options.workspacePath + '/debug' || (__dirname + '/../../workspace/debug') , { 'index': false }));
+    }
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
