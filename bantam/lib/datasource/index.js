@@ -126,12 +126,11 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
         query = query + key + "=" + (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) + '&';
       }
     }
-
     // if (params.indexOf(param) === (params.length-1)) {
     //   done(uri + query.slice(0,-1));
     // }
   });
-
+  console.log(query);
   return uri + query.slice(0,-1);
 }
 
@@ -182,11 +181,20 @@ Datasource.prototype.processRequest = function (datasource, req) {
     }, this);
   }
 
+  //Regular expression search for {param.nameOfParam} and replace with requestParameters
+  var paramRule = /(\"\{)(\bparams.\b)(.*?)(\}\")/gmi;
+  this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function(match, p1, p2, p3, p4, offset, string) {
+    if (req.params[p3]) {
+      return req.params[p3];
+    }
+  }.bind(this)));
+
   // add the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
   _.each(this.requestParams, function(obj) {
     if (req.params.hasOwnProperty(obj.param)) {
-      this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
+      var encodedParameters = encodeURIComponent(req.params[obj.param]);
+      this.schema.datasource.filter[obj.field] = encodedParameters;
     }
     else {
       // param not found in request, remove it from DS filter
