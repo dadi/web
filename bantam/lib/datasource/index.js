@@ -192,8 +192,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // in the querystring's request params e.g. /car-reviews/:make/:model
   _.each(this.requestParams, function(obj) {
     if (req.params.hasOwnProperty(obj.param)) {
-      var encodedParameters = encodeURIComponent(req.params[obj.param]);
-      this.schema.datasource.filter[obj.field] = encodedParameters;
+      this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
     }
     else {
       // param not found in request, remove it from DS filter
