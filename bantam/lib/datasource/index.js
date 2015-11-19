@@ -130,7 +130,6 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
     //   done(uri + query.slice(0,-1));
     // }
   });
-  console.log(query);
   return uri + query.slice(0,-1);
 }
 
