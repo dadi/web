@@ -59,8 +59,7 @@ module.exports.isApiAvailable = function(done) {
   };
 
   http.get(options, function(res) {
-    // Serama will return a 404 when requesting '/'
-    if (res.statusCode == 404) {
+    if (/200|401|404/.exec(res.statusCode)) {
       return done(true);
     }
   }).on('error', function(e) {
