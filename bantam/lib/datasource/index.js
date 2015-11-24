@@ -7,7 +7,7 @@ var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
 var Datasource = function (page, datasource, options, callback) {
 
   this.log = log.get().child({module: 'datasource'});
-  this.log.info('Datasource logging started (' + datasource + ').')
+  //this.log.info('Datasource logging started (' + datasource + ').')
 
   this.page = page;
   this.name = datasource;
@@ -138,13 +138,8 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
 Datasource.prototype.processRequest = function (datasource, req) {
 
   var self = this;
-
+  var originalFilter = _.clone(this.schema.datasource.filter);
   var query = url.parse(req.url, true).query;
-
-  // handle the json flag
-  if (query.hasOwnProperty('json')) {
-    delete query.json;
-  }
 
   // handle the cache flag
   if (query.hasOwnProperty('cache') && query.cache === 'false') {
@@ -157,7 +152,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // if the current datasource matches the page name
   // add some params from the query string or request params
-  if (this.page.name && datasource.indexOf(this.page.name) >= 0) {
+  if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters === 'true') {
 
     // handle pagination param
     this.schema.datasource.page = query.page || req.params.page || 1;
@@ -177,7 +172,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
         _.extend(this.schema.datasource.filter, JSON.parse(value));
       }
       else {
-        this.schema.datasource.filter[key] = encodeURIComponent(value);
+        //this.schema.datasource.filter[key] = encodeURIComponent(value);
       }
     }, this);
   }

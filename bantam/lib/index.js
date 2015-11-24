@@ -149,17 +149,23 @@ Server.prototype.start = function (options, done) {
 
     server.on('listening', function (e) {
 
-      var env = config.get('env');
-      var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
-      var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
+      // check that our API connection is valid
+      help.isApiAvailable(function(result) {
+        if (!result) process.exit(0);
 
-      console.log("\n" + rosecombMessage.bold.white);
-      console.log(seramaMessage.bold.blue + "\n");
+        var env = config.get('env');
+        var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+        var seramaMessage = "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
 
-      if (env === 'production') {
-        self.log.info(rosecombMessage);
-        self.log.info(seramaMessage);
-      }
+        console.log("\n" + rosecombMessage.bold.white);
+        console.log(seramaMessage.bold.blue + "\n");
+
+        if (env === 'production') {
+          self.log.info(rosecombMessage);
+          self.log.info(seramaMessage);
+        }
+
+      });
 
     });
 
@@ -528,8 +534,12 @@ Server.prototype.dustCompile = function (options) {
     dust.onLoad = function(templateName, opts, callback) {
       // `templateName` is the name of the template requested by dust.render / dust.stream
       // or via a partial include, like {> "hello-world" /}
-      // `options` can be set as part of a Context. They will be explored later
       fs.readFile(options.workspacePath + '/' + templateName + '.dust', { encoding: 'utf8' }, function (err, data) {
+        if (err) {
+          self.log.error(err);
+          console.log(err);
+        }
+
         callback(null, data);
       });
     }

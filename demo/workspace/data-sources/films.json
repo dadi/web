@@ -4,7 +4,7 @@
 		"name": "Films DS",
 		"source": {
 			"type": "static",
-			"data": 
+			"data":
 				[
 					{
 						"_id": "4b80c5bf-cd48-41e5-9e57-29a6dcafab1c",
@@ -66,7 +66,6 @@
 			"order": "desc"
 		},
 		"search": {},
-		"fields": ["_id","title","director","poster","author","length","score","reviews"]
+		"fields": {"_id":1,"title":1,"director":1,"poster":1,"author":1,"length":1,"score":1,"reviews":1}
 	}
 }
-

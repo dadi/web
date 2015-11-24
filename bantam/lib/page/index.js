@@ -15,6 +15,7 @@ var Page = function (name, schema) {
   this.events = schema.events;
   this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
   this.keepWhitespace = this.settings.hasOwnProperty('keepWhitespace') ? this.settings.keepWhitespace : true;
+  this.passFilters =  this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false;
 
   // throw error if route property is invalid
   if (schema.route && typeof schema.route != 'object') {

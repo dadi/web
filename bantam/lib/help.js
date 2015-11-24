@@ -4,6 +4,7 @@ var http = require('http');
 var url = require('url');
 var util = require('util');
 var _ = require('underscore');
+var perfy = require('perfy');
 
 var log = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
@@ -18,6 +19,55 @@ module.exports.htmlEncode = function(input) {
         return '&#'+i.charCodeAt(0)+';';
     });
     return encodedStr;
+}
+
+module.exports.timer = {
+
+  isDebugEnabled: function isDebugEnabled() {
+    return config.get('debug');
+  },
+
+  start: function start(key) {
+    if (!this.isDebugEnabled()) return;
+    console.log('Start timer: ' + key);
+    perfy.start(key, false);
+  },
+
+  stop: function stop(key) {
+    if (!this.isDebugEnabled()) return;
+    console.log('Stop timer: ' + key);
+    if (perfy.exists(key)) perfy.end(key);
+  },
+
+  getStats: function getStats() {
+    if (!this.isDebugEnabled()) return;
+    var stats = [];
+    _.each(perfy.names(), function (key) {
+      if (perfy.result(key)) stats.push( { key:key, value: perfy.result(key).summary } );
+    });
+    perfy.destroyAll();
+    return stats;
+  }
+
+}
+
+module.exports.isApiAvailable = function(done) {
+  var options = {
+    host: config.get('api.host'),
+    port: config.get('api.port'),
+    path: '/'
+  };
+
+  http.get(options, function(res) {
+    // Serama will return a 404 when requesting '/'
+    if (res.statusCode == 404) {
+      return done(true);
+    }
+  }).on('error', function(e) {
+    console.log("Error connecting to API at '" + config.get('api.host') + ":" + config.get('api.port') + "': " + e.message);
+    console.log("Check the 'api' settings in config file 'config/config." + config.get('env') + ".json'\n");
+    return done(false);
+  });
 }
 
 // helper that sends json response
@@ -129,7 +179,6 @@ module.exports.getData = function(datasource, done) {
             self.log.info("GET datasource '" + datasource.schema.datasource.key + "': " + options.path);
 
             req = http.request(options, function(res) {
-
               var output = '';
 
               res.on('data', function(chunk) {
@@ -146,10 +195,8 @@ module.exports.getData = function(datasource, done) {
                     err.statusCode = res.statusCode;
                     err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
 
-                    //self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                    self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
                 }
-
-                self.log.info("GOT datasource '" + datasource.schema.datasource.key + "': " + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
 
                 return done(null, output);
               });
@@ -157,8 +204,8 @@ module.exports.getData = function(datasource, done) {
             });
 
             req.on('error', function(err) {
-               self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
-               return done('{ "error" : "Connection refused" }', {});
+               self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + ' (' + datasource.endpoint + ')');
+               return done(JSON.stringify({ "error" : "Connection refused for " + datasource.endpoint  }), {});
             });
 
             try {

@@ -1,6 +1,6 @@
 {
   "name": "rosecomb",
-  "version": "0.1.6-beta",
+  "version": "0.1.7-beta",
   "description": "Template layer for the Serama API",
   "scripts": {
     "test": "env NODE_ENV=test ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
@@ -18,6 +18,7 @@
     "colors": "latest",
     "common-dustjs-helpers": "^0.1.0",
     "compression": "^1.6.0",
+    "connect-static-transform": "^0.8.0",
     "convict": "^1.0.1",
     "dustjs-helpers": "^1.7.3",
     "dustjs-linkedin": "^2.7.2",
@@ -41,9 +42,11 @@
     "redis": "^2.2.5",
     "redis-rstream": "^0.1.2",
     "redis-wstream": "^0.2.5",
+    "send": "^0.13.0",
     "serve-favicon": "^2.3.0",
     "serve-static": "^1.10.0",
     "stack-trace": "latest",
+    "statuses": "^1.2.1",
     "toobusy-js": "^0.4.2",
     "underscore": "~1.6.0",
     "underscore.string": "^3.2.2"

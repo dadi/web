@@ -194,7 +194,7 @@ module.exports.Api = Api;
 function defaultError(api) {
 
     return function (err, req, res) {
-
+        if (res.finished) return;
         api.log.error(err);
 
         res.statusCode = err.statusCode || 500;
@@ -221,7 +221,7 @@ function defaultError(api) {
             }
 
             res.setHeader('Content-Length', Buffer.byteLength(resBody));
-            return res.end(resBody);
+            res.end(resBody);
         }
     }
 }
