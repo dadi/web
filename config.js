@@ -55,6 +55,23 @@ var conf = convict({
       default: "superSecret"
     }
   },
+  aws: {
+    accessKeyId: {
+      doc: "",
+      format: String,
+      default: ""
+    },
+    secretAccessKey: {
+      doc: "",
+      format: String,
+      default: ""
+    },
+    region: {
+      doc: "",
+      format: String,
+      default: ""
+    }
+  },
   caching: {
     ttl: {
       doc: "",
@@ -180,33 +197,6 @@ var conf = convict({
         doc: "An AWS Kinesis stream to write to log records to.",
         format: String,
         default: ""
-      }
-    },
-    slack: {
-      enabled: {
-        doc: "If true, error logs are sent to the specified Slack channel.",
-        format: Boolean,
-        default: false
-      },
-      webhook_url:  {
-        doc: "The web hook URL you have configured for your Slack integration.",
-        format: String,
-        default: ""
-      },
-      channel:  {
-        doc: "The Slack channel to post errors to.",
-        format: String,
-        default: "#rosecomb-status"
-      },
-      username: {
-        doc: "The username to display when posting errors to Slack.",
-        format: String,
-        default: "Rosecomb"
-      },
-      icon_emoji: {
-        doc: "The emoji to display when posting errors to Slack.",
-        format: String,
-        default: ":scream_cat:"
       }
     }
   },
