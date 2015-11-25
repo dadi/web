@@ -7,7 +7,7 @@ var Page = function (name, schema) {
   schema.settings = schema.settings || {};
 
   this.name = name;
-  this.key = schema.key || name;
+  this.key = schema.page.key || name;
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
   this.settings = schema.settings || {};
