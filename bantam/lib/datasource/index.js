@@ -142,9 +142,9 @@ Datasource.prototype.processRequest = function (datasource, req) {
   var query = url.parse(req.url, true).query;
 
   // handle the json flag
-  if (query.hasOwnProperty('json')) {
-    delete query.json;
-  }
+  // if (query.hasOwnProperty('json')) {
+  //   delete query.json;
+  // }
 
   // handle the cache flag
   if (query.hasOwnProperty('cache') && query.cache === 'false') {
@@ -177,7 +177,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
         _.extend(this.schema.datasource.filter, JSON.parse(value));
       }
       else {
-        this.schema.datasource.filter[key] = encodeURIComponent(value);
+        //this.schema.datasource.filter[key] = encodeURIComponent(value);
       }
     }, this);
   }

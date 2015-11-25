@@ -143,7 +143,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
       perfy.start('router - constraint', false);
       this.constraints[route](req, res, function (result) {
         // return the result
-        perfy.end('router - constraint');
+        if (perfy.exists('router - constraint')) perfy.end('router - constraint');
         return callback(result);
       });
     }
@@ -155,7 +155,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
 
       help.getData(datasource, function(err, result) {
 
-        perfy.end('router - constraint ' + datasource);
+        if (perfy.exists('router - constraint ' + datasource)) perfy.end('router - constraint ' + datasource);
 
         if (err) {
           return callback(err);

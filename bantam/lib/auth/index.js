@@ -70,7 +70,7 @@ module.exports = function (server) {
             token.authToken = tokenResponse;
             token.created_at = Math.floor(Date.now() / 1000);
 
-            perfy.end('auth');
+            if (perfy.exists('auth')) perfy.end('auth');
 
             self.log.info('Token received.');
             return next();
