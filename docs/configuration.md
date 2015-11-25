@@ -20,6 +20,11 @@
         "clientId":"rosecombClient",
         "secret":"superSecret"
     },
+    "aws": {
+      "accessKeyId": "<your key here>",
+      "secretAccessKey": "<your secret here>",
+      "region": "eu-west-1"
+    },
     "caching": {
         "ttl": 300,
         "directory": {
@@ -55,11 +60,6 @@
             "fileRotationPeriod": "1d",
             "fileRetentionCount": 14,
             "kinesisStream": "rosecomb_test"
-        },
-        "slack": {
-            "enabled": true,
-            "webhook_url": "https://hooks.slack.com/services/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",
-            "channel": "#rosecomb-status"
         }
     },
     "rewrites": {
@@ -153,15 +153,13 @@ fileRotationPeriod           | The period at which to rotate the access log file
 fileRetentionCount           | The number of rotated log files to keep. |    7           | 14
 kinesisStream           | An AWS Kinesis stream to write to log records to. |  ""   | "rosecomb_aws_kinesis"
 
-###### Section: `logging.slack`
+###### Section: `logging.aws`
 
 Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
-enabled           | If true, error logs are sent to the specified Slack channel.   |    false   | true       
-webhook_url           | The web hook URL you have configured for your Slack integration.   |       ""        | See example config above.
-channel           | The Slack channel to post errors to. |    "#rosecomb-status"           | ""
-username           | The username to display when posting errors to Slack. |  "Rosecomb"   | "Your Application Name"
-icon_emoji         | The emoji to display when posting errors to Slack. |  ":scream_cat:"   | ":thumbsdown:"
+accessKeyId           |    |    ""   | ""
+secretAccessKey           |    |       ""        | ""
+region           |  |    ""           | ""
 
 ###### Section: `rewrites`
 
