@@ -1,5 +1,4 @@
 var bunyan = require('bunyan');
-var BunyanSlack = require('bunyan-slack');
 var KinesisStream = require('aws-kinesis-writable');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
@@ -9,6 +8,7 @@ var _ = require('underscore');
 
 var config = require(path.resolve(__dirname + '/../../config'));
 var options = config.get('logging');
+var awsConfig = config.get('aws');
 var enabled = options.enabled;
 var logPath = path.resolve(options.path + '/' + options.filename + '.' + config.get('env') + '.' + options.extension);
 var accessLogPath = path.resolve(options.path + '/' + options.filename + '.access.' + options.extension);
@@ -57,11 +57,9 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream != '') {
       name: 'Kinesis Log Stream',
       level: 'info',
       stream: new KinesisStream ({
-        // accessKeyId: read from environment variables or ~/.aws/credentials,
-        // secretAccessKey: read from environment variables or ~/.aws/credentials,
-        // accessKeyId: "AKIAI45YB4R2EP4DWMFQ",
-        // secretAccessKey: "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",
-        region:          'eu-west-1',
+        accessKeyId: awsConfig.accessKeyId,
+        secretAccessKey: awsConfig.secretAccessKey,
+        region:          awsConfig.region,
         streamName:      options.accessLog.kinesisStream,
         partitionKey:    'Rosecomb'
       })
@@ -71,42 +69,6 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream != '') {
   logStream.stream.on('error', function (err) {
     console.log(err);
     log.warn(err);
-  });
-}
-
-if (options.slack.enabled && config.get('env') !== 'test' && config.get('env') !== 'development') {
-  log.addStream({
-    name: 'Slack Log Stream',
-    stream: new BunyanSlack ({
-      webhook_url: options.slack.webhook_url,
-      //icon_url: "your_icon_url",
-      channel: options.slack.channel,
-      username: options.slack.username,
-      icon_emoji: options.slack.icon_emoji,
-      customFormatter: function(record, levelName) {
-        return {
-          attachments: [{
-            fallback: "Required plain-text summary of the attachment.",
-            color: 'danger',
-            pretext: "",
-            author_name: config.get('app.name') + ": error in module '" + record.module + "'",
-            author_link: "",
-            author_icon: ":bantam:",
-            // title: "Slack API Documentation",
-            // title_link: "https://api.slack.com/",
-            text: record.err.stack,
-            fields: [{
-              title: "Host: " + record.hostname,
-              value: ":clock4: " + record.time,
-              short: true
-            }]
-          }]
-        };
-      }
-    }, function (error){
-        console.log(error);
-    }),
-    level: 'error'
   });
 }
 

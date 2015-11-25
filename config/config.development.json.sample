@@ -15,6 +15,11 @@
     "clientId":"rosecombClient",
     "secret":"superSecret"
   },
+  "aws": {
+    "accessKeyId": "",
+    "secretAccessKey": "",
+    "region": ""
+  },
   "logging": {
     "enabled": true,
     "path": "./log",
@@ -25,13 +30,6 @@
       "fileRotationPeriod": "1d",
       "fileRetentionCount": 14,
       "kinesisStream": ""
-    },
-    "slack": {
-      "enabled": false,
-      "webhook_url": "https://hooks.slack.com/services/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",
-      "channel": "#rosecomb-status",
-      "username": "Rosecomb",
-      "icon_emoji": ":scream_cat:"
     }
   },
   "headers": {
