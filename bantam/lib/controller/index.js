@@ -128,19 +128,19 @@ Controller.prototype.get = function (req, res, next) {
 
     if (!template) {
       var err = new Error();
-      err.json = { "message": "Dust template not found" };
-      err.statusCode = 500;
-      return next(err);
+      err.name = "DustTemplate";
+      err.message = "Template not found: '" + self.page.template + "'. (Rendering page '" + self.page.key + "')";
+      err.path = req.url;
+      throw err;
     }
 
     self.loadData(req, res, data, function(err, data) {
-      if (err) {
-        var e = new Error(err.json? err.json.message : err);
-        e.statusCode = err.statusCode || 500;
-        if (next) return next(e);
-      }
 
       help.timer.stop('get');
+
+      if (err) {
+        throw err;
+      }
 
       if (data) data.stats = help.timer.getStats();
 
