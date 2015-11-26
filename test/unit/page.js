@@ -38,7 +38,7 @@ describe('Page', function (done) {
   it('should attach key if supplied', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    schema.key = 'key!'
+    schema.page.key = 'key!'
     page(name, schema).key.should.eql('key!');
     done();
   });
@@ -159,13 +159,13 @@ describe('Page', function (done) {
     server.object.components['/actualUrl'] = {
       page: {
         name: 'test page',
-        key: 'test',
-        route: {
-          paths: ['/actualUrl']
-        },
-        settings: {
-          cache: true
-        }
+        key: 'test'
+      },
+      route: {
+        paths: ['/actualUrl']
+      },
+      settings: {
+        cache: true
       }
     };
 
