@@ -60,10 +60,14 @@ module.exports = function (server) {
           res.on('end', function() {
 
             if (!output) {
-              self.log.error('No token received, invalid credentials.');
-
-              res.statusCode = 401;
-              return next();
+              var err = new Error();
+              var message = 'No token received, invalid credentials.';
+              err.name = 'Authentication';
+              err.message = message;
+              err.remoteIp = options.hostname;
+              err.remotePort = options.port;
+              err.path = options.path;
+              return next(err);
             }
 
             var tokenResponse = JSON.parse(output);
@@ -72,27 +76,25 @@ module.exports = function (server) {
 
             help.timer.stop('auth');
 
-            self.log.info('Token received.');
             return next();
           });
         });
 
         req.on('error', function(err) {
-          self.log.error(err);
-          self.log.error('Error requesting accessToken from ' + options.hostname);
+          var message = 'Couldn\'t request accessToken';
+          err.name = 'Authentication';
+          err.message = message;
+          err.remoteIp = options.hostname;
+          err.remotePort = options.port;
+
           help.timer.stop('auth');
-          next();
+          next(err);
         });
 
         // write data to request body
         req.write(JSON.stringify(postData));
 
-        try {
-          req.end();
-        }
-        catch (e) {
-        }
-
+        req.end();
     });
 
 };
