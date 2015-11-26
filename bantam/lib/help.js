@@ -60,12 +60,13 @@ module.exports.isApiAvailable = function(done) {
 
   http.get(options, function(res) {
     if (/200|401|404/.exec(res.statusCode)) {
-      return done(true);
+      return done(null, true);
     }
   }).on('error', function(e) {
-    console.log("Error connecting to API at '" + config.get('api.host') + ":" + config.get('api.port') + "': " + e.message);
-    console.log("Check the 'api' settings in config file 'config/config." + config.get('env') + ".json'\n");
-    return done(false);
+    e.message = 'Error connecting to API: ' + e.message + '. Check the \'api\' settings in config file \'config/config.' + config.get('env') + '.json';
+    e.remoteIp = options.host;
+    e.remotePort = options.port;
+    return done(e);
   });
 }
 
@@ -171,7 +172,11 @@ module.exports.getData = function(datasource, done) {
             method: 'GET'
         };
 
-        self.getHeaders(datasource, function(headers) {
+        self.getHeaders(datasource, function(err, headers) {
+
+            if (err) {
+              return done(err);
+            }
 
             var options = _.extend(defaults, headers);
 
@@ -203,16 +208,15 @@ module.exports.getData = function(datasource, done) {
             });
 
             req.on('error', function(err) {
-               self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + ' (' + datasource.endpoint + ')');
-               return done(JSON.stringify({ "error" : "Connection refused for " + datasource.endpoint  }), {});
+              var message = 'Couldn\'t request data from ' + datasource.endpoint;
+              err.name = 'GetData';
+              err.message = message;
+              err.remoteIp = options.host;
+              err.remotePort = options.port;
+              return done(err);
             });
 
-            try {
-                req.end();
-            }
-            catch (e) {
-
-            }
+            req.end();
         });
     });
 };
@@ -220,12 +224,13 @@ module.exports.getData = function(datasource, done) {
 module.exports.getHeaders = function(datasource, done) {
     var headers;
     if(datasource.authStrategy){
-        datasource.authStrategy.getToken(datasource, function (token){
-            done({headers: {'Authorization': 'Bearer ' + token}} );
+        datasource.authStrategy.getToken(datasource, function (err, token){
+            if (err) return done(err);
+            return done(null, {headers: {'Authorization': 'Bearer ' + token}} );
         });
     }
     else {
-        done( {headers:{'Authorization': 'Bearer ' + token.authToken.accessToken }});
+        return done(null, {headers:{'Authorization': 'Bearer ' + token.authToken.accessToken }});
     }
 };
 
