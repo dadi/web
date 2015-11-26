@@ -4,6 +4,10 @@ var _ = require('underscore');
 var log = require(__dirname + '/../log');
 var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
 
+/**
+ * Represents a Datasource.
+ * @constructor
+ */
 var Datasource = function (page, datasource, options, callback) {
 
   this.log = log.get().child({module: 'datasource'});
@@ -41,6 +45,19 @@ var Datasource = function (page, datasource, options, callback) {
 
 };
 
+/**
+ * Callback for loading a datasource schema.
+ *
+ * @callback loadDatasourceCallback
+ * @param {Error} err - An error occurred whilst trying to load the datasource schema.
+ * @param {JSON} result - the datasource schema.
+ */
+
+/**
+ *  Reads a datasource schema from the filesystem
+ *  @param {loadDatasourceCallback} done - the callback that handles the response
+ *  @public
+ */
 Datasource.prototype.loadDatasource = function(done) {
 
   var filepath = (this.options.datasourcePath || '') + '/' + this.name + '.json';
@@ -85,6 +102,12 @@ Datasource.prototype.setAuthStrategy = function() {
   return new BearerAuthStrategy(this.schema.datasource.auth);
 };
 
+/**
+ *  Constructs the datasource endpoint using properties defined in the schema
+ *  @param {JSON} schema - the callback that handles the response
+ *  @param done - the callback that handles the response
+ *  @public
+ */
 Datasource.prototype.buildEndpoint = function(schema, done) {
 
   if (schema.datasource.source.type === 'static') return;
@@ -102,6 +125,12 @@ Datasource.prototype.buildEndpoint = function(schema, done) {
   done();
 };
 
+/**
+ *  Adds querystring parameters to the datasource endpoint using properties defined in the schema
+ *  @param {JSON} schema - the datasource schema
+ *  @param {String} uri - the original datasource endpoint
+ *  @public
+ */
 Datasource.prototype.processDatasourceParameters = function (schema, uri) {
 
   var query = '?';
