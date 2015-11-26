@@ -198,6 +198,18 @@ var conf = convict({
         format: String,
         default: ""
       }
+    },
+    sentry: {
+      enabled: {
+        doc: "If true, error logging to a Sentry server is enabled.",
+        format: Boolean,
+        default: false
+      },
+      dsn: {
+        doc: "The 'DSN' to use for Sentry logging. It should be similar to 'https://693ef18da3184cffa82144fde2979cbc:a0651b0286784761a62ef8e8fc128722@app.getsentry.com/59524'.",
+        format: String,
+        default: ""
+      }
     }
   },
   rewrites: {
