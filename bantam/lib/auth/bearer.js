@@ -39,7 +39,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     }
   };
 
-  var req = http.request(options, function(res) {            
+  var req = http.request(options, function(res) {
     var output = '';
 
     res.on('data', function(chunk) {
@@ -51,35 +51,36 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     res.on('end', function() {
 
       if (output === '') {
-        self.log.info('No token received, invalid credentials for datasource %s', datasource.name);
-        
-        res.statusCode = 401;
-        return done();
+        var message = 'No token received, invalid credentials for datasource "' + datasource.name + '"';
+        var err = new Error();
+        err.name = 'Datasource authentication';
+        err.message = message;
+        err.remoteIp = options.hostname;
+        err.remotePort = options.port;
+        return done(err);
       }
 
       var tokenResponse = JSON.parse(output);
       self.token.authToken = tokenResponse;
       self.token.created_at = Math.floor(Date.now() / 1000);
-      
-      return done(self.token.authToken.accessToken);
+
+      return done(null, self.token.authToken.accessToken);
     });
   });
 
-  req.on('error', function(err) {
-    self.log.info('Error requesting accessToken from %s for datasource %s', options.hostname, datasource.name);
-    return;
+  req.on('error', function (err) {
+    var message = 'Couldn\'t request accessToken for datasource "' + datasource.name + '"';
+    err.name = 'Datasource authentication';
+    err.message = message;
+    err.remoteIp = options.hostname;
+    err.remotePort = options.port;
+    return done(err);
   });
 
   // write data to request body
   req.write(JSON.stringify(postData));
 
-  try {
-    req.end();
-  }
-  catch (e) {
-    self.log.error(e);
-  }
-      
+  req.end();
 };
 
 module.exports = function (options) {
