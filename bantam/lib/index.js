@@ -10,9 +10,9 @@ var serveStatic = require('serve-static')
 var serveFavicon = require('serve-favicon');
 var compress = require('compression');
 var toobusy = require('toobusy-js');
-var moment = require('moment');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
+var raven = require('raven');
 var _ = require('underscore');
 
 var controller = require(__dirname + '/controller');
@@ -37,23 +37,6 @@ var Server = function () {
     this.log.info('Server logging started.')
 };
 
-var validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/;
-// matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
-var privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/;
-
-var getClientIpAddress = function (input) {
-  var ips = input.split(',');
-  var result = '';
-  _.each(ips, function (ip) {
-    if (ip.match(validIpAddress)) {
-      if (!ip.match(privateIpAddress)) {
-        result = ip;
-      }
-    }
-  });
-  return result.trim();
-}
-
 Server.prototype.start = function (options, done) {
     var self = this;
 
@@ -65,9 +48,10 @@ Server.prototype.start = function (options, done) {
 
     // override config
     if (options.configPath)
-        config.loadFile(options.configPath);
+      config.loadFile(options.configPath);
 
-    // add necessary middlewares in order below here...
+    if (config.get('logging.sentry.enabled'))
+      app.use(raven.middleware.express.requestHandler(config.get('logging.sentry.dsn')));
 
     // serve static files (css,js,fonts)
     try {
@@ -80,60 +64,17 @@ Server.prototype.start = function (options, done) {
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
 
-    if (config.get('debug')) {
+    if (config.get('debug'))
       app.use(serveStatic(options.workspacePath + '/debug' || (__dirname + '/../../workspace/debug') , { 'index': false }));
-    }
 
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
-    if (config.get('headers.useGzipCompression')) {
+    if (config.get('headers.useGzipCompression'))
       app.use(compress());
-    }
 
     // request logging middleware
-    app.use(function (req, res, next) {
-        var start = Date.now();
-        var _end = res.end;
-        res.end = function () {
-            var duration = Date.now() - start;
-
-            //console.log(res);
-
-            var clientIpAddress = req.connection.remoteAddress;
-            if (req.headers.hasOwnProperty('x-forwarded-for')) {
-              clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for']);
-            }
-
-            var accessRecord = (clientIpAddress || '')
-            + ' -'
-            + ' ' + moment().format()
-            + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
-            + ' ' + res.statusCode
-            + ' ' + (res._headers ? res._headers['content-length'] : '')
-            + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
-            + ' ' + req.headers["user-agent"]
-
-            // write to the access log first
-            log.access(accessRecord);
-
-            // log the request method and url, and the duration
-            log.info({module: 'router'}, req.method
-                + ' ' + req.url
-                + ' ' + res.statusCode
-                + ' ' + duration + 'ms');
-
-            _end.apply(res, arguments);
-        };
-        next();
-    });
-
-    this.initialiseMiddleware(options);
-
-    var virtualDirs = config.get('virtualDirectories');
-    _.each(virtualDirs, function (dir) {
-      app.use(serveStatic(__dirname + '/../../' + dir.path , { 'index': dir.index, 'redirect': dir.forceTrailingSlash }));
-    })
+    app.use(log.requestLogger);
 
     // caching layer
     cache(self).init();
@@ -150,8 +91,12 @@ Server.prototype.start = function (options, done) {
     server.on('listening', function (e) {
 
       // check that our API connection is valid
-      help.isApiAvailable(function(result) {
-        if (!result) process.exit(0);
+      help.isApiAvailable(function(err, result) {
+        if (err) {
+          console.log(err);
+          console.log();
+          process.exit(0);
+        }
 
         var env = config.get('env');
         var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
@@ -169,17 +114,25 @@ Server.prototype.start = function (options, done) {
 
     });
 
-    server.on('error', function (e) {
-      if (e.code == 'EADDRINUSE') {
-        var message = 'Error ' + e.code + ': Address ' + config.get('server.host') + ':' + config.get('server.port') + ' is already in use, is something else listening on port ' + config.get('server.port') + '?\n\n';
-        console.log(message);
-        self.log.error(message);
+    server.on('error', function (err) {
+      if (err.code == 'EADDRINUSE') {
+        var message =  'Can\'t connect to local address, is something already listening on port ' + config.get('server.port') + '?';
+        err.localIp = config.get('server.host');
+        err.localPort = config.get('server.port');
+        err.message = message;
+        console.log(err);
+        console.log();
         process.exit(0);
       }
     });
 
     // load app specific routes
     this.loadApi(options);
+
+    var virtualDirs = config.get('virtualDirectories');
+    _.each(virtualDirs, function (dir) {
+      app.use(serveStatic(__dirname + '/../../' + dir.path , { 'index': dir.index, 'redirect': dir.forceTrailingSlash }));
+    })
 
     // dust configuration
     dust.isDebug = config.get('dust.debug');
@@ -233,8 +186,8 @@ Server.prototype.loadApi = function (options) {
     var pagePath = this.pagePath = options.pagePath || __dirname + '/../../workspace/pages';
     var partialPath = this.partialPath = options.partialPath || __dirname + '/../../workspace/partials';
     var eventPath = this.eventPath = options.eventPath || __dirname + '/../../workspace/events';
-
     var routesPath = this.routesPath = options.routesPath || __dirname + '/../../workspace/routes';
+    var middlewarePath = this.middlewarePath = options.middlewarePath || __dirname + '/../../workspace/middleware';
 
     options.datasourcePath = datasourcePath;
     options.pagePath = pagePath;
@@ -242,11 +195,15 @@ Server.prototype.loadApi = function (options) {
     options.eventPath = eventPath;
     options.routesPath = routesPath;
     options.workspacePath = workspacePath;
+    options.middlewarePath = middlewarePath;
 
     self.ensureDirectories(options, function(text) {
 
         // load routes
         self.updatePages(pagePath, options, false);
+
+        // Load middleware
+        self.initMiddleware(middlewarePath, options);
 
         // compile all dust templates
         self.dustCompile(options);
@@ -282,17 +239,11 @@ Server.prototype.loadApi = function (options) {
 
 };
 
-Server.prototype.initialiseMiddleware = function (options) {
-
-    options || (options = {});
-
-    var middlewarePath = this.middlewarePath = options.middlewarePath || __dirname + '/../../workspace/middleware';
-    options.middlewarePath = middlewarePath;
-
-    var middlewares = this.loadMiddleware(middlewarePath, options);
-    _.each(middlewares, function(middleware) {
-      middleware.init(this.app);
-    }, this);
+Server.prototype.initMiddleware = function (directoryPath, options) {
+  var middlewares = this.loadMiddleware(directoryPath, options);
+  _.each(middlewares, function(middleware) {
+    middleware.init(this.app);
+  }, this);
 }
 
 Server.prototype.loadMiddleware = function (directoryPath, options) {
