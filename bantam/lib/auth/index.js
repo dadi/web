@@ -1,9 +1,9 @@
 var http = require('http');
 var url = require('url');
 var querystring = require('querystring');
-var perfy = require('perfy');
 
 var config = require(__dirname + '/../../../config.js');
+var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
 var token = require(__dirname + '/token');
 
@@ -33,7 +33,7 @@ module.exports = function (server) {
         }
 
         this.log.info('Generating new access token for "' + req.url + '"');
-        perfy.start('auth', false);
+        help.timer.start('auth');
 
         var postData = {
           clientId : config.get('auth.clientId'),
@@ -60,38 +60,41 @@ module.exports = function (server) {
           res.on('end', function() {
 
             if (!output) {
-              self.log.error('No token received, invalid credentials.');
-
-              res.statusCode = 401;
-              return next();
+              var err = new Error();
+              var message = 'No token received, invalid credentials.';
+              err.name = 'Authentication';
+              err.message = message;
+              err.remoteIp = options.hostname;
+              err.remotePort = options.port;
+              err.path = options.path;
+              return next(err);
             }
 
             var tokenResponse = JSON.parse(output);
             token.authToken = tokenResponse;
             token.created_at = Math.floor(Date.now() / 1000);
 
-            if (perfy.exists('auth')) perfy.end('auth');
+            help.timer.stop('auth');
 
-            self.log.info('Token received.');
             return next();
           });
         });
 
         req.on('error', function(err) {
-          self.log.error(err);
-          self.log.error('Error requesting accessToken from ' + options.hostname);
-          next();
+          var message = 'Couldn\'t request accessToken';
+          err.name = 'Authentication';
+          err.message = message;
+          err.remoteIp = options.hostname;
+          err.remotePort = options.port;
+
+          help.timer.stop('auth');
+          next(err);
         });
 
         // write data to request body
         req.write(JSON.stringify(postData));
 
-        try {
-          req.end();
-        }
-        catch (e) {
-        }
-
+        req.end();
     });
 
 };

@@ -6,7 +6,6 @@ var commonDustHelpers = require('common-dustjs-helpers');
 var Q = require('q');
 var crypto = require('crypto');
 var beautify_html = require('js-beautify').html;
-var perfy = require('perfy');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config.js');
@@ -24,7 +23,7 @@ var Controller = function (page, options) {
   if (!page) throw new Error('Page instance required');
 
   this.log = log.get().child({module: 'controller'});
-  this.log.info('Controller logging started (' + (page.name || '') + ').');
+  //this.log.info('Controller logging started (' + (page.name || '') + ').');
 
   this.page = page;
 
@@ -87,7 +86,7 @@ Controller.prototype.attachEvents = function(done) {
 
 Controller.prototype.get = function (req, res, next) {
 
-    perfy.start('get', false);
+    help.timer.start('get');
 
     this.log.debug({req:req});
 
@@ -129,25 +128,21 @@ Controller.prototype.get = function (req, res, next) {
 
     if (!template) {
       var err = new Error();
-      err.json = { "message": "Dust template not found" };
-      err.statusCode = 500;
-      return next(err);
+      err.name = "DustTemplate";
+      err.message = "Template not found: '" + self.page.template + "'. (Rendering page '" + self.page.key + "')";
+      err.path = req.url;
+      throw err;
     }
 
     self.loadData(req, res, data, function(err, data) {
+
+      help.timer.stop('get');
+
       if (err) {
-        var e = new Error(err.json? err.json.message : err);
-        e.statusCode = err.statusCode || 500;
-        if (next) return next(e);
+        throw err;
       }
 
-      if (perfy.exists('get')) perfy.end('get');
-
-      data.stats = [];
-      _.each(perfy.names(), function(key) {
-        if (perfy.result(key)) data.stats.push({key:key, value: perfy.result(key).summary});
-      });
-      perfy.destroyAll();
+      if (data) data.stats = help.timer.getStats();
 
       try {
         if (json) {
@@ -207,7 +202,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 
   _.each(events, function(value, key) {
 
-      perfy.start('event: ' + key, false);
+      help.timer.start('event: ' + key);
 
       // add a random value to the data obj so we can check if an
       // event has sent back the obj - in which case we assign it back
@@ -218,7 +213,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
       // run the event
       events[key].run(req, res, data, function (err, result) {
 
-        if (perfy.exists('event: ' + key)) perfy.end('event: ' + key);
+        help.timer.stop('event: ' + key);
 
         if (err) {
           return done(err, data);
@@ -251,14 +246,14 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
   var query = url.parse(req.url, true).query;
 
-  perfy.start('load data', false);
+  help.timer.start('load data');
 
   // no datasources specified for this page
   // so start processing the attached events
   if (!hasAttachedDatasources(self.datasources)) {
     self.loadEventData(self.events, req, res, data, function (err, result) {
 
-      if (perfy.exists('load data')) perfy.end('load data');
+      help.timer.stop('load data');
       return done(err, result);
     });
   }
@@ -277,9 +272,12 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
     processSearchParameters(key, datasource, req);
 
-    perfy.start('datasource: ' + datasource.name, false);
+    help.timer.start('datasource: ' + datasource.name);
+
     help.getData(datasource, function(err, result) {
-      if (perfy.exists('datasource: ' + datasource.name)) perfy.end('datasource: ' + datasource.name);
+
+      help.timer.stop('datasource: ' + datasource.name);
+
       if (err) return done(err);
 
       if (result) {
@@ -297,7 +295,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
         self.processChained(chainedDatasources, data, query, function() {
 
           self.loadEventData(self.events, req, res, data, function (err, result) {
-            if (perfy.exists('load data')) perfy.end('load data');
+
+            help.timer.stop('load data');
+
             done(err, result);
           });
 
@@ -319,7 +319,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
 
   _.each(chainedDatasources, function(chainedDatasource, chainedKey) {
 
-    perfy.start('datasource: ' + chainedDatasource.name + ' (chained)', false);
+    help.timer.start('datasource: ' + chainedDatasource.name + ' (chained)');
 
     if (!data[chainedDatasource.chained.datasource]) {
       var message = "Error: chained datasource " + chainedKey + " expected data at this node."
@@ -390,15 +390,9 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
 
     chainedDatasource.buildEndpoint(chainedDatasource.schema, function() {});
 
-    // rebuild the datasource endpoint with the new filters
-    //var d = new Datasource();
-    // d.buildEndpoint(chainedDatasource.schema, function(endpoint) {
-
-    //   chainedDatasource.endpoint = endpoint;
-
     help.getData(chainedDatasource, function(err, result) {
 
-      if (perfy.exists('datasource: ' + chainedDatasource.name + ' (chained)')) perfy.end('datasource: ' + chainedDatasource.name + ' (chained)');
+      help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)');
 
       if (result) {
         try {

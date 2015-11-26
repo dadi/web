@@ -8,5 +8,5 @@
   {>"partials/footer" /}
 
   {>"debug/partials/debug-panel" /}
-  
+
 {>"partials/end" /}

@@ -7,11 +7,11 @@ var redisRStream = require('redis-rstream');
 var redisWStream = require('redis-wstream');
 var Readable = require('stream').Readable;
 var url = require('url');
-var perfy = require('perfy');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config.js');
 var log = require(__dirname + '/../log');
+var help = require(__dirname + '/../help');
 
 var Cache = function(server) {
 
@@ -87,9 +87,12 @@ Cache.prototype.init = function() {
 
     this.server.app.use(function (req, res, next) {
 
-        perfy.start('cache - check enabled', false);
+        help.timer.start('cache - check enabled');
+
         var enabled = self.cachingEnabled(req);
-        if (perfy.exists('cache - check enabled')) perfy.end('cache - check enabled');
+
+        help.timer.stop('cache - check enabled');
+
         if (!enabled) return next();
 
         // only cache GET requests
@@ -107,7 +110,7 @@ Cache.prototype.init = function() {
 
         var readStream;
 
-        perfy.start('cache - find', false);
+        help.timer.start('cache - find');
 
         if (self.redisClient) {
 
@@ -128,7 +131,7 @@ Cache.prototype.init = function() {
                     res.setHeader('Server', config.get('server.name'));
                     res.setHeader('Content-Type', 'text/html');
 
-                    if (perfy.exists('cache - find')) perfy.end('cache - find');
+                    help.timer.stop('cache - find');
                     readStream = redisRStream(self.redisClient, filename);
                     readStream.pipe(res);
 
@@ -183,7 +186,7 @@ Cache.prototype.init = function() {
 
               //console.log('ok');
               self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
-              if (perfy.exists('cache - find')) perfy.end('cache - find');
+              help.timer.stop('cache - find');
 
               fs.stat(cachepath, function (err, stat) {
                 res.statusCode = 200;
@@ -204,7 +207,7 @@ Cache.prototype.init = function() {
 
         function cacheResponse() {
 
-            perfy.start('cache - store', false);
+            help.timer.start('cache - store');
 
             // file is expired or does not exist, wrap res.end and res.write to save to cache
             var _end = res.end;
@@ -240,7 +243,7 @@ Cache.prototype.init = function() {
                         if (config.get('caching.ttl')) {
                             self.redisClient.expire(filename, config.get('caching.ttl'));
                         }
-                        if (perfy.exists('cache - store')) perfy.end('cache - store');
+                        help.timer.stop('cache - store');
                     });
                 }
                 else {
@@ -249,7 +252,7 @@ Cache.prototype.init = function() {
                     var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'});
                     stream.pipe(cacheFile);
 
-                    if (perfy.exists('cache - store')) perfy.end('cache - store');
+                    help.timer.stop('cache - store');
                 }
             };
             return next();

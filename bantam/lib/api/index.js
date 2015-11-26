@@ -1,9 +1,16 @@
 var http = require('http');
 var url = require('url');
 var pathToRegexp = require('path-to-regexp');
+var raven = require('raven');
 var _ = require('underscore');
-var log = require(__dirname + '/../log');
 
+var log = require(__dirname + '/../log');
+var config = require(__dirname + '/../../../config');
+
+/**
+ * Represents the main server.
+ * @constructor
+ */
 var Api = function () {
     this.paths = [];
     this.all = [];
@@ -11,8 +18,12 @@ var Api = function () {
 
     this.log = log.get().child({module: 'api'});
 
-    // always add default error handler in case the application doesn't define one
-    this.errors.push(defaultError(this));
+    if (config.get('logging.sentry.enabled')) {
+      this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')));
+    }
+
+    // Fallthrough error handler
+    this.errors.push(onError(this));
 
     // permanently bind context to listener
     this.listener = this.listener.bind(this);
@@ -190,40 +201,21 @@ module.exports = function () {
 
 module.exports.Api = Api;
 
-// Default error handler, in case application doesn't define error handling
-function defaultError(api) {
+function onError(api) {
+  return function (err, req, res, next) {
 
-    return function (err, req, res) {
+    if (config.get('env') === 'development') console.log(err);
 
-        api.log.error(err);
+    api.log.error(err);
 
-        res.statusCode = err.statusCode || 500;
+    var body = 'Uh oh. Something went wrong. The development team have been notified.';
+    if (res.sentry) body += ' For reference, the error number associated with this error is ' + res.sentry;
 
-        // look for an error page that has been loaded
-        // along with the rest of the API, and call its
-        // handler if it exists
-
-        var path = _.findWhere(api.paths, { path: '/' + res.statusCode });
-
-        if (path) {
-            path.handler(req, res);
-        }
-        else { // otherwise, respond with default message
-
-            var resBody = '';
-            if (err.json) {
-                resBody = JSON.stringify(err.json);
-                res.setHeader('Content-Type', 'application/json');
-            }
-            else {
-              resBody = err.toString();
-              res.setHeader('Content-Type', 'text/plain');
-            }
-
-            res.setHeader('Content-Length', Buffer.byteLength(resBody));
-            return res.end(resBody);
-        }
-    }
+    // The error id is attached to `res.sentry` to be returned
+    // and optionally displayed to the user for support.
+    res.statusCode = 500;
+    res.end(body);
+  }
 }
 
 // return a 404

@@ -2,6 +2,7 @@ var bunyan = require('bunyan');
 var KinesisStream = require('aws-kinesis-writable');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
+var moment = require('moment');
 var path = require('path');
 var util = require('util');
 var _ = require('underscore');
@@ -111,9 +112,63 @@ var self = module.exports = {
 
     getAccessLog: function getAccessLog() {
         return accessLog;
-    }
+    },
 
+    requestLogger: function (req, res, next) {
+        var start = Date.now();
+        var _end = res.end;
+        res.end = function () {
+            var duration = Date.now() - start;
+
+            var clientIpAddress = req.connection.remoteAddress;
+            if (req.headers.hasOwnProperty('x-forwarded-for')) {
+              clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for']);
+            }
+
+            var accessRecord = (clientIpAddress || '')
+            + ' -'
+            + ' ' + moment().format()
+            + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
+            + ' ' + res.statusCode
+            + ' ' + (res._headers ? res._headers['content-length'] : '')
+            + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
+            + ' ' + req.headers["user-agent"]
+
+            // write to the access log first
+            self.access(accessRecord);
+
+            // log the request method and url, and the duration
+            log.info({module: 'router'}, req.method
+                + ' ' + req.url
+                + ' ' + res.statusCode
+                + ' ' + duration + 'ms');
+
+            _end.apply(res, arguments);
+        };
+        next();
+    }
 }
+
+var getClientIpAddress = function (input) {
+
+  // matches all of the addresses in the private ranges and 127.0.0.1 as a bonus
+  var privateIpAddress = /(^127.0.0.1)|(^10.)|(^172.1[6-9].)|(^172.2[0-9].)|(^172.3[0-1].)|(^192.168.)/;
+  var validIpAddress = /(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/;
+
+  var ips = input.split(',');
+  var result = '';
+
+  _.each(ips, function (ip) {
+    if (ip.match(validIpAddress)) {
+      if (!ip.match(privateIpAddress)) {
+        result = ip;
+      }
+    }
+  });
+
+  return result.trim();
+}
+
 
 /**
  * DEPRECATED Log message if running at stage level

@@ -1,3 +1,16 @@
+0.1.7 / 2015-11-26
+===================
+
+* Server:
+  - Error if the configured API can't be reached
+  - Simplify middleware loading
+* Logging:
+  - Simplify error logging
+  - Provide configuration for logging to a Sentry server
+  - Remove Slack logging option, as this can be done from Sentry
+* Config:
+  - Provide configuration for logging to a Sentry server
+
 0.1.6 / 2015-11-12
 ===================
 

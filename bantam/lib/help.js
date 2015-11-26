@@ -4,6 +4,7 @@ var http = require('http');
 var url = require('url');
 var util = require('util');
 var _ = require('underscore');
+var perfy = require('perfy');
 
 var log = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
@@ -18,6 +19,55 @@ module.exports.htmlEncode = function(input) {
         return '&#'+i.charCodeAt(0)+';';
     });
     return encodedStr;
+}
+
+module.exports.timer = {
+
+  isDebugEnabled: function isDebugEnabled() {
+    return config.get('debug');
+  },
+
+  start: function start(key) {
+    if (!this.isDebugEnabled()) return;
+    console.log('Start timer: ' + key);
+    perfy.start(key, false);
+  },
+
+  stop: function stop(key) {
+    if (!this.isDebugEnabled()) return;
+    console.log('Stop timer: ' + key);
+    if (perfy.exists(key)) perfy.end(key);
+  },
+
+  getStats: function getStats() {
+    if (!this.isDebugEnabled()) return;
+    var stats = [];
+    _.each(perfy.names(), function (key) {
+      if (perfy.result(key)) stats.push( { key:key, value: perfy.result(key).summary } );
+    });
+    perfy.destroyAll();
+    return stats;
+  }
+
+}
+
+module.exports.isApiAvailable = function(done) {
+  var options = {
+    host: config.get('api.host'),
+    port: config.get('api.port'),
+    path: '/'
+  };
+
+  http.get(options, function(res) {
+    if (/200|401|404/.exec(res.statusCode)) {
+      return done(null, true);
+    }
+  }).on('error', function(e) {
+    e.message = 'Error connecting to API: ' + e.message + '. Check the \'api\' settings in config file \'config/config.' + config.get('env') + '.json';
+    e.remoteIp = options.host;
+    e.remotePort = options.port;
+    return done(e);
+  });
 }
 
 // helper that sends json response
@@ -122,14 +172,17 @@ module.exports.getData = function(datasource, done) {
             method: 'GET'
         };
 
-        self.getHeaders(datasource, function(headers) {
+        self.getHeaders(datasource, function(err, headers) {
+
+            if (err) {
+              return done(err);
+            }
 
             var options = _.extend(defaults, headers);
 
             self.log.info("GET datasource '" + datasource.schema.datasource.key + "': " + options.path);
 
             req = http.request(options, function(res) {
-
               var output = '';
 
               res.on('data', function(chunk) {
@@ -146,10 +199,8 @@ module.exports.getData = function(datasource, done) {
                     err.statusCode = res.statusCode;
                     err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
 
-                    //self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                    self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
                 }
-
-                self.log.info("GOT datasource '" + datasource.schema.datasource.key + "': " + res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
 
                 return done(null, output);
               });
@@ -157,16 +208,15 @@ module.exports.getData = function(datasource, done) {
             });
 
             req.on('error', function(err) {
-               self.log.error('help.getData error (' + JSON.stringify(req._headers)  + '): ' + err + '(' + datasource.endpoint + ')');
-               return done('{ "error" : "Connection refused" }', {});
+              var message = 'Couldn\'t request data from ' + datasource.endpoint;
+              err.name = 'GetData';
+              err.message = message;
+              err.remoteIp = options.host;
+              err.remotePort = options.port;
+              return done(err);
             });
 
-            try {
-                req.end();
-            }
-            catch (e) {
-
-            }
+            req.end();
         });
     });
 };
@@ -174,12 +224,13 @@ module.exports.getData = function(datasource, done) {
 module.exports.getHeaders = function(datasource, done) {
     var headers;
     if(datasource.authStrategy){
-        datasource.authStrategy.getToken(datasource, function (token){
-            done({headers: {'Authorization': 'Bearer ' + token}} );
+        datasource.authStrategy.getToken(datasource, function (err, token){
+            if (err) return done(err);
+            return done(null, {headers: {'Authorization': 'Bearer ' + token}} );
         });
     }
     else {
-        done( {headers:{'Authorization': 'Bearer ' + token.authToken.accessToken }});
+        return done(null, {headers:{'Authorization': 'Bearer ' + token.authToken.accessToken }});
     }
 };
 

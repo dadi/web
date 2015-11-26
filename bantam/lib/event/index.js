@@ -7,7 +7,7 @@ var Event = function (pageName, eventName, options) {
   if (!pageName) throw new Error('Page name required');
 
   this.log = log.get().child({module: 'event'});
-  this.log.info('Event logging started (page: ' + pageName + ', event: ' + eventName + ').')
+  //this.log.info('Event logging started (page: ' + pageName + ', event: ' + eventName + ').')
 
   this.page = pageName;
   this.name = eventName;

@@ -30,6 +30,10 @@
       "fileRotationPeriod": "1d",
       "fileRetentionCount": 14,
       "kinesisStream": ""
+    },
+    "sentry": {
+      "enabled": false,
+      "dsn": ""
     }
   },
   "headers": {
