@@ -74,7 +74,7 @@ Cache.prototype.cachingEnabled = function(req) {
         this.options.cache = false;
     }
 
-    return (this.enabled && this.options.cache);
+    return (this.enabled && (this.options.cache || false));
 }
 
 Cache.prototype.initialiseRedisClient = function() {
@@ -162,7 +162,6 @@ Cache.prototype.init = function() {
 
             readStream.on('end', function () {
               if (noCache) {
-                  //console.log('noCache');
                   res.setHeader('X-Cache', 'MISS');
                   res.setHeader('X-Cache-Lookup', 'HIT');
                   return next();
@@ -184,7 +183,6 @@ Cache.prototype.init = function() {
 
               }
 
-              //console.log('ok');
               self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
               help.timer.stop('cache - find');
 
