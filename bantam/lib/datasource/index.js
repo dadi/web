@@ -209,6 +209,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
   this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function(match, p1, p2, p3, p4, offset, string) {
     if (req.params[p3]) {
       return req.params[p3];
+    } else {
+      return match;
     }
   }.bind(this)));
 
