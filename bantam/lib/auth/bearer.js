@@ -18,7 +18,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     // if the token creation date + expiry in seconds is greater
     // than the current time, we don't need to generate a new token
     if ((self.token.created_at + self.token.authToken.expiresIn) > now) {
-      return done(self.token.authToken.accessToken);
+      return done(null, self.token.authToken.accessToken);
     }
   }
 
