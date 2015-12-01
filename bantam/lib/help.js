@@ -169,7 +169,8 @@ module.exports.getData = function(datasource, done) {
             host: datasource.source.host,
             port: datasource.source.port,
             path: datasource.endpoint,
-            method: 'GET'
+            method: 'GET',
+            agent: self.keepAliveAgent()
         };
 
         self.getHeaders(datasource, function(err, headers) {
@@ -233,6 +234,10 @@ module.exports.getHeaders = function(datasource, done) {
         return done(null, {headers:{'Authorization': 'Bearer ' + token.authToken.accessToken }});
     }
 };
+
+module.exports.keepAliveAgent = function() {
+  return new http.Agent({ keepAlive: true });
+}
 
 // function to wrap try - catch for JSON.parse to mitigate pref losses
 module.exports.parseQuery = function (queryStr) {
