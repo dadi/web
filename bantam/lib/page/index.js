@@ -10,9 +10,10 @@ var Page = function (name, schema) {
   this.key = schema.page.key || name;
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
-  this.settings = schema.settings || {};
   this.datasources = schema.datasources;
   this.events = schema.events;
+
+  this.settings = schema.settings || {};
   this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
   this.keepWhitespace = this.settings.hasOwnProperty('keepWhitespace') ? this.settings.keepWhitespace : true;
   this.passFilters =  this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false;

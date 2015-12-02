@@ -275,13 +275,14 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
     var pages = fs.readdirSync(directoryPath);
 
     pages.forEach(function (page) {
-        if (path.extname(page) !== '.json') return;
+      if (path.extname(page) !== '.json') return;
 
-        // parse the url out of the directory structure
-        var pageFilepath = path.join(directoryPath, page);
+      // get the full path to the page file
+      var pageFilepath = path.join(directoryPath, page);
 
-        // file should be json file containing schema
-        var name = page.slice(0, page.indexOf('.'));
+      // strip the filename minus the extension
+      // to use as the page name
+      var name = page.slice(0, page.indexOf('.'));
 
       self.addRoute({
         name: name,
@@ -302,13 +303,15 @@ Server.prototype.addRoute = function (obj, options, reload) {
       throw err;
     }
 
-    // With each page we create a controller, that acts as a component of the REST api.
-    // We then add the component to the api by adding a route to the app and mapping
-    // `req.method` to component methods
+    // create a page with the supplied schema,
+    // using the filename as the page name
     var page = Page(obj.name, schema);
 
+    // create a handler for requests to this page
     var control = controller(page, options);
 
+    // add the component to the api by adding a route to the app and mapping
+    // `req.method` to component methods
     this.addComponent({
         key: page.key,
         route: page.route,
