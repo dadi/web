@@ -23,8 +23,8 @@ describe('Logger', function (done) {
   before(function(done) {
 
     // for now, ignore
-    done();
-    
+    return done();
+
     // Start a local Kinesis server
     var kinesaliteServer = kinesalite({path: './test/kinesis-test-db', createStreamMs: 1});
 
@@ -58,7 +58,7 @@ describe('Logger', function (done) {
   beforeEach(function (done) {
 
     // for now, ignore
-    done();
+    return done();
 
     get_iterator(function (err, data) {
       if (err) return done(err);
@@ -70,7 +70,7 @@ describe('Logger', function (done) {
   after(function(done) {
 
     // for now, ignore
-    done();
+    return done();
 
     kinesis.listStreams({}, function(err, data) {
       if (err) {
@@ -104,7 +104,7 @@ describe('Logger', function (done) {
   it('should log to a kinesis stream if configured', function (done) {
 
     // for now, ignore
-    done();
+    return done();
 
     kinesis.listStreams({}, function(err, data) {
       if (err) {
