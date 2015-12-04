@@ -51,7 +51,7 @@ if (options.accessLog.enabled) {
   });
 }
 
-if (options.accessLog.enabled && options.accessLog.kinesisStream != '') {
+if (options.accessLog.enabled && options.accessLog.kinesisStream !== '') {
   // Create a log stream
   accessLog.addStream(
     {
@@ -125,29 +125,29 @@ var self = module.exports = {
               clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for']);
             }
 
-            var accessRecord = (clientIpAddress || '')
-            + ' -'
-            + ' ' + moment().format()
-            + ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion
-            + ' ' + res.statusCode
-            + ' ' + (res._headers ? res._headers['content-length'] : '')
-            + (req.headers["referer"] ? (' ' + req.headers["referer"]) : '')
-            + ' ' + req.headers["user-agent"]
+            var accessRecord = (clientIpAddress || '') +
+            ' -' +
+            ' ' + moment().format() +
+            ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion +
+            ' ' + res.statusCode +
+            ' ' + (res._headers ? res._headers['content-length'] : '') +
+            (req.headers["referer"] ? (' ' + req.headers["referer"]) : '') +
+            ' ' + req.headers["user-agent"];
 
             // write to the access log first
             self.access(accessRecord);
 
             // log the request method and url, and the duration
-            log.info({module: 'router'}, req.method
-                + ' ' + req.url
-                + ' ' + res.statusCode
-                + ' ' + duration + 'ms');
+            log.info({module: 'router'}, req.method +
+                ' ' + req.url +
+                ' ' + res.statusCode +
+                ' ' + duration + 'ms');
 
             _end.apply(res, arguments);
         };
         next();
     }
-}
+};
 
 var getClientIpAddress = function (input) {
 
@@ -167,7 +167,7 @@ var getClientIpAddress = function (input) {
   });
 
   return result.trim();
-}
+};
 
 
 /**
@@ -181,7 +181,7 @@ module.exports.stage = function() {
   util.deprecate(function (message, done) {
     //module.exports.info(message);
 }, module.exports.warn('log.stage() is deprecated and will be removed in a future release. Use log.debug(), log.info(), log.warn(), log.error(), log.trace() instead.'));
-}
+};
 
 /**
  * DEPRECATED Log message if running at production level
@@ -194,4 +194,4 @@ module.exports.prod = function() {
   util.deprecate(function (message, done) {
     //module.exports.info(message);
 }, module.exports.warn('log.prod() is deprecated and will be removed in a future release. Use log.debug(), log.info(), log.warn(), log.error(), log.trace() instead.'));
-}
+};

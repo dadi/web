@@ -7,7 +7,6 @@ var Event = function (pageName, eventName, options) {
   if (!pageName) throw new Error('Page name required');
 
   this.log = log.get().child({module: 'event'});
-  //this.log.info('Event logging started (page: ' + pageName + ', event: ' + eventName + ').')
 
   this.page = pageName;
   this.name = eventName;
@@ -27,26 +26,21 @@ Event.prototype.loadEvent = function() {
     return require(filepath);
   }
   catch (err) {
-    throw new Error('Error loading event "' + filepath + '". ' + err);
+    throw err;
   }
 };
 
 Event.prototype.run = function(req, res, data, done) {
   var self = this;
-  try {
-    this.loadEvent()(req, res, data, function (err, result) {
-      if (err) {
-        self.log.error(err);
-      }
 
-      return done(err, result);
-    });
-  }
-  catch (err) {
-    self.log.error(err);
-    self.log.info(err);
-    return done(err, data);
-  }
+  this.loadEvent()(req, res, data, function (err, result) {
+
+    if (err) {
+      self.log.error(err);
+    }
+
+    return done(err, result);
+  });
 };
 
 module.exports = function (pageName, eventName, options) {
