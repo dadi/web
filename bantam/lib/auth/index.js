@@ -45,12 +45,13 @@ module.exports = function (server) {
           port: config.get('api.port'),
           path: tokenRoute,
           method: 'POST',
+          agent: new http.Agent({ keepAlive: true }),
           headers: {
             'Content-Type': 'application/json'
           }
         };
 
-        var req = http.request(options, function(res) {
+        var request = http.request(options, function(res) {
           var output = '';
 
           res.on('data', function(chunk) {
@@ -80,7 +81,7 @@ module.exports = function (server) {
           });
         });
 
-        req.on('error', function(err) {
+        request.on('error', function(err) {
           var message = 'Couldn\'t request accessToken';
           err.name = 'Authentication';
           err.message = message;
@@ -92,9 +93,9 @@ module.exports = function (server) {
         });
 
         // write data to request body
-        req.write(JSON.stringify(postData));
+        request.write(JSON.stringify(postData));
 
-        req.end();
+        request.end();
     });
 
 };
