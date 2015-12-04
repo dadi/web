@@ -10,7 +10,7 @@ var Event = function (req, res, data, callback) {
 
   data.run = true;
 
-  callback(null);
+  callback(null, data);
 };
 
 module.exports = function (req, res, data, callback) {

@@ -84,7 +84,7 @@ describe('Event', function (done) {
     })
   });
 
-  it('should log errors when they occur in the attached event', function (done) {
+  it('should throw errors when they occur in the attached event', function (done) {
 
     var pageName = 'test';
     var eventName = 'test_event_error';
@@ -92,19 +92,14 @@ describe('Event', function (done) {
 
     var data = { test: true };
 
-    var logger = newEvent.log;
-    var infoMethod = sinon.spy(logger, 'info');
-    var errorMethod = sinon.spy(logger, 'error');
 
-    newEvent.run({}, {}, data, function(err, result) {
+    should.throws(function() {
+      newEvent.run({}, {}, data, function(err, result) {
+      })
+    });
 
-      logger.info.restore();
-      logger.error.restore();
-      infoMethod.called.should.eql(true);
-      errorMethod.called.should.eql(true);
+    done();
 
-      done();
-    })
   });
 
   it('should load the referenced event file from the filesystem', function (done) {
