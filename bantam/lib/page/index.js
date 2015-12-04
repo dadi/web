@@ -1,4 +1,5 @@
 var pathToRegexp = require('path-to-regexp');
+var config = require(__dirname + '/../../../config');
 
 var _pages = {};
 
@@ -15,7 +16,7 @@ var Page = function (name, schema) {
 
   this.settings = schema.settings || {};
   this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
-  this.keepWhitespace = this.settings.hasOwnProperty('keepWhitespace') ? this.settings.keepWhitespace : true;
+  this.keepWhitespace = this.settings.hasOwnProperty('keepWhitespace') ? this.settings.keepWhitespace : config.get('dust').hasOwnProperty('whitespace') ? config.get('dust.whitespace') : true;
   this.passFilters =  this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false;
 
   // throw error if route property is invalid
