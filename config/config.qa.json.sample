@@ -4,7 +4,8 @@
   },
   "server": {
     "host": "127.0.0.1",
-    "port": 3020
+    "port": 3020,
+    "socketTimeoutSec": 30
   },
   "api": {
     "host": "127.0.0.1",

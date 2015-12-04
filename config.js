@@ -24,6 +24,11 @@ var conf = convict({
       doc: "The server name.",
       format: String,
       default: "Bantam (Rosecomb)"
+    },
+    socketTimeoutSec: {
+      doc: "The number of seconds to wait before closing an idle socket.",
+      format: Number,
+      default: 10
     }
   },
 	api: {
