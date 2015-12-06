@@ -28,7 +28,7 @@ var conf = convict({
     socketTimeoutSec: {
       doc: "The number of seconds to wait before closing an idle socket.",
       format: Number,
-      default: 10
+      default: 30
     }
   },
 	api: {
