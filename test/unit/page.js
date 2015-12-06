@@ -6,6 +6,7 @@ var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
 var page = require(__dirname + '/../../bantam/lib/page');
 var help = require(__dirname + '/help');
+var config = require(__dirname + '/../../config.js');
 
 describe('Page', function (done) {
   it('should export constructor', function (done) {
@@ -334,6 +335,38 @@ describe('Page', function (done) {
 
     })
 
+    done();
+  });
+
+  it('should apply global config `dust.whitespace` as a fallback when no `page.keepWhitespace` is available', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    delete schema.page.keepWhitespace;
+    config.set('dust.whitespace', true);
+  
+    page(name, schema).keepWhitespace.should.be.true;
+  
+    done();
+  });
+  
+  it('should prioritise page config `keepWhitespace` param over global config `dust.whitespace`', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    schema.page.keepWhitespace = true;
+    config.set('dust.whitespace', false);
+    page(name, schema).keepWhitespace.should.be.true;
+  
+    done();
+  });
+  
+  it('should handle missing page config `keepWhitespace` and global config `dust.whitespace`', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    delete schema.page.keepWhitespace;
+    delete config.dust;
+  
+    page(name, schema).keepWhitespace.should.exist;
+  
     done();
   });
 
