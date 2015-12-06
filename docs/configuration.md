@@ -9,7 +9,8 @@
     },
     "server": {
         "host": "127.0.0.1",
-        "port": 3020
+        "port": 3020,
+        "socketTimeoutSec": 30
     },
     "api": {
         "host": "127.0.0.1",
@@ -88,6 +89,7 @@ allowJsonView           |  If true, allows ?json=true in the querystring to retu
 :---------------|:----------------------------|:---------------|:--------------
 host           |    |               | api.example.com       
 port           |    |               | 3000
+socketTimeoutSec           | The number of seconds to wait before closing an idle socket   |        30       | 10
 
 ###### Section: `api`
 
