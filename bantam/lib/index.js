@@ -6,7 +6,7 @@ var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
 var mkdirp = require('mkdirp');
-var serveStatic = require('serve-static')
+var serveStatic = require('serve-static');
 var serveFavicon = require('serve-favicon');
 var compress = require('compression');
 var toobusy = require('toobusy-js');
@@ -34,24 +34,26 @@ var Server = function () {
     this.monitors = {};
 
     this.log = log.get().child({module: 'server'});
-    this.log.info('Server logging started.')
+    this.log.info('Server logging started.');
 };
 
 Server.prototype.start = function (options, done) {
     var self = this;
 
     this.readyState = 2;
-    options || (options = {});
+    options = options || {};
 
     // create app
     var app = this.app = api();
 
     // override config
-    if (options.configPath)
+    if (options.configPath) {
       config.loadFile(options.configPath);
+    }
 
-    if (config.get('logging.sentry.enabled'))
+    if (config.get('logging.sentry.enabled')) {
       app.use(raven.middleware.express.requestHandler(config.get('logging.sentry.dsn')));
+    }
 
     // serve static files (css,js,fonts)
     try {
@@ -61,17 +63,23 @@ Server.prototype.start = function (options, done) {
       // file not found
     }
 
+    // add static paths
     app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
     app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
 
-    if (config.get('debug'))
+    // add debug files to static paths
+    if (config.get('debug')) {
       app.use(serveStatic(options.workspacePath + '/debug' || (__dirname + '/../../workspace/debug') , { 'index': false }));
+    }
 
+    // add parsers
     app.use(bodyParser.json());
     app.use(bodyParser.text());
 
-    if (config.get('headers.useGzipCompression'))
+    // add gzip compression
+    if (config.get('headers.useGzipCompression')) {
       app.use(compress());
+    }
 
     // request logging middleware
     app.use(log.requestLogger);
@@ -87,6 +95,20 @@ Server.prototype.start = function (options, done) {
 
     // start listening
     var server = this.server = app.listen(config.get('server.port'), config.get('server.host'));
+
+    server.on('connection', function(socket) {
+
+      server.getConnections(function(err, count) {
+        console.log('A new connection was made by a client. ' + count + ' connections now in use.');
+      });
+
+      // set a timeout for the client connection
+      socket.setTimeout(config.get('server.socketTimeoutSec') * 1000);
+      socket.on('timeout', function() {
+        console.log("Socket timed out, closing.");
+        socket.end();
+      });
+    });
 
     server.on('listening', function (e) {
 
@@ -132,7 +154,7 @@ Server.prototype.start = function (options, done) {
     var virtualDirs = config.get('virtualDirectories');
     _.each(virtualDirs, function (dir) {
       app.use(serveStatic(__dirname + '/../../' + dir.path , { 'index': dir.index, 'redirect': dir.forceTrailingSlash }));
-    })
+    });
 
     // dust configuration
     dust.isDebug = config.get('dust.debug');
@@ -146,7 +168,7 @@ Server.prototype.start = function (options, done) {
       server.close();
       toobusy.shutdown();
       self.log.info('Server stopped, process exiting.');
-      process.exit();
+      process.exit(0);
     });
 
     // this is all sync, so callback isn't really necessary.
@@ -155,7 +177,7 @@ Server.prototype.start = function (options, done) {
 
 function setCustomCacheControl(res, path) {
   _.each(config.get('headers.cacheControl'), function (value, key) {
-    if (serveStatic.mime.lookup(path) === key && value != '') {
+    if (serveStatic.mime.lookup(path) === key && value !== '') {
       res.setHeader('Cache-Control', value);
     }
   });
@@ -177,7 +199,7 @@ Server.prototype.stop = function (done) {
 };
 
 Server.prototype.loadApi = function (options) {
-    options || (options = {});
+    options = options || {};
 
     var self = this;
 
@@ -244,7 +266,7 @@ Server.prototype.initMiddleware = function (directoryPath, options) {
   _.each(middlewares, function(middleware) {
     middleware.init(this.app);
   }, this);
-}
+};
 
 Server.prototype.loadMiddleware = function (directoryPath, options) {
 
@@ -295,8 +317,10 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
 Server.prototype.addRoute = function (obj, options, reload) {
 
     // get the page schema
+    var schema;
+
     try {
-      var schema = require(obj.filepath);
+      schema = require(obj.filepath);
     }
     catch (err) {
       this.log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
@@ -420,7 +444,6 @@ Server.prototype.removeMonitor = function (filepath) {
 
 Server.prototype.dustCompile = function (options) {
 
-    var self = this;
     var pagePath = options.pagePath;
     var templatePath = options.pagePath;
     var partialPath = options.partialPath;
@@ -437,7 +460,8 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
-            self.log.info(message);
+            console.log(message);
+            throw e;
         }
     });
 
@@ -463,7 +487,8 @@ Server.prototype.dustCompile = function (options) {
             }
             catch (e) {
                 var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
-                self.log.info(message);
+                console.log(message);
+                throw e;
             }
         }
     });
@@ -480,7 +505,8 @@ Server.prototype.dustCompile = function (options) {
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
-            self.log.info(message);
+            console.log(message);
+            throw e;
         }
     });
 
@@ -496,7 +522,7 @@ Server.prototype.dustCompile = function (options) {
 
         callback(null, data);
       });
-    }
+    };
 };
 
 /**
@@ -562,8 +588,8 @@ function buildVerbMethod(verb) {
                     if (err) return next(err);
 
                     args[i](req, res, doCallbacks(++i));
-                }
-            }
+                };
+            };
 
             doCallbacks(0)();
         };

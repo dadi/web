@@ -7,7 +7,7 @@ var BearerAuthStrategy = function(options) {
   this.token = {};
 
   this.log = log.get().child({module: 'auth/bearer'});
-}
+};
 
 BearerAuthStrategy.prototype.getToken = function(datasource, done) {
 

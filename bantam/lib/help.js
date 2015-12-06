@@ -237,7 +237,7 @@ module.exports.getHeaders = function(datasource, done) {
 
 module.exports.keepAliveAgent = function() {
   return new http.Agent({ keepAlive: true });
-}
+};
 
 // function to wrap try - catch for JSON.parse to mitigate pref losses
 module.exports.parseQuery = function (queryStr) {
@@ -253,7 +253,7 @@ module.exports.parseQuery = function (queryStr) {
     // handle case where queryStr is "null" or some other malicious string
     if (typeof ret !== 'object' || ret === null) ret = {};
     return ret;
-}
+};
 
 // creates a new function in the underscore.js namespace
 // allowing us to pluck multiple properties - used to return only the
