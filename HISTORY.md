@@ -1,3 +1,12 @@
+0.1.7 / 2015-12-06
+===================
+* Config:
+  - Add config option for socket timeout, defaults to 30 seconds
+
+* Keepalive header added to Serama data & auth requests
+
+
+
 0.1.7 / 2015-11-26
 ===================
 
