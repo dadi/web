@@ -54,7 +54,7 @@
     },
     "redis": {
       "enabled": false,
-      "host": "",
+      "host": "empire.qvhlji.ng.0001.euw1.cache.amazonaws.com",
       "port": 6379
     }
   },
