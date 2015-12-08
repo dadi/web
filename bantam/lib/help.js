@@ -150,7 +150,6 @@ module.exports.getData = function(datasource, done) {
 
     this.log = log.get().child({module: 'helper'});
 
-    // TODO allow non-Serama endpoints
     var datasourceCache = new DatasourceCache(datasource);
 
     var self = this;
@@ -192,15 +191,19 @@ module.exports.getData = function(datasource, done) {
 
               res.on('end', function() {
 
-                // if response is not 200 don't cache
-                if (res.statusCode === 200) datasourceCache.cacheResponse(output);
-
                 if (res.statusCode >= 400) {
                     var err = new Error();
                     err.statusCode = res.statusCode;
                     err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
 
                     self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                }
+
+                // only cache ds response if 200
+                if (res.statusCode === 200) {
+                  datasourceCache.cacheResponse(output, function() {
+                    //
+                  });
                 }
 
                 return done(null, output);

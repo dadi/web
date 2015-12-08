@@ -84,7 +84,7 @@ describe('Cache', function (done) {
     var req = {
       paths: ['/fakeUrl'],
       url: 'http://www.example.com/fakeUrl'
-    }
+    };
 
     cache(server.object).cachingEnabled(req).should.eql(false);
 
@@ -110,7 +110,7 @@ describe('Cache', function (done) {
     var req = {
       paths: ['/actualUrl'],
       url: 'http://www.example.com/actualUrl'
-    }
+    };
 
     cache(server.object).cachingEnabled(req).should.eql(true);
 
@@ -136,7 +136,7 @@ describe('Cache', function (done) {
     var req = {
       paths: ['/actualUrl'],
       url: 'http://www.example.com/actualUrl'
-    }
+    };
 
     cache(server.object).cachingEnabled(req).should.eql(false);
 
@@ -162,7 +162,7 @@ describe('Cache', function (done) {
     var req = {
       paths: ['/actualUrl'],
       url: 'http://www.example.com/actualUrl?json=true'
-    }
+    };
 
     cache(server.object).cachingEnabled(req).should.eql(false);
 
@@ -188,7 +188,7 @@ describe('Cache', function (done) {
     var req = {
       paths: ['/actualUrl'],
       url: 'http://www.example.com/actualUrl?json=false'
-    }
+    };
 
     cache(server.object).cachingEnabled(req).should.eql(true);
 
@@ -214,7 +214,7 @@ describe('Cache', function (done) {
     var req = {
       paths: ['/actualUrl'],
       url: 'http://www.example.com/actualUrl'
-    }
+    };
 
     cache(server.object).cachingEnabled(req).should.eql(false);
 
