@@ -341,32 +341,37 @@ describe('Page', function (done) {
   it('should apply global config `dust.whitespace` as a fallback when no `page.keepWhitespace` is available', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    delete schema.page.keepWhitespace;
+    if (schema.settings.hasOwnProperty('keepWhitespace')) delete schema.settings.keepWhitespace;
     config.set('dust.whitespace', true);
-  
-    page(name, schema).keepWhitespace.should.be.true;
-  
+
+    page(name, schema).keepWhitespace.should.eql(true);
+
     done();
   });
-  
+
   it('should prioritise page config `keepWhitespace` param over global config `dust.whitespace`', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    schema.page.keepWhitespace = true;
+    schema.settings.keepWhitespace = true;
     config.set('dust.whitespace', false);
-    page(name, schema).keepWhitespace.should.be.true;
-  
+    page(name, schema).keepWhitespace.should.eql(true);
+
     done();
   });
-  
+
   it('should handle missing page config `keepWhitespace` and global config `dust.whitespace`', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    delete schema.page.keepWhitespace;
-    delete config.dust;
-  
-    page(name, schema).keepWhitespace.should.exist;
-  
+    if (schema.settings.hasOwnProperty('keepWhitespace')) delete schema.settings.keepWhitespace;
+
+    var configStub = sinon.stub(config, 'get');
+    configStub.withArgs('dust').returns({ cache: true, debug: false, debugLevel: 'INFO'});
+
+    var p = page(name, schema);
+    p.keepWhitespace.should.eql(true);
+
+    configStub.restore();
+
     done();
   });
 
