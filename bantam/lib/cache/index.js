@@ -16,7 +16,7 @@ var help = require(__dirname + '/../help');
 var Cache = function(server) {
 
     this.log = log.get().child({module: 'cache'});
-    this.log.info('Cache logging started.')
+    this.log.info('Cache logging started.');
 
     this.server = server;
     this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled');
@@ -41,10 +41,16 @@ var Cache = function(server) {
             this.log.error(err);
         });
     }
-}
+};
 
-module.exports = function (server) {
-    return new Cache(server);
+var instance;
+module.exports = function(server) {
+  //console.log(server);
+  //console.log(instance);
+  if (!instance) {
+    instance = new Cache(server);
+  }
+  return instance;
 };
 
 Cache.prototype.cachingEnabled = function(req) {
@@ -75,11 +81,11 @@ Cache.prototype.cachingEnabled = function(req) {
     }
 
     return (this.enabled && (this.options.cache || false));
-}
+};
 
 Cache.prototype.initialiseRedisClient = function() {
     return redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
-}
+};
 
 Cache.prototype.init = function() {
 
@@ -256,4 +262,9 @@ Cache.prototype.init = function() {
             return next();
         }
     });
+};
+
+// reset method for unit tests
+module.exports.reset = function() {
+  instance = null;
 };
