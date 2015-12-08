@@ -65,32 +65,49 @@ DatasourceCache.prototype.getFromCache = function (done) {
 
   if (self.cache.redisClient) {
     self.cache.redisClient.exists(self.filename, function (err, exists) {
+
       if (exists > 0) {
         readStream = redisRStream(self.cache.redisClient, self.filename);
+
+        if (!readStream) {
+          return done(false);
+        }
+
+        readStream.on('error', function (err) {
+          return done(false);
+        });
+
+        readStream.on('data', function (chunk) {
+          if (chunk) data += chunk;
+        });
+
+        readStream.on('end', function () {
+          self.cache.log.info('Serving datasource from Redis');
+
+          return done(data);
+        });
+      }
+      else {
+        return done(false);
       }
     });
   }
   else {
     readStream = fs.createReadStream(self.cachepath, {encoding: self.encoding});
-  }
 
-  if (!readStream) {
-    return done(false);
-  }
-
-  readStream.on('error', function (err) {
-    return done(false);
-  });
-
-  readStream.on('data', function (chunk) {
-    if (chunk) data += chunk;
-  });
-
-  readStream.on('end', function () {
-    if (self.cache.redisClient) {
-      self.cache.log.info('Serving datasource from Redis');
+    if (!readStream) {
+      return done(false);
     }
-    else {
+
+    readStream.on('error', function (err) {
+      return done(false);
+    });
+
+    readStream.on('data', function (chunk) {
+      if (chunk) data += chunk;
+    });
+
+    readStream.on('end', function () {
       // check if ttl has elapsed
       var stats = fs.statSync(self.cachepath);
       var ttl = self.options.ttl || config.get('caching.ttl');
@@ -100,11 +117,11 @@ DatasourceCache.prototype.getFromCache = function (done) {
       }
 
       self.cache.log.info('Serving datasource from cache file (' + self.cachepath + ')');
-    }
 
-    return done(data);
-  });
+      return done(data);
+    });
 
+  }
 };
 
 DatasourceCache.prototype.cacheResponse = function(data, done) {
