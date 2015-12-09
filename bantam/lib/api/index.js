@@ -18,6 +18,7 @@ var Api = function () {
 
     this.log = log.get().child({module: 'api'});
 
+    // Sentry error handler
     if (config.get('logging.sentry.enabled')) {
       this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')));
     }
@@ -84,9 +85,9 @@ Api.prototype.unuse = function (path) {
         // indx = this.all.indexOf(path);
         // return !!~indx && this.all.splice(indx, 1);
     }
-    var path = _.findWhere(this.paths, { path: path });
-    this.paths = _.without(this.paths, path);
-}
+    var existing = _.findWhere(this.paths, { path: path });
+    this.paths = _.without(this.paths, existing);
+};
 
 /**
  *  convenience method that creates http server and attaches listener
@@ -109,8 +110,6 @@ Api.prototype.listen = function (port, host, backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
-
-    var self = this;
 
     // clone the middleware stack
     var stack = this.all.slice(0);
@@ -135,9 +134,8 @@ Api.prototype.listener = function (req, res) {
             try {
               stack[i](req, res, doStack(++i));
             }
-            catch (err) {
-              self.log.error(err);
-              return errStack(0)(err);
+            catch (e) {
+              return errStack(0)(e);
             }
         };
     };
@@ -204,18 +202,30 @@ module.exports.Api = Api;
 function onError(api) {
   return function (err, req, res, next) {
 
-    if (config.get('env') === 'development') console.log(err);
+    if (config.get('env') === 'development') {
+      console.log();
+      console.log(err.stack.toString());
+    }
 
     api.log.error(err);
 
-    var body = 'Uh oh. Something went wrong. The development team have been notified.';
-    if (res.sentry) body += ' For reference, the error number associated with this error is ' + res.sentry;
+    var message = "<html><head><title>DADI Web - 500 Internal Server Error</title></head>";
+    message += "<body>";
+    message += "<h1>Internal Server Error</h1>";
+    message += "<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>";
 
-    // The error id is attached to `res.sentry` to be returned
-    // and optionally displayed to the user for support.
+    // The error id is attached to `res.sentry` to be returned and optionally displayed to the user for support.
+    if (res.sentry) message += "<p>This error has been logged and the development team notified. The unique ID associated with this error is <b>" + res.sentry + "</b>.</p>";
+
+    message += "<blockquote>";
+    message += "<pre>" + err.stack.toString(); + "</pre>";
+    message += "</blockquote>";
+    message += "</body></html>";
+
     res.statusCode = 500;
-    res.end(body);
-  }
+    res.setHeader('Content-Type', 'text/html');
+    res.end(message);
+  };
 }
 
 // return a 404
@@ -236,7 +246,7 @@ function notFound(api, req, res) {
         else {
             res.end("404: Ain't nothing here but you and me.");
         }
-    }
+    };
 }
 
 function routePriority(path, keys) {
