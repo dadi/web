@@ -84,11 +84,13 @@ Server.prototype.start = function (options, done) {
     // request logging middleware
     app.use(log.requestLogger);
 
-    // caching layer
-    cache(self).init();
+    if (config.get('api.enabled')) {
+      // caching layer
+      cache(self).init();
 
-    // authentication layer
-    auth(self);
+      // authentication layer
+      auth(self);
+    }
 
     // handle routing & redirects
     router(self, options);

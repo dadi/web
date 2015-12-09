@@ -20,10 +20,12 @@ var DatasourceCache = function (datasource) {
   this.enabled = this.cache.enabled;
   this.options = this.datasource.schema.datasource.caching || {};
 
-  // we build the filename with a hashed hex string so we can be unique
-  // and avoid using file system reserved characters in the name
-  this.filename = crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
-  this.cachepath = path.join(this.options.directory, this.filename + '.' + this.options.extension);
+  if (this.datasource.source.type !== 'static') {
+    // we build the filename with a hashed hex string so we can be unique
+    // and avoid using file system reserved characters in the name
+    this.filename = crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
+    this.cachepath = path.join(this.options.directory, this.filename + '.' + this.options.extension);
+  }
 
   var self = this;
 
