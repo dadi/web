@@ -41,6 +41,11 @@ var conf = convict({
       doc: "port to bind",
       format: 'port',
       default: 8080
+    },
+    enabled: {
+      doc: "Determines whether this web instance requires access to an API",
+      format: Boolean,
+      default: true
     }
   },
   auth: {
