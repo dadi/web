@@ -21,6 +21,7 @@ var Cache = function(server) {
     this.server = server;
     this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled');
     this.dir = config.get('caching.directory.path');
+    this.extension = config.get('caching.directory.extension');
     this.redisClient = null;
     this.encoding = 'utf8';
     this.options = {};

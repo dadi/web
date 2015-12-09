@@ -6,6 +6,7 @@ var redis = require('redis');
 var redisRStream = require('redis-rstream');
 var redisWStream = require('redis-wstream');
 var Readable = require('stream').Readable;
+var s = require('underscore.string');
 
 var cache = require(__dirname + '/index.js');
 var config = require(__dirname + '/../../../config.js');
@@ -17,15 +18,16 @@ var DatasourceCache = function (datasource) {
   this.datasource = datasource;
 
   this.cache = cache();
-  this.enabled = this.cache.enabled;
   this.options = this.datasource.schema.datasource.caching || {};
 
-  if (this.datasource.source.type !== 'static') {
-    // we build the filename with a hashed hex string so we can be unique
-    // and avoid using file system reserved characters in the name
-    this.filename = crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
-    this.cachepath = path.join(this.options.directory, this.filename + '.' + this.options.extension);
-  }
+  // enabled if main cache module is enabled and this is not a static datasource
+  this.enabled = this.cache.enabled && this.datasource.source.type !== 'static';
+
+  // we build the filename with a hashed hex string so we can be unique
+  // and avoid using file system reserved characters in the name
+  this.filename = crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
+
+  this.setCachePath();
 
   var self = this;
 
@@ -36,23 +38,32 @@ var DatasourceCache = function (datasource) {
   }
 };
 
+DatasourceCache.prototype.setCachePath = function() {
+  var cachePath = '.';
+
+  if (!s.isBlank(this.options.directory) && !s.isBlank(this.options.extension)) {
+    cachePath = path.join(this.options.directory, this.filename + '.' + this.options.extension);
+  }
+  else {
+    cachePath = path.join(this.cache.dir, this.filename + '.' + this.cache.extension);
+  }
+
+  this.cachepath = cachePath;
+};
+
 DatasourceCache.prototype.cachingEnabled = function() {
 
-  if (this.datasource.source.type === 'static') {
-    return false;
-  }
+  var enabled = this.enabled || false;
 
-  var enabled = this.enabled;
+  if (!this.cachepath) enabled = false;
 
-  if (typeof enabled === 'undefined') {
-    return false;
-  }
-
+  // check the querystring for a no cache param
   var query = url.parse(this.datasource.endpoint, true).query;
   if (query.hasOwnProperty('cache') && query.cache === 'false' || config.get('debug')) {
     enabled = false;
   }
 
+  // enabled if the datasource caching block says it's enabled
   return enabled && this.options.enabled;
 };
 
