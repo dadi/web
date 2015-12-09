@@ -98,61 +98,9 @@ Server.prototype.start = function (options, done) {
     // start listening
     var server = this.server = app.listen(config.get('server.port'), config.get('server.host'));
 
-    server.on('connection', function(socket) {
-
-      server.getConnections(function(err, count) {
-        console.log('A new connection was made by a client. ' + count + ' connections now in use.');
-      });
-
-      // set a timeout for the client connection
-      socket.setTimeout(config.get('server.socketTimeoutSec') * 1000);
-      socket.on('timeout', function() {
-        console.log("Socket timed out, closing.");
-        socket.end();
-      });
-    });
-
-    server.on('listening', function (e) {
-
-      // check that our API connection is valid
-      help.isApiAvailable(function(err, result) {
-        if (err) {
-          console.log(err);
-          console.log();
-          process.exit(0);
-        }
-
-        var env = config.get('env');
-        var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
-        var seramaMessage = "";
-
-        if (config.get('api.enabled') === true) {
-          seramaMessage += "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
-        }
-
-        console.log("\n" + rosecombMessage.bold.white);
-        console.log(seramaMessage.bold.blue + "\n");
-
-        if (env === 'production') {
-          self.log.info(rosecombMessage);
-          self.log.info(seramaMessage);
-        }
-
-      });
-
-    });
-
-    server.on('error', function (err) {
-      if (err.code == 'EADDRINUSE') {
-        var message =  'Can\'t connect to local address, is something already listening on port ' + config.get('server.port') + '?';
-        err.localIp = config.get('server.host');
-        err.localPort = config.get('server.port');
-        err.message = message;
-        console.log(err);
-        console.log();
-        process.exit(0);
-      }
-    });
+    server.on('connection', onConnection);
+    server.on('listening', onListening);
+    server.on('error', onError);
 
     // load app specific routes
     this.loadApi(options);
@@ -608,4 +556,53 @@ function buildVerbMethod(verb) {
         // if no route is provided, call this for all requests
         this.app.use(handler);
     };
+}
+
+function onConnection(socket) {
+  // set a timeout for the client connection
+  socket.setTimeout(config.get('server.socketTimeoutSec') * 1000);
+  socket.on('timeout', function() {
+    socket.end();
+  });
+}
+
+function onListening(e) {
+
+  // check that our API connection is valid
+  help.isApiAvailable(function(err, result) {
+    if (err) {
+      console.log(err);
+      console.log();
+      process.exit(0);
+    }
+
+    var env = config.get('env');
+
+    var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+    var seramaMessage = "";
+
+    if (config.get('api.enabled') === true) {
+      seramaMessage += "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
+    }
+
+    console.log("\n" + rosecombMessage.bold.white);
+    console.log(seramaMessage.bold.blue + "\n");
+
+    if (env === 'production') {
+      self.log.info(rosecombMessage);
+      self.log.info(seramaMessage);
+    }
+  });
+}
+
+function onError(err) {
+  if (err.code == 'EADDRINUSE') {
+    var message =  'Can\'t connect to local address, is something already listening on port ' + config.get('server.port') + '?';
+    err.localIp = config.get('server.host');
+    err.localPort = config.get('server.port');
+    err.message = message;
+    console.log(err);
+    console.log();
+    process.exit(0);
+  }
 }

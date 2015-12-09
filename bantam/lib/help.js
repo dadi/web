@@ -197,11 +197,13 @@ module.exports.getData = function(datasource, done) {
               res.on('end', function() {
 
                 if (res.statusCode >= 400) {
-                    var err = new Error();
-                    err.statusCode = res.statusCode;
-                    err.json = { "error" : res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint };
+                  var err = new Error();
+                  err.message = 'Datasource "' + datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + datasource.endpoint;
+                  err.remoteIp = options.host;
+                  err.remotePort = options.port;
 
-                    self.log.info(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                  self.log.error(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                  return done(err);
                 }
 
                 // only cache ds response if 200
