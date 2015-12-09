@@ -52,6 +52,11 @@ module.exports.timer = {
 }
 
 module.exports.isApiAvailable = function(done) {
+
+  if (config.get('api.enabled') === false) {
+    return done(null, true);
+  }
+
   var options = {
     host: config.get('api.host'),
     port: config.get('api.port'),
