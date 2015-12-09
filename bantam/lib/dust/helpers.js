@@ -8,12 +8,23 @@ var html_strip = require('htmlstrip-native');
 
 /*
 * Returns the supplied 'data' parameter truncated using the supplied 'length' parameter
-* Usage: {@Truncate data="{body}" length="250"/}
+* Usage: {@Truncate data="{body}" length="250" ellipsis="true"/}
 */
 dust.helpers.Truncate = function(chunk, context, bodies, params) {
     var data   = context.resolve(params.data),
-        length = context.resolve(params.length);
-    return chunk.write(data.substr(0, length));
+        length = context.resolve(params.length),
+        ellipsis = context.resolve(params.ellipsis);
+    var str;
+    if (ellipsis === 'true' && data.length > length) {
+        str = data.substr(0, length);
+        if(data) {
+            str = str.replace(/[\W]*$/, '&hellip;');
+        }
+    }
+    else {
+        str = data.substr(0, length);
+    }
+    return chunk.write(str);
 }
 
 /*
@@ -32,6 +43,7 @@ dust.helpers.Trim = function(chunk, context, bodies, params) {
 */
 dust.helpers.formatDate = function(chunk, context, bodies, params) {
     var format = context.resolve(params.format);
+    var parseFormat = context.resolve(params.parseFormat);
 
     if (params.unix_sec) {
         var unix_sec = context.resolve(params.unix_sec);
@@ -43,7 +55,7 @@ dust.helpers.formatDate = function(chunk, context, bodies, params) {
     }
     else {
         var data = context.resolve(params.data);
-        return chunk.write(moment(data, format).format(format));
+        return chunk.write(moment(data, parseFormat || format).format(format));
     }
 }
 

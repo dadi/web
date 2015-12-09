@@ -8,7 +8,7 @@ var help = require(__dirname + '/help');
 describe('Dust Helpers', function (done) {
 
   // @Truncate
-  it('should truncate specified data with the specified length', function (done) {
+  it('truncate: should truncate specified data with the specified length', function (done) {
 
     var source = "{@Truncate data=\"plain text\" length=\"5\"/}";
     var expected = "plain";
@@ -20,9 +20,35 @@ describe('Dust Helpers', function (done) {
     });
   });
 
+  // @Truncate
+  it('truncate: should truncate specified data with the specified length and add ellipsis', function (done) {
+
+    var source = "{@Truncate data=\"plain text\" length=\"5\" ellipsis=\"true\"/}";
+    var expected = "plain&hellip;";
+
+    dust.renderSource(source, {}, function (err, out) {
+      if (err) done(err);
+      out.should.eql(expected);
+      done();
+    });
+  });
+
+  // @Truncate
+  it('truncate: should truncate specified data with the specified length and add ellipsis false', function (done) {
+
+    var source = "{@Truncate data=\"plain text\" length=\"5\" ellipsis=\"false\"/}";
+    var expected = "plain";
+
+    dust.renderSource(source, {}, function (err, out) {
+      if (err) done(err);
+      out.should.eql(expected);
+      done();
+    });
+  });
+
   // @Trim
   // Usage: {@Trim data="{body}"/}
-  it('should trim whitespace from specified data', function (done) {
+  it('trim: should trim whitespace from specified data', function (done) {
 
     var source = "{@Trim data=\"plain text    \"/}";
     var expected = "plain text";
@@ -36,7 +62,7 @@ describe('Dust Helpers', function (done) {
 
   // @formatDate
   // Usage: {@formatDate data="{body}" [unix="{lastModifiedAt}"] format="YYYY-MM-DDTh:mm:ss+01:00"/}
-  // it('should format specified data as date', function (done) {
+  it('formatDate: should format specified data as date');//, function (done) {
   //
   //   var source = "{@formatDate data=\"{body}\" unix=\"{lastModifiedAt}\" format=\"YYYY-MM-DDTh:mm:ss+01:00\"/}";
   //   var expected = "plain text";
@@ -49,7 +75,7 @@ describe('Dust Helpers', function (done) {
   // });
 
   // @markdown
-  it('should format markdown as html', function (done) {
+  it('markdown: should format as html', function (done) {
 
     var source = "Here is a paragraph"
     var tmpl = "{@markdown}" + source + "{/markdown}";
@@ -63,7 +89,7 @@ describe('Dust Helpers', function (done) {
   });
 
   // @soberMarkdown
-  it('should format markdown as html without <p> wrappers', function (done) {
+  it('markdown: should format as html without <p> wrappers', function (done) {
 
     var source = "Here is a paragraph"
     var tmpl = "{@soberMarkdown}" + source + "{/soberMarkdown}";
@@ -78,7 +104,7 @@ describe('Dust Helpers', function (done) {
 
   // @forceRender
   //* Usage: {@forceRender str="{body}" value="{vartoreplace}" /}
-  it('should format markdown as html without <p> wrappers', function (done) {
+  it('forceRender: should evaluate passed parameters', function (done) {
 
     var body = "Hello World, I mean {...}";
     var tmpl = "{@forceRender str=\"" + body + "\" value=\"" + "{person}" + "\"/}";
@@ -94,7 +120,7 @@ describe('Dust Helpers', function (done) {
   });
 
   // @htmlstrip
-  it('should remove html from content', function (done) {
+  it('htmlstrip: should remove html from content', function (done) {
 
     var tmpl = "{@htmlstrip}<p>Hello</p>{/htmlstrip}";
 
@@ -189,7 +215,7 @@ describe('Dust Helpers', function (done) {
   });
 
   // @numberCommas
-  it('should format number with commas', function (done) {
+  it('numberCommas: should format number with commas', function (done) {
 
     var tmpl = "{@numberCommas}1024{/numberCommas}";
 
@@ -273,7 +299,7 @@ describe('Dust Helpers', function (done) {
 
   // @slugify
   // {@slugify}{title}{/slugify}
-  it('should slugify data', function (done) {
+  it('slugify: should slugify data', function (done) {
 
     var body = "Hello World";
     var tmpl = "{@slugify}" + body + "{/slugify}";
