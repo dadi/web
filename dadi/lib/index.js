@@ -159,13 +159,13 @@ function loadPaths(paths) {
 
   var options = {};
 
-  options.workspacePath = path.resolve(paths.workspace || __dirname + '/../../workspace');
   options.datasourcePath = path.resolve(paths.datasources || __dirname + '/../../workspace/datasources');
   options.eventPath = path.resolve(paths.events || __dirname + '/../../workspace/events');
   options.pagePath = path.resolve(paths.pages || __dirname + '/../../workspace/pages');
   options.partialPath = path.resolve(paths.partials || __dirname + '/../../workspace/partials');
   options.routesPath = path.resolve(paths.routes || __dirname + '/../../workspace/routes');
   options.middlewarePath = path.resolve(paths.middleware || __dirname + '/../../workspace/middleware');
+
   if (paths.media) options.mediaPath = path.resolve(paths.media);
   if (paths.public) options.publicPath = path.resolve(paths.public);
 
