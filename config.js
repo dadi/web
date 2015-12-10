@@ -6,44 +6,44 @@ var conf = convict({
     name: {
       doc: "The applicaton name",
       format: String,
-      default: "Rosecomb (Repo Default)"
+      default: "DADI Web (Repo Default)"
     }
   },
 	server: {
     host: {
-      doc: "Rosecomb IP address",
+      doc: "The IP address the web application will run on",
       format: '*',
       default: '0.0.0.0'
     },
     port: {
-      doc: "port to bind",
+      doc: "The port the web application will bind to",
       format: 'port',
       default: 8080
     },
     name: {
       doc: "The server name.",
       format: String,
-      default: "Bantam (Rosecomb)"
+      default: "DADI (Web)"
     },
     socketTimeoutSec: {
-      doc: "The number of seconds to wait before closing an idle socket.",
+      doc: "The number of seconds to wait before closing an idle socket",
       format: Number,
-      default: 30
+      default: 120
     }
   },
 	api: {
     host: {
-      doc: "Serama IP address",
+      doc: "The IP address the DADI API application runs on",
       format: '*',
       default: '0.0.0.0'
     },
     port: {
-      doc: "port to bind",
+      doc: "The port for the DADI API application",
       format: 'port',
       default: 8080
     },
     enabled: {
-      doc: "Determines whether this web instance requires access to an API",
+      doc: "Determines whether this web instance requires access to the API",
       format: Boolean,
       default: true
     }
@@ -57,7 +57,7 @@ var conf = convict({
     clientId: {
       doc: "",
       format: String,
-      default: "rosecombClient"
+      default: "testClient"
     },
     secret: {
       doc: "",
@@ -90,34 +90,34 @@ var conf = convict({
     },
     directory: {
       enabled: {
-        doc: "",
+        doc: "If enabled, cache files will be saved to the filesystem",
         format: Boolean,
         default: true
       },
       path: {
-        doc: "",
+        doc: "The relative path to the cache directory",
         format: String,
-        default: "./cache/rosecomb"
+        default: "./cache/web"
       },
       extension: {
-        doc: "",
+        doc: "The extension to use for cache files",
         format: String,
         default: "html"
       }
     },
     redis: {
       enabled: {
-        doc: "",
+        doc: "If enabled, cache files will be saved to the specified Redis server",
         format: Boolean,
         default: false
       },
       host: {
-        doc: "",
+        doc: "The Redis server host",
         format: String,
         default: "tresting.qvhlji.ng.0001.euw1.cache.amazonaws.com"
       },
       port: {
-        doc: "port to bind",
+        doc: "The port for the Redis server",
         format: 'port',
         default: 6379
       },
@@ -180,7 +180,7 @@ var conf = convict({
     filename: {
       doc: "The name to use for the log file, without extension.",
       format: String,
-      default: "rosecomb"
+      default: "web"
     },
     extension: {
       doc: "The extension to use for the log file.",
@@ -189,7 +189,7 @@ var conf = convict({
     },
     accessLog: {
       enabled: {
-        doc: "If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `rosecomb.access.log`.",
+        doc: "If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`.",
         format: Boolean,
         default: true
       },
