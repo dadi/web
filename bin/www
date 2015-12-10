@@ -1,0 +1,1 @@
+var app = require(__dirname + '/../index.js').start();
