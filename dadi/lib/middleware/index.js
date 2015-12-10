@@ -6,7 +6,7 @@ var log = require(__dirname + '/../log');
 var Middleware = function (name, options) {
 
   this.log = log.get().child({module: 'middleware (' + name + ')'});
-  this.log.info('Middlware logging started (' + name + ').');
+  this.log.info('Middleware logging started (' + name + ').');
 
   this.name = name;
   this.options = options || {};
