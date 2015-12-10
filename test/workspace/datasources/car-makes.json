@@ -12,7 +12,7 @@
         "caching": {
             "enabled": false,
             "ttl": 50,
-            "directory": "./cache/rosecomb/",
+            "directory": "./cache/web/",
             "extension": "json"
         },
         "auth": {
@@ -21,7 +21,7 @@
             "port": "3000",
             "tokenUrl": "/token",
             "credentials": {
-                "clientId": "rosecombClient",
+                "clientId": "testClient",
                 "secret": "superSecret"
             }
         },
