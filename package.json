@@ -1,6 +1,6 @@
 {
   "name": "dadi-web",
-  "version": "0.2.0-beta",
+  "version": "0.2.1-beta",
   "description": "Web frontend and template layer for the DADI API",
   "main": "bin/www",
   "scripts": {
