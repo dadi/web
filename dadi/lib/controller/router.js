@@ -110,7 +110,7 @@ Router.prototype.constrain = function(route, constraint) {
     this.log.info(message, constraint, route);
   }
   else {
-    this.log.error("Route constraint '" + constraint + "' not found. Is it defined in '/workspace/routes/constraints.js' or '/workspace/data-sources/'?");
+    this.log.error("Route constraint '" + constraint + "' not found. Is it defined in '/workspace/routes/constraints.js' or '/workspace/datasources/'?");
   }
 
   return;
@@ -232,9 +232,8 @@ module.exports = function (server, options) {
       var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
 
         if (err) {
-          //self.log.error(err);
           console.log(err);
-          return next();
+          throw(err);
         }
 
         _.extend(ds.schema.datasource.filter, { "rule": req.url });

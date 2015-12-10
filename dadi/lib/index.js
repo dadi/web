@@ -37,11 +37,12 @@ var Server = function () {
     this.log.info('Server logging started.');
 };
 
-Server.prototype.start = function (options, done) {
+Server.prototype.start = function (done) {
     var self = this;
 
     this.readyState = 2;
-    options = options || {};
+
+    var options = loadPaths(config.get('paths') || {});
 
     // create app
     var app = this.app = api();
@@ -56,16 +57,17 @@ Server.prototype.start = function (options, done) {
     }
 
     // serve static files (css,js,fonts)
-    try {
-      app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
-    }
-    catch (err) {
-      // file not found
-    }
+    if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }));
 
-    // add static paths
-    app.use(serveStatic(options.mediaPath || 'media', { 'index': false }));
-    app.use(serveStatic(options.publicPath || 'public' , { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
+    if (options.publicPath) {
+      app.use(serveStatic(options.publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }));
+      try {
+        app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'));
+      }
+      catch (err) {
+        // file not found
+      }
+    }
 
     // add debug files to static paths
     if (config.get('debug')) {
@@ -119,10 +121,11 @@ Server.prototype.start = function (options, done) {
     this.readyState = 1;
 
     process.on('SIGINT', function() {
-      server.close();
-      toobusy.shutdown();
-      self.log.info('Server stopped, process exiting.');
-      process.exit(0);
+      self.stop(function() {
+        toobusy.shutdown();
+        self.log.info('Server stopped, process exiting.');
+        process.exit(0);
+      });
     });
 
     // this is all sync, so callback isn't really necessary.
@@ -152,56 +155,72 @@ Server.prototype.stop = function (done) {
     });
 };
 
+function loadPaths(paths) {
+
+  var options = {};
+
+  options.workspacePath = path.resolve(paths.workspace || __dirname + '/../../workspace');
+  options.datasourcePath = path.resolve(paths.datasources || __dirname + '/../../workspace/datasources');
+  options.eventPath = path.resolve(paths.events || __dirname + '/../../workspace/events');
+  options.pagePath = path.resolve(paths.pages || __dirname + '/../../workspace/pages');
+  options.partialPath = path.resolve(paths.partials || __dirname + '/../../workspace/partials');
+  options.routesPath = path.resolve(paths.routes || __dirname + '/../../workspace/routes');
+  options.middlewarePath = path.resolve(paths.middleware || __dirname + '/../../workspace/middleware');
+  if (paths.media) options.mediaPath = path.resolve(paths.media);
+  if (paths.public) options.publicPath = path.resolve(paths.public);
+
+  _.each(options, function(path) {
+    fs.stat(path, function(err, stats) {
+      if (err) {
+        if (err.code === 'ENOENT') {
+          console.log('Path "' + path + '" could not be found. Ensure paths are configured correctly in "./config/config.' + config.get('env') + '.json".\n');
+          console.log(JSON.stringify(paths, null, 2));
+          console.log();
+          process.exit(0);
+        }
+      }
+    });
+  });
+
+  return options;
+}
+
 Server.prototype.loadApi = function (options) {
-    options = options || {};
+
+    var paths = options;
+    options = {};
 
     var self = this;
-
-    var workspacePath = this.workspacePath = options.workspacePath || __dirname + '/../../workspace';
-    var datasourcePath = this.datasourcePath = options.datasourcePath || __dirname + '/../../workspace/data-sources';
-    var pagePath = this.pagePath = options.pagePath || __dirname + '/../../workspace/pages';
-    var partialPath = this.partialPath = options.partialPath || __dirname + '/../../workspace/partials';
-    var eventPath = this.eventPath = options.eventPath || __dirname + '/../../workspace/events';
-    var routesPath = this.routesPath = options.routesPath || __dirname + '/../../workspace/routes';
-    var middlewarePath = this.middlewarePath = options.middlewarePath || __dirname + '/../../workspace/middleware';
-
-    options.datasourcePath = datasourcePath;
-    options.pagePath = pagePath;
-    options.partialPath = partialPath;
-    options.eventPath = eventPath;
-    options.routesPath = routesPath;
-    options.workspacePath = workspacePath;
-    options.middlewarePath = middlewarePath;
 
     self.ensureDirectories(options, function(text) {
 
         // load routes
-        self.updatePages(pagePath, options, false);
+        self.updatePages(options.pagePath, options, false);
 
         // Load middleware
-        self.initMiddleware(middlewarePath, options);
+        self.initMiddleware(options.middlewarePath, options);
 
         // compile all dust templates
         self.dustCompile(options);
 
-        self.addMonitor(datasourcePath, function (dsFile) {
-            self.updatePages(pagePath, options, true);
+        self.addMonitor(options.datasourcePath, function (dsFile) {
+            self.updatePages(options.pagePath, options, true);
         });
 
-        self.addMonitor(eventPath, function (eventFile) {
-            self.updatePages(pagePath, options, true);
+        self.addMonitor(options.eventPath, function (eventFile) {
+            self.updatePages(options.pagePath, options, true);
         });
 
-        self.addMonitor(pagePath, function (pageFile) {
-            self.updatePages(pagePath, options);
+        self.addMonitor(options.pagePath, function (pageFile) {
+            self.updatePages(options.pagePath, options);
             self.dustCompile(options);
         });
 
-        self.addMonitor(partialPath, function (partialFile) {
+        self.addMonitor(options.partialPath, function (partialFile) {
             self.dustCompile(options);
         });
 
-        self.addMonitor(routesPath, function (file) {
+        self.addMonitor(options.routesPath, function (file) {
             if (self.app.Router) {
                 self.app.Router.loadRewrites(options, function() {
                     self.app.Router.loadRewriteModule();
@@ -578,19 +597,19 @@ function onListening(e) {
 
     var env = config.get('env');
 
-    var rosecombMessage = "[BANTAM] Started Rosecomb '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
-    var seramaMessage = "";
+    var webMessage = "[DADI] Started web application '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+    var apiMessage = "";
 
     if (config.get('api.enabled') === true) {
-      seramaMessage += "[BANTAM] Attached to Serama API on " + config.get('api.host') + ":" + config.get('api.port');
+      apiMessage += "[DADI] Attached to DADI API on " + config.get('api.host') + ":" + config.get('api.port');
     }
 
-    console.log("\n" + rosecombMessage.bold.white);
-    console.log(seramaMessage.bold.blue + "\n");
+    console.log("\n" + webMessage.bold.white);
+    console.log(apiMessage.bold.blue + "\n");
 
     if (env === 'production') {
-      self.log.info(rosecombMessage);
-      self.log.info(seramaMessage);
+      self.log.info(webMessage);
+      self.log.info(apiMessage);
     }
   });
 }

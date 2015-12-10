@@ -26,7 +26,7 @@ mkdirp(path.resolve(options.path), {}, function(err, made) {
 });
 
 var log = bunyan.createLogger({
-    name: 'rosecomb',
+    name: 'dadi-web',
     serializers: bunyan.stdSerializers,
     streams: [
       //{ level: 'debug', stream: process.stdout },
@@ -38,7 +38,7 @@ var log = bunyan.createLogger({
 var accessLog;
 if (options.accessLog.enabled) {
   accessLog = bunyan.createLogger({
-      name: 'rosecomb_access',
+      name: 'access',
       serializers: bunyan.stdSerializers,
       streams: [
         {
@@ -62,7 +62,7 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream !== '') {
         secretAccessKey: awsConfig.secretAccessKey,
         region:          awsConfig.region,
         streamName:      options.accessLog.kinesisStream,
-        partitionKey:    'Rosecomb'
+        partitionKey:    'dadi-web'
       })
     }
   );
