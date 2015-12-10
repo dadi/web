@@ -4,11 +4,11 @@ var http = require("http");
 var url = require('url');
 var querystring = require('querystring');
 
-/* Sample Rosecomb includes */
+/* Sample DADI includes */
 var config = require(__dirname + '/../../config.js');
-var help = require(__dirname + '/../../bantam/lib/help');
+var help = require(__dirname + '/../../dadi/lib/help');
 
-// the `data` parameter contains the data already loaded by 
+// the `data` parameter contains the data already loaded by
 // the page's datasources and any previous events that have fired
 var Event = function (req, res, data, callback) {
 
@@ -17,7 +17,7 @@ var Event = function (req, res, data, callback) {
   data.params = JSON.stringify(url.parse(req.url,true).query);
   data.pathname = url.parse(req.url,true).pathname;
 
-  callback(data); 
+  callback(data);
 };
 
 module.exports = function (req, res, data, callback) {
