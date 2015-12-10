@@ -187,9 +187,6 @@ function loadPaths(paths) {
 
 Server.prototype.loadApi = function (options) {
 
-    var paths = options;
-    options = {};
-
     var self = this;
 
     self.ensureDirectories(options, function(text) {
