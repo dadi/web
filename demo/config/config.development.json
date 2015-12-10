@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Rosecomb Demo App"
+    "name": "DADI Web Demo App"
   },
   "server": {
       "host": "127.0.0.1",
@@ -18,14 +18,14 @@
   "logging": {
       "enabled": true,
       "path": "./log",
-      "filename": "rosecomb",
+      "filename": "web",
       "extension": "log"
   },
   "caching": {
       "ttl": 300,
       "directory": {
         "enabled": false,
-        "path": "./cache/rosecomb/",
+        "path": "./cache/web/",
         "extension": "html"
       }
   },
