@@ -7,14 +7,14 @@ var should = require('should');
 var sinon = require('sinon');
 var redis = require('redis');
 
-var api = require(__dirname + '/../../bantam/lib/api');
-var Server = require(__dirname + '/../../bantam/lib');
-var datasourceCache = require(__dirname + '/../../bantam/lib/cache/datasource');
-var datasource = require(__dirname + '/../../bantam/lib/datasource');
-var page = require(__dirname + '/../../bantam/lib/page');
+var api = require(__dirname + '/../../dadi/lib/api');
+var Server = require(__dirname + '/../../dadi/lib');
+var datasourceCache = require(__dirname + '/../../dadi/lib/cache/datasource');
+var datasource = require(__dirname + '/../../dadi/lib/datasource');
+var page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/help');
 var config = require(__dirname + '/../../config.js');
-var cache = require(__dirname + '/../../bantam/lib/cache');
+var cache = require(__dirname + '/../../dadi/lib/cache');
 
 describe('Datasource Cache', function (done) {
 

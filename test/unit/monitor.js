@@ -1,11 +1,11 @@
 var fs = require('fs');
 var path = require('path');
 var sinon = require('sinon');
-var api = require(__dirname + '/../../bantam/lib/api');
-var Server = require(__dirname + '/../../bantam/lib');
+var api = require(__dirname + '/../../dadi/lib/api');
+var Server = require(__dirname + '/../../dadi/lib');
 var should = require('should');
 var _ = require('underscore');
-var monitor = require(__dirname + '/../../bantam/lib/monitor');
+var monitor = require(__dirname + '/../../dadi/lib/monitor');
 var help = require(__dirname + '/help');
 
 describe('Monitor', function (done) {

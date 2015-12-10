@@ -1,10 +1,10 @@
 var should = require('should');
 var sinon = require('sinon');
-var api = require(__dirname + '/../../bantam/lib/api');
-var Server = require(__dirname + '/../../bantam/lib');
-var cache = require(__dirname + '/../../bantam/lib/cache');
-var datasource = require(__dirname + '/../../bantam/lib/datasource');
-var page = require(__dirname + '/../../bantam/lib/page');
+var api = require(__dirname + '/../../dadi/lib/api');
+var Server = require(__dirname + '/../../dadi/lib');
+var cache = require(__dirname + '/../../dadi/lib/cache');
+var datasource = require(__dirname + '/../../dadi/lib/datasource');
+var page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/help');
 var config = require(__dirname + '/../../config.js');
 

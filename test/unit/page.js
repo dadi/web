@@ -1,10 +1,10 @@
 var sinon = require('sinon');
-var api = require(__dirname + '/../../bantam/lib/api');
-var Server = require(__dirname + '/../../bantam/lib');
+var api = require(__dirname + '/../../dadi/lib/api');
+var Server = require(__dirname + '/../../dadi/lib');
 var should = require('should');
 var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
-var page = require(__dirname + '/../../bantam/lib/page');
+var page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/help');
 var config = require(__dirname + '/../../config.js');
 

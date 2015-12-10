@@ -1,8 +1,8 @@
 var path = require('path');
 var should = require('should');
 var sinon = require('sinon');
-var log = require(__dirname + '/../../bantam/lib/log');
-var e = require(__dirname + '/../../bantam/lib/event');
+var log = require(__dirname + '/../../dadi/lib/log');
+var e = require(__dirname + '/../../dadi/lib/event');
 var help = require(__dirname + '/help');
 
 describe('Event', function (done) {

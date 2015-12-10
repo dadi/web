@@ -1,8 +1,8 @@
 var should = require('should');
 var dust = require('dustjs-linkedin');
-var Server = require(__dirname + '/../../bantam/lib');
-var api = require(__dirname + '/../../bantam/lib/api');
-var page = require(__dirname + '/../../bantam/lib/page');
+var Server = require(__dirname + '/../../dadi/lib');
+var api = require(__dirname + '/../../dadi/lib/api');
+var page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/help');
 
 describe('Dust Helpers', function (done) {

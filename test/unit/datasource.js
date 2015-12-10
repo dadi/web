@@ -1,9 +1,9 @@
 var should = require('should');
 var sinon = require('sinon');
-var page = require(__dirname + '/../../bantam/lib/page');
-var datasource = require(__dirname + '/../../bantam/lib/datasource');
+var page = require(__dirname + '/../../dadi/lib/page');
+var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var help = require(__dirname + '/help');
-var log = require(__dirname + '/../../bantam/lib/log');
+var log = require(__dirname + '/../../dadi/lib/log');
 
 describe('Datasource', function (done) {
   it('should export constructor', function (done) {
