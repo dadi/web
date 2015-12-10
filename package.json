@@ -1,13 +1,13 @@
 {
-  "name": "rosecomb",
-  "version": "0.1.7-beta",
-  "description": "Template layer for the Serama API",
+  "name": "dadi-web",
+  "version": "0.2.0-beta",
+  "description": "Web frontend and template layer for the DADI API",
+  "main": "bin/www",
   "scripts": {
+    "start": "node ./bin/www",
     "test": "env NODE_ENV=test ./node_modules/.bin/istanbul cover --report cobertura --report text --report html --report lcov ./node_modules/.bin/_mocha test",
-    "posttest": "./scripts/coverage.js",
-    "start": "node bantam/main"
+    "posttest": "./scripts/coverage.js"
   },
-  "private": true,
   "dependencies": {
     "async": "^1.4.2",
     "aws-kinesis-writable": "^1.3.1",
@@ -17,7 +17,7 @@
     "colors": "latest",
     "common-dustjs-helpers": "^0.1.0",
     "compression": "^1.6.0",
-    "convict": "^1.0.1",
+    "convict": "1.0.1",
     "dustjs-helpers": "^1.7.3",
     "dustjs-linkedin": "^2.7.2",
     "etagify": "0.0.2",
@@ -66,5 +66,12 @@
   },
   "bugs": {
     "url": "https://github.com/bantam-framework/rosecomb/issues"
-  }
+  },
+  "homepage": "https://github.com/bantam-framework/rosecomb",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "author": "James Lambie <jameslambie@gmail.com>",
+  "license": "ISC"
 }
