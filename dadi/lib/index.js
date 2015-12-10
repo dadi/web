@@ -209,7 +209,7 @@ Server.prototype.loadApi = function (options) {
         });
 
         self.addMonitor(options.pagePath, function (pageFile) {
-            self.updatePages(options.pagePath, options);
+            self.updatePages(options.pagePath, options, true);
             self.dustCompile(options);
         });
 
@@ -420,6 +420,10 @@ Server.prototype.dustCompile = function (options) {
 
     var self = this;
 
+    // reset the dust cache so
+    // templates can be reloaded
+    dust.cache = {};
+
     _.each(self.components, function(component) {
         try {
             var filepath = path.join(templatePath, component.page.template);
@@ -447,7 +451,7 @@ Server.prototype.dustCompile = function (options) {
 
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
 
-            self.log.info("template %s (%s) not found in cache, loading source...", pageTemplateName, file);
+            self.log.info("Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
 
             var template =  fs.readFileSync(file, "utf8");
 
