@@ -26,7 +26,7 @@ Layouts
       },
       "route": "/car-reviews/:make/:model", // route configuration (optional)
       "template": "car-reviews.dust", // template filename (optional)
-      "datasources": [ // specifies attached data sources
+      "datasources": [ // specifies attached datasources
           "car-makes",
           "car-models"
       ],
@@ -41,7 +41,7 @@ https://www.npmjs.com/package/common-dustjs-helpers
 
 ##### Truncate
 
-Returns the supplied 'data' parameter truncated using the supplied 'length' parameter 
+Returns the supplied 'data' parameter truncated using the supplied 'length' parameter
 
 ###### Usage
 

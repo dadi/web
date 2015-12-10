@@ -18,7 +18,7 @@
     },
     "auth": {
         "tokenUrl":"/token",
-        "clientId":"rosecombClient",
+        "clientId":"testClient",
         "secret":"superSecret"
     },
     "aws": {
@@ -30,7 +30,7 @@
         "ttl": 300,
         "directory": {
             "enabled": true,
-            "path": "./cache/rosecomb/",
+            "path": "./cache/web/",
             "extension": "html"
         },
         "redis": {
@@ -54,13 +54,13 @@
     "logging": {
         "enabled": true,
         "path": "./log",
-        "filename": "rosecomb",
+        "filename": "web",
         "extension": "log",
         "accessLog": {
             "enabled": true,
             "fileRotationPeriod": "1d",
             "fileRetentionCount": 14,
-            "kinesisStream": "rosecomb_test"
+            "kinesisStream": "dadi_web_test"
         }
     },
     "rewrites": {
@@ -113,7 +113,7 @@ secret           |    |               |         "superSecret"
 ttl           |    |               |  300      
 directory           | Configuration block for caching using a local filesystem directory   |               |
 directory.enabled           | If true, cache files will be stored on disk using the settings below. Either directory or redis caching must be enabled for caching to work.   | true              | true
-directory.path           | The directory to use for storing cache files, relative to the root of the application   |    "./cache/rosecomb"           |  "./cache/rosecomb"
+directory.path           | The directory to use for storing cache files, relative to the root of the application   |    "./cache/web"           |  "./cache/web"
 directory.extension           | The file extension to use for cache files   |    "html"           |  "html"
 redis           | Configuration block for caching using a Redis caching service   |               |
 redis.enabled           | If true, cache files will be stored in the Redis cache store using the settings below. Either directory or redis caching must be enabled for caching to work.   | false              | true
@@ -143,17 +143,17 @@ cacheControl           |    									|       true     | true
 :---------------|:----------------------------|:---------------|:--------------
 enabled           | If true, logging is enabled using the following settings.   |            true   | true       
 path           | The absolute or relative path to the directory for log files.   |       "./log"        | "/data/app/log"
-filename           | The filename to use for the log files. The name you choose will be given a suffix indicating the current application environment. |    "rosecomb"           | "your_application_name"      
+filename           | The filename to use for the log files. The name you choose will be given a suffix indicating the current application environment. |    "web"           | "your_application_name"      
 extension           | The extension to use for the log files.  |  "log"   | "txt"
 
 ###### Section: `logging.accessLog`
 
 Property       | Description                 | Default value  |  Example
 :---------------|:----------------------------|:---------------|:--------------
-enabled           | If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `rosecomb.access.log`.   |            true   | true       
+enabled           | If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`.   |            true   | true       
 fileRotationPeriod           | The period at which to rotate the access log file. This is a string of the format '$number$scope' where '$scope' is one of 'ms', 'h', 'd', 'w', 'm', 'y'. The following names can be used 'hourly' (= '1h'), 'daily (= '1d'), 'weekly' ('1w'), 'monthly' ('1m'), 'yearly' ('1y').   |       "1d"        | "daily"
 fileRetentionCount           | The number of rotated log files to keep. |    7           | 14
-kinesisStream           | An AWS Kinesis stream to write to log records to. |  ""   | "rosecomb_aws_kinesis"
+kinesisStream           | An AWS Kinesis stream to write to log records to. |  ""   | "dadi_web_aws_kinesis"
 
 ###### Section: `logging.aws`
 
@@ -186,7 +186,7 @@ In the above example `baseUrl` would be availabe to a page template and could be
 ```html
 <html>
 <body>
-  <h1>Welcome to Rosecomb</h1>
+  <h1>Welcome to DADI Web</h1>
   <img src="{baseUrl}/images/welcome.png"/>
 </body>
 </html>

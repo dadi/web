@@ -5,7 +5,7 @@
 Events are server side JavaScript and can add additional functionality to a page/dust template. Events can serve as a useful way to implement logic to a logicless Dust template.
 
 Use case:
-A Rosecomb developer would like count how many people clicked on a 'plus' button.
+A developer would like count how many people clicked on a 'plus' button.
 
 To achieve this he has to create a new event and attach it to the page where he has the 'plus' button.
 
@@ -45,7 +45,7 @@ var path = require('path');
 var http = require("http");
 var querystring = require('querystring');
 
-/* optional Rosecomb includes */
+/* optional includes */
 var config = require(__dirname + '/../../config.js');
 
 // the `data` parameter contains the data already loaded by

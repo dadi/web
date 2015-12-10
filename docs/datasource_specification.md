@@ -17,7 +17,7 @@
         "caching": {
             "enabled": true,
             "ttl": 300,
-            "directory": "./cache/rosecomb/",
+            "directory": "./cache/web/",
             "extension": "json"
         },
         "auth": {
@@ -106,9 +106,9 @@ The `param` value should match the parameter specified in the page route, and th
 
 ###### For example, given a MongoDB collection `makes` with the fields `_id`, `name`:
 
-With the route `/cars/:make/:model` and the above requestParams, Rosecomb will extract the `:make` parameter from the URL and use it to query the MongoDB collection using the field `name`.
+With the route `/cars/:make/:model` and the above requestParams, DADI Web will extract the `:make` parameter from the URL and use it to query the MongoDB collection using the field `name`.
 
-With a request to `http://www.example.com/cars/ford/focus`, Rosecomb will extract the named `:make` parameter from the URL, which in this case is `Ford`. A filter query is constructed for Serama using this parameter but translating it using the `field` value.
+With a request to `http://www.example.com/cars/ford/focus`, DADI Web will extract the named `:make` parameter from the URL, which in this case is `Ford`. A filter query is constructed for Serama using this parameter but translating it using the `field` value.
 
 The Serama query becomes `{ "name" : "Ford" }`.
 
@@ -117,7 +117,7 @@ See [Page Specification](page_specification.md) for custom routing information.
 
 #### Chaining datasources
 
-It is often a requirement to query a datasource using data from another datasource. Rosecomb supports this through the use of chained datasources.
+It is often a requirement to query a datasource using data from another datasource. DADI Web supports this through the use of chained datasources.
 
 Add the `chained` property to the datasource that relies on data loaded by another datasource.
 

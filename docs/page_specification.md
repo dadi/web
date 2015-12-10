@@ -21,7 +21,7 @@
 	    },
 	    "contentType": "application/xml", // (optional, default = text/html)
 	    "template": "car-reviews.dust", // template filename (optional)
-	    "datasources": [ // specifies attached data sources
+	    "datasources": [ // specifies attached datasources
         "car-makes",
         "car-models"
 	    ],
@@ -42,11 +42,11 @@ The `route.paths` property is used to specify the URLs that match the page. The 
 
 ##### Route Constraints
 
-In the case of ambiguous routes it is possible to provide Rosecomb with a constraint function or datasource to check a matching route against some business logic or database records.
+In the case of ambiguous routes it is possible to provide a constraint function or datasource to check a matching route against some business logic or database records.
 
-Returning `true` from a constraint instructs Rosecomb that this is the correct route.
+Returning `true` from a constraint instructs the router that this is the correct route.
 
-Returning `false` from a constraint instructs Rosecomb to try the next matching route (or return a 404 if there are no further matching routes).
+Returning `false` from a constraint instructs the router to try the next matching route (or return a 404 if there are no further matching routes).
 
 ###### Constraint Functions
 
@@ -76,7 +76,7 @@ module.exports.nextIfNewsOrFeatures = function (req, res, callback) {
 
 ###### Constraint Datasources
 
-An existing datasource can be used as the route constraint. The specified datasource must exist in `workspace/data-sources/`. The following examples have some missing properties for brevity.
+An existing datasource can be used as the route constraint. The specified datasource must exist in `workspace/datasources/`. The following examples have some missing properties for brevity.
 
 _workspace/pages/manufacturer.json_
 
@@ -87,7 +87,7 @@ _workspace/pages/manufacturer.json_
 },
 ```
 
-_workspace/data-sources/manufacturers.json_
+_workspace/datasources/manufacturers.json_
 
 ```js
 {
@@ -123,7 +123,7 @@ If there is a result for this datasource query, the constraint will return `true
 ##### Named Parameters
 It is possible to specify a route containing named parameters which can be utilised by the datasources attached to the page.
 
-For example the route `/cars/:make/:model` will ensure this page is loaded for any request matching this format. Rosecomb will extract the `:make` and `:model` parameters making them available as filter parameters in the page's attached datasources.
+For example the route `/cars/:make/:model` will ensure this page is loaded for any request matching this format. The `:make` and `:model` parameters will be extracted making them available as filter parameters in the page's attached datasources.
 
 The following URLs all match this page's route:
 
@@ -148,4 +148,4 @@ URL       | Named Parameters
 #### More Information
 
  * See [Datasource Specification](datasource_specification.md) for more information regarding the use of named parameters.
- * Rosecomb uses the [Path to Regexp](https://github.com/pillarjs/path-to-regexp) library when parsing routes. More information on parameter usage can be found in the Github repository.
+ * The [Path to Regexp](https://github.com/pillarjs/path-to-regexp) library is used when parsing routes. More information on parameter usage can be found in the Github repository.

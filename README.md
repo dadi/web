@@ -1,4 +1,4 @@
-![Rosecomb](rosecomb.png)
+![DADI Web](rosecomb.png)
 
 ![Build Status](http://img.shields.io/badge/Release-0.1.7_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)&nbsp;![Coverage](http://img.shields.io/badge/Coverage-31%-red.svg?style=flat-square)
 
@@ -6,7 +6,7 @@
 
 * [Overview](#overview)
 * [Pages](docs/page_specification.md)
-* [Data sources](docs/datasource_specification.md)
+* [Datasources](docs/datasource_specification.md)
 * [Setup and installation](#setup-and-installation)
 * [Configuration](#configuration)
 * [Running the demo application](#running-the-demo-application)
@@ -17,35 +17,35 @@
 
 ## Overview
 
-Rosecomb is built on Node.JS. It is a high performance schemaless templating layer designed in support of API-first development and the principle of COPE.
+DADI Web is built on Node.JS. It is a high performance schema-less templating layer designed in support of API-first development and the principle of COPE.
 
-It can opperate as a stand alone platform or in conjunction with [Serama](https://github.com/bantam-framework/serama) as a full stack web application.
+[TODO]
+It can operate as a stand alone platform or in conjunction with [Serama](https://github.com/dadi-framework/serama) as a full stack web application.
 
-Rosecomb is part of [Bantam](https://github.com/bantam-framework/), a suite of components covering the full development stack, built for performance and scale.
-
-Rosecomb is based on Node.JS, using latest stable versions.
+[TODO]
+DADI Web is part of [dadi](https://github.com/dadi-framework/), a suite of components covering the full development stack, built for performance and scale.
 
 ### Component Terminology
 
 #### Page descriptors
-These files describe the application's pages and the routes which load them. Data sources and events used by the page are specified within these files.
+These files describe the application's pages and the routes which load them. Datasources and events used by the page are specified within these files.
 
-Rosecomb monitors the `workspace` folder for changes and will automatically reload pages and templates when these files change.
+[TODO] Rosecomb monitors the `workspace` folder for changes and will automatically reload pages and templates when these files change.
 
 New pages can be initialised by simply creating new page descriptor and template files in `workspace/pages/`. A new page descriptor should take the format `{pagename}.json`. It should either reference an existing template file or you can create a new one in `workspace/pages/` with the format `{pagename}.dust`.
 
 Unless a custom route has been specified in the page descriptpr, the new page will be availabe at `http://www.example.com/{pagename}`.
 
 
-Multiple datasource files (`workspace/data-sources/{datasourcename}.json`) can be attached to a page. Each data source file describes which Serama endpoint to use, which filters to use, how many records to return etc. A full list of options can be found in the [Datasource Specification](datasource_specification.md) document.
+Multiple datasource files (`workspace/datasources/{datasourcename}.json`) can be attached to a page. Each datasource file describes which Serama endpoint to use, which filters to use, how many records to return etc. A full list of options can be found in the [Datasource Specification](datasource_specification.md) document.
 
-#### Data sources
-Data sources are the main link between Rosecomb and a Serama REST API or other third party end point. Data sources describe which endpoints to use, how to authenticate against that service, whether caching and pagination are enabled and can include default filters to pass to Serama. See [Datasource Specification](datasource_specification.md) for more information and a sample data source.
+#### Datasources
+Datasources are the main link between a DADI Web application and a DADI API or other third party end point. Datasources describe which endpoints to use, how to authenticate against that service, whether caching and pagination are enabled and can include default filters to pass to the API. See [Datasource Specification](datasource_specification.md) for more information and a sample datasource.
 
-Data sources are assigned to pages in the page descriptor file.
+Datasources are assigned to pages in the page descriptor file.
 
 #### Events
-These files add additional server side functionality to pages. Events are run after a page has loaded data from all of it's data sources, so they have access to all the data specified by a page's descriptor file.
+These files add additional server side functionality to pages. Events are run after a page has loaded data from all of it's datasources, so they have access to all the data specified by a page's descriptor file.
 
 See [Events](events.md) for more information and a sample event file.
 
@@ -56,7 +56,7 @@ Pages are the main template files. Templating is based around the [DustJS](http:
 
 Partials are reusable template files that may be referenced from the main page templates. Partials may also contain *DustJS* code.
 
-Pages and partials have access to the data loaded in data sources and events.
+Pages and partials have access to the data loaded in datasources and events.
 
 ###### Error Pages
 
@@ -68,13 +68,13 @@ workspace/pages/404.json
 workspace/pages/404.dust
 ```
 
-404 templates have access to data source and event data in the same way as standard pages.
+404 templates have access to datasource and event data in the same way as standard pages.
 
 
 ### File structure
 ```  
-  bantam/main.js
-  workspace/data-sources/{datasource name}.json
+  dadi/main.js
+  workspace/datasources/{datasource name}.json
   workspace/events/{event name}.json
   workspace/pages/{page name}.dust
   workspace/pages/{page name}.json
@@ -106,6 +106,7 @@ See [Configuration](docs/configuration.md) for more information and a sample con
 
 ### Running the server
 
+[TODO]
 Rosecomb expects the Serama API to be running locally on port 3001. Start the Serama server before running Rosecomb.
 
 	npm start
@@ -121,25 +122,25 @@ A datasource is a JSON file specifying the API endpoint to connect to along with
 
 ### Example
 
-If a request is made to Rosecomb running on `http://localhost:3000/articles` the application takes the `articles` parameter and looks for an `articles.json` page descriptor in `workspace/pages`. Any datasources that page descriptor specifies are loaded from `workspace/data-sources` and the data is retrieved from the datasource's API endpoint. In order to render the returned data to the browser, a Dust template must exist in `workspace/pages` with the same name as the requested page, e.g. `articles.dust`.
+If a request is made to `http://localhost:3000/articles` the application takes the `articles` parameter and looks for an `articles.json` page descriptor in `workspace/pages`. Any datasources that page descriptor specifies are loaded from `workspace/datasources` and the data is retrieved from the datasource's API endpoint. In order to render the returned data to the browser, a Dust template must exist in `workspace/pages` with the same name as the requested page, e.g. `articles.dust`.
 
 ### Further Reading
 
 The `docs/` directory contains additional documentation on the component parts of the system:
 
 * [Configuration](docs/configuration.md)
-* [Data sources](docs/datasource_specification.md)
+* [Datasources](docs/datasource_specification.md)
 * [Events](docs/events.md)
 * [Pages](docs/page_specification.md)
 * [Page Templates](docs/page_templates.md)
 * [Routing](docs/routing.md)
 * [Logging](docs/logging.md)
 
-Feel free to contact the Bantam core development team on team@bant.am with questions.
+Feel free to contact the dadi core development team on team@bant.am with questions.
 
 ## Development
 
-Rosecomb was conceived, developed and is maintained by the engineering team at DADI+ ([https://dadi.co](https://dadi.co)).
+DADI Web was conceived, developed and is maintained by the engineering team at DADI+ ([https://dadi.co](https://dadi.co)).
 
 Core contributors:
 
@@ -150,7 +151,7 @@ Core contributors:
 
 ### Roadmap
 
-We will capture planned updates and additions here. If you have anything to contribute in terms of future direction, please add as an enhancement request within [issues](https://github.com/bantam-framework/rosecomb/issues).
+We will capture planned updates and additions here. If you have anything to contribute in terms of future direction, please add as an enhancement request within [issues](https://github.com/dadi-framework/rosecomb/issues).
 
 
 ### Versioning
@@ -169,7 +170,7 @@ _Additional labels for pre-release and build metadata are available as extension
 
 Very daring.
 
-Fork, hack, possibly even add some tests, then send a pull request :)
+Any new feature, enhancement or bug fix should be accompanied by unit and/or acceptance tests. Fork, hack, add tests, then send us a pull request :)
 
 ## Licence
 
