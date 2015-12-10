@@ -1,9 +1,9 @@
-var app = require(__dirname + '/../bantam/lib/');
+var app = require(__dirname + '/../dadi/lib/');
 
 // Go!
 app.start({
   workspacePath: __dirname + '/workspace',
-  datasourcePath: __dirname + '/workspace/data-sources',
+  datasourcePath: __dirname + '/workspace/datasources',
   pagePath: __dirname + '/workspace/pages',
   partialPath: __dirname + '/workspace/partials',
   eventPath: __dirname + '/workspace/events',
