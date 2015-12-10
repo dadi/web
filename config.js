@@ -231,7 +231,7 @@ var conf = convict({
     path: {
       doc: "",
       format: String,
-      default: "workspace/routes/rewrites.txt"
+      default: ""
     },
     forceTrailingSlash: {
       doc: "",

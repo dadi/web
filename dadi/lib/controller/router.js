@@ -2,8 +2,9 @@
 REWRITE INFO:
 https://github.com/tinganho/connect-modrewrite
 */
-var fs = require('fs');
 var es = require('event-stream');
+var fs = require('fs');
+var path = require('path');
 var url = require('url');
 var querystring = require('querystring');
 //var modRewrite = require('connect-modrewrite');
@@ -29,7 +30,7 @@ var Router = function (server, options) {
   this.handlers = [];
   this.rules = [];
 
-  this.rewritesFile = config.get('rewrites.path');
+  this.rewritesFile = config.get('rewrites.path') === '' ? null : path.resolve(config.get('rewrites.path'));
   this.rewritesDatasource = config.get('rewrites.datasource');
 
   this.server = server;
@@ -53,6 +54,8 @@ Router.prototype.loadRewrites = function(options, done) {
 
   self.rules = [];
 
+  if (!self.rewritesFile) return done();
+
   var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
   stream.pipe(es.split("\n"))
@@ -74,7 +77,7 @@ Router.prototype.loadRewrites = function(options, done) {
 }
 
 /**
- *  Attaches a function from /workspace/routes/constraints.js or a datasource to the specified route
+ *  Attaches a function from /{routesPath}/constraints.js or a datasource to the specified route
  *  @param {String} route
  *  @param {String} fn
  *  @return undefined
@@ -88,7 +91,7 @@ Router.prototype.constrain = function(route, constraint) {
 
   if (this.handlers[constraint]) {
 
-    // add constraint from /workspace/routes/constraints.js if it exists
+    // add constraint from /{routesPath}/constraints.js if it exists
     c = this.handlers[constraint];
     message = "Added route constraint function '%s' for '%s'";
   }
@@ -110,14 +113,18 @@ Router.prototype.constrain = function(route, constraint) {
     this.log.info(message, constraint, route);
   }
   else {
-    this.log.error("Route constraint '" + constraint + "' not found. Is it defined in '/workspace/routes/constraints.js' or '/workspace/datasources/'?");
+    var error = "Route constraint '" + constraint + "' not found. Is it defined in '" + this.options.routesPath + "/constraints.js' or '" + this.options.datasourcePath + "/" + constraint + ".json'?";
+    var err = new Error(error);
+    err.name = 'Router';
+    this.log.error(error);
+    throw(err);
   }
 
   return;
 }
 
 /**
- *  Attaches a function from /workspace/routes/constraints.js to the specified route
+ *  Attaches a function from /{routesPath}/constraints.js to the specified route
  *  @param {String} route
  *  @return `true` if `route` can be handled by a route handler, or if no handler matches the route. `false`
  *  if a route handler matches but returned false when tested.
