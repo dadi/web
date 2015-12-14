@@ -105,7 +105,7 @@ Controller.prototype.get = function (req, res, next) {
       done = sendBackJSON(statusCode, res, next);
     }
     else {
-      done = sendBackHTML(statusCode, this.page.contentType, res, next);
+      done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next);
     }
 
     var self = this;

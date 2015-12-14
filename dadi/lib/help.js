@@ -108,7 +108,7 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 }
 
 // helper that sends html response
-module.exports.sendBackHTML = function (successCode, contentType, res, next) {
+module.exports.sendBackHTML = function (method, successCode, contentType, res, next) {
     return function (err, results) {
 
         if (err) {
@@ -124,7 +124,13 @@ module.exports.sendBackHTML = function (successCode, contentType, res, next) {
         res.setHeader('Content-Type', contentType);
         res.setHeader('Content-Length', Buffer.byteLength(resBody));
 
-        res.end(resBody);
+        if (method.toLowerCase() === 'head') {
+          res.setHeader('Connection', 'close');
+          return res.end("");
+        }
+        else {
+          return res.end(resBody);
+        }
     }
 }
 

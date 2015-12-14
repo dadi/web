@@ -367,6 +367,11 @@ Server.prototype.addComponent = function (options, reload) {
                     // map request method to controller method
                     var method = req.method && req.method.toLowerCase();
 
+                    // if it's a HEAD request, fake it as a GET so that it
+                    // continues. The help.sendbackHTML method will be passed
+                    // the actual req.method to determine what we send back
+                    if (method === 'head') method = 'get';
+
                     if (method && options.component[method]) {
                       return options.component[method](req, res, next);
                     }
