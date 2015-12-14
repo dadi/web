@@ -14,6 +14,11 @@
 * [Further reading](#further-reading)
 * [Development](#development)
 
+## TODO
+* Add config documentation for new "paths" block, and the deprecated `workspace` default
+* Sort out sample public & workspace folders
+* Find somewhere for the debug assets
+* Ensure demo app runs - perhaps add this to the generator and not the main codebase
 
 ## Overview
 
