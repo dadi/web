@@ -39,8 +39,12 @@ var DatasourceCache = function (datasource) {
 };
 
 DatasourceCache.prototype.setCachePath = function() {
+
+  // default
   var cachePath = '.';
 
+  // if the datasource file defines a directory and extension, use those, otherwise
+  // fallback to using the main cache module settings
   if (!s.isBlank(this.options.directory) && !s.isBlank(this.options.extension)) {
     cachePath = path.join(this.options.directory, this.filename + '.' + this.options.extension);
   }
