@@ -31,6 +31,7 @@ Middleware.prototype.init = function(app) {
   }
   catch (err) {
     this.log.error(err);
+    throw(err);
   }
 };
 
