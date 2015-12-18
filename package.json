@@ -74,6 +74,6 @@
     "doc": "docs",
     "test": "test"
   },
-  "author": "James Lambie <jameslambie@gmail.com>",
-  "license": "ISC"
+  "author": "DADI <team@dadi.tech>",
+  "license": "MIT"
 }
