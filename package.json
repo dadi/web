@@ -1,6 +1,6 @@
 {
   "name": "dadi-web",
-  "version": "0.2.1-beta",
+  "version": "0.3.7-beta",
   "description": "Web frontend and template layer for the DADI API",
   "main": "main.js",
   "scripts": {
@@ -43,6 +43,7 @@
     "send": "^0.13.0",
     "serve-favicon": "^2.3.0",
     "serve-static": "^1.10.0",
+    "server-destroy": "1.0.1",
     "stack-trace": "latest",
     "statuses": "^1.2.1",
     "toobusy-js": "^0.4.2",
