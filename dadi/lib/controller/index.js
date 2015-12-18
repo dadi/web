@@ -1,8 +1,5 @@
 var fs = require('fs');
 var url = require('url');
-var dust = require('dustjs-linkedin');
-var dustHelpers = require('dustjs-helpers');
-var commonDustHelpers = require('common-dustjs-helpers');
 var Q = require('q');
 var crypto = require('crypto');
 var beautify_html = require('js-beautify').html;
@@ -14,6 +11,7 @@ var log = require(__dirname + '/../log');
 
 var Datasource = require(__dirname + '/../datasource');
 var Event = require(__dirname + '/../event');
+var View = require(__dirname + '/../view');
 
 // helpers
 var sendBackHTML = help.sendBackHTML;
@@ -80,16 +78,21 @@ Controller.prototype.attachEvents = function(done) {
   done();
 };
 
-// Controller.prototype.post = function (req, res, next) {
-//   sendBackHTML(200, this.page.contentType, res, next)(null, "\n\nPOST Return\n\n");
-// }
+Controller.prototype.post = function (req, res, next) {
+  return this.process(req, res, next);
+}
 
 Controller.prototype.get = function (req, res, next) {
+  return this.process(req, res, next);
+}
 
-    help.timer.start('get');
+Controller.prototype.process = function (req, res, next) {
+
+    help.timer.start(req.method.toLowerCase());
 
     this.log.debug({req:req});
 
+    var self = this;
     var settings = {};
 
     // allow query string param to return data only
@@ -97,8 +100,8 @@ Controller.prototype.get = function (req, res, next) {
     var debug = config.get('debug');
     var json = config.get('allowJsonView') && query.json && query.json.toString() === 'true';
 
+    var view = new View(req.url, self.page, json);
     var statusCode = res.statusCode || 200;
-
     var done;
 
     if (json) {
@@ -107,8 +110,6 @@ Controller.prototype.get = function (req, res, next) {
     else {
       done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next);
     }
-
-    var self = this;
 
     var data = {
       "title": self.page.name,
@@ -120,72 +121,34 @@ Controller.prototype.get = function (req, res, next) {
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);
 
-    // add common dust helpers
-    new commonDustHelpers.CommonDustjsHelpers().export_helpers_to(dust);
-
-    var pageTemplate = self.page.template.slice(0, self.page.template.indexOf('.'));
-    var template = _.find(_.keys(dust.cache), function (k){ return k.indexOf(pageTemplate) > -1; });
-
-    if (!template) {
-      var err = new Error();
-      err.name = "DustTemplate";
-      err.message = "Template not found: '" + self.page.template + "'. (Rendering page '" + self.page.key + "')";
-      err.path = req.url;
-      throw err;
-    }
-
     self.loadData(req, res, data, function(err, data) {
 
-      help.timer.stop('get');
+      if (err) return done(err);
 
-      if (err) {
-        throw err;
-      }
-
+      help.timer.stop(req.method.toLowerCase());
       if (data) data.stats = help.timer.getStats();
 
-      try {
-        if (json) {
-          // Return the raw data
-          return done(null, data);
-        }
-        else {
-          dust.config.whitespace = self.page.keepWhitespace;
+      view.setData(data);
 
-          // Render the compiled template
-          dust.render(pageTemplate, data, function(err, result) {
-            if (err) {
-              err = new Error(err.message);
-              err.statusCode = 500;
-              return done(err, null);
-            }
-
-            if (self.page.beautify) {
-              try {
-                result = beautify_html(result);
-              }
-              catch (err) {
-                result = err;
-              }
-            }
-
-            return done(err, result);
-          });
-        }
-      }
-      catch (e) {
-        console.log(e)
-        var err = new Error(e.message);
-        err.statusCode = 500;
-        if (next) {
-          return next(err);
-        }
-        else {
-          return done(err);
-        }
-      }
+      //try {
+      view.render(function(err, result) {
+        if (err) return next(err);
+        return done(null, result);
+      });
+      // }
+      // catch (e) {
+      //   console.log(e)
+      //   var err = new Error(e.message);
+      //   err.statusCode = 500;
+      //   if (next) {
+      //     return next(err);
+      //   }
+      //   else {
+      //     return done(err);
+      //   }
+      // }
     });
-};
+}
 
 function hasAttachedDatasources(datasources) {
   return (typeof datasources === 'object' && Object.keys(datasources).length > 0);
@@ -211,32 +174,37 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
       data.checkValue = checkValue;
 
       // run the event
-      events[key].run(req, res, data, function (err, result) {
+      try {
+        events[key].run(req, res, data, function (err, result) {
 
-        help.timer.stop('event: ' + key);
+          help.timer.stop('event: ' + key);
 
-        if (err) {
-          return done(err, data);
-        }
+          if (err) {
+            return done(err, data);
+          }
 
-        // if we get data back with the same checkValue property,
-        // reassign it to our global data object to avoid circular JSON
-        if (result && result.checkValue && result.checkValue === checkValue) {
-          data = result;
-        }
-        else if (result) {
-          // add the result to our global data object
-          data[key] = result;
-        }
+          // if we get data back with the same checkValue property,
+          // reassign it to our global data object to avoid circular JSON
+          if (result && result.checkValue && result.checkValue === checkValue) {
+            data = result;
+          }
+          else if (result) {
+            // add the result to our global data object
+            data[key] = result;
+          }
 
-        eventIdx++;
+          eventIdx++;
 
-        // return the data if we're at the end of the events
-        // array, we have all the responses to render the page
-        if (eventIdx === Object.keys(events).length) {
-          return done(null, data);
-        }
-      });
+          // return the data if we're at the end of the events
+          // array, we have all the responses to render the page
+          if (eventIdx === Object.keys(events).length) {
+            return done(null, data);
+          }
+        });
+      }
+      catch (err) {
+        return done(err, data);
+      }
   });
 }
 
@@ -292,7 +260,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
       idx++;
 
       if (idx === Object.keys(primaryDatasources).length) {
-        self.processChained(chainedDatasources, data, query, function() {
+        self.processChained(chainedDatasources, data, query, function(err, result) {
+
+          if (err) return done(err);
 
           self.loadEventData(self.events, req, res, data, function (err, result) {
 
@@ -303,7 +273,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
         });
       }
-    })
+    });
 
   });
 }
@@ -314,7 +284,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
   var self = this;
 
   if (0 === Object.keys(chainedDatasources).length) {
-    return done(data);
+    return done(null, data);
   }
 
   _.each(chainedDatasources, function(chainedDatasource, chainedKey) {
@@ -322,10 +292,11 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
     help.timer.start('datasource: ' + chainedDatasource.name + ' (chained)');
 
     if (!data[chainedDatasource.chained.datasource]) {
-      var message = "Error: chained datasource " + chainedKey + " expected data at this node."
-      data[chainedDatasource.chained.datasource] = message;
+      var message = "Chained datasource '" + chainedDatasource.name + "' expected to find data from datasource '" + chainedDatasource.chained.datasource + "'.";
+      var err = new Error();
+      err.message = message;
       self.log.warn(message);
-      return done(data);
+      return done(err);
     }
 
     // find the value of the parameter in the returned data
@@ -338,8 +309,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
       return o ? o[x] : "" }, data[chainedDatasource.chained.datasource]);
     }
     catch(e) {
-      param = e;
-      this.log.error('Error processing chained datasource: ' + e);
+      return done(e);
     }
 
     // cast the param value if needed
@@ -406,14 +376,11 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
       idx++;
 
       if (idx === Object.keys(chainedDatasources).length) {
-        return done(data);
+        return done(null, data);
       }
 
     });
-
-    //});
   });
-
 }
 
 function processSearchParameters(key, datasource, req) {
