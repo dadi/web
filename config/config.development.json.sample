@@ -4,7 +4,7 @@
   },
   "server": {
     "host": "127.0.0.1",
-    "port": 3020,
+    "port": 3001,
     "socketTimeoutSec": 30
   },
   "api": {
@@ -66,6 +66,17 @@
     "debug": false,
     "debugLevel": "INFO",
     "whitespace": false
+  },
+  "sessions": {
+    "enabled": false,
+    "name": "dadiweb.sid",
+    "secret": "secretsquirrel",
+    "resave": false,
+    "saveUninitialized": false,
+    "cookie": {
+      "maxAge": 60000,
+      "secure": false
+    }
   },
   "rewrites": {
     "datasource": "rewrites",

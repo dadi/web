@@ -222,6 +222,64 @@ var conf = convict({
       }
     }
   },
+  paths: {
+    doc: "",
+    format: Object,
+    default: {
+      workspacePath: __dirname + '/workspace',
+      datasourcePath: __dirname + '/workspace/data-sources',
+      pagePath: __dirname + '/workspace/pages',
+      partialPath: __dirname + '/workspace/partials',
+      eventPath: __dirname + '/workspace/events',
+      mediaPath: __dirname + '/media',
+      publicPath: __dirname + '/public',
+      routesPath: __dirname + '/routes'
+    }
+  },
+  sessions: {
+    enabled: {
+      doc: "",
+      format: Boolean,
+      default: false
+    },
+    name: {
+      doc: "The session cookie name. The default value is 'dadiweb.sid'",
+      format: String,
+      default: "dadiweb.sid"
+    },
+    secret: {
+      doc: "This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.",
+      format: String,
+      default: "dadiwebsecretsquirrel"
+    },
+    resave: {
+      doc: "Forces the session to be saved back to the session store, even if the session was never modified during the request.",
+      format: Boolean,
+      default: false
+    },
+    saveUninitialized: {
+      doc: "Forces a session that is 'uninitialized' to be saved to the store. A session is uninitialized when it is new but not modified.",
+      format: Boolean,
+      default: false
+    },
+    store: {
+      doc: "The session store instance, defaults to a new MemoryStore instance.",
+      format: String,
+      default: ""
+    },
+    cookie: {
+      maxAge: {
+        doc: "Set the cookie’s expiration as an interval of seconds in the future, relative to the time the browser received the cookie. Null means no 'expires' parameter is set so the cookie becomes a browser-session cookie. When the user closes the browser the cookie (and session) will be removed.",
+        format: Number,
+        default: 60000
+      },
+      secure: {
+        doc: "",
+        format: Boolean,
+        default: false
+      }
+    }
+  },
   rewrites: {
     datasource: {
       doc: "",

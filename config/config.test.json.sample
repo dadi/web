@@ -4,12 +4,23 @@
   },
   "server": {
     "host": "127.0.0.1",
-    "port": 3020,
+    "port": 8000,
     "socketTimeoutSec": 30
   },
   "api": {
     "host": "127.0.0.1",
     "port": 3000
+  },
+  "paths": {
+    "workspacePath": "test/workspace",
+    "datasources": "test/workspace/data-sources",
+    "pages": "test/workspace/pages",
+    "partials": "test/workspace/partials",
+    "events": "test/workspace/events",
+    "middleware": "test/workspace/middleware",
+    "media": "test/media",
+    "public": "test/public",
+    "routes": "test/routes"
   },
   "auth": {
     "tokenUrl":"/token",
@@ -68,7 +79,7 @@
     "whitespace": false
   },
   "rewrites": {
-    "datasource": "rewrites",
+    "datasource": "",
     "path": "",
     "forceTrailingSlash": false
   },
