@@ -2,7 +2,7 @@ var should = require('should');
 var sinon = require('sinon');
 var page = require(__dirname + '/../../dadi/lib/page');
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
-var help = require(__dirname + '/help');
+var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../../dadi/lib/log');
 
 describe('Datasource', function (done) {
@@ -73,13 +73,13 @@ describe('Datasource', function (done) {
     sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
     var ds = datasource(p, dsName, options, function() {} );
-      
+
     ds.requestParams.should.eql([]);
-    
+
     datasource.Datasource.prototype.loadDatasource.restore();
     done();
   });
-  
+
   it('should attach `requestParams` to datasource if specified', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
@@ -88,9 +88,9 @@ describe('Datasource', function (done) {
     var options = help.getPathOptions();
 
     var ds = datasource(p, dsName, options, function() {} );
-      
+
     ds.requestParams[0].param.should.eql("make");
-    
+
     done();
   });
 
@@ -105,9 +105,9 @@ describe('Datasource', function (done) {
     sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
     var ds = datasource(p, dsName, options, function() {} );
-      
+
     should.not.exist(ds.chained);
-    
+
     datasource.Datasource.prototype.loadDatasource.restore();
     done();
   });
@@ -120,10 +120,10 @@ describe('Datasource', function (done) {
     var options = help.getPathOptions();
 
     var ds = datasource(p, dsName, options, function() {} );
-      
+
     should.exist(ds.chained);
     ds.chained.datasource.should.eql('global');
-    
+
     done();
   });
 
@@ -138,9 +138,9 @@ describe('Datasource', function (done) {
     sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
     var ds = datasource(p, dsName, options, function() {} );
-      
+
     should.not.exist(ds.authStrategy);
-    
+
     datasource.Datasource.prototype.loadDatasource.restore();
     done();
   });
@@ -153,10 +153,10 @@ describe('Datasource', function (done) {
     var options = help.getPathOptions();
 
     var ds = datasource(p, dsName, options, function() {} );
-      
+
     should.exist(ds.authStrategy);
     ds.authStrategy.config.type.should.eql('bearer');
-    
+
     done();
   });
 
@@ -165,24 +165,24 @@ describe('Datasource', function (done) {
     var schema = help.getPageSchema();
     var p = page(name, schema);
     var dsName = 'car-makes';
-    
+
     datasource(p, dsName, help.getPathOptions(), function(err, ds) {
       ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
       done();
     });
-    
+
   });
 
   it('should build an endpoint string from schema properties when no page is specified', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
     var dsName = 'car-makes';
-    
+
     datasource(name, dsName, help.getPathOptions(), function(err, ds) {
       ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
       done();
     });
-    
+
   });
 
   it('should attach specified `options` to datasource', function (done) {
@@ -203,11 +203,11 @@ describe('Datasource', function (done) {
     var method = sinon.spy(log, 'error');
 
     datasource(p, dsName, help.getPathOptions(), function() {})
-        
+
     method.called.should.be.true;
 
     log.error.restore();
-    
+
     //should.throws(function() { datasource(p, dsName, help.getPathOptions(), function() {}) }, Error);
 
     done();
@@ -222,9 +222,9 @@ describe('Datasource', function (done) {
     var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName, '');
 
     var ds = datasource(p, dsName, options, function() {} );
-      
+
     ds.schema.should.eql(dsSchema);
-    
+
     done();
   });
 
@@ -236,14 +236,14 @@ describe('Datasource', function (done) {
 
     var params = { "make": "bmw" };
     var req = { params: params, url: '/1.0/cars/makes' };
-    
-    var ds = datasource(p, dsName, help.getPathOptions(), function() {});    
-      
+
+    var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
     ds.processRequest(name, req);
     ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}');
-      
+
     done();
-    
+
   });
 
 });

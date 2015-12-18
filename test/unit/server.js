@@ -5,7 +5,7 @@ var should = require('should');
 var _ = require('underscore');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var Controller = require(__dirname + '/../../dadi/lib/controller');
-var help = require(__dirname + '/help');
+var help = require(__dirname + '/../help');
 
 describe('Server', function (done) {
 
@@ -59,10 +59,4 @@ describe('Server', function (done) {
     done();
   });
 
-  // it('should attach name to page', function (done) {
-  //   var name = 'test';
-  //   var schema = help.getPageSchema();
-  //   page(name, schema).name.should.eql('test');
-  //   done();
-  // });
 })

@@ -2,7 +2,7 @@ var path = require('path');
 var should = require('should');
 var sinon = require('sinon');
 var log = require(__dirname + '/../../dadi/lib/log');
-var help = require(__dirname + '/help');
+var help = require(__dirname + '/../help');
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
 describe('Logger', function (done) {

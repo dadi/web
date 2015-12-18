@@ -6,10 +6,10 @@ var should = require('should');
 var sinon = require('sinon');
 var bunyan = require('bunyan');
 var stringify = require('json-stringify-safe');
-//var log = require(__dirname + '/../../dadi/lib/log');
-//var config = require(path.resolve(__dirname + '/../../config.js'));
+var log = require(__dirname + '/../../dadi/lib/log');
+var config = require(path.resolve(__dirname + '/../../config.js'));
 
-const STREAM_NAME = 'web_test';
+const STREAM_NAME = 'rosecomb_test';
 const REGION = 'us-east-1';
 
 AWS.config.region = REGION;
@@ -128,7 +128,7 @@ describe('Logger', function (done) {
               // secretAccessKey: AWS.config.secretAccessKey,
               region:          REGION,
               streamName:      STREAM_NAME,
-              partitionKey:    'dadi-web'
+              partitionKey:    'Rosecomb'
             })
           }
         );

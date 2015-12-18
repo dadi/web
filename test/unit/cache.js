@@ -5,7 +5,7 @@ var Server = require(__dirname + '/../../dadi/lib');
 var cache = require(__dirname + '/../../dadi/lib/cache');
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var page = require(__dirname + '/../../dadi/lib/page');
-var help = require(__dirname + '/help');
+var help = require(__dirname + '/../help');
 var config = require(__dirname + '/../../config.js');
 
 describe('Cache', function (done) {

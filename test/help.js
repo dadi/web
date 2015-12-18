@@ -19,8 +19,28 @@ datasources
  */
 
 
-
+var assert = require('assert');
 var fs = require('fs');
+var path = require('path');
+
+function cookie(res) {
+  var setCookie = res.headers['set-cookie'];
+  return (setCookie && setCookie[0]) || undefined;
+}
+
+module.exports.shouldSetCookie = function(name) {
+  return function (res) {
+    var header = cookie(res);
+    assert.ok(header, 'should have a cookie header');
+    assert.equal(header.split('=')[0], name, 'should set cookie ' + name);
+  };
+}
+
+module.exports.shouldNotHaveHeader = function(header) {
+  return function (res) {
+    assert.ok(!(header.toLowerCase() in res.headers), 'should not have ' + header + ' header');
+  };
+}
 
 module.exports.getPageSchema = function () {
     return {
@@ -48,11 +68,11 @@ module.exports.getPageSchema = function () {
 
 module.exports.getPathOptions = function () {
   return {
-  	datasourcePath: __dirname + '/../workspace/datasources',
-		pagePath: __dirname + '/../workspace/pages',
-		partialPath: __dirname + '/../workspace/partials',
-		eventPath: __dirname + '/../workspace/events',
-		routesPath: __dirname + '/../workspace/routes'
+  	datasourcePath: __dirname + '/../test/workspace/data-sources',
+		pagePath: __dirname + '/../test/workspace/pages',
+		partialPath: __dirname + '/../test/workspace/partials',
+		eventPath: __dirname + '/../test/workspace/events',
+		routesPath: __dirname + '/../test/workspace/routes'
   }
 };
 

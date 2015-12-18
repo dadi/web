@@ -5,7 +5,7 @@ var should = require('should');
 var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
 var page = require(__dirname + '/../../dadi/lib/page');
-var help = require(__dirname + '/help');
+var help = require(__dirname + '/../help');
 var config = require(__dirname + '/../../config.js');
 
 describe('Page', function (done) {

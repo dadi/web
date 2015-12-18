@@ -6,7 +6,7 @@ var Server = require(__dirname + '/../../dadi/lib');
 var should = require('should');
 var _ = require('underscore');
 var monitor = require(__dirname + '/../../dadi/lib/monitor');
-var help = require(__dirname + '/help');
+var help = require(__dirname + '/../help');
 
 describe('Monitor', function (done) {
 

@@ -3,7 +3,7 @@ var should = require('should');
 var sinon = require('sinon');
 var log = require(__dirname + '/../../dadi/lib/log');
 var e = require(__dirname + '/../../dadi/lib/event');
-var help = require(__dirname + '/help');
+var help = require(__dirname + '/../help');
 
 describe('Event', function (done) {
   it('should export constructor', function (done) {
