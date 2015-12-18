@@ -1,6 +1,6 @@
 ![DADI Web](http://dadi.tech/workspace/assets/img/dadi.png)
 
-![Build Status](http://img.shields.io/badge/Release-0.2.0_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)&nbsp;![Coverage](https://img.shields.io/badge/Coverage-31%-red.svg?style=flat-square)
+![Build Status](http://img.shields.io/badge/Release-0.4.0_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)&nbsp;![Coverage](https://img.shields.io/badge/Coverage-31%-red.svg?style=flat-square)
 
 ## Contents
 
@@ -28,7 +28,7 @@ DADI Web is built on Node.JS. It is a high performance schema-less templating la
 It can operate as a stand alone platform or in conjunction with [Serama](https://github.com/dadi-framework/serama) as a full stack web application.
 
 [TODO]
-DADI Web is part of [dadi](https://github.com/dadi-framework/), a suite of components covering the full development stack, built for performance and scale.
+DADI Web is part of [dadi](https://github.com/dadi/), a suite of components covering the full development stack, built for performance and scale.
 
 ### Component Terminology
 
@@ -156,7 +156,7 @@ Core contributors:
 
 ### Roadmap
 
-We will capture planned updates and additions here. If you have anything to contribute in terms of future direction, please add as an enhancement request within [issues](https://github.com/dadi-framework/rosecomb/issues).
+We will capture planned updates and additions here. If you have anything to contribute in terms of future direction, please add as an enhancement request within [issues](https://github.com/dadi/web/issues).
 
 
 ### Versioning
