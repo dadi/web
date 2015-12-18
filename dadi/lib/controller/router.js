@@ -100,7 +100,7 @@ Router.prototype.constrain = function(route, constraint) {
     // try to build a datasource from the provided constraint
     var datasource = new Datasource(route, constraint, this.options, function(err, ds) {
       if (err) {
-        this.log.error(err);
+        self.log.error(err);
       }
 
       c = ds;
@@ -232,7 +232,7 @@ module.exports = function (server, options) {
 
       if (!this.shouldCall) return next();
 
-      console.log('processing ' + req.url);
+      console.log('[Router] processing: ' + req.url);
 
       if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
 
