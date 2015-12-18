@@ -1,6 +1,8 @@
 
 var version = require('../../package.json').version;
+var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
 
+var _ = require('underscore');
 var colors = require('colors');
 var fs = require('fs');
 var path = require('path');
@@ -14,7 +16,14 @@ var enableDestroy = require('server-destroy');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var raven = require('raven');
-var _ = require('underscore');
+var session = require('express-session');
+var mongoStore;
+if (nodeVersion < 1) {
+  mongoStore = require('connect-mongo/es5')(session);
+}
+else {
+  mongoStore = require('connect-mongo')(session);
+}
 
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
@@ -78,6 +87,38 @@ Server.prototype.start = function (done) {
     // add parsers
     app.use(bodyParser.json());
     app.use(bodyParser.text());
+    // parse application/x-www-form-urlencoded
+    app.use(bodyParser.urlencoded({ extended: true }));
+
+    // add gzip compression
+    if (config.get('headers.useGzipCompression')) {
+      app.use(compress());
+    }
+
+    // request logging middleware
+    app.use(log.requestLogger);
+
+    // session manager
+    var sessionConfig = config.get('sessions');
+
+    if (sessionConfig.enabled) {
+      var sessionOptions = {
+        name: sessionConfig.name,
+        secret: sessionConfig.secret,
+        resave: sessionConfig.resave,
+        saveUninitialized: sessionConfig.saveUninitialized,
+        cookie: sessionConfig.cookie
+      };
+
+      var store = this.getSessionStore(sessionConfig);
+
+      if (store) {
+        sessionOptions.store = store;
+      }
+
+      // add the session middleware
+      app.use(session(sessionOptions));
+    }
 
     // add gzip compression
     if (config.get('headers.useGzipCompression')) {
@@ -528,7 +569,47 @@ Server.prototype.dustCompile = function (options) {
         callback(null, data);
       });
     };
-};
+}
+
+Server.prototype.getSessionStore = function(sessionConfig) {
+  var env = config.get('env');
+  if (/development|test/.exec(env) === null) {
+    if (sessionConfig.store === '') {
+      var message = '';
+      message += 'It is not recommended to use an in-memory session store in the ' + env + ' environment. Please change the configuration to one of the following:\n\n';
+
+      sessionConfig.store = 'mongodb://username:password@host/databaseName';
+      message += 'MongoDB:\n'.green;
+      message += JSON.stringify(sessionConfig, null, 2);
+      message += '\n\n';
+
+      sessionConfig.store = '<redis_server_host>:<redis_server_port>';
+      message += 'Redis\n'.green;
+      message += JSON.stringify(sessionConfig, null, 2);
+      message += '\n\n';
+
+      sessionConfig.store = '';
+
+      throw new Error(message);
+    }
+
+    //app.set('trust proxy', 1) // trust first proxy
+    //sess.cookie.secure = true // serve secure cookies
+  }
+
+  if (sessionConfig.store === '') {
+    return null;
+  }
+
+  if (sessionConfig.store.indexOf('mongodb') > -1) {
+    return new mongoStore({
+		  url: sessionConfig.store
+    });
+  }
+  else if (sessionConfig.store.indexOf(':') > 0) {
+    // redis
+  }
+}
 
 /**
  *  Create workspace directories if they don't already exist
@@ -629,7 +710,7 @@ function onListening(e) {
 
     var env = config.get('env');
 
-    var webMessage = "[DADI] Started web application '" + config.get('app.name') + "' (" + version + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+    var webMessage = "[DADI] Started web application '" + config.get('app.name') + "' (" + version + ", Node.JS v" + nodeVersion + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
     var apiMessage = "";
 
     if (config.get('api.enabled') === true) {
@@ -638,11 +719,11 @@ function onListening(e) {
 
     console.log("\n" + webMessage.bold.white);
     console.log(apiMessage.bold.blue + "\n");
-
-    if (env === 'production') {
-      self.log.info(webMessage);
-      self.log.info(apiMessage);
-    }
+    //
+    // if (env === 'production') {
+    //   self.log.info(webMessage);
+    //   self.log.info(apiMessage);
+    // }
   });
 }
 
