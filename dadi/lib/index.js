@@ -10,6 +10,7 @@ var serveStatic = require('serve-static');
 var serveFavicon = require('serve-favicon');
 var compress = require('compression');
 var toobusy = require('toobusy-js');
+var enableDestroy = require('server-destroy');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var raven = require('raven');
@@ -104,6 +105,9 @@ Server.prototype.start = function (done) {
     server.on('listening', onListening);
     server.on('error', onError);
 
+    // enhance with a 'destroy' function
+    enableDestroy(server);
+
     // load app specific routes
     this.loadApi(options);
 
@@ -120,17 +124,37 @@ Server.prototype.start = function (done) {
 
     this.readyState = 1;
 
-    process.on('SIGINT', function() {
-      self.stop(function() {
-        toobusy.shutdown();
-        self.log.info('Server stopped, process exiting.');
-        process.exit(0);
-      });
-    });
+    //do something when app is closing
+    process.on('exit', this.exitHandler.bind(null, {server: this, cleanup: true}));
+
+    //catches ctrl+c event
+    process.on('SIGINT', this.exitHandler.bind(null, {server: this, exit: true}));
+
+    //catches uncaught exceptions
+    process.on('uncaughtException', this.exitHandler.bind(null, {server: this, exit: true}));
 
     // this is all sync, so callback isn't really necessary.
     done && done();
-};
+}
+
+Server.prototype.exitHandler = function(options, err) {
+  var server = options.server;
+
+  if (options.cleanup) {
+    server.stop(function() {
+      toobusy.shutdown();
+    });
+  }
+
+  if (err) console.log(err);
+
+  if (options.exit) {
+    console.log();
+    console.log('Server stopped, process exiting...');
+    server.log.info('Server stopped, process exiting.');
+    process.exit();
+  }
+}
 
 function setCustomCacheControl(res, path) {
   _.each(config.get('headers.cacheControl'), function (value, key) {
@@ -148,6 +172,8 @@ Server.prototype.stop = function (done) {
     Object.keys(this.monitors).forEach(this.removeMonitor.bind(this));
 
     Object.keys(this.components).forEach(this.removeComponent.bind(this));
+
+    this.server.destroy();
 
     this.server.close(function (err) {
         self.readyState = 0;
