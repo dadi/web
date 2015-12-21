@@ -44,18 +44,6 @@ Unless a custom route has been specified in the page descriptpr, the new page wi
 
 Multiple datasource files (`workspace/datasources/{datasourcename}.json`) can be attached to a page. Each datasource file describes which Serama endpoint to use, which filters to use, how many records to return etc. A full list of options can be found in the [Datasource Specification](datasource_specification.md) document.
 
-#### Datasources
-Datasources are the main link between a DADI Web application and a DADI API or other third party end point. Datasources describe which endpoints to use, how to authenticate against that service, whether caching and pagination are enabled and can include default filters to pass to the API. See [Datasource Specification](datasource_specification.md) for more information and a sample datasource.
-
-Datasources are assigned to pages in the page descriptor file.
-
-#### Events
-These files add additional server side functionality to pages. Events are run after a page has loaded data from all of it's datasources, so they have access to all the data specified by a page's descriptor file.
-
-See [Events](events.md) for more information and a sample event file.
-
-Events are assigned to pages in the page descriptor file.
-
 #### Pages and Partials
 Pages are the main template files. Templating is based around the [DustJS](http://akdubya.github.io/dustjs/) templating language.
 
