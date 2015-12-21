@@ -226,14 +226,17 @@ var conf = convict({
     doc: "",
     format: Object,
     default: {
-      workspacePath: __dirname + '/workspace',
-      datasourcePath: __dirname + '/workspace/data-sources',
-      pagePath: __dirname + '/workspace/pages',
-      partialPath: __dirname + '/workspace/partials',
-      eventPath: __dirname + '/workspace/events',
-      mediaPath: __dirname + '/media',
-      publicPath: __dirname + '/public',
-      routesPath: __dirname + '/routes'
+      datasourcePath: __dirname + '/app/datasources',
+      eventPath: __dirname + '/app/events',
+      filtersPath: __dirname + '/app/utils/filters',
+      helpersPath: __dirname + '/app/utils/helpers',
+      mediaPath: __dirname + '/app/media',
+      middlewarePath: __dirname + '/app/middleware',
+      pagePath: __dirname + '/app/pages',
+      partialPath: __dirname + '/app/partials',
+      publicPath: __dirname + '/app/public',
+      routesPath: __dirname + '/app/routes',
+      workspacePath: __dirname + '/workspace'
     }
   },
   sessions: {

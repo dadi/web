@@ -170,6 +170,38 @@ describe('View', function (done) {
 
   });
 
+  it('should throw an error if the configured helper path cannot be found', function (done) {
+
+    // set a helper path in config
+    config.set('paths.helpers', 'test/app/utils/not/here/helpers');
+
+    var name = 'test';
+    var schema = help.getPageSchema();
+    schema.template = 'test.dust';
+
+    // load a template
+    var template = "<h1>Code Helper Example</h1>";
+    template += "{@code}";
+    template += "alert('Hello World');";
+    template += "{/code}";
+
+    var compiled = dust.compile(template, 'test', true);
+    dust.loadSource(compiled);
+
+    var req = {
+      url: '/test'
+    };
+
+    var p = page(name, schema);
+
+    should.throws(function() { view(req.url, p, false); }, Error);
+
+    // reset helper path in config
+    config.set('paths.helpers', 'test/app/utils/helpers');
+    
+    done();
+  });
+
   it('should still render if custom dust helper cannot be found when calling `render()`', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();

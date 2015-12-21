@@ -12,15 +12,15 @@
     "port": 3000
   },
   "paths": {
-    "workspacePath": "test/workspace",
-    "datasources": "test/workspace/data-sources",
-    "pages": "test/workspace/pages",
-    "partials": "test/workspace/partials",
-    "events": "test/workspace/events",
-    "middleware": "test/workspace/middleware",
-    "media": "test/media",
-    "public": "test/public",
-    "routes": "test/routes"
+    "workspacePath": "test/app",
+    "datasources": "test/app/datasources",
+    "pages": "test/app/pages",
+    "partials": "test/app/partials",
+    "events": "test/app/events",
+    "middleware": "test/app/middleware",
+    "media": "test/app/media",
+    "public": "test/app/public",
+    "routes": "test/app/routes"
   },
   "auth": {
     "tokenUrl":"/token",

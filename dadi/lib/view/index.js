@@ -78,6 +78,15 @@ View.prototype.render = function(done) {
  *  @api public
  */
 View.prototype.loadFiles = function(pathToHelpers) {
+
+  // test the requested path
+  try {
+    var stats = fs.statSync(pathToHelpers);
+  }
+  catch (err) {
+    throw err;
+  }
+
   fs.readdirSync(pathToHelpers).sort().forEach(function(file) {
     var filepath = path.resolve(pathToHelpers + '/' + file);
     stats = fs.statSync(filepath);
