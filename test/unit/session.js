@@ -27,8 +27,8 @@ var connectionString = 'http://' + config.get('server.host') + ':' + config.get(
 function startServer(page) {
 
   var options = {
-    pagePath: __dirname + '/../workspace/pages',
-    eventPath: __dirname + '/../workspace/events'
+    pagePath: __dirname + '/../app/pages',
+    eventPath: __dirname + '/../app/events'
   };
 
   Server.app = api();

@@ -68,11 +68,11 @@ module.exports.getPageSchema = function () {
 
 module.exports.getPathOptions = function () {
   return {
-  	datasourcePath: __dirname + '/../test/workspace/data-sources',
-		pagePath: __dirname + '/../test/workspace/pages',
-		partialPath: __dirname + '/../test/workspace/partials',
-		eventPath: __dirname + '/../test/workspace/events',
-		routesPath: __dirname + '/../test/workspace/routes'
+  	datasourcePath: __dirname + '/../test/app/datasources',
+		pagePath: __dirname + '/../test/app/pages',
+		partialPath: __dirname + '/../test/app/partials',
+		eventPath: __dirname + '/../test/app/events',
+		routesPath: __dirname + '/../test/app/routes'
   }
 };
 

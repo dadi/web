@@ -75,7 +75,7 @@ describe('Event', function (done) {
   it('should run the attached event', function (done) {
     var pageName = 'test';
     var eventName = 'test_event';
-    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../workspace/events') });
+    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../app/events') });
 
     var data = { test: true };
     newEvent.run({}, {}, data, function(err, result) {
@@ -88,7 +88,7 @@ describe('Event', function (done) {
 
     var pageName = 'test';
     var eventName = 'test_event_error';
-    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../workspace/events') });
+    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../app/events') });
 
     var data = { test: true };
 
@@ -105,10 +105,10 @@ describe('Event', function (done) {
   it('should load the referenced event file from the filesystem', function (done) {
     var pageName = 'test';
     var eventName = 'test_event';
-    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../workspace/events') });
+    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../app/events') });
 
     var file = newEvent.loadEvent();
-    var expected = require(path.join(__dirname, '../workspace/events/test_event.js'));
+    var expected = require(path.join(__dirname, '../app/events/test_event.js'));
 
     file.should.eql(expected);
     done();
@@ -117,7 +117,7 @@ describe('Event', function (done) {
   it('should throw an error if the referenced event file can\'t be found', function (done) {
     var pageName = 'test';
     var eventName = 'test_event_xxx';
-    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../workspace/events') });
+    var newEvent = e(pageName, eventName, { "eventPath": path.join(__dirname, '../app/events') });
 
     should.throws(function() { newEvent.loadEvent() } );
     done();
