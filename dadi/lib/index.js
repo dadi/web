@@ -52,7 +52,7 @@ Server.prototype.start = function (done) {
 
     this.readyState = 2;
 
-    var options = loadPaths(config.get('paths') || {});
+    var options = this.loadPaths(config.get('paths') || {});
 
     // create app
     var app = this.app = api();
@@ -222,28 +222,30 @@ Server.prototype.stop = function (done) {
     });
 };
 
-function loadPaths(paths) {
+Server.prototype.loadPaths = function(paths) {
 
+  var self = this;
   var options = {};
 
-  options.datasourcePath = path.resolve(paths.datasources || __dirname + '/../../workspace/datasources');
-  options.eventPath = path.resolve(paths.events || __dirname + '/../../workspace/events');
-  options.pagePath = path.resolve(paths.pages || __dirname + '/../../workspace/pages');
-  options.partialPath = path.resolve(paths.partials || __dirname + '/../../workspace/partials');
-  options.routesPath = path.resolve(paths.routes || __dirname + '/../../workspace/routes');
-  options.middlewarePath = path.resolve(paths.middleware || __dirname + '/../../workspace/middleware');
+  options.datasourcePath = path.resolve(paths.datasources || __dirname + '/../../app/datasources');
+  options.eventPath = path.resolve(paths.events || __dirname + '/../../app/events');
+  options.pagePath = path.resolve(paths.pages || __dirname + '/../../app/pages');
+  options.partialPath = path.resolve(paths.partials || __dirname + '/../../app/partials');
+  options.routesPath = path.resolve(paths.routes || __dirname + '/../../app/routes');
+  options.middlewarePath = path.resolve(paths.middleware || __dirname + '/../../app/middleware');
 
   if (paths.media) options.mediaPath = path.resolve(paths.media);
   if (paths.public) options.publicPath = path.resolve(paths.public);
 
-  _.each(options, function(path) {
+  _.each(options, function(path, key) {
     fs.stat(path, function(err, stats) {
       if (err) {
         if (err.code === 'ENOENT') {
-          console.log('Path "' + path + '" could not be found. Ensure paths are configured correctly in "./config/config.' + config.get('env') + '.json".\n');
-          console.log(JSON.stringify(paths, null, 2));
-          console.log();
-          process.exit(0);
+
+          self.ensureDirectories(options, function() {
+            //
+          });
+
         }
       }
     });
@@ -625,8 +627,15 @@ Server.prototype.ensureDirectories = function (options, done) {
     var idx = 0;
     _.each(options, function(dir) {
       mkdirp(dir, {}, function (err, made) {
-        if (err) self.log.error(err);
-        if (made) self.log.info('Created workspace directory ' + made);
+        if (err) {
+          self.log.error(err);
+          console.log(err);
+        }
+
+        if (made) {
+          self.log.info('Created directory ' + made);
+          console.log('Created directory ' + made);
+        }
 
         idx++;
 
