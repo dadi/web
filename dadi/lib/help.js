@@ -109,29 +109,43 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 
 // helper that sends html response
 module.exports.sendBackHTML = function (method, successCode, contentType, res, next) {
-    return function (err, results) {
 
-        if (err) {
-          console.log(err);
-          return next(err);
-        }
+  return function (err, results) {
 
-        var resBody = results;
-
-        res.statusCode = successCode;
-        res.setHeader('Server', config.get('server.name'));
-        //res.setHeader('Cache-Control', 'private, max-age=600');
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Content-Length', Buffer.byteLength(resBody));
-
-        if (method.toLowerCase() === 'head') {
-          res.setHeader('Connection', 'close');
-          return res.end("");
-        }
-        else {
-          return res.end(resBody);
-        }
+    if (err) {
+      console.log(err);
+      return next(err);
     }
+
+    var resBody = results;
+
+    res.statusCode = successCode;
+    res.setHeader('Server', config.get('server.name'));
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Length', Buffer.byteLength(resBody));
+    //res.setHeader('Cache-Control', 'private, max-age=600');
+
+    self.addHeaders(res);
+
+    if (method.toLowerCase() === 'head') {
+      res.setHeader('Connection', 'close');
+      return res.end("");
+    }
+    else {
+      return res.end(resBody);
+    }
+  }
+}
+
+module.exports.addHeaders = function(res) {
+  var headers = config.get('headers');
+
+  _.each(headers.cors, function(value, header) {
+    res.setHeader(header, value);
+    if (header === 'Access-Control-Allow-Origin' && value !== '*') {
+      res.setHeader('Vary', 'Origin');
+    }
+  });
 }
 
 module.exports.getStaticData = function(datasource, done) {

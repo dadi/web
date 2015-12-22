@@ -43,6 +43,9 @@
       "text/css": "public, max-age=86400",
       "text/javascript": "public, max-age=86400",
       "application/javascript": "public, max-age=86400"
+    },
+    "cors": {
+      "Access-Control-Allow-Origin": "*"
     }
   },
   "caching": {
