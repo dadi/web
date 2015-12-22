@@ -1,3 +1,5 @@
+var fs = require('fs');
+var path = require('path');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var commonDustHelpers = require('common-dustjs-helpers');
@@ -18,6 +20,8 @@ var View = function (url, page, json) {
 
   this.pageTemplate = this.page.template.slice(0, this.page.template.indexOf('.'));
   this.template = _.find(_.keys(dust.cache), function (k) { return k.indexOf(self.pageTemplate) > -1; });
+
+  this.loadTemplateHelpers();
 }
 
 View.prototype.setData = function(data) {
@@ -67,6 +71,44 @@ View.prototype.render = function(done) {
       return done(err, result);
     });
   }
+}
+
+/**
+ *  Load all files located in the specified path
+ *  @api public
+ */
+View.prototype.loadFiles = function(pathToHelpers) {
+
+  // test the requested path
+  try {
+    var stats = fs.statSync(pathToHelpers);
+  }
+  catch (err) {
+    throw err;
+  }
+
+  fs.readdirSync(pathToHelpers).sort().forEach(function(file) {
+    var filepath = path.resolve(pathToHelpers + '/' + file);
+    stats = fs.statSync(filepath);
+    if (stats.isFile() && file.slice(-3) === '.js') {
+
+      require(filepath);
+    }
+  });
+}
+
+/**
+ *  Load all files located in app/utils/helpers && app/utils/filters (or configured alternatives)
+ *  @api public
+ */
+View.prototype.loadTemplateHelpers = function() {
+  var paths = config.get('paths');
+
+  var filtersPath = paths.filters || path.resolve(__dirname + '/../../../app/utils/filters');
+  var helpersPath = paths.helpers || path.resolve(__dirname + '/../../../app/utils/helpers');
+
+  this.loadFiles(filtersPath);
+  this.loadFiles(helpersPath);
 }
 
 module.exports = function (url, page, json) {
