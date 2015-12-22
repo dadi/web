@@ -205,6 +205,8 @@ module.exports.getData = function(datasource, done) {
                 if (res.statusCode >= 400) {
                   var err = new Error();
                   err.message = 'Datasource "' + datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + datasource.endpoint;
+                  if (output) err.message += '\n' + output;
+                  
                   err.remoteIp = options.host;
                   err.remotePort = options.port;
 
