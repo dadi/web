@@ -132,6 +132,8 @@ Router.prototype.constrain = function(route, constraint) {
  */
 Router.prototype.testConstraint = function(route, req, res, callback) {
 
+  var self = this;
+
   if (!this.constraints[route]) {
     // no constraint against this route,
     // let's use it
@@ -175,7 +177,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
         if (result) {
           try {
             var results = JSON.parse(result);
-            // console.log(results);
+
             if (results && results.results && results.results.length > 0) {
               return callback(true);
             }
@@ -184,7 +186,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
             }
           }
           catch (err) {
-            this.log.error(err);
+            self.log.error(err);
             return callback(false);
           }
         }

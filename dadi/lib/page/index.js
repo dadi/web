@@ -14,7 +14,7 @@ var Page = function (name, schema) {
   this.datasources = schema.datasources;
   this.events = schema.events;
 
-  this.settings = schema.settings || {};
+  this.settings = schema.settings;
   this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
   this.keepWhitespace = getWhitespaceSetting(this.settings);
   this.passFilters =  this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false;

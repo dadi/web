@@ -1,12 +1,11 @@
-
 /**
  * Module dependencies
  */
 
 var url = require('url');
+var qs = require('qs');
 var httpReq = require('http').request;
 var httpsReq = require('https').request;
-var qs = require('qs');
 var defaultVia = '1.1 ' + require('os').hostname();
 
 /**
@@ -35,7 +34,6 @@ module.exports = function(rules) {
   rules = _parse(rules);
 
   return function(req, res, next) {
-
     var protocol = req.connection.encrypted || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
     var callNext = true;
 
@@ -48,7 +46,7 @@ module.exports = function(rules) {
       }
 
       var location;
-      if(/\:\/\//.test(rule.replace)) {
+      if(/\:\/\//.test(rule.replace)) {
         location = req.url.replace(rule.regexp, rule.replace);
       }
       else {
@@ -56,8 +54,6 @@ module.exports = function(rules) {
       }
 
       var match = rule.regexp.test(req.url);
-
-      //if (match) console.log(rule)
 
       // If not match
       if(!match) {
@@ -108,7 +104,6 @@ module.exports = function(rules) {
         res.writeHead(rule.redirect, {
           Location : location
         });
-        //console.log('end')
         res.end();
         callNext = false;
         return true;
@@ -119,7 +114,6 @@ module.exports = function(rules) {
         if (rule.replace !== '-') {
           req.url = req.url.replace(rule.regexp, rule.replace);
         }
-        //console.log(req.url)
         if (rule.last) callNext = false;
         return rule.last;
       }

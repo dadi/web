@@ -39,7 +39,7 @@ describe('Page', function (done) {
   it('should attach key if supplied', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    schema.page.key = 'key!'
+    schema.page.key = 'key!';
     page(name, schema).key.should.eql('key!');
     done();
   });
@@ -63,7 +63,7 @@ describe('Page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
 
-    delete schema.route.path
+    delete schema.route.path;
     schema.route.paths = '/car-reviews/:make/:model';
 
     var p = page(name, schema);
@@ -75,11 +75,29 @@ describe('Page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
 
-    delete schema.route.path
+    delete schema.route.path;
     schema.route.paths = ['/car-reviews/:make/:model'];
 
     var p = page(name, schema);
     p.route.paths.should.eql(schema.route.paths);
+    done();
+  });
+
+  it('should attach specified `route constraint` to page', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    schema.route.constraint = 'getCategories';
+    page(name, schema).route.constraint.should.eql('getCategories');
+    done();
+  });
+
+  it('should attach specified `route constraint` to page when the `paths` is a string', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    delete schema.route.path;
+    schema.route.paths = '/car-reviews/:make/:model';
+    schema.route.constraint = 'getCategories';
+    page(name, schema).route.constraint.should.eql('getCategories');
     done();
   });
 
@@ -103,7 +121,7 @@ describe('Page', function (done) {
     var p = page(name, schema);
 
     p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:model/review/:subpage')
+    p.route.paths.push('/car-reviews/:make/:model/review/:subpage');
 
     var url = p.toPath({ make: 'bmw', model: '2-series'});
     url.should.eql('/car-reviews/bmw/2-series');
@@ -117,7 +135,7 @@ describe('Page', function (done) {
     var p = page(name, schema);
 
     p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:model/review/:subpage')
+    p.route.paths.push('/car-reviews/:make/:model/review/:subpage');
 
     var url = p.toPath({ make: 'bmw', model: '2-series', subpage: 'on-the-road'});
     url.should.eql('/car-reviews/bmw/2-series/review/on-the-road');
@@ -131,9 +149,9 @@ describe('Page', function (done) {
     var p = page(name, schema);
 
     p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:model/review/:subpage')
+    p.route.paths.push('/car-reviews/:make/:model/review/:subpage');
 
-    should.throws(function() { p.toPath({ make: 'bmw', yyy: '2-series', xxx: 'on-the-road'}) }, Error);
+    should.throws(function() { p.toPath({ make: 'bmw', yyy: '2-series', xxx: 'on-the-road'}); }, Error);
 
     done();
   });
@@ -144,7 +162,7 @@ describe('Page', function (done) {
     var p = page(name, schema);
 
     p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:year')
+    p.route.paths.push('/car-reviews/:make/:year');
 
     var url = p.toPath({ make: 'bmw', year: '2005'});
     url.should.eql('/car-reviews/bmw/2005');
@@ -206,7 +224,7 @@ describe('Page', function (done) {
   it('should attach specified `contentType` to page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    schema.contentType = 'application/xml'
+    schema.contentType = 'application/xml';
     page(name, schema).contentType.should.eql('application/xml');
     done();
   });
@@ -222,6 +240,34 @@ describe('Page', function (done) {
     done();
   });
 
+  it('should attach empty object when `settings` is not provided', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    delete schema.settings;
+    var p = page(name, schema);
+    p.settings.should.eql({});
+
+    done();
+  });
+
+  it('should set `beautify` when `settings.beautify` is provided', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    schema.settings.beautify = true;
+    var p = page(name, schema);
+    p.beautify.should.eql(true);
+    done();
+  });
+
+  it('should set `passFilters` when `settings.passFilters` is provided', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    schema.settings.passFilters = true;
+    var p = page(name, schema);
+    p.passFilters.should.eql(true);
+    done();
+  });
+
   it('should throw error if `cache` setting is incorrect', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
@@ -229,7 +275,7 @@ describe('Page', function (done) {
     schema.page.cache = schema.settings.cache;
     delete schema.settings.cache;
 
-    should.throws(function() { page(name, schema) }, Error);
+    should.throws(function() { page(name, schema); }, Error);
 
     done();
   });
@@ -270,7 +316,7 @@ describe('Page', function (done) {
     var schema = help.getPageSchema();
     schema.route = "/test";
 
-    should.throws(function() { page(name, schema) }, Error);
+    should.throws(function() { page(name, schema); }, Error);
 
     done();
   });
@@ -322,18 +368,18 @@ describe('Page', function (done) {
         if (typeof token === 'object') {
           parts[token.name] = 'whatever';
         }
-      })
+      });
 
       //console.log(path)
 
       var url = p.toPath(parts);
-      var expected = pathToRegexp.compile(path)(parts)
+      var expected = pathToRegexp.compile(path)(parts);
 
       //console.log(url)
 
       url.should.eql(expected);
 
-    })
+    });
 
     done();
   });

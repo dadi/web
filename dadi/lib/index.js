@@ -624,6 +624,7 @@ Server.prototype.ensureDirectories = function (options, done) {
     var self = this;
 
     // create workspace directories if they don't exist
+    // permissions default to 0777
     var idx = 0;
     _.each(options, function(dir) {
       mkdirp(dir, {}, function (err, made) {
