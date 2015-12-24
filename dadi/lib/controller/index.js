@@ -78,6 +78,40 @@ Controller.prototype.attachEvents = function(done) {
   done();
 };
 
+Controller.prototype.buildInitialViewData = function(req) {
+
+  var data = {};
+  var urlData = url.parse(req.url, true);
+
+  data.query = urlData.query;
+
+  data.params = {};
+
+  // add request params (params from the path, e.g. /:make/:model)
+  _.extend(data.params, req.params);
+
+  // add query params (params from the querystring, e.g. /reviews?page=2);
+  _.extend(data.params, data.query);
+
+  data.host = req.headers.host;
+
+  if (urlData.pathname.length) {
+    data.pathname = urlData.pathname;
+  }
+  else {
+    data.pathname = "";
+  }
+
+  var json = config.get('allowJsonView') && urlData.query.json && urlData.query.json.toString() === 'true';
+
+  data.title = this.page.name;
+  data.global = config.has('global') ? config.get('global') : {};  // global values from config
+  data.debug = config.get('debug');
+  data.json = json || false;
+
+  return data;
+}
+
 Controller.prototype.post = function (req, res, next) {
   return this.process(req, res, next);
 }
@@ -94,29 +128,20 @@ Controller.prototype.process = function (req, res, next) {
 
     var self = this;
     var settings = {};
-
-    // allow query string param to return data only
-    var query = url.parse(req.url, true).query;
-    var debug = config.get('debug');
-    var json = config.get('allowJsonView') && query.json && query.json.toString() === 'true';
-
-    var view = new View(req.url, self.page, json);
-    var statusCode = res.statusCode || 200;
     var done;
 
-    if (json) {
+    var statusCode = res.statusCode || 200;
+
+    var data = this.buildInitialViewData(req);
+
+    var view = new View(req.url, self.page, data.json);
+
+    if (data.json) {
       done = sendBackJSON(statusCode, res, next);
     }
     else {
       done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next);
     }
-
-    var data = {
-      "title": self.page.name,
-      "debug": debug || false,
-      "json": json || false,
-      "global": config.has('global') ? config.get('global') : {}  // global values from config
-    };
 
     // add id component from the request
     if (req.params.id) data.id = decodeURIComponent(req.params.id);
@@ -212,8 +237,6 @@ Controller.prototype.loadData = function(req, res, data, done) {
   var idx = 0;
   var self = this;
 
-  var query = url.parse(req.url, true).query;
-
   help.timer.start('load data');
 
   // no datasources specified for this page
@@ -260,7 +283,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
       idx++;
 
       if (idx === Object.keys(primaryDatasources).length) {
-        self.processChained(chainedDatasources, data, query, function(err, result) {
+        self.processChained(chainedDatasources, data, function(err, result) {
 
           if (err) return done(err);
 
@@ -278,7 +301,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   });
 }
 
-Controller.prototype.processChained = function (chainedDatasources, data, query, done) {
+Controller.prototype.processChained = function (chainedDatasources, data, done) {
 
   var idx = 0;
   var self = this;
@@ -321,12 +344,12 @@ Controller.prototype.processChained = function (chainedDatasources, data, query,
     }
 
     // does the parent page require no cache?
-    if (query.cache === 'false') {
+    if (data.query.cache === 'false') {
       chainedDatasource.schema.datasource.cache = false;
     }
 
     // add page # to datasource options
-    chainedDatasource.schema.datasource.page = query.page || 1;
+    chainedDatasource.schema.datasource.page = data.query.page || 1;
 
     if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
       param = parseInt(param);
