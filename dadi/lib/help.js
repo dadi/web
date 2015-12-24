@@ -58,21 +58,26 @@ module.exports.isApiAvailable = function(done) {
   }
 
   var options = {
-    host: config.get('api.host'),
+    hostname: config.get('api.host'),
     port: config.get('api.port'),
-    path: '/'
+    path: '/',
+    method: 'GET'
   };
 
-  http.get(options, function(res) {
+  var request = http.request(options, function(res) {
     if (/200|401|404/.exec(res.statusCode)) {
       return done(null, true);
     }
-  }).on('error', function(e) {
+  });
+
+  request.on('error', function(e) {
     e.message = 'Error connecting to API: ' + e.message + '. Check the \'api\' settings in config file \'config/config.' + config.get('env') + '.json';
-    e.remoteIp = options.host;
+    e.remoteIp = options.hostname;
     e.remotePort = options.port;
     return done(e);
   });
+
+  request.end();
 }
 
 // helper that sends json response
