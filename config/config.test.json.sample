@@ -78,7 +78,7 @@
   "dust": {
     "cache": true,
     "debug": false,
-    "debugLevel": "INFO",
+    "debugLevel": "WARN",
     "whitespace": false
   },
   "rewrites": {
