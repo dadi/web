@@ -1,0 +1,40 @@
+{
+	"datasource": {
+		"key": "car-models",
+		"name": "Models datasource",
+		"source": {
+			"type": "remote",
+			"protocol": "http",
+			"host": "127.0.0.1",
+			"port": "3000",
+			"endpoint": "1.0/cars/models"
+		},
+    "caching": {
+      "enabled": false,
+      "ttl": 50,
+      "directory": "./cache/rosecomb/",
+      "extension": "json"
+  	},
+    "auth": {
+      "type": "bearer",
+      "host": "127.0.0.1",
+      "port": "3000",
+      "tokenUrl": "/token",
+      "credentials": {
+        "clientId": "rosecombClient",
+        "secret": "superSecret"
+      }
+    },
+  	"paginate": true,
+  	"count": 20,
+  	"sort": [
+      { "field": "name", "order": "asc" }
+    ],
+  	"search": {},
+    "filter": {},
+  	"fields": { "name": 1, "_id": 0 },
+    "requestParams": [
+      { "param": "model", "field": "name" }
+    ]
+	}
+}

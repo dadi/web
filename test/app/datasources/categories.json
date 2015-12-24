@@ -1,0 +1,30 @@
+{
+	"datasource": {
+		"key": "categories",
+		"name": "Category datasource",
+		"source": {
+			"type": "remote",
+			"protocol": "http",
+			"host": "127.0.0.1",
+			"port": "3000",
+			"endpoint": "1.0/cars/makes"
+		},
+    "caching": {
+      "enabled": false,
+      "ttl": 50,
+      "directory": "./cache/web/",
+      "extension": "json"
+    },
+  	"paginate": true,
+  	"count": 20,
+  	"sort": [
+      { "field": "name", "order": "asc" }
+    ],
+  	"search": {},
+    "filter": {},
+  	"fields": { "name": 1, "_id": 0 },
+    "requestParams": [
+      { "param": "category", "field": "name" }
+    ]
+	}
+}
