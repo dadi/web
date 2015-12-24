@@ -34,6 +34,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     port: self.config.port,
     path: self.tokenRoute,
     method: 'POST',
+    agent: new http.Agent({ keepAlive: true }),
     headers: {
       'Content-Type': 'application/json'
     }
