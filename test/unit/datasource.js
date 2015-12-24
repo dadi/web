@@ -228,22 +228,212 @@ describe('Datasource', function (done) {
     done();
   });
 
-  it('should add requestParams to the endpoint', function (done) {
-    var name = 'test';
-    var schema = help.getPageSchema();
-    var p = page(name, schema);
-    var dsName = 'car-makes';
+  describe('processRequest', function(done) {
+    it('should add requestParams to the endpoint', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      var p = page(name, schema);
+      var dsName = 'car-makes';
 
-    var params = { "make": "bmw" };
-    var req = { params: params, url: '/1.0/cars/makes' };
+      var params = { "make": "bmw" };
+      var req = { params: params, url: '/1.0/cars/makes' };
 
-    var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
 
-    ds.processRequest(name, req);
-    ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}');
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}');
 
-    done();
+      done();
+    });
 
+    it('should pass cache param to the endpoint', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = true;
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+
+      var params = { "make": "bmw", "page": 3 };
+      var req = { params: params, url: '/1.0/cars/makes?cache=false' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}&cache=false');
+
+      ds.schema.datasource.cache.should.eql(false);
+
+      done();
+    });
+
+    it('should remove cache setting from ds schema if not passed in the query', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = true;
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+
+      var params = { "make": "bmw", "page": 3 };
+      var req = { params: params, url: '/1.0/cars/makes?cache=false' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}&cache=false');
+      ds.schema.datasource.cache.should.eql(false);
+
+      var req = { params: params, url: '/1.0/cars/makes' };
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}');
+      (typeof ds.schema.datasource.cache === 'undefined').should.eql(true);
+
+      done();
+    });
+
+    it('should pass page param to the endpoint when page.passFilters is true', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = true;
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+
+      var params = { "make": "bmw", "page": 3 };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should pass page param to the endpoint when the datasource matches the page name', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = false;
+      var p = page(name, schema);
+      var dsName = 'test-cars-ds';
+
+      var params = { "make": "bmw", "page": 3 };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should pass req.params id param to the endpoint when the datasource matches the page name', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = false;
+      var p = page(name, schema);
+      var dsName = 'test-cars-ds';
+
+      var params = { 'id': '1234567890' };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"_id":"1234567890"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should pass req.params id param to the endpoint when page.passFilters is true', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = true;
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+
+      var params = { 'id': '1234567890' };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"_id":"1234567890"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should pass querystring id param to the endpoint when the datasource matches the page name', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = false;
+      var p = page(name, schema);
+      var dsName = 'test-cars-ds';
+
+      var req = { params: {}, url: '/1.0/cars/makes?id=1234567890' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"_id":"1234567890"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should pass querystring id param to the endpoint when page.passFilters is true', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = true;
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+
+      var req = { params: {}, url: '/1.0/cars/makes?id=1234567890' };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"_id":"1234567890"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should pass page param to each datasource', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = true;
+      var p = page(name, schema);
+
+      var params = { "make": "bmw", "model": "i3", "page": 3 };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var ds1 = datasource(p, 'car-makes', help.getPathOptions(), function() {});
+      var ds2 = datasource(p, 'car-models', help.getPathOptions(), function() {});
+
+      ds1.processRequest('car-makes', req);
+      ds2.processRequest('car-models', req);
+
+      ds2.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/models?count=20&page=3&filter={"name":"i3"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should pass filter param to the endpoint', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      schema.settings.passFilters = true;
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+
+      var filter = JSON.stringify( { "model": "x3" } );
+      var params = { "make": "bmw", "page": 3 };
+      var req = { params: params, url: '/1.0/cars/makes?filter=' + filter };
+
+      var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+
+      ds.processRequest(dsName, req);
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"model":"x3","name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
   });
 
 });
