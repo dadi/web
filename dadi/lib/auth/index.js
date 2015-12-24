@@ -35,10 +35,10 @@ module.exports = function (server) {
         this.log.info('Generating new access token for "' + req.url + '"');
         help.timer.start('auth');
 
-        var postData = {
+        var postData = JSON.stringify({
           clientId : config.get('auth.clientId'),
           secret : config.get('auth.secret')
-        };
+        });
 
         var options = {
           hostname: config.get('api.host'),
@@ -59,7 +59,6 @@ module.exports = function (server) {
           });
 
           res.on('end', function() {
-
             if (!output) {
               var err = new Error();
               var message = 'No token received, invalid credentials.';
@@ -93,7 +92,7 @@ module.exports = function (server) {
         });
 
         // write data to request body
-        request.write(JSON.stringify(postData));
+        request.write(postData);
 
         request.end();
     });
