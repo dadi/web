@@ -1,6 +1,6 @@
 {
   "name": "dadi-web",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Web frontend and template layer for the DADI API",
   "main": "main.js",
   "scripts": {
