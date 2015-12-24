@@ -34,17 +34,15 @@ function startServer(page) {
   Server.app = api();
   Server.components = {};
   Server.start(function() {
+    // create a handler for requests to this page
+    var controller = Controller(page, options);
 
+    Server.addComponent({
+        key: page.key,
+        route: page.route,
+        component: controller
+    }, false);
   });
-
-  // create a handler for requests to this page
-  var controller = Controller(page, options);
-
-  Server.addComponent({
-      key: page.key,
-      route: page.route,
-      component: controller
-  }, false);
 }
 
 function cleanup(done) {

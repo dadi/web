@@ -217,8 +217,8 @@ Server.prototype.stop = function (done) {
     this.server.destroy();
 
     this.server.close(function (err) {
-        self.readyState = 0;
-        done && done(err);
+      self.readyState = 0;
+      return done && done(err);
     });
 };
 
