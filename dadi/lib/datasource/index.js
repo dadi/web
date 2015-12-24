@@ -170,7 +170,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // handle the cache flag
   if (query.hasOwnProperty('cache') && query.cache === 'false') {
-    delete query.cache;
     this.schema.datasource.cache = false;
   }
   else {
@@ -179,12 +178,10 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // if the current datasource matches the page name
   // add some params from the query string or request params
-  if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters === 'true') {
+  if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters) {
 
     // handle pagination param
     this.schema.datasource.page = query.page || req.params.page || 1;
-    delete query.page;
-    delete req.params.page;
 
     // add an ID filter if it was present in the querystring
     // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
@@ -197,9 +194,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
     _.each(query, function(value, key) {
       if (key === 'filter') {
         _.extend(this.schema.datasource.filter, JSON.parse(value));
-      }
-      else {
-        //this.schema.datasource.filter[key] = encodeURIComponent(value);
       }
     }, this);
   }
