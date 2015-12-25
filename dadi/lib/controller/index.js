@@ -84,8 +84,8 @@ Controller.prototype.buildInitialViewData = function(req) {
   var urlData = url.parse(req.url, true);
 
   data.query = urlData.query;
-
   data.params = {};
+  data.pathname = "";
 
   // add request params (params from the path, e.g. /:make/:model)
   _.extend(data.params, req.params);
@@ -98,9 +98,6 @@ Controller.prototype.buildInitialViewData = function(req) {
   if (urlData.pathname.length) {
     data.pathname = urlData.pathname;
   }
-  else {
-    data.pathname = "";
-  }
 
   var json = config.get('allowJsonView') && urlData.query.json && urlData.query.json.toString() === 'true';
 
@@ -108,6 +105,9 @@ Controller.prototype.buildInitialViewData = function(req) {
   data.global = config.has('global') ? config.get('global') : {};  // global values from config
   data.debug = config.get('debug');
   data.json = json || false;
+
+  delete data.query.json;
+  delete data.params.json;
 
   return data;
 }
