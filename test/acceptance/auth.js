@@ -150,6 +150,49 @@ describe('Auth', function (done) {
 
   });
 
+  it('should return error if api can\'t be reached', function (done) {
+
+    config.set('api.enabled', true);
+
+    http.register_intercept({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: '/token',
+      method: 'POST',
+      agent: new http.Agent({ keepAlive: true }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    http.replyWithError();
+
+    delete require.cache['../../dadi/lib/auth'];
+    auth = proxyquire('../../dadi/lib/auth', {'http': http});
+
+    startServer(function() {
+
+      setTimeout(function() {
+
+        var client = request(clientHost);
+        client
+        .get('/')
+        .expect('content-type', 'text/html')
+        .expect(500)
+        .end(function (err, res) {
+          if (err) return done(err);
+
+          Server.stop(function() {
+            setTimeout(function() {
+              done();
+            }, 200);
+          });
+
+        });
+      }, 700);
+
+    });
+
+  });
+
   it('should not error if valid credentials are supplied and a token is returned', function (done) {
 
     config.set('api.enabled', true);

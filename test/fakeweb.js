@@ -81,6 +81,10 @@ http.get_intercepts = function(){
     return intercept_rules;
 };
 
+http.replyWithError = function(err) {
+  
+}
+
 // wrap http.request with interceptor function
 var old_request = http.request;
 http.request = function(options, callback) {

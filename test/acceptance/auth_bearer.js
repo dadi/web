@@ -159,44 +159,85 @@ describe('Auth - Datasource', function (done) {
 
   });
 
-  it('should not error if valid credentials are supplied and a token is returned');//, function (done) {
+  it('should not error if valid credentials are supplied and a token is returned', function (done) {
 
-  //   config.set('api.enabled', true);
-  //
-  //   http.register_intercept({
-  //     hostname: '127.0.0.1',
-  //     port: 3000,
-  //     path: '/token',
-  //     method: 'POST',
-  //     agent: new http.Agent({ keepAlive: true }),
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: token
-  //   });
-  //
-  //   delete require.cache['../../dadi/lib/auth'];
-  //   auth = proxyquire('../../dadi/lib/auth', {'http': http});
-  //
-  //   startServer(function() {
-  //     setTimeout(function() {
-  //
-  //       var client = request(clientHost);
-  //       client
-  //       .get('/test')
-  //       .expect('content-type', 'text/html')
-  //       .expect(200)
-  //       .end(function (err, res) {
-  //         if (err) return done(err);
-  //
-  //         Server.stop(function() {
-  //           setTimeout(function() {
-  //             done();
-  //           }, 200);
-  //         });
-  //
-  //       });
-  //     }, 200);
-  //   });
-  //
-  // });
+    config.set('api.enabled', true);
+    config.set('allowJsonView', true);
+
+    // first intercept is for the main auth
+    http.register_intercept({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: '/token',
+      method: 'POST',
+      agent: new http.Agent({ keepAlive: true }),
+      headers: { 'Content-Type': 'application/json' },
+      body: token
+    });
+
+    // second intercept is for the datasource
+    http.register_intercept({
+      hostname: '127.0.0.1',
+      port: 9000,
+      path: '/token',
+      method: 'POST',
+      agent: new http.Agent({ keepAlive: true }),
+      headers: { 'Content-Type': 'application/json' },
+      body: token
+    });
+
+    var result = JSON.stringify({
+      results: [
+        {
+          makeName: 'Ford'
+        }
+      ]
+    });
+
+    http.register_intercept({
+      hostname: '127.0.0.1',
+      port: 3000,
+      path: 'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}',
+      method: 'GET',
+      agent: new http.Agent({ keepAlive: true }),
+      headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71' },
+      body: result
+    });
+
+    delete require.cache['../../dadi/lib/auth'];
+    auth = proxyquire('../../dadi/lib/auth', {'http': http});
+
+    delete require.cache['../../dadi/lib/auth/bearer'];
+    bearer_auth = proxyquire('../../dadi/lib/auth/bearer', {'http': http});
+
+    startServer(function() {
+
+      setTimeout(function() {
+
+        var client = request(clientHost);
+        client
+        .get('/test?json=true')
+        .expect('content-type', 'application/json')
+        .expect(200)
+        .end(function (err, res) {
+
+          if (err) return done(err);
+
+          var actual = JSON.stringify(res.body['car-makes-unchained']);
+          var expected = JSON.stringify(JSON.parse(result));
+          actual.should.eql(expected);
+
+          Server.stop(function() {
+            setTimeout(function() {
+              done();
+            }, 200);
+          });
+
+        });
+      }, 500);
+
+    });
+
+  });
 
 });
