@@ -212,7 +212,7 @@ module.exports.getData = function(datasource, done) {
 
             self.log.info("GET datasource '" + datasource.schema.datasource.key + "': " + options.path);
 
-            req = http.request(options, function(res) {
+            var req = http.request(options, function(res) {
               var output = '';
 
               res.on('data', function(chunk) {
@@ -225,7 +225,7 @@ module.exports.getData = function(datasource, done) {
                   var err = new Error();
                   err.message = 'Datasource "' + datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + datasource.endpoint;
                   if (output) err.message += '\n' + output;
-                  
+
                   err.remoteIp = options.host;
                   err.remotePort = options.port;
 
