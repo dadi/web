@@ -712,6 +712,7 @@ function onListening(e) {
 
   // check that our API connection is valid
   help.isApiAvailable(function(err, result) {
+
     if (err) {
       console.log(err);
       console.log();
@@ -720,20 +721,33 @@ function onListening(e) {
 
     var env = config.get('env');
 
-    var webMessage = "[DADI] Started web application '" + config.get('app.name') + "' (" + version + ", Node.JS v" + nodeVersion + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
-    var apiMessage = "";
+    // var webMessage = "Started DADI Web '" + config.get('app.name') + "' (" + version + ", Node.JS v" + nodeVersion + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port');
+    // var apiMessage = "";
 
-    if (config.get('api.enabled') === true) {
-      apiMessage += "[DADI] Attached to DADI API on " + config.get('api.host') + ":" + config.get('api.port');
-    }
-
-    console.log("\n" + webMessage.bold.white);
-    console.log(apiMessage.bold.blue + "\n");
-    //
-    // if (env === 'production') {
-    //   self.log.info(webMessage);
-    //   self.log.info(apiMessage);
+    // if (config.get('api.enabled') === true) {
+    //   apiMessage += "Attached to DADI API on " + config.get('api.host') + ":" + config.get('api.port');
     // }
+
+    var startText = '';
+    startText += '  ----------------------------\n';
+    startText += '  ' + config.get('app.name').green + '\n';
+    startText += '  Started \'DADI Web\'\n';
+    startText += '  ----------------------------\n';
+    startText += '  Server:      '.green + config.get('server.host') + ':' + config.get('server.port') + '\n';
+    startText += '  Version:     '.green + version + '\n';
+    startText += '  Node.JS:     '.green + nodeVersion + '\n';
+    startText += '  Environment: '.green + env + '\n';
+    if (config.get('api.enabled') === true) {
+    startText += '  API:         '.green + config.get('api.host') + ":" + config.get('api.port') + '\n';
+    }
+    else {
+    startText += '  API:         '.green + 'Not found'.red + '\n';
+    }
+    startText += '  ----------------------------\n';
+    console.log(startText);
+
+    // console.log("\n" + webMessage.bold.white);
+    // console.log(apiMessage.bold.blue + "\n");
   });
 }
 
