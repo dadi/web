@@ -25,7 +25,7 @@ var DatasourceCache = function (datasource) {
 
   // we build the filename with a hashed hex string so we can be unique
   // and avoid using file system reserved characters in the name
-  this.filename = crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
+  this.filename = crypto.createHash('sha1').update(this.datasource.name + '_' + this.datasource.endpoint).digest('hex');
 
   this.setCachePath();
 
