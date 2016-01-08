@@ -25,6 +25,17 @@ else {
   mongoStore = require('connect-mongo')(session);
 }
 
+// let's ensure there's at least a dev config file here
+var devConfigPath = __dirname + '/../../config/config.development.json';
+try {
+  var stats = fs.statSync(devConfigPath);
+}
+catch(err) {
+  if (err.code === 'ENOENT') {
+    fs.writeFileSync(devConfigPath, fs.readFileSync(devConfigPath+'.sample'));
+  }
+}
+
 var controller = require(__dirname + '/controller');
 var router = require(__dirname + '/controller/router');
 var Page = require(__dirname + '/page');
@@ -62,7 +73,7 @@ Server.prototype.start = function (done) {
       config.loadFile(options.configPath);
     }
 
-    if (config.get('logging.sentry.enabled')) {
+    if (config.get('logging.sentry.dsn') !== "") {
       app.use(raven.middleware.express.requestHandler(config.get('logging.sentry.dsn')));
     }
 
@@ -233,6 +244,9 @@ Server.prototype.loadPaths = function(paths) {
   options.partialPath = path.resolve(paths.partials || __dirname + '/../../app/partials');
   options.routesPath = path.resolve(paths.routes || __dirname + '/../../app/routes');
   options.middlewarePath = path.resolve(paths.middleware || __dirname + '/../../app/middleware');
+
+  options.filtersPath = path.resolve(paths.filters || __dirname + '/../../app/utils/filters');
+  options.helpersPath = path.resolve(paths.helpers || __dirname + '/../../app/utils/helpers');
 
   if (paths.media) options.mediaPath = path.resolve(paths.media);
   if (paths.public) options.publicPath = path.resolve(paths.public);
@@ -668,36 +682,36 @@ module.exports = new Server();
 // if a route is passed, the node module `path-to-regexp` is
 // used to create the RegExp that will test requests for this route
 function buildVerbMethod(verb) {
-    return function () {
-        var args = [].slice.call(arguments, 0);
-        var route = typeof arguments[0] === 'string' ? args.shift() : null;
+  return function () {
+    var args = [].slice.call(arguments, 0);
+    var route = typeof arguments[0] === 'string' ? args.shift() : null;
 
-        var handler = function (req, res, next) {
-            if (!(req.method && req.method.toLowerCase() === verb)) {
-                next();
-            }
+    var handler = function (req, res, next) {
+      if (!(req.method && req.method.toLowerCase() === verb)) {
+        next();
+      }
 
-            // push the next route on to the bottom of callback stack in case none of these callbacks send a response
-            args.push(next);
-            var doCallbacks = function (i) {
-                return function (err) {
-                    if (err) return next(err);
+      // push the next route on to the bottom of callback stack in case none of these callbacks send a response
+      args.push(next);
+      var doCallbacks = function (i) {
+        return function (err) {
+          if (err) return next(err);
 
-                    args[i](req, res, doCallbacks(++i));
-                };
-            };
-
-            doCallbacks(0)();
+          args[i](req, res, doCallbacks(++i));
         };
+      };
 
-        // if there is a route provided, only call for matching requests
-        if (route) {
-            return this.app.use(route, handler);
-        }
-
-        // if no route is provided, call this for all requests
-        this.app.use(handler);
+      doCallbacks(0)();
     };
+
+    // if there is a route provided, only call for matching requests
+    if (route) {
+      return this.app.use(route, handler);
+    }
+
+    // if no route is provided, call this for all requests
+    this.app.use(handler);
+  };
 }
 
 function onConnection(socket) {
@@ -745,6 +759,8 @@ function onListening(e) {
     }
     startText += '  ----------------------------\n';
     console.log(startText);
+
+    console.log('  Copyright %s 2015 DADI+ Limited (https://dadi.tech)'.white, String.fromCharCode(169));
 
     // console.log("\n" + webMessage.bold.white);
     // console.log(apiMessage.bold.blue + "\n");
