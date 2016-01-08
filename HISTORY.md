@@ -1,3 +1,11 @@
+
+
+* Config:
+ - Remove `sentry.enabled` and rely solely on the existence of the `sentry.dsn` property
+ - Rationalise included config properties in sample files, most can be handled by the sensible defaults
+* Cache
+ - Ensure a more unique datasource cache key by including the datasource name as well as the endpoint
+
 0.1.7 / 2015-12-06
 ===================
 * Config:
