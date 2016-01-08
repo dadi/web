@@ -9,6 +9,7 @@ var _ = require('underscore');
 var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
+var app = require(__dirname + '/../');
 
 var View = function (url, page, json) {
   this.url = url;
