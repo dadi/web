@@ -137,6 +137,7 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
 
   var params = [
     {"count": (schema.datasource.count || 0)},
+    {"skip": (schema.datasource.skip)},
     {"page": (schema.datasource.page || 1)},
     //{"search": schema.datasource.search},
     {"filter": schema.datasource.filter || {}},
