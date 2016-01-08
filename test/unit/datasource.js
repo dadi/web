@@ -173,6 +173,23 @@ describe('Datasource', function (done) {
 
   });
 
+  it('should use the `skip` property when building an endpoint string', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+    var dsName = 'car-makes';
+
+    var req = { params: {}, url: '/1.0/cars/makes' };
+
+    var ds = datasource(p, dsName, help.getPathOptions(), function() {});
+    ds.schema.datasource.skip = 5;
+
+    ds.processRequest(dsName, req);
+    ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&skip=5&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+    done();
+  });
+
   it('should build an endpoint string from schema properties when no page is specified', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
