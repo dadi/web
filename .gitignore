@@ -1,7 +1,8 @@
-app
+public/*
+app/*
+workspace/*
 !test/app
-public
-workspace
+!test/app/public
 !test/workspace
 
 # Config
