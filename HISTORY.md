@@ -3,8 +3,13 @@
 * Config:
  - Remove `sentry.enabled` and rely solely on the existence of the `sentry.dsn` property
  - Rationalise included config properties in sample files, most can be handled by the sensible defaults
-* Cache
+* Cache:
  - Ensure a more unique datasource cache key by including the datasource name as well as the endpoint
+ - Ensure a more unique page cache key by including the query as well as the pathname
+* Views:
+ - Added new `replace` helper, usage: {@replace str="hello.world" search="." replace="-" /}
+* Datasource:
+ - Add `skip` property to give the option of specifying an offset when querying for API data
 
 0.1.7 / 2015-12-06
 ===================

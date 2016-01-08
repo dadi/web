@@ -107,7 +107,7 @@ Cache.prototype.init = function() {
 
         // we build the filename with a hashed hex string so we can be unique
         // and avoid using file system reserved characters in the name
-        var requestUrl = url.parse(req.url, true).pathname;
+        var requestUrl = url.parse(req.url, true).path;
         var filename = crypto.createHash('sha1').update(requestUrl).digest('hex');
         var cachepath = path.join(self.dir, filename + '.' + config.get('caching.directory.extension'));
 
