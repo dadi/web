@@ -251,7 +251,7 @@ module.exports = function (server, options) {
         help.getData(ds, function(err, result) {
 
           if (err) {
-            this.log.error({err:err}, 'Error loading data in Router Rewrite module');
+            console.log('Error loading data in Router Rewrite module');
             return next(err);
           }
 
