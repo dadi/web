@@ -19,7 +19,7 @@ var Api = function () {
     this.log = log.get().child({module: 'api'});
 
     // Sentry error handler
-    if (config.get('logging.sentry.enabled')) {
+    if (config.get('logging.sentry.dsn') !== "") {
       this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')));
     }
 
