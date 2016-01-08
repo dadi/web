@@ -4,8 +4,7 @@
   },
   "server": {
     "host": "127.0.0.1",
-    "port": 3001,
-    "socketTimeoutSec": 30
+    "port": 3001
   },
   "api": {
     "host": "127.0.0.1",
@@ -16,79 +15,14 @@
     "clientId":"testClient",
     "secret":"superSecret"
   },
-  "aws": {
-    "accessKeyId": "",
-    "secretAccessKey": "",
-    "region": ""
-  },
-  "logging": {
-    "enabled": true,
-    "path": "./log",
-    "filename": "web",
-    "extension": "log",
-    "accessLog": {
-      "enabled": true,
-      "fileRotationPeriod": "1d",
-      "fileRetentionCount": 14,
-      "kinesisStream": ""
-    },
-    "sentry": {
-      "enabled": false,
-      "dsn": ""
-    }
-  },
-  "headers": {
-    "useGzipCompression": true,
-    "cacheControl": {
-      "text/css": "public, max-age=86400",
-      "text/javascript": "",
-      "application/javascript": ""
-    },
-    "cors": {
-      "Access-Control-Allow-Origin": "*"
-    }
-  },
-  "caching": {
-    "ttl": 300,
-    "directory": {
-      "enabled": true,
-      "path": "./cache/web/",
-      "extension": "html"
-    },
-    "redis": {
-      "enabled": false,
-      "host": "",
-      "port": 6379
-    }
-  },
   "global" : {
     "baseUrl": "http://www.example.com"
   },
-  "dust": {
-    "cache": true,
-    "debug": false,
-    "debugLevel": "INFO",
-    "whitespace": false
-  },
-  "sessions": {
-    "enabled": false,
-    "name": "dadiweb.sid",
-    "secret": "secretsquirrel",
-    "resave": false,
-    "saveUninitialized": false,
-    "cookie": {
-      "maxAge": 60000,
-      "secure": false
-    }
-  },
-  "rewrites": {
-    "datasource": "rewrites",
-    "path": "",
-    "forceTrailingSlash": false
-  },
   "virtualDirectories": [
-    { "path": "data/legacy_features", "index": "default.html", "forceTrailingSlash": false }
-  ],
-  "debug": true,
-  "allowJsonView": true
+    {
+      "path": "data/legacy_features",
+      "index": "default.html",
+      "forceTrailingSlash": false
+    }
+  ]
 }

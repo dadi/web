@@ -4,12 +4,19 @@
   },
   "server": {
     "host": "127.0.0.1",
-    "port": 8000,
-    "socketTimeoutSec": 30
+    "port": 8000
   },
   "api": {
     "host": "127.0.0.1",
     "port": 3000
+  },
+  "auth": {
+    "tokenUrl":"/token",
+    "clientId":"testClient",
+    "secret":"superSecret"
+  },
+  "global" : {
+    "baseUrl": "http://www.example.com"
   },
   "paths": {
     "workspacePath": "test/app",
@@ -21,71 +28,5 @@
     "media": "test/app/media",
     "public": "test/app/public",
     "routes": "test/app/routes"
-  },
-  "auth": {
-    "tokenUrl":"/token",
-    "clientId":"testClient",
-    "secret":"superSecret"
-  },
-  "aws": {
-    "accessKeyId": "",
-    "secretAccessKey": "",
-    "region": ""
-  },
-  "logging": {
-    "enabled": true,
-    "path": "./log",
-    "filename": "web",
-    "extension": "log",
-    "accessLog": {
-      "enabled": true,
-      "fileRotationPeriod": "1d",
-      "fileRetentionCount": 14,
-      "kinesisStream": ""
-    },
-    "sentry": {
-      "enabled": false,
-      "dsn": ""
-    }
-  },
-  "headers": {
-    "useGzipCompression": true,
-    "cacheControl": {
-      "text/css": "public, max-age=86400",
-      "text/javascript": "public, max-age=86400",
-      "application/javascript": "public, max-age=86400"
-    },
-    "cors": {
-      "Access-Control-Allow-Origin": "*"
-    }
-  },
-  "caching": {
-    "ttl": 300,
-    "directory": {
-      "enabled": true,
-      "path": "./cache/web/",
-      "extension": "html"
-    },
-    "redis": {
-      "enabled": false,
-      "host": "empire.qvhlji.ng.0001.euw1.cache.amazonaws.com",
-      "port": 6379
-    }
-  },
-  "global" : {
-    "baseUrl": "http://www.example.com"
-  },
-  "dust": {
-    "cache": true,
-    "debug": false,
-    "debugLevel": "WARN",
-    "whitespace": false
-  },
-  "rewrites": {
-    "datasource": "",
-    "path": "",
-    "forceTrailingSlash": false
-  },
-  "debug": false,
-  "allowJsonView": false
+  }
 }

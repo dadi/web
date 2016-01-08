@@ -130,19 +130,19 @@ var conf = convict({
   },
   dust: {
   	cache: {
-      doc: "Determines if Dust caching is enabled",
+      doc: "If true, compiled templates are saved to the Dust cache. Recommended setting: true",
       format: Boolean,
       default: true
     },
     debug: {
       doc: "",
       format: Boolean,
-      default: true
+      default: false
     },
     debugLevel: {
       doc: "",
       format: String,
-      default: "DEBUG"
+      default: "WARN"
     },
     whitespace: {
       doc: "",
@@ -154,7 +154,7 @@ var conf = convict({
     useGzipCompression: {
       doc: "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
       format: Boolean,
-      default: false
+      default: true
     },
     cacheControl: {
       doc: "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
@@ -210,13 +210,8 @@ var conf = convict({
       }
     },
     sentry: {
-      enabled: {
-        doc: "If true, error logging to a Sentry server is enabled.",
-        format: Boolean,
-        default: false
-      },
       dsn: {
-        doc: "The 'DSN' to use for Sentry logging. It should be similar to 'https://693ef18da3184cffa82144fde2979cbc:a0651b0286784761a62ef8e8fc128722@app.getsentry.com/59524'.",
+        doc: "The 'DSN' to use for logging errors and events to a Sentry server. It should be similar to 'https://693ef18da3184cffa82144fde2979cbc:a0651b0286784761a62ef8e8fc128722@app.getsentry.com/59524'.",
         format: String,
         default: ""
       }
