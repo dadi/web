@@ -313,4 +313,19 @@ describe('Dust Helpers', function (done) {
     });
   });
 
+  // @replace
+  // {@replace str="{message}" search="." replace="-" /}
+  it('replace: should replace all instances of search string with the replacement', function (done) {
+
+    var tmpl = "{@replace str=\"Hello World, nice day\" search=\" \" replace=\"X\"/}";
+    var expected = "HelloXWorld,XniceXday";
+
+
+    dust.renderSource(tmpl, {  }, function (err, out) {
+      if (err) done(err);
+      out.should.eql(expected);
+      done();
+    });
+  });
+
 });

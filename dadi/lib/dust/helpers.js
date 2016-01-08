@@ -348,3 +348,32 @@ dust.helpers.slugify = function(chunk, context, bodies, params) {
         chunk.end();
     });
 };
+
+/**
+ * Performs a global search and replace within a string.
+ * In the following example, we replace all periods in the
+ * message string with dashes.
+ *
+ * {@replace str="{message}" search="." replace="-" /}
+ *
+ * str - the input string within which the search and replace will be performed
+ * search - the character or sequence to search
+ * replace - the character or sequence used to replace
+ */
+dust.helpers.replace = function (chunk, context, bodies, params) {
+  var str = context.resolve(params.str);
+  var search = context.resolve(params.search);
+  var replace = context.resolve(params.replace);
+
+  var result = str.replace(new RegExp(escapeRegExp(search), 'g'), replace);
+
+  return chunk.write(result);
+};
+
+/**
+ * Processes the given string to escape special meta characters used within
+ * Regular Expressions. This is used by the replace helper.
+ */
+function escapeRegExp(string) {
+    return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
