@@ -86,6 +86,9 @@ Controller.prototype.buildInitialViewData = function(req) {
   data.query = urlData.query;
   data.params = {};
   data.pathname = "";
+  data.host = req.headers.host;
+
+  if (urlData.pathname.length) data.pathname = urlData.pathname;
 
   // add request params (params from the path, e.g. /:make/:model)
   _.extend(data.params, req.params);
@@ -93,12 +96,10 @@ Controller.prototype.buildInitialViewData = function(req) {
   // add query params (params from the querystring, e.g. /reviews?page=2);
   _.extend(data.params, data.query);
 
-  data.host = req.headers.host;
+  // add id component from the request
+  if (req.params.id) data.id = decodeURIComponent(req.params.id);
 
-  if (urlData.pathname.length) {
-    data.pathname = urlData.pathname;
-  }
-
+  // allow JSON view using ?json=true
   var json = config.get('allowJsonView') && urlData.query.json && urlData.query.json.toString() === 'true';
 
   data.title = this.page.name;
@@ -133,7 +134,6 @@ Controller.prototype.process = function (req, res, next) {
     var statusCode = res.statusCode || 200;
 
     var data = this.buildInitialViewData(req);
-
     var view = new View(req.url, self.page, data.json);
 
     if (data.json) {
@@ -143,12 +143,12 @@ Controller.prototype.process = function (req, res, next) {
       done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next);
     }
 
-    // add id component from the request
-    if (req.params.id) data.id = decodeURIComponent(req.params.id);
-
     self.loadData(req, res, data, function(err, data) {
 
-      if (err) return done(err);
+      if (err) {
+        if (err.statusCode && err.statusCode === 404) return next();
+        return done(err);
+      }
 
       help.timer.stop(req.method.toLowerCase());
       if (data) data.stats = help.timer.getStats();
