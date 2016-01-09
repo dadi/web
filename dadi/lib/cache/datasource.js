@@ -30,17 +30,9 @@ var DatasourceCache = function (datasource) {
   this.setCachePath();
 
   var self = this;
-
-  if (self.cache.redisClient) {
-    self.cache.redisClient.on("error", function (err) {
-      self.cache.log.error(err);
-    });
-  }
 };
 
 DatasourceCache.prototype.setCachePath = function() {
-
-  // default
   var cachePath = '.';
 
   // if the datasource file defines a directory and extension, use those, otherwise
@@ -99,7 +91,7 @@ DatasourceCache.prototype.getFromCache = function (done) {
         });
 
         readStream.on('end', function () {
-          self.cache.log.info('Serving datasource from Redis');
+          self.cache.log.info('Serving datasource from Redis (' + self.datasource.name + ', ' + self.filename + ')');
 
           return done(data);
         });
@@ -133,7 +125,7 @@ DatasourceCache.prototype.getFromCache = function (done) {
          return done(false);
       }
 
-      self.cache.log.info('Serving datasource from cache file (' + self.cachepath + ')');
+      self.cache.log.info('Serving datasource from cache file (' + self.datasource.name + ', ' + self.cachepath + ')');
 
       return done(data);
     });
