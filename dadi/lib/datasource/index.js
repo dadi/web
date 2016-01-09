@@ -1,8 +1,10 @@
 var fs = require('fs');
 var url = require('url');
 var _ = require('underscore');
-var log = require(__dirname + '/../log');
+
 var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
+var config = require(__dirname + '/../../../config.js');
+var log = require(__dirname + '/../log');
 
 /**
  * Represents a Datasource.
@@ -115,9 +117,11 @@ Datasource.prototype.buildEndpoint = function(schema, done) {
   var self = this;
   var uri = "";
 
+  var apiConfig = config.get('api');
+
   var protocol = schema.datasource.source.protocol || 'http';
-  var host = schema.datasource.source.host || '';
-  var port = schema.datasource.source.port || '';
+  var host = schema.datasource.source.host || apiConfig.host;
+  var port = schema.datasource.source.port || apiConfig.port;
 
   uri = [protocol, '://', host, port != '' ? ':' : '', port, '/', schema.datasource.source.endpoint].join('');
 
