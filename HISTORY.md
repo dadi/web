@@ -1,15 +1,27 @@
 
+0.5.0 / 2016-01-08
+===================
+
+* Cache:
+ - Ensure a more unique datasource cache key by including the datasource name as well as the endpoint
+ - Ensure a more unique page cache key by including the query as well as the pathname
+ - Improve search for loaded component based on request URL
+ - Ensure contentType is passed from loaded component (page) settings when returning cached data
 
 * Config:
  - Remove `sentry.enabled` and rely solely on the existence of the `sentry.dsn` property
  - Rationalise included config properties in sample files, most can be handled by the sensible defaults
-* Cache:
- - Ensure a more unique datasource cache key by including the datasource name as well as the endpoint
- - Ensure a more unique page cache key by including the query as well as the pathname
-* Views:
- - Added new `replace` helper, usage: {@replace str="hello.world" search="." replace="-" /}
+
 * Datasource:
  - Add `skip` property to give the option of specifying an offset when querying for API data
+ - Use main config api settings when endpoint host or port are not specified by the datasource schema
+
+* Event:
+ - Pass 404 errors from event files to the NotFound handler
+
+* Views:
+ - Added new `replace` helper, usage: {@replace str="hello.world" search="." replace="-" /}
+
 
 0.1.7 / 2015-12-06
 ===================
