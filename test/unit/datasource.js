@@ -4,6 +4,7 @@ var page = require(__dirname + '/../../dadi/lib/page');
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../../dadi/lib/log');
+var config = require(__dirname + '/../../config.js');
 
 describe('Datasource', function (done) {
   it('should export constructor', function (done) {
@@ -199,7 +200,53 @@ describe('Datasource', function (done) {
       ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
       done();
     });
+  });
 
+  it('should use main config api settings if no host specified', function(done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var dsName = 'car-makes';
+
+    config.set('api.host', 'api.example.com');
+    config.set('api.port', 80);
+
+    var ds = datasource(name, dsName, help.getPathOptions(), function() {});
+    delete ds.schema.datasource.source.host;
+    //delete ds.schema.datasource.source.port;
+    ds.buildEndpoint(ds.schema, function() {});
+    ds.endpoint.should.eql('http://api.example.com:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
+    done();
+  });
+
+  it('should use main config api settings if no port specified', function(done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var dsName = 'car-makes';
+
+    config.set('api.host', 'api.example.com');
+    config.set('api.port', 80);
+
+    var ds = datasource(name, dsName, help.getPathOptions(), function() {});
+    delete ds.schema.datasource.source.port;
+    ds.buildEndpoint(ds.schema, function() {});
+    ds.endpoint.should.eql('http://127.0.0.1:80/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
+    done();
+  });
+
+  it('should use main config api settings if no host or port specified', function(done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var dsName = 'car-makes';
+
+    config.set('api.host', 'api.example.com');
+    config.set('api.port', 80);
+
+    var ds = datasource(name, dsName, help.getPathOptions(), function() {});
+    delete ds.schema.datasource.source.host;
+    delete ds.schema.datasource.source.port;
+    ds.buildEndpoint(ds.schema, function() {});
+    ds.endpoint.should.eql('http://api.example.com:80/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
+    done();
   });
 
   it('should attach specified `options` to datasource', function (done) {
