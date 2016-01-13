@@ -123,7 +123,7 @@ Datasource.prototype.buildEndpoint = function(schema, done) {
   var host = schema.datasource.source.host || apiConfig.host;
   var port = schema.datasource.source.port || apiConfig.port;
 
-  uri = [protocol, '://', host, port != '' ? ':' : '', port, '/', schema.datasource.source.endpoint].join('');
+  uri = [protocol, '://', host, (port !== '' ? ':' : ''), port, '/', schema.datasource.source.endpoint].join('');
 
   self.endpoint = self.processDatasourceParameters(schema, uri);
   done();
