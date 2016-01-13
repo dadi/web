@@ -8,9 +8,8 @@ var perfy = require('perfy');
 
 var log = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
-var DatasourceCache = require(__dirname + '/cache/datasource');
-
 var config = require(__dirname + '/../../config.js');
+var DatasourceCache = require(__dirname + '/cache/datasource');
 
 var self = this;
 
@@ -195,8 +194,8 @@ module.exports.getData = function(datasource, done) {
         }
 
         var defaults = {
-            host: datasource.source.host,
-            port: datasource.source.port,
+            host: datasource.source.host || config.get('api.host'),
+            port: datasource.source.port || config.get('api.host'),
             path: datasource.endpoint,
             method: 'GET',
             agent: self.keepAliveAgent()
