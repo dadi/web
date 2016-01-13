@@ -307,16 +307,21 @@ var conf = convict({
     format: Array,
     default: []
   },
+  allowJsonView: {
+    doc: "If true, allows appending ?json=true to the querystring to view the raw JSON output for each page.",
+    format: Boolean,
+    default: false
+  },
   debug: {
     doc: "If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.",
     format: Boolean,
     default: false
   },
-  allowJsonView: {
-    doc: "If true, allows appending ?json=true to the querystring to view the raw JSON output for each page.",
-    format: Boolean,
-    default: false
-  }
+  secret: {
+    doc: "A value that must be passed to requests for the /config route, which allows viewing the application config in the browser",
+    format: String,
+    default: "1dc10073-ca36-4373-a646-0d1092caf4a5"
+  },
 });
 
 // Load environment dependent configuration

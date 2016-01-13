@@ -3,20 +3,23 @@ var version = require('../../package.json').version;
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
 
 var _ = require('underscore');
-var colors = require('colors');
-var fs = require('fs');
-var path = require('path');
 var bodyParser = require('body-parser');
-var mkdirp = require('mkdirp');
-var serveStatic = require('serve-static');
-var serveFavicon = require('serve-favicon');
+var colors = require('colors');
 var compress = require('compression');
-var toobusy = require('toobusy-js');
-var enableDestroy = require('server-destroy');
+var crypto = require('crypto');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
+var enableDestroy = require('server-destroy');
+var fs = require('fs');
+var mkdirp = require('mkdirp');
+var path = require('path');
 var raven = require('raven');
+var serveFavicon = require('serve-favicon');
+var serveStatic = require('serve-static');
 var session = require('express-session');
+var toobusy = require('toobusy-js');
+var url = require('url');
+
 var mongoStore;
 if (nodeVersion < 1) {
   mongoStore = require('connect-mongo/es5')(session);
@@ -138,6 +141,19 @@ Server.prototype.start = function (done) {
 
     // request logging middleware
     app.use(log.requestLogger);
+
+    app.use('/config', function(req, res, next) {
+      var hash = crypto.createHash('md5').update(config.get('secret')+config.get('app.name')).digest('hex');
+      console.log(hash)
+      if (url.parse(req.url,true).query.secret === hash) {
+        res.statusCode = 200;
+        //res.end(config.toString());
+        res.end(config.getSchemaString());
+      }
+      else {
+        next();
+      }
+    });
 
     if (config.get('api.enabled')) {
       // caching layer
