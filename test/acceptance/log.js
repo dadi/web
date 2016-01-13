@@ -5,7 +5,6 @@ var path = require('path');
 var should = require('should');
 var sinon = require('sinon');
 var bunyan = require('bunyan');
-var stringify = require('json-stringify-safe');
 var log = require(__dirname + '/../../dadi/lib/log');
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
