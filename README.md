@@ -1,6 +1,6 @@
-![DADI Web](http://dadi.tech/workspace/assets/img/dadi.png)
+# DADI Web
 
-![Build Status](http://img.shields.io/badge/Release-0.4.1_Beta-green.svg?style=flat-square)&nbsp;[![License](http://img.shields.io/:License-MIT-blue.svg?style=flat-square)](http://dadi.mit-license.org)&nbsp;![Coverage](https://img.shields.io/badge/Coverage-63%-yellow.svg?style=flat-square)
+![Build Status](http://img.shields.io/badge/Release-0.4.1_Beta-green.svg?style=flat-square)&nbsp;![Coverage](https://img.shields.io/badge/Coverage-63%-yellow.svg?style=flat-square)
 
 ## Contents
 
