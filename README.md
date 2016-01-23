@@ -6,8 +6,7 @@
 
 DADI Web is built on Node.JS. It is a high performance schema-less templating layer designed in support of API-first development and the principle of COPE.
 
-[TODO]
-It can operate as a stand alone platform or in conjunction with [Serama](https://github.com/dadi-framework/serama) as a full stack web application.
+It can operate as a stand alone platform or in conjunction with [DADI API](https://github.com/dadi/api) as a full stack web application.
 
 DADI Web is part of [dadi](https://github.com/dadi/), a suite of components covering the full development stack, built for performance and scale.
 
