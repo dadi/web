@@ -13,7 +13,6 @@ var log = require(__dirname + '/../log');
 var Datasource = function (page, datasource, options, callback) {
 
   this.log = log.get().child({module: 'datasource'});
-  //this.log.info('Datasource logging started (' + datasource + ').')
 
   this.page = page;
   this.name = datasource;
@@ -143,7 +142,7 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
     {"count": (schema.datasource.count || 0)},
     {"skip": (schema.datasource.skip)},
     {"page": (schema.datasource.page || 1)},
-    //{"search": schema.datasource.search},
+    {"referer": schema.datasource.referer},
     {"filter": schema.datasource.filter || {}},
     {"fields": schema.datasource.fields || {}},
     {"sort": processSortParameter(schema.datasource.sort)}
@@ -179,6 +178,10 @@ Datasource.prototype.processRequest = function (datasource, req) {
   }
   else {
     delete this.schema.datasource.cache;
+  }
+
+  if (req.headers && req.headers.referer) {
+    this.schema.datasource.referer = encodeURIComponent(req.headers.referer);
   }
 
   // if the current datasource matches the page name
