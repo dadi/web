@@ -75,78 +75,82 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream !== '') {
 
 var self = module.exports = {
 
-    access: function access() {
-        if (enabled && options.accessLog.enabled) {
-          try {
-            accessLog.info.apply(accessLog, arguments);
-          }
-          catch (err) {
-            log.error(err);
-          }
-        }
-    },
+  enabled: function() {
+    return config.get('logging').enabled;
+  },
 
-    debug: function debug() {
-        if (enabled) log.debug.apply(log, arguments);
-    },
-
-    info: function info() {
-        if (enabled) log.info.apply(log, arguments);
-    },
-
-    warn: function warn() {
-        if (enabled) log.warn.apply(log, arguments);
-    },
-
-    error: function error() {
-        if (enabled) log.error.apply(log, arguments);
-    },
-
-    trace: function trace() {
-        if (enabled) log.trace.apply(log, arguments);
-    },
-
-    get: function get() {
-        return log;
-    },
-
-    getAccessLog: function getAccessLog() {
-        return accessLog;
-    },
-
-    requestLogger: function (req, res, next) {
-        var start = Date.now();
-        var _end = res.end;
-        res.end = function () {
-            var duration = Date.now() - start;
-
-            var clientIpAddress = req.connection.remoteAddress;
-            if (req.headers.hasOwnProperty('x-forwarded-for')) {
-              clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for']);
-            }
-
-            var accessRecord = (clientIpAddress || '') +
-            ' -' +
-            ' ' + moment().format() +
-            ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion +
-            ' ' + res.statusCode +
-            ' ' + (res._headers ? res._headers['content-length'] : '') +
-            (req.headers["referer"] ? (' ' + req.headers["referer"]) : '') +
-            ' ' + req.headers["user-agent"];
-
-            // write to the access log first
-            self.access(accessRecord);
-
-            // log the request method and url, and the duration
-            log.info({module: 'router'}, req.method +
-                ' ' + req.url +
-                ' ' + res.statusCode +
-                ' ' + duration + 'ms');
-
-            _end.apply(res, arguments);
-        };
-        next();
+  access: function access() {
+    if (self.enabled() && options.accessLog.enabled) {
+      try {
+        accessLog.info.apply(accessLog, arguments);
+      }
+      catch (err) {
+        log.error(err);
+      }
     }
+  },
+
+  debug: function debug() {
+    if (self.enabled()) log.debug.apply(log, arguments);
+  },
+
+  info: function info() {
+    if (self.enabled()) log.info.apply(log, arguments);
+  },
+
+  warn: function warn() {
+    if (self.enabled()) log.warn.apply(log, arguments);
+  },
+
+  error: function error() {
+    if (self.enabled()) log.error.apply(log, arguments);
+  },
+
+  trace: function trace() {
+    if (self.enabled()) log.trace.apply(log, arguments);
+  },
+
+  get: function get() {
+    return log;
+  },
+
+  getAccessLog: function getAccessLog() {
+    return accessLog;
+  },
+
+  requestLogger: function (req, res, next) {
+    var start = Date.now();
+    var _end = res.end;
+    res.end = function () {
+      var duration = Date.now() - start;
+
+      var clientIpAddress = req.connection.remoteAddress;
+      if (req.headers.hasOwnProperty('x-forwarded-for')) {
+        clientIpAddress = getClientIpAddress(req.headers['x-forwarded-for']);
+      }
+
+      var accessRecord = (clientIpAddress || '') +
+      ' -' +
+      ' ' + moment().format() +
+      ' ' + req.method + ' ' + req.url + ' ' + 'HTTP/' + req.httpVersion +
+      ' ' + res.statusCode +
+      ' ' + (res._headers ? res._headers['content-length'] : '') +
+      (req.headers["referer"] ? (' ' + req.headers["referer"]) : '') +
+      ' ' + req.headers["user-agent"];
+
+      // write to the access log first
+      self.access(accessRecord);
+
+      // log the request method and url, and the duration
+      log.info({module: 'router'}, req.method +
+        ' ' + req.url +
+        ' ' + res.statusCode +
+        ' ' + duration + 'ms');
+
+      _end.apply(res, arguments);
+    };
+    next();
+  }
 };
 
 var getClientIpAddress = function (input) {
