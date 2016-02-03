@@ -328,4 +328,111 @@ describe('Dust Helpers', function (done) {
     });
   });
 
+  describe('findWhere', function(done) {
+    it('should return the first matching item', function(done) {
+
+      var list = [{id: 'one', body: 'The First'}, {id: 'two', body: 'The Second'}, {id: 'three', body: 'The Third'}];
+      var id = 'two';
+      var tmpl = '{@findWhere list=list key="id" value=id}{body}{/findWhere}';
+      var expected = "The Second";
+
+      dust.renderSource(tmpl, { list: list, id: id  }, function (err, out) {
+        if (err) done(err);
+        out.should.eql(expected);
+        done();
+      });
+    });
+
+    it('should return the first matching item using multiple properties', function(done) {
+
+      var list = [{id: 2, body: 'one'}, {id: 2, body: 'two'}, {id: 3, body: 'three'}];
+      var tmpl = "Hello, {@findWhere list=list props=\"{'id':2, 'body':'two'}\"}{body}{/findWhere}";
+      var expected = "Hello, two";
+
+      dust.renderSource(tmpl, { list: list }, function (err, out) {
+        if (err) done(err);
+        out.should.eql(expected);
+        done();
+      });
+    });
+
+    it('should error if not enough params supplied', function(done) {
+
+      var list = [{id: 'one', body: 'The First'}, {id: 'two', body: 'The Second'}, {id: 'three', body: 'The Third'}];
+      var id = 'two';
+      var tmpl = '{@findWhere list=list key="id"}{body}{/findWhere}';
+      var expected = "The Second";
+
+      should.throws(function() { dust.renderSource(tmpl, { list: list, id: id  }, {}); }, Error );
+
+      done();
+    });
+  });
+
+  describe('paginate', function(done) {
+
+    it('should return empty block if not enough params supplied', function(done) {
+
+      var tmpl = '<ul>';
+      tmpl += '{@paginate page=page totalPages=totalPages path="{pathNoPage}/{n}"}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">{n}</a></li>{:else}<li><a href="{path}/">{n}</a></li>{/eq}{!';
+      tmpl += '!}{:current}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">{n}</a></li>{:else}<li><a href="{path}/">{n}</a></li>{/eq}{!';
+      tmpl += '!}{:prev}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">Prev</a></li>{:else}<li><a href="{path}/">Prev</a></li>{/eq}{!';
+      tmpl += '!}{:next}{!';
+      tmpl += '	!}<li><a href="{path}/">Next</a></li>{!';
+      tmpl += '!}{/paginate}';
+      tmpl += '</ul>';
+
+      dust.renderSource(tmpl, { page: 1  }, function(err, out) {
+        out.should.eql('<ul></ul>');
+        done();
+      });
+    });
+
+    it('should return empty block if page params are invalid', function(done) {
+
+      var tmpl = '<ul>';
+      tmpl += '{@paginate page=page totalPages=totalPages path="{pathNoPage}/{n}"}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">{n}</a></li>{:else}<li><a href="{path}/">{n}</a></li>{/eq}{!';
+      tmpl += '!}{:current}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">{n}</a></li>{:else}<li><a href="{path}/">{n}</a></li>{/eq}{!';
+      tmpl += '!}{:prev}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">Prev</a></li>{:else}<li><a href="{path}/">Prev</a></li>{/eq}{!';
+      tmpl += '!}{:next}{!';
+      tmpl += '	!}<li><a href="{path}/">Next</a></li>{!';
+      tmpl += '!}{/paginate}';
+      tmpl += '</ul>';
+
+      //should.throws(function() { dust.renderSource(tmpl, { page: -1, totalPages: 3, pathNoPage: '/articles'  }, {}); }, Error );
+      dust.renderSource(tmpl, { page: 'a', totalPages: 3, pathNoPage: '/articles'  }, function(err, out) {
+        out.should.eql('<ul></ul>');
+        done();
+      });
+    });
+
+    it('should render a pagination block', function(done) {
+      var tmpl = '<ul>';
+      tmpl += '{@paginate page=page totalPages=totalPages path="{pathNoPage}/{n}"}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">{n}</a></li>{:else}<li><a href="{path}/">{n}</a></li>{/eq}{!';
+      tmpl += '!}{:current}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">{n}</a></li>{:else}<li><a href="{path}/">{n}</a></li>{/eq}{!';
+      tmpl += '!}{:prev}{!';
+      tmpl += '	!}{@eq key="{n}" value="1"}<li><a href="{path}">Prev</a></li>{:else}<li><a href="{path}/">Prev</a></li>{/eq}{!';
+      tmpl += '!}{:next}{!';
+      tmpl += '	!}<li><a href="{path}/">Next</a></li>{!';
+      tmpl += '!}{/paginate}';
+      tmpl += '</ul>';
+
+      var expected = '<ul><li><a href="/articles/">1</a></li><li><a href="/articles/2/">2</a></li><li><a href="/articles/3/">3</a></li><li><a href="/articles/2/">Next</a></li></ul>';
+
+      dust.renderSource(tmpl, { page: 1, totalPages: 3, pathNoPage: '/articles'  }, function (err, out) {
+        if (err) done(err);
+        out.should.eql(expected);
+        done();
+      });
+
+    });
+  });
 });
