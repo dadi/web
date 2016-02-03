@@ -155,7 +155,7 @@ var self = module.exports = {
         };
         next();
     }
-};
+}
 
 var getClientIpAddress = function (input) {
 
