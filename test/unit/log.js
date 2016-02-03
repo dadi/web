@@ -67,4 +67,23 @@ describe('Logger', function (done) {
     done();
   });
 
+  it('should not log when enabled = false', function (done) {
+
+    var message = 'Hello';
+
+    var logger = log.get();
+    var method = sinon.spy(logger, 'info');
+
+    config.set('logging.enabled', false);
+
+    log.info(message);
+
+    config.set('logging.enabled', true);
+    logger.info.restore();
+
+    method.called.should.eql(false);
+
+    done();
+  });
+
 });
