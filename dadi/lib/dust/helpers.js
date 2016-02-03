@@ -1,4 +1,5 @@
 var dust = require('dustjs-linkedin');
+var JSON5 = require('json5');
 var marked = require('marked');
 var moment = require('moment');
 var pluralist = require('pluralist');
@@ -377,3 +378,190 @@ dust.helpers.replace = function (chunk, context, bodies, params) {
 function escapeRegExp(string) {
     return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 }
+
+/*
+* Paginate pages
+* Usage:
+* For arrays of objects each object has its property at key checked for a match with the provided value, much like underscore's `findWhere`
+* ```
+* {@paginate page=currentPageNumber totalPages=totalPageCount}
+*   <a href="{path}">{n}</a>
+* {:current}
+*   <a href="{path}">Current page {n}</a>
+* {:prev}
+*   <a href="{path}">Prev</a>
+* {:next}
+*   <a href="{path}">Next</a>
+* {/paginate}
+* ```
+*/
+dust.helpers.paginate = function(chunk, context, bodies, params) {
+  var err;
+  if(!('page' in params && 'totalPages' in params && 'path' in params)) {
+    err = new Error('Insufficient information provided to @paginate helper');
+  }
+  var current = parseInt(params.page, 10);
+  var totalPages = parseInt(params.totalPages, 10);
+  if(!(isFinite(current) && isFinite(totalPages))) {
+    err = new Error('Parameters provided to @paginate helper are not integers');
+  }
+  var path = params.path;
+  var paginateContext = {
+    n: current,
+    path: ''
+  };
+  if(err) {
+    console.log(err);
+    return chunk;
+  }
+  var context = context.push(paginateContext);
+
+  function printStep(body, n) {
+    paginateContext.n = n;
+    paginateContext.path = context.resolve(params.path);
+    if(n === 1) {
+      // this is to make the path just the base path, without the number
+      paginateContext.path = (paginateContext.path || '').replace(/1\/?$/, '');
+    }
+    chunk.render(body, context);
+  }
+  var printGap = bodies.gap ? printStep.bind(null, bodies.gap) : function(){};
+  function printStepOrGap(step) {
+    if(step === '.') {
+      printGap();
+    }
+    else {
+      printStep(bodies.block, step);
+    }
+  }
+
+  function getStepSize(distance) {
+    if(distance > 550) { return 500; }
+    else if(distance > 110) { return 100; }
+    else if(distance > 53) { return distance - 25; }
+    else if(distance > 23) { return distance - 10; }
+    else if(distance >= 10) { return distance - 5; }
+    else if(distance >= 5) { return distance - 2; }
+    else { return 1; }
+  }
+  function makeSteps(start, end, tightness) {
+    // start & end are non-inclusive
+    var now, final, stepSize, steps = [];
+
+    if(tightness === 'increase') {
+      now = start;
+      final = end;
+      while(now < final) {
+        if(now !== start) {
+          steps.push(now);
+        }
+        stepSize = getStepSize(final - now);
+        if(stepSize > 1) {
+          steps.push('.');
+        }
+        now += stepSize;
+      }
+    }
+    else { // decrease
+      now = end;
+      final = start;
+      while(now > final) {
+        if(now !== end) {
+          steps.push(now);
+        }
+        stepSize = getStepSize(now - final);
+        if(stepSize > 1) {
+          steps.push('.');
+        }
+        now -= stepSize;
+      }
+      steps.reverse();
+    }
+
+    return steps;
+  }
+
+  // Only one page
+  if(!totalPages || totalPages === 1) {
+    if(bodies.else) {
+      return chunk.render(bodies.else, context);
+    }
+    return chunk;
+  }
+
+  if(current > 1) {
+    // Prev
+    if(bodies.prev) {
+      printStep(bodies.prev, current - 1);
+    }
+    // First step
+    printStep(bodies.block, 1);
+    // Pre current
+    _.each(makeSteps(1, current, 'increase'), printStepOrGap);
+  }
+
+  // Current
+  printStep(bodies.current, current);
+
+  if(current < totalPages) {
+    // Post current
+    _.each(makeSteps(current, totalPages, 'decrease'), printStepOrGap);
+    // Last step
+    printStep(bodies.block, totalPages);
+    // Next
+    if(bodies.next) {
+      printStep(bodies.next, current + 1);
+    }
+  }
+
+  return chunk;
+};
+
+/*
+* Get the first item matching the sent in params. Replaces iteration+eq combos.
+* Usage:
+* For arrays of objects each object has its property at key checked for a match with the provided value, much like underscore's `findWhere`
+* ```
+* {@findWhere list=aList key="id" value=id}
+* {.}
+* {/findWhere}
+* ```
+* You can also supply the `list` with `props`, which is a (loosely parsed by json5)
+* JSON object in a string. This makes it possible to combine multiple filters.
+* ```
+* {@findWhere list=aList props="{attr: "{strvalue}", other: {numericalId}}"}
+* {.}
+* {/findWhere}
+* ```
+* Whatever you send in you will at most ever get one item back.
+*/
+dust.helpers.findWhere = function(chunk, context, bodies, params) {
+  var list = params.list;
+  var key = params.key;
+  var value = params.value;
+  var props;
+  var found;
+  if('list' in params && 'key' in params && 'value' in params) {
+    found = _.find(list, function(obj) {
+      return (obj[key] == value);
+    });
+  }
+  else if('list' in params && 'props' in params) {
+    try {
+      props = JSON5.parse(context.resolve(params.props));
+    } catch(err) {
+      throw new Error('The @findWhere dust helper received invalid json for props')
+    }
+    found = _.findWhere(list, props);
+  }
+  else {
+    throw new Error('The @findWhere dust helper is missing a parameter');
+  }
+  if(found) {
+    return chunk.render(bodies.block, context.push(found));
+  }
+  else if('else' in bodies) {
+    return chunk.render(bodies.else, context);
+  }
+  return chunk;
+};
