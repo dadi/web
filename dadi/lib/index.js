@@ -103,6 +103,9 @@ Server.prototype.start = function (done) {
     // parse application/x-www-form-urlencoded
     app.use(bodyParser.urlencoded({ extended: true }));
 
+    // request logging middleware
+    app.use(log.requestLogger);
+
     // add gzip compression
     if (config.get('headers.useGzipCompression')) {
       app.use(compress());
