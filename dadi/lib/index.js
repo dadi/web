@@ -104,6 +104,9 @@ Server.prototype.start = function (done) {
     // parse application/x-www-form-urlencoded
     app.use(bodyParser.urlencoded({ extended: true }));
 
+    // request logging middleware
+    app.use(log.requestLogger);
+
     // add gzip compression
     if (config.get('headers.useGzipCompression')) {
       app.use(compress());
@@ -142,14 +145,6 @@ Server.prototype.start = function (done) {
       // add the session middleware
       app.use(session(sessionOptions));
     }
-
-    // add gzip compression
-    if (config.get('headers.useGzipCompression')) {
-      app.use(compress());
-    }
-
-    // request logging middleware
-    app.use(log.requestLogger);
 
     app.use('/config', function(req, res, next) {
       var hash = crypto.createHash('md5').update(config.get('secret')+config.get('app.name')).digest('hex');
