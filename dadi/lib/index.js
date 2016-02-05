@@ -120,9 +120,6 @@ Server.prototype.start = function (done) {
       return next();
     });
 
-    // request logging middleware
-    app.use(log.requestLogger);
-
     // session manager
     var sessionConfig = config.get('sessions');
 
