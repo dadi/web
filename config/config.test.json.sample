@@ -19,7 +19,7 @@
     "baseUrl": "http://www.example.com"
   },
   "paths": {
-    "workspacePath": "test/app",
+    "workspace": "test/app",
     "datasources": "test/app/datasources",
     "pages": "test/app/pages",
     "partials": "test/app/partials",
