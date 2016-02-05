@@ -142,14 +142,6 @@ Server.prototype.start = function (done) {
       app.use(session(sessionOptions));
     }
 
-    // add gzip compression
-    if (config.get('headers.useGzipCompression')) {
-      app.use(compress());
-    }
-
-    // request logging middleware
-    app.use(log.requestLogger);
-
     app.use('/config', function(req, res, next) {
       var hash = crypto.createHash('md5').update(config.get('secret')+config.get('app.name')).digest('hex');
       console.log(hash)
