@@ -193,7 +193,7 @@ module.exports.getData = function(datasource, done) {
 
         var defaults = {
             host: datasource.source.host || config.get('api.host'),
-            port: datasource.source.port || config.get('api.host'),
+            port: datasource.source.port || config.get('api.port'),
             path: datasource.endpoint,
             method: 'GET',
             agent: self.keepAliveAgent()
