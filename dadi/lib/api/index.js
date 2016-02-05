@@ -200,6 +200,8 @@ module.exports.Api = Api;
 function onError(api) {
   return function (err, req, res, next) {
 
+    if (res.finished) return;
+
     if (config.get('env') === 'development') {
       console.log();
       console.log(err.stack.toString());
