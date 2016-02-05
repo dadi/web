@@ -243,7 +243,7 @@ module.exports.getData = function(datasource, done) {
             });
 
             req.on('error', function(err) {
-              var message = 'Couldn\'t request data from ' + datasource.endpoint;
+              var message = err.toString() + '. Couldn\'t request data from ' + datasource.endpoint;
               err.name = 'GetData';
               err.message = message;
               err.remoteIp = options.host;
