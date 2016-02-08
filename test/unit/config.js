@@ -1,20 +1,9 @@
 
-var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
-
 var sinon = require('sinon');
 var fs = require('fs');
 var should = require('should');
 var request = require('supertest');
 var _ = require('underscore');
-
-var session = require('express-session');
-var mongoStore;
-if (nodeVersion < 1) {
-  mongoStore = require('connect-mongo/es5')(session);
-}
-else {
-  mongoStore = require('connect-mongo')(session);
-}
 
 var api = require(__dirname + '/../../dadi/lib/api');
 var Server = require(__dirname + '/../../dadi/lib');
@@ -78,7 +67,6 @@ function cleanup(done) {
 describe('Config', function (done) {
 
   afterEach(function(done) {
-    //config.set('sessions.store', '');
     done();
   });
 
@@ -86,8 +74,6 @@ describe('Config', function (done) {
 
     config.set('api.enabled', false);
     loadConfig(config.get('server'));
-    // config.set('sessions.enabled', true);
-    // config.set('sessions.name', 'dadiweb.sid');
 
     // create a page
     var name = 'test';
