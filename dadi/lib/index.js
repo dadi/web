@@ -783,12 +783,11 @@ function onListening(e) {
     startText += '  API:         '.green + 'Not found'.red + '\n';
     }
     startText += '  ----------------------------\n';
-    console.log(startText);
 
-    console.log('  Copyright %s 2015 DADI+ Limited (https://dadi.tech)'.white, String.fromCharCode(169));
-
-    // console.log("\n" + webMessage.bold.white);
-    // console.log(apiMessage.bold.blue + "\n");
+    if (env !== 'test') {
+      console.log(startText);
+      console.log('  Copyright %s 2015 DADI+ Limited (https://dadi.tech)'.white, String.fromCharCode(169));
+    }
   });
 }
 
