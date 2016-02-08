@@ -109,6 +109,15 @@ Server.prototype.start = function (done) {
       app.use(compress());
     }
 
+    // update configuration based on domain
+    var domainConfigLoaded;
+    app.use(function(req, res, next) {
+      if (domainConfigLoaded) return next();
+      config.updateConfigDataForDomain(req.headers.host);
+      domainConfigLoaded = true;
+      return next();
+    });
+
     // request logging middleware
     app.use(log.requestLogger);
 
