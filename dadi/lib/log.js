@@ -80,7 +80,7 @@ var self = module.exports = {
   },
 
   access: function access() {
-    if (self.enabled('info') && options.accessLog.enabled) {
+    if (options.accessLog.enabled) {
       try {
         accessLog.info.apply(accessLog, arguments);
       }
