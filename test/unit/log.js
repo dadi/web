@@ -42,6 +42,23 @@ describe('Logger', function (done) {
     done();
   });
 
+  it('should use bunyan log.debug when log.debug is called', function (done) {
+
+    config.set('logging.level', 'debug');
+
+    var message = 'Hello';
+
+    var logger = log.get();
+    var method = sinon.spy(logger, 'debug');
+
+    log.debug(message);
+    logger.debug.restore();
+
+    method.called.should.eql(false);
+
+    done();
+  });
+
   it('should use bunyan log.info when log.info is called', function (done) {
 
     config.set('logging.level', 'info');
