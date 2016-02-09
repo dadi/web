@@ -7,7 +7,7 @@ var path = require('path');
 var util = require('util');
 var _ = require('underscore');
 
-var config = require(path.resolve(__dirname + '/../../config'));
+var config = require(__dirname + '/../../config');
 var options = config.get('logging');
 var awsConfig = config.get('aws');
 var enabled = options.enabled;
@@ -75,12 +75,12 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream !== '') {
 
 var self = module.exports = {
 
-  enabled: function() {
-    return config.get('logging').enabled;
+  enabled: function(level) {
+    return config.get('logging').enabled && (bunyan.resolveLevel(level) >= bunyan.resolveLevel(config.get('logging.level')));
   },
 
   access: function access() {
-    if (self.enabled() && options.accessLog.enabled) {
+    if (self.enabled('info') && options.accessLog.enabled) {
       try {
         accessLog.info.apply(accessLog, arguments);
       }
@@ -91,23 +91,23 @@ var self = module.exports = {
   },
 
   debug: function debug() {
-    if (self.enabled()) log.debug.apply(log, arguments);
+    if (self.enabled('debug')) log.debug.apply(log, arguments);
   },
 
   info: function info() {
-    if (self.enabled()) log.info.apply(log, arguments);
+    if (self.enabled('info')) log.info.apply(log, arguments);
   },
 
   warn: function warn() {
-    if (self.enabled()) log.warn.apply(log, arguments);
+    if (self.enabled('warn')) log.warn.apply(log, arguments);
   },
 
   error: function error() {
-    if (self.enabled()) log.error.apply(log, arguments);
+    if (self.enabled('error')) log.error.apply(log, arguments);
   },
 
   trace: function trace() {
-    if (self.enabled()) log.trace.apply(log, arguments);
+    if (self.enabled('trace')) log.trace.apply(log, arguments);
   },
 
   get: function get() {
