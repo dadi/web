@@ -109,6 +109,15 @@ Server.prototype.start = function (done) {
       app.use(compress());
     }
 
+    // update configuration based on domain
+    var domainConfigLoaded;
+    app.use(function(req, res, next) {
+      if (domainConfigLoaded) return next();
+      config.updateConfigDataForDomain(req.headers.host);
+      domainConfigLoaded = true;
+      return next();
+    });
+
     // request logging middleware
     app.use(log.requestLogger);
 
@@ -774,12 +783,11 @@ function onListening(e) {
     startText += '  API:         '.green + 'Not found'.red + '\n';
     }
     startText += '  ----------------------------\n';
-    console.log(startText);
 
-    console.log('  Copyright %s 2015 DADI+ Limited (https://dadi.tech)'.white, String.fromCharCode(169));
-
-    // console.log("\n" + webMessage.bold.white);
-    // console.log(apiMessage.bold.blue + "\n");
+    if (env !== 'test') {
+      console.log(startText);
+      console.log('  Copyright %s 2015 DADI+ Limited (https://dadi.tech)'.white, String.fromCharCode(169));
+    }
   });
 }
 

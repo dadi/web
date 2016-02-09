@@ -1,4 +1,6 @@
 var convict = require('convict');
+var fs = require('fs');
+var path = require('path');
 
 // Define a schema
 var conf = convict({
@@ -114,7 +116,7 @@ var conf = convict({
       host: {
         doc: "The Redis server host",
         format: String,
-        default: "tresting.qvhlji.ng.0001.euw1.cache.amazonaws.com"
+        default: "127.0.0.1"
       },
       port: {
         doc: "The port for the Redis server",
@@ -327,6 +329,21 @@ var conf = convict({
 // Load environment dependent configuration
 var env = conf.get('env');
 conf.loadFile('./config/config.' + env + '.json');
+
+// Load domain-specific configuration
+conf.updateConfigDataForDomain = function(domain) {
+  var domainConfig = './config/' + domain + '.json';
+  try {
+    var stats = fs.statSync(domainConfig);
+    // no error, file exists
+    conf.loadFile(domainConfig);
+  }
+  catch(err) {
+    if (err.code === 'ENOENT') {
+      // console.log('No domain-specific configuration file: ' + domainConfig);
+    }
+  }
+};
 
 // Perform validation
 conf.validate({strict: false});
