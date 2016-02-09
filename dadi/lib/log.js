@@ -7,7 +7,7 @@ var path = require('path');
 var util = require('util');
 var _ = require('underscore');
 
-var config = require(path.resolve(__dirname + '/../../config'));
+var config = require(__dirname + '/../../config');
 var options = config.get('logging');
 var awsConfig = config.get('aws');
 var enabled = options.enabled;
