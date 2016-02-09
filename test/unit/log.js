@@ -93,6 +93,23 @@ describe('Logger', function (done) {
     done();
   });
 
+  it('should write to the access log if enabled', function (done) {
+
+    config.set('logging.level', 'debug');
+
+    var message = 'Hello';
+
+    var logger = log.getAccessLog();
+    var method = sinon.spy(logger, 'info');
+
+    log.access(message);
+    logger.info.restore();
+
+    method.called.should.eql(true);
+
+    done();
+  });
+
   it('should use bunyan log.warn when log.stage is called', function (done) {
 
     var message = 'Hello';
