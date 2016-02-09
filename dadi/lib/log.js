@@ -7,7 +7,7 @@ var path = require('path');
 var util = require('util');
 var _ = require('underscore');
 
-var config = require(path.resolve(__dirname + '/../../config'));
+var config = require(__dirname + '/../../config');
 var options = config.get('logging');
 var awsConfig = config.get('aws');
 var enabled = options.enabled;
@@ -79,7 +79,6 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream !== '') {
 
 var self = module.exports = {
 
-<<<<<<< HEAD
     enabled: function(level) {
       return config.get('logging').enabled && (bunyan.resolveLevel(level) >= bunyan.resolveLevel(config.get('logging.level')));
     },
