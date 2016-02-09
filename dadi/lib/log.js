@@ -79,7 +79,6 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream !== '') {
 
 var self = module.exports = {
 
-<<<<<<< HEAD
     enabled: function(level) {
       return config.get('logging').enabled && (bunyan.resolveLevel(level) >= bunyan.resolveLevel(config.get('logging.level')));
     },
