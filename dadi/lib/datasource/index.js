@@ -11,9 +11,6 @@ var log = require(__dirname + '/../log');
  * @constructor
  */
 var Datasource = function (page, datasource, options, callback) {
-
-  this.log = log.get().child({module: 'datasource'});
-
   this.page = page;
   this.name = datasource;
   this.options = options || {};
@@ -71,7 +68,7 @@ Datasource.prototype.loadDatasource = function(done) {
     done(null, schema);
   }
   catch (err) {
-    this.log.error({'err': err}, 'Error loading datasource schema "' + filepath + '". Is it valid JSON?');
+    log.error({module: 'datasource'}, {'err': err}, 'Error loading datasource schema "' + filepath + '". Is it valid JSON?');
     done(err);
   }
 };
