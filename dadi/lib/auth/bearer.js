@@ -5,8 +5,6 @@ var BearerAuthStrategy = function(options) {
   this.config = options;
   this.tokenRoute = options.tokenUrl || '/token';
   this.token = {};
-
-  this.log = log.get().child({module: 'auth/bearer'});
 };
 
 BearerAuthStrategy.prototype.getToken = function(datasource, done) {
@@ -22,7 +20,7 @@ BearerAuthStrategy.prototype.getToken = function(datasource, done) {
     }
   }
 
-  this.log.info('Generating new access token for datasource %s', datasource.name);
+  log.info({module: 'auth/bearer'}, 'Generating new access token for datasource %s', datasource.name);
 
   var postData = {
     clientId : self.config.credentials.clientId,
