@@ -29,7 +29,8 @@ var log = bunyan.createLogger({
     name: 'dadi-web',
     serializers: bunyan.stdSerializers,
     streams: [
-      //{ level: 'debug', stream: process.stdout },
+      { level: 'debug', stream: process.stdout },
+      { level: 'info', path: logPath },
       { level: 'info', path: logPath },
       { level: 'error', path: logPath }
     ]
