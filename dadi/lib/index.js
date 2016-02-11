@@ -57,8 +57,7 @@ var Server = function () {
     this.components = {};
     this.monitors = {};
 
-    this.log = log.get().child({module: 'server'});
-    this.log.info('Server logging started.');
+    log.info({module: 'server'}, 'Server logging started.');
 };
 
 Server.prototype.start = function (done) {
@@ -228,7 +227,7 @@ Server.prototype.exitHandler = function(options, err) {
   if (options.exit) {
     console.log();
     console.log('Server stopped, process exiting...');
-    server.log.info('Server stopped, process exiting.');
+    log.info({module: 'server'}, 'Server stopped, process exiting.');
     process.exit();
   }
 }
@@ -333,7 +332,7 @@ Server.prototype.loadApi = function (options) {
             }
         });
 
-        self.log.info('Load complete.');
+        log.info({module: 'server'}, 'Load complete.');
 
     });
 
@@ -401,7 +400,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
       schema = require(obj.filepath);
     }
     catch (err) {
-      this.log.error({err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
+      log.error({module: 'server'}, {err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?');
       throw err;
     }
 
@@ -443,7 +442,7 @@ Server.prototype.addComponent = function (options, reload) {
 
         if (path === '/index') {
 
-            this.log.info("Loaded " + path);
+            log.debug({module: 'server'}, "Loaded " + path);
 
             // configure "index" route
             this.app.use('/', function (req, res, next) {
@@ -459,7 +458,7 @@ Server.prototype.addComponent = function (options, reload) {
         }
         else {
 
-            this.log.info("Loaded " + path);
+            log.debug({module: 'server'}, "Loaded " + path);
 
             if (options.route.constraint) this.app.Router.constrain(path, options.route.constraint);
 
@@ -564,7 +563,7 @@ Server.prototype.dustCompile = function (options) {
 
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
 
-            self.log.info("Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
+            log.info({module: 'server'}, "Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
 
             var template =  fs.readFileSync(file, "utf8");
 
@@ -603,7 +602,7 @@ Server.prototype.dustCompile = function (options) {
       // or via a partial include, like {> "hello-world" /}
       fs.readFile(options.workspacePath + '/' + templateName + '.dust', { encoding: 'utf8' }, function (err, data) {
         if (err) {
-          self.log.error(err);
+          log.error({module: 'server'}, err);
           console.log(err);
         }
 
@@ -668,12 +667,12 @@ Server.prototype.ensureDirectories = function (options, done) {
     _.each(options, function(dir) {
       mkdirp(dir, {}, function (err, made) {
         if (err) {
-          self.log.error(err);
+          log.error({module: 'server'}, err);
           console.log(err);
         }
 
         if (made) {
-          self.log.info('Created directory ' + made);
+          log.info({module: 'server'}, 'Created directory ' + made);
           console.log('Created directory ' + made);
         }
 
