@@ -14,8 +14,7 @@ var log = require(__dirname + '/../log');
 var help = require(__dirname + '/../help');
 
 var Cache = function(server) {
-  this.log = log.get().child({module: 'cache'});
-  this.log.info('Cache logging started.');
+  log.info({module: 'cache'}, 'Cache logging started.');
 
   this.server = server;
   this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled');
@@ -30,15 +29,15 @@ var Cache = function(server) {
   // create cache directory or initialise Redis
   if (config.get('caching.directory.enabled')) {
     mkdirp(self.dir, {}, function (err, made) {
-      if (err) self.log.error(err);
-      if (made) self.log.info('Created cache directory ' + made);
+      if (err) log.error({module: 'cache'}, err);
+      if (made) log.info({module: 'cache'}, 'Created cache directory ' + made);
     });
   }
   else if (config.get('caching.redis.enabled')) {
     self.redisClient = self.initialiseRedisClient();
 
     self.redisClient.on("error", function (err) {
-      self.log.error(err);
+      log.error({module: 'cache'}, err);
     });
   }
 };
@@ -197,7 +196,7 @@ Cache.prototype.init = function() {
 
         }
 
-        self.log.info('Serving ' + req.url + ' from cache file (' + cachepath + ')');
+        log.info({module: 'cache'}, 'Serving ' + req.url + ' from cache file (' + cachepath + ')');
 
         fs.stat(cachepath, function (err, stat) {
           res.statusCode = 200;
@@ -242,7 +241,7 @@ Cache.prototype.init = function() {
 
         if (self.redisClient) {
           self.redisClient.on("error", function (err) {
-            self.log.error(err);
+            log.error({module: 'cache'}, err);
           });
 
           // save to redis
