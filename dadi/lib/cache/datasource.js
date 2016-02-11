@@ -10,6 +10,7 @@ var s = require('underscore.string');
 
 var cache = require(__dirname + '/index.js');
 var config = require(__dirname + '/../../../config.js');
+var log = require(__dirname + '/../log');
 
 var cacheEncoding = 'utf8';
 var options = {};
@@ -91,7 +92,7 @@ DatasourceCache.prototype.getFromCache = function (done) {
         });
 
         readStream.on('end', function () {
-          self.cache.log.info('Serving datasource from Redis (' + self.datasource.name + ', ' + self.filename + ')');
+          log.info({module: 'cache'}, 'Serving datasource from Redis (' + self.datasource.name + ', ' + self.filename + ')');
 
           return done(data);
         });
@@ -125,7 +126,7 @@ DatasourceCache.prototype.getFromCache = function (done) {
          return done(false);
       }
 
-      self.cache.log.info('Serving datasource from cache file (' + self.datasource.name + ', ' + self.cachepath + ')');
+      log.info({module: 'cache'}, 'Serving datasource from cache file (' + self.datasource.name + ', ' + self.cachepath + ')');
 
       return done(data);
     });
