@@ -75,8 +75,12 @@ if (options.accessLog.enabled && options.accessLog.kinesisStream !== '') {
 
 var self = module.exports = {
 
+    enabled: function(level) {
+      return config.get('logging').enabled && (bunyan.resolveLevel(level) >= bunyan.resolveLevel(config.get('logging.level')));
+    },
+
     access: function access() {
-        if (enabled && options.accessLog.enabled) {
+        if (options.accessLog.enabled) {
           try {
             accessLog.info.apply(accessLog, arguments);
           }
@@ -87,23 +91,23 @@ var self = module.exports = {
     },
 
     debug: function debug() {
-        if (enabled) log.debug.apply(log, arguments);
+        if (self.enabled('debug')) log.debug.apply(log, arguments);
     },
 
     info: function info() {
-        if (enabled) log.info.apply(log, arguments);
+        if (self.enabled('info')) log.info.apply(log, arguments);
     },
 
     warn: function warn() {
-        if (enabled) log.warn.apply(log, arguments);
+        if (self.enabled('warn')) log.warn.apply(log, arguments);
     },
 
     error: function error() {
-        if (enabled) log.error.apply(log, arguments);
+        if (self.enabled('error')) log.error.apply(log, arguments);
     },
 
     trace: function trace() {
-        if (enabled) log.trace.apply(log, arguments);
+        if (self.enabled('trace')) log.trace.apply(log, arguments);
     },
 
     get: function get() {
