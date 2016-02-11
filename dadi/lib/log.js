@@ -29,12 +29,15 @@ var log = bunyan.createLogger({
     name: 'dadi-web',
     serializers: bunyan.stdSerializers,
     streams: [
-      { level: 'debug', stream: process.stdout },
       { level: 'info', path: logPath },
-      { level: 'info', path: logPath },
+      { level: 'warn', path: logPath },
       { level: 'error', path: logPath }
     ]
 });
+
+if (config.get('env') !== 'test') {
+  log.addStream({ level: 'debug', stream: process.stdout });
+}
 
 var accessLog;
 if (options.accessLog.enabled) {
