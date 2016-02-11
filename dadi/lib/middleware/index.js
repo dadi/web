@@ -5,8 +5,7 @@ var log = require(__dirname + '/../log');
 
 var Middleware = function (name, options) {
 
-  this.log = log.get().child({module: 'middleware (' + name + ')'});
-  this.log.info('Middleware logging started (' + name + ').');
+  log.info({module: 'middleware'}, 'Middleware logging started (' + name + ').');
 
   this.name = name;
   this.options = options || {};
@@ -30,7 +29,7 @@ Middleware.prototype.init = function(app) {
     this.load()(app);
   }
   catch (err) {
-    this.log.error(err);
+    log.error({module: 'middleware'}, err);
     throw(err);
   }
 };
