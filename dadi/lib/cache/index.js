@@ -44,8 +44,6 @@ var Cache = function(server) {
 
 var instance;
 module.exports = function(server) {
-  //console.log(server);
-  //console.log(instance);
   if (!instance) {
     instance = new Cache(server);
   }
@@ -136,7 +134,6 @@ Cache.prototype.init = function() {
           res.setHeader('X-Cache-Lookup', 'HIT');
 
           if (noCache) {
-              //console.log('noCache');
               res.setHeader('X-Cache', 'MISS');
               return next();
           }
@@ -186,7 +183,6 @@ Cache.prototype.init = function() {
           var ttl = self.options.ttl || config.get('caching.ttl');
           var lastMod = stats && stats.mtime && stats.mtime.valueOf();
           if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
-            console.log('lastMod');
             res.setHeader('X-Cache', 'MISS');
             res.setHeader('X-Cache-Lookup', 'HIT');
             return cacheResponse();
