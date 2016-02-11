@@ -16,8 +16,6 @@ var Api = function () {
     this.all = [];
     this.errors = [];
 
-    this.log = log.get().child({module: 'api'});
-
     // Sentry error handler
     if (config.get('logging.sentry.dsn') !== "") {
       this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')));
@@ -207,7 +205,7 @@ function onError(api) {
       console.log(err.stack.toString());
     }
 
-    api.log.error(err);
+    log.error({module: 'api'}, err);
 
     var message = "<html><head><title>DADI Web - 500 Internal Server Error</title></head>";
     message += "<body>";
