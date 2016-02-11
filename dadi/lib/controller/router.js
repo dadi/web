@@ -20,8 +20,7 @@ var Datasource = require(__dirname + '/../datasource');
 
 var Router = function (server, options) {
 
-  this.log = log.get().child({module: 'router'});
-  this.log.info('Router logging started.')
+  log.info({module: 'router'}, 'Router logging started.')
 
   this.data = {};
   this.params = {};
@@ -43,7 +42,7 @@ var Router = function (server, options) {
     this.handlers = require(options.routesPath + '/constraints.js');
   }
   catch (err) {
-    this.log.info('No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
+    log.info({module: 'router'}, 'No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
   }
 }
 
@@ -65,7 +64,7 @@ Router.prototype.loadRewrites = function(options, done) {
   );
 
   stream.on('error', function (err) {
-    self.log.error('No rewrites loaded, file not found (' + self.rewritesFile + ')');
+    log.error({module: 'router'}, 'No rewrites loaded, file not found (' + self.rewritesFile + ')');
     done(err);
   });
 
@@ -100,7 +99,7 @@ Router.prototype.constrain = function(route, constraint) {
     // try to build a datasource from the provided constraint
     var datasource = new Datasource(route, constraint, this.options, function(err, ds) {
       if (err) {
-        self.log.error(err);
+        log.error({module: 'router'}, err);
       }
 
       c = ds;
@@ -110,13 +109,13 @@ Router.prototype.constrain = function(route, constraint) {
 
   if (c) {
     this.constraints[route] = c;
-    this.log.info(message, constraint, route);
+    log.info({module: 'router'}, message, constraint, route);
   }
   else {
     var error = "Route constraint '" + constraint + "' not found. Is it defined in '" + this.options.routesPath + "/constraints.js' or '" + this.options.datasourcePath + "/" + constraint + ".json'?";
     var err = new Error(error);
     err.name = 'Router';
-    this.log.error(error);
+    log.error({module: 'router'}, error);
     throw(err);
   }
 
@@ -144,8 +143,8 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
   // for this route, run it
   if (this.constraints[route]) {
 
-    console.log("[ROUTER] testConstraint: " + req.url);
-    console.log("[ROUTER] testConstraint: " + route);
+    log.debug({module: 'router'}, "[ROUTER] testConstraint: " + req.url);
+    log.debug({module: 'router'}, "[ROUTER] testConstraint: " + route);
 
     if (typeof this.constraints[route] === 'function') {
 
@@ -186,7 +185,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
             }
           }
           catch (err) {
-            self.log.error(err);
+            log.error({module: 'router'}, err);
             return callback(false);
           }
         }
@@ -196,8 +195,8 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
 }
 
 Router.prototype.loadRewriteModule = function() {
-  this.log.info("Rewrite module reload.");
-  this.log.info(this.rules.length + " rewrites/redirects loaded.");
+  log.info({module: 'router'}, "Rewrite module reload.");
+  log.info({module: 'router'}, this.rules.length + " rewrites/redirects loaded.");
 }
 
 module.exports = function (server, options) {
@@ -234,7 +233,7 @@ module.exports = function (server, options) {
 
       if (!this.shouldCall) return next();
 
-      console.log('[Router] processing: ' + req.url);
+      log.debug({module: 'router'}, '[Router] processing: ' + req.url);
 
       if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
 
