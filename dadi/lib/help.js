@@ -177,8 +177,6 @@ module.exports.getStaticData = function(datasource, done) {
 
 module.exports.getData = function(datasource, done) {
 
-    this.log = log.get().child({module: 'helper'});
-
     var datasourceCache = new DatasourceCache(datasource);
 
     var self = this;
@@ -209,7 +207,7 @@ module.exports.getData = function(datasource, done) {
 
             var options = _.extend(defaults, headers);
 
-            self.log.info("GET datasource '" + datasource.schema.datasource.key + "': " + options.path);
+            log.info({module: 'helper'}, "GET datasource '" + datasource.schema.datasource.key + "': " + options.path);
 
             var req = http.request(options, function(res) {
               var output = '';
@@ -228,7 +226,7 @@ module.exports.getData = function(datasource, done) {
                   err.remoteIp = options.host;
                   err.remotePort = options.port;
 
-                  self.log.error(res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
+                  log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
                   return done(err);
                 }
 
