@@ -29,8 +29,6 @@ describe('Logger', function (done) {
 
     config.set('logging.level', 'info');
 
-    config.set('logging.level', 'debug');
-
     var message = 'Hello';
 
     var logger = log.get();
