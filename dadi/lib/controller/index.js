@@ -20,9 +20,6 @@ var sendBackJSON = help.sendBackJSON;
 var Controller = function (page, options) {
   if (!page) throw new Error('Page instance required');
 
-  this.log = log.get().child({module: 'controller'});
-  //this.log.info('Controller logging started (' + (page.name || '') + ').');
-
   this.page = page;
 
   this.options = options || {};
@@ -34,7 +31,7 @@ var Controller = function (page, options) {
 
   this.attachDatasources(function(err) {
     if (err) {
-      self.log.fatal(err);
+      log.error({module: 'controller'}, err);
       throw err;
     }
   });
@@ -125,7 +122,7 @@ Controller.prototype.process = function (req, res, next) {
 
     help.timer.start(req.method.toLowerCase());
 
-    this.log.debug({req:req});
+    log.debug({module: 'controller'}, {req:req});
 
     var self = this;
     var settings = {};
@@ -318,7 +315,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, done) 
       var message = "Chained datasource '" + chainedDatasource.name + "' expected to find data from datasource '" + chainedDatasource.chained.datasource + "'.";
       var err = new Error();
       err.message = message;
-      self.log.warn(message);
+      log.warn({module: 'controller'}, message);
       return done(err);
     }
 
@@ -392,7 +389,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, done) 
           data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result));
         }
         catch (e) {
-          this.log.error(e);
+          log.error({module: 'controller'}, e);
         }
       }
 
