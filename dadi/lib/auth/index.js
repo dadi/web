@@ -17,8 +17,6 @@ module.exports = function (server) {
 
         var self = this;
 
-        this.log = log.get().child({module: 'auth'});
-
         // don't authenticate *.jpg GET requests
         var path = url.parse(req.url).pathname;
         if (path.split(".").pop() === 'jpg') return next();
@@ -32,7 +30,7 @@ module.exports = function (server) {
           }
         }
 
-        this.log.info('Generating new access token for "' + req.url + '"');
+        log.info({module: 'auth'}, 'Generating new access token for "' + req.url + '"');
         help.timer.start('auth');
 
         var postData = JSON.stringify({

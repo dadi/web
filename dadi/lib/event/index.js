@@ -6,8 +6,6 @@ var log = require(__dirname + '/../log');
 var Event = function (pageName, eventName, options) {
   if (!pageName) throw new Error('Page name required');
 
-  this.log = log.get().child({module: 'event'});
-
   this.page = pageName;
   this.name = eventName;
   this.options = options || {};
@@ -36,7 +34,7 @@ Event.prototype.run = function(req, res, data, done) {
   this.loadEvent()(req, res, data, function (err, result) {
 
     if (err) {
-      self.log.error(err);
+      log.error({module: 'event'}, err);
     }
 
     return done(err, result);
