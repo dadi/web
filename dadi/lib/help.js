@@ -141,54 +141,10 @@ module.exports.sendBackHTML = function (method, successCode, contentType, res, n
   }
 }
 
-<<<<<<< HEAD
 /**
  * Adds hewders defined in the configuration file to the response
  * @param {res} res - the HTTP response
  */
-=======
-// function to wrap try - catch for JSON.parse to mitigate pref losses
-module.exports.parseQuery = function (queryStr) {
-    var ret;
-    try {
-        // strip leading zeroes from querystring before attempting to parse
-        ret = JSON.parse(queryStr.replace(/\b0(\d+)/, "\$1"));
-    }
-    catch (e) {
-        ret = {};
-    }
-
-    // handle case where queryStr is "null" or some other malicious string
-    if (typeof ret !== 'object' || ret === null) ret = {};
-    return ret;
-};
-
-// creates a new function in the underscore.js namespace
-// allowing us to pluck multiple properties - used to return only the
-// fields we require from an array of objects
-_.mixin({selectFields: function() {
-        var args = _.rest(arguments, 1)[0];
-        return _.map(arguments[0], function(item) {
-            var obj = {};
-            _.each(args.split(','), function(arg) {
-                obj[arg] = item[arg];
-            });
-            return obj;
-        });
-    }
-});
-
-/**
- * Creates a new DataHelper for fetching data from datasource endpoints
- * @class
- */
-var DataHelper = function(datasource, requestUrl) {
-  this.datasource = _.clone(datasource);
-  this.requestUrl = requestUrl;
-  this.dataCache = new DatasourceCache(this.datasource, requestUrl);
-}
-
->>>>>>> move non-data related methods up to allow room for dataHelper change
 module.exports.addHeaders = function(res) {
   var headers = config.get('headers');
 
