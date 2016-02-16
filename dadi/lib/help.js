@@ -207,16 +207,16 @@ var DataHelper = function(datasource, requestUrl) {
   };
 }
 
-module.exports.getStaticData = function(datasource, done) {
+DataHelper.prototype.getStaticData = function(done) {
 
-    var data = datasource.source.data;
+    var data = this.datasource.source.data;
 
     if (_.isArray(data)) {
-        var sortField = datasource.schema.datasource.sort.field;
-        var sortDir = datasource.schema.datasource.sort.order;
-        var search = datasource.schema.datasource.search;
-        var count = datasource.schema.datasource.count;
-        var fields = datasource.schema.datasource.fields;
+        var sortField = this.datasource.schema.datasource.sort.field;
+        var sortDir = this.datasource.schema.datasource.sort.order;
+        var search = this.datasource.schema.datasource.search;
+        var count = this.datasource.schema.datasource.count;
+        var fields = this.datasource.schema.datasource.fields;
 
         if (search) data = _.where(data, search);
         if (sortField) data = _.sortBy(data, sortField);
