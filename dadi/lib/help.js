@@ -207,29 +207,6 @@ var DataHelper = function(datasource, requestUrl) {
   };
 }
 
-DataHelper.prototype.getStaticData = function(done) {
-
-    var data = this.datasource.source.data;
-
-    if (_.isArray(data)) {
-        var sortField = this.datasource.schema.datasource.sort.field;
-        var sortDir = this.datasource.schema.datasource.sort.order;
-        var search = this.datasource.schema.datasource.search;
-        var count = this.datasource.schema.datasource.count;
-        var fields = this.datasource.schema.datasource.fields;
-
-        if (search) data = _.where(data, search);
-        if (sortField) data = _.sortBy(data, sortField);
-        if (sortDir === 'desc') data = data.reverse();
-
-        if (count) data = _.first(data, count);
-
-        if (fields) data = _.chain(data).selectFields(fields.join(",")).value();
-    }
-
-    done(data);
-}
-
 DataHelper.prototype.load = function(done) {
     var self = this;
 
@@ -344,6 +321,29 @@ DataHelper.prototype.getHeaders = function(done) {
 
 DataHelper.prototype.keepAliveAgent = function() {
   return new http.Agent({ keepAlive: true });
+}
+
+DataHelper.prototype.getStaticData = function(done) {
+
+    var data = this.datasource.source.data;
+
+    if (_.isArray(data)) {
+        var sortField = this.datasource.schema.datasource.sort.field;
+        var sortDir = this.datasource.schema.datasource.sort.order;
+        var search = this.datasource.schema.datasource.search;
+        var count = this.datasource.schema.datasource.count;
+        var fields = this.datasource.schema.datasource.fields;
+
+        if (search) data = _.where(data, search);
+        if (sortField) data = _.sortBy(data, sortField);
+        if (sortDir === 'desc') data = data.reverse();
+
+        if (count) data = _.first(data, count);
+
+        if (fields) data = _.chain(data).selectFields(fields.join(",")).value();
+    }
+
+    done(data);
 }
 
 module.exports.DataHelper = DataHelper;
