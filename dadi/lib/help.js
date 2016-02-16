@@ -141,6 +141,21 @@ module.exports.sendBackHTML = function (method, successCode, contentType, res, n
   }
 }
 
+/**
+ * Adds hewders defined in the configuration file to the response
+ * @param {res} res - the HTTP response
+ */
+module.exports.addHeaders = function(res) {
+  var headers = config.get('headers');
+
+  _.each(headers.cors, function(value, header) {
+    res.setHeader(header, value);
+    if (header === 'Access-Control-Allow-Origin' && value !== '*') {
+      res.setHeader('Vary', 'Origin');
+    }
+  });
+}
+
 // function to wrap try - catch for JSON.parse to mitigate pref losses
 module.exports.parseQuery = function (queryStr) {
     var ret;
@@ -180,17 +195,6 @@ var DataHelper = function(datasource, requestUrl) {
   this.datasource = _.clone(datasource);
   this.requestUrl = requestUrl;
   this.dataCache = new DatasourceCache(this.datasource, requestUrl);
-}
-
-module.exports.addHeaders = function(res) {
-  var headers = config.get('headers');
-
-  _.each(headers.cors, function(value, header) {
-    res.setHeader(header, value);
-    if (header === 'Access-Control-Allow-Origin' && value !== '*') {
-      res.setHeader('Vary', 'Origin');
-    }
-  });
 }
 
 module.exports.getStaticData = function(datasource, done) {
