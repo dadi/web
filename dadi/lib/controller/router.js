@@ -165,7 +165,8 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
 
       datasource.processRequest(datasource.page.name, req);
 
-      help.getData(datasource, function(err, result) {
+      var dataHelper = new help.DataHelper(datasource, req.url);
+      dataHelper.load(function(err, result) {
 
         help.timer.stop('router constraint: ' + datasource);
 
