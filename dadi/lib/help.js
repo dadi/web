@@ -220,7 +220,7 @@ module.exports.getStaticData = function(datasource, done) {
     done(data);
 }
 
-module.exports.getData = function(datasource, done) {
+DataHelper.prototype.load = function(datasource, done) {
 
     var datasourceCache = new DatasourceCache(datasource);
 
