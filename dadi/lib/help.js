@@ -208,73 +208,72 @@ var DataHelper = function(datasource, requestUrl) {
 }
 
 DataHelper.prototype.load = function(done) {
-    var self = this;
+  var self = this;
 
-    this.dataCache.getFromCache(function (cachedData) {
-        if (cachedData) return done(null, cachedData);
+  this.dataCache.getFromCache(function (cachedData) {
+    if (cachedData) return done(null, cachedData);
 
-        if (self.datasource.source.type === 'static') {
-            return self.getStaticData(function(data) {
-                return done(null, data);
+    if (self.datasource.source.type === 'static') {
+      return self.getStaticData(function(data) {
+        return done(null, data);
+      });
+    }
+
+    self.getHeaders(function(err, headers) {
+      if (err) {
+        return done(err);
+      }
+
+      _.extend(self.options, headers);
+
+      log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path);
+
+      var request = http.request(self.options, function(res) {
+        var output = '';
+        var encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : '';
+
+        if (encoding === 'gzip') {
+          var gunzip = zlib.createGunzip();
+          var buffer = [];
+
+          gunzip.on('data', function(data) {
+            buffer.push(data.toString());
+          }).on('end', function() {
+            output = buffer.join("");
+            self.processOutput(res, output, function(err, data, res) {
+              return done(null, data, res);
             });
+          }).on('error', function(err) {
+            done(err);
+          });
+
+          res.pipe(gunzip);
         }
+        else {
+          res.on('data', function(chunk) {
+            output += chunk;
+          });
 
-        self.getHeaders(function(err, headers) {
-            if (err) {
-              return done(err);
-            }
-
-            _.extend(self.options, headers);
-
-            log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path);
-
-            var request = http.request(self.options, function(res) {
-              var output = '';
-
-              var encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : '';
-
-              if (encoding === 'gzip') {
-                var gunzip = zlib.createGunzip();
-                var buffer = [];
-
-                gunzip.on('data', function(data) {
-                  buffer.push(data.toString());
-                }).on('end', function() {
-                  output = buffer.join("");
-                  self.processOutput(res, output, function(err, data, res) {
-                    return done(null, data, res);
-                  });
-                }).on('error', function(err) {
-                  done(err);
-                });
-
-                res.pipe(gunzip);
-              }
-              else {
-                res.on('data', function(chunk) {
-                  output += chunk;
-                });
-
-                res.on('end', function() {
-                  self.processOutput(res, output, function(err, data, res) {
-                    return done(null, data, res);
-                  });
-                });
-              }
+          res.on('end', function() {
+            self.processOutput(res, output, function(err, data, res) {
+              return done(null, data, res);
             });
+          });
+        }
+      });
 
-            request.on('error', function(err) {
-              var message = err.toString() + '. Couldn\'t request data from ' + self.datasource.endpoint;
-              err.name = 'GetData';
-              err.message = message;
-              err.remoteIp = self.options.host;
-              err.remotePort = self.options.port;
-              return done(err);
-            });
+      request.on('error', function(err) {
+        var message = err.toString() + '. Couldn\'t request data from ' + self.datasource.endpoint;
+        err.name = 'GetData';
+        err.message = message;
+        err.remoteIp = self.options.host;
+        err.remotePort = self.options.port;
+        return done(err);
+      });
 
-            request.end();
-        });
+      request.end();
     });
+  });
 }
 
 DataHelper.prototype.processOutput = function(res, data, done) {
@@ -324,26 +323,25 @@ DataHelper.prototype.keepAliveAgent = function() {
 }
 
 DataHelper.prototype.getStaticData = function(done) {
+  var data = this.datasource.source.data;
 
-    var data = this.datasource.source.data;
+  if (_.isArray(data)) {
+    var sortField = this.datasource.schema.datasource.sort.field;
+    var sortDir = this.datasource.schema.datasource.sort.order;
+    var search = this.datasource.schema.datasource.search;
+    var count = this.datasource.schema.datasource.count;
+    var fields = this.datasource.schema.datasource.fields;
 
-    if (_.isArray(data)) {
-        var sortField = this.datasource.schema.datasource.sort.field;
-        var sortDir = this.datasource.schema.datasource.sort.order;
-        var search = this.datasource.schema.datasource.search;
-        var count = this.datasource.schema.datasource.count;
-        var fields = this.datasource.schema.datasource.fields;
+    if (search) data = _.where(data, search);
+    if (sortField) data = _.sortBy(data, sortField);
+    if (sortDir === 'desc') data = data.reverse();
 
-        if (search) data = _.where(data, search);
-        if (sortField) data = _.sortBy(data, sortField);
-        if (sortDir === 'desc') data = data.reverse();
+    if (count) data = _.first(data, count);
 
-        if (count) data = _.first(data, count);
+    if (fields) data = _.chain(data).selectFields(fields.join(",")).value();
+  }
 
-        if (fields) data = _.chain(data).selectFields(fields.join(",")).value();
-    }
-
-    done(data);
+  done(data);
 }
 
 module.exports.DataHelper = DataHelper;
