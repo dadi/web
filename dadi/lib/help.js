@@ -172,6 +172,15 @@ _.mixin({selectFields: function() {
     }
 });
 
+/**
+ * Creates a new DataHelper for fetching data from datasource endpoints
+ * @class
+ */
+var DataHelper = function(datasource, requestUrl) {
+  this.datasource = _.clone(datasource);
+  this.requestUrl = requestUrl;
+  this.dataCache = new DatasourceCache(this.datasource, requestUrl);
+}
 
 module.exports.addHeaders = function(res) {
   var headers = config.get('headers');
