@@ -273,7 +273,8 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
     help.timer.start('datasource: ' + datasource.name);
 
-    help.getData(datasource, function(err, result) {
+    var dataHelper = new help.DataHelper(datasource, req.url);
+    dataHelper.load(function(err, result) {
 
       help.timer.stop('datasource: ' + datasource.name);
 
@@ -391,7 +392,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, done) 
 
     chainedDatasource.buildEndpoint(chainedDatasource.schema, function() {});
 
-    help.getData(chainedDatasource, function(err, result) {
+    var dataHelper = new help.DataHelper(chainedDatasource, req.url);
+    dataHelper.load(function(err, result) {
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)');
 
