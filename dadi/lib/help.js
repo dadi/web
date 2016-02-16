@@ -317,7 +317,7 @@ DataHelper.prototype.processOutput = function(res, data, done) {
     err.remoteIp = self.options.host;
     err.remotePort = self.options.port;
 
-    log.error(res.statusMessage + ' (' + res.statusCode + ')' + ": " + this.datasource.endpoint);
+    log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ": " + this.datasource.endpoint);
     //return done(err);
     throw(err);
   }
