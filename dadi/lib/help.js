@@ -195,6 +195,16 @@ var DataHelper = function(datasource, requestUrl) {
   this.datasource = _.clone(datasource);
   this.requestUrl = requestUrl;
   this.dataCache = new DatasourceCache(this.datasource, requestUrl);
+
+  var self = this;
+
+  self.options = {
+    host: self.datasource.source.host || config.get('api.host'),
+    port: self.datasource.source.port || config.get('api.port'),
+    path: self.datasource.endpoint,
+    method: 'GET',
+    agent: self.keepAliveAgent()
+  };
 }
 
 module.exports.getStaticData = function(datasource, done) {
@@ -232,21 +242,12 @@ DataHelper.prototype.load = function(done) {
             });
         }
 
-        var defaults = {
-            host: self.datasource.source.host || config.get('api.host'),
-            port: self.datasource.source.port || config.get('api.port'),
-            path: self.datasource.endpoint,
-            method: 'GET',
-            agent: self.keepAliveAgent()
-        };
-
         self.getHeaders(function(err, headers) {
-
             if (err) {
               return done(err);
             }
 
-            self.options = _.extend(defaults, headers);
+            _.extend(self.options, headers);
 
             log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path);
 
