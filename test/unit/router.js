@@ -5,6 +5,7 @@ var api = require(__dirname + '/../../dadi/lib/api');
 var Server = require(__dirname + '/../../dadi/lib');
 var should = require('should');
 var _ = require('underscore');
+var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var Controller = require(__dirname + '/../../dadi/lib/controller');
 var Router = require(__dirname + '/../../dadi/lib/controller/router');
@@ -203,17 +204,19 @@ describe('Router', function (done) {
         ]
       };
 
-      sinon.stub(libHelp, 'getData').yields(null, JSON.stringify(data));
+      var dsName = 'car-makes';
+      var ds = datasource(page, dsName, help.getPathOptions(), function() {});
+
+      var dataHelper = new libHelp.DataHelper(ds, null);
+      sinon.stub(libHelp.DataHelper.prototype, 'load').yields(null, JSON.stringify(data));
       server.app.Router.constrain(page.route.paths[0], page.route.constraint);
 
       var req = { url: '/test', params: {} };
       var res = {};
 
       server.app.Router.testConstraint(page.route.paths[0], req, res, function(result) {
+        libHelp.DataHelper.prototype.load.restore();
         result.should.eql(true);
-
-        libHelp.getData.restore();
-
         done();
       });
 
@@ -240,17 +243,20 @@ describe('Router', function (done) {
         results: []
       };
 
-      sinon.stub(libHelp, 'getData').yields(null, JSON.stringify(data));
+      var dsName = 'car-makes';
+      var ds = datasource(page, dsName, help.getPathOptions(), function() {});
+
+      var dataHelper = new libHelp.DataHelper(ds, null);
+      sinon.stub(libHelp.DataHelper.prototype, 'load').yields(null, JSON.stringify(data));
+
       server.app.Router.constrain(page.route.paths[0], page.route.constraint);
 
       var req = { url: '/test', params: {} };
       var res = {};
 
       server.app.Router.testConstraint(page.route.paths[0], req, res, function(result) {
+        libHelp.DataHelper.prototype.load.restore();
         result.should.eql(false);
-
-        libHelp.getData.restore();
-
         done();
       });
     });
@@ -274,17 +280,20 @@ describe('Router', function (done) {
 
       var data = "{0";
 
-      sinon.stub(libHelp, 'getData').yields(null, data);
+      var dsName = 'car-makes';
+      var ds = datasource(page, dsName, help.getPathOptions(), function() {});
+
+      var dataHelper = new libHelp.DataHelper(ds, null);
+      sinon.stub(libHelp.DataHelper.prototype, 'load').yields(null, JSON.stringify(data));
+
       server.app.Router.constrain(page.route.paths[0], page.route.constraint);
 
       var req = { url: '/test', params: {} };
       var res = {};
 
       server.app.Router.testConstraint(page.route.paths[0], req, res, function(result) {
+        libHelp.DataHelper.prototype.load.restore();
         result.should.eql(false);
-
-        libHelp.getData.restore();
-
         done();
       });
     });
