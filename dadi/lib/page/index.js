@@ -11,8 +11,8 @@ var Page = function (name, schema) {
   this.key = schema.page.key || name;
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
-  this.datasources = schema.datasources;
-  this.events = schema.events;
+  this.datasources = schema.datasources || [];
+  this.events = schema.events || [];
 
   this.settings = schema.settings;
   this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
