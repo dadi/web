@@ -220,100 +220,129 @@ module.exports.getStaticData = function(datasource, done) {
     done(data);
 }
 
-DataHelper.prototype.load = function(datasource, done) {
-
-    var datasourceCache = new DatasourceCache(datasource);
-
+DataHelper.prototype.load = function(done) {
     var self = this;
 
-    datasourceCache.getFromCache(function (cachedData) {
-
+    this.dataCache.getFromCache(function (cachedData) {
         if (cachedData) return done(null, cachedData);
 
-        if (datasource.source.type === 'static') {
-            return self.getStaticData(datasource, function(data) {
+        if (self.datasource.source.type === 'static') {
+            return self.getStaticData(function(data) {
                 return done(null, data);
             });
         }
 
         var defaults = {
-            host: datasource.source.host || config.get('api.host'),
-            port: datasource.source.port || config.get('api.port'),
-            path: datasource.endpoint,
+            host: self.datasource.source.host || config.get('api.host'),
+            port: self.datasource.source.port || config.get('api.port'),
+            path: self.datasource.endpoint,
             method: 'GET',
             agent: self.keepAliveAgent()
         };
 
-        self.getHeaders(datasource, function(err, headers) {
+        self.getHeaders(function(err, headers) {
 
             if (err) {
               return done(err);
             }
 
-            var options = _.extend(defaults, headers);
+            self.options = _.extend(defaults, headers);
 
-            log.info({module: 'helper'}, "GET datasource '" + datasource.schema.datasource.key + "': " + options.path);
+            log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path);
 
-            var req = http.request(options, function(res) {
+            var request = http.request(self.options, function(res) {
               var output = '';
 
-              res.on('data', function(chunk) {
-                output += chunk;
-              });
+              var encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : '';
 
-              res.on('end', function() {
+              if (encoding === 'gzip') {
+                var gunzip = zlib.createGunzip();
+                var buffer = [];
 
-                if (res.statusCode >= 400) {
-                  var err = new Error();
-                  err.message = 'Datasource "' + datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + datasource.endpoint;
-                  if (output) err.message += '\n' + output;
-
-                  err.remoteIp = options.host;
-                  err.remotePort = options.port;
-
-                  log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ": " + datasource.endpoint);
-                  return done(err);
-                }
-
-                // only cache ds response if 200
-                if (res.statusCode === 200) {
-                  datasourceCache.cacheResponse(output, function() {
-                    //
+                gunzip.on('data', function(data) {
+                  buffer.push(data.toString());
+                }).on('end', function() {
+                  output = buffer.join("");
+                  self.processOutput(res, output, function(err, data, res) {
+                    return done(null, data, res);
                   });
-                }
+                }).on('error', function(err) {
+                  done(err);
+                });
 
-                return done(null, output);
-              });
+                res.pipe(gunzip);
+              }
+              else {
+                res.on('data', function(chunk) {
+                  output += chunk;
+                });
 
+                res.on('end', function() {
+                  self.processOutput(res, output, function(err, data, res) {
+                    return done(null, data, res);
+                  });
+                });
+              }
             });
 
-            req.on('error', function(err) {
-              var message = err.toString() + '. Couldn\'t request data from ' + datasource.endpoint;
+            request.on('error', function(err) {
+              var message = err.toString() + '. Couldn\'t request data from ' + self.datasource.endpoint;
               err.name = 'GetData';
               err.message = message;
-              err.remoteIp = options.host;
-              err.remotePort = options.port;
+              err.remoteIp = self.options.host;
+              err.remotePort = self.options.port;
               return done(err);
             });
 
-            req.end();
+            request.end();
         });
     });
-};
+}
 
-module.exports.getHeaders = function(datasource, done) {
-    var headers;
-    if(datasource.authStrategy){
-        datasource.authStrategy.getToken(datasource, function (err, token){
-            if (err) return done(err);
-            return done(null, {headers: {'Authorization': 'Bearer ' + token}} );
-        });
-    }
-    else {
-        return done(null, {headers:{'Authorization': 'Bearer ' + token.authToken.accessToken }});
-    }
-};
+DataHelper.prototype.processOutput = function(res, data, done) {
+  // Return a 202 Accepted response immediately,
+  // along with the datasource response
+  if (res.statusCode === 202) {
+    return done(null, JSON.parse(data), res);
+  }
 
-module.exports.keepAliveAgent = function() {
+  // if the error is anything other than
+  // Success or Bad Request, error
+  if (!/200|400/.exec(res.statusCode)) {
+    var err = new Error();
+    err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.datasource.endpoint;
+    if (data) err.message += '\n' + data;
+
+    err.remoteIp = self.options.host;
+    err.remotePort = self.options.port;
+
+    log.error(res.statusMessage + ' (' + res.statusCode + ')' + ": " + this.datasource.endpoint);
+    //return done(err);
+    throw(err);
+  }
+
+  // Cache 200 responses
+  if (res.statusCode === 200) {
+    this.dataCache.cacheResponse(data, function() {});
+  }
+
+  return done(null, data);
+}
+
+DataHelper.prototype.getHeaders = function(done) {
+  if (this.datasource.authStrategy){
+    this.datasource.authStrategy.getToken(this.datasource, function (err, token){
+      if (err) return done(err);
+      return done(null, { headers: { 'Authorization': 'Bearer ' + token, 'accept-encoding': 'gzip' } } );
+    });
+  }
+  else {
+    return done(null, { headers: { 'Authorization': 'Bearer ' + token.authToken.accessToken, 'accept-encoding': 'gzip' } } );
+  }
+}
+
+DataHelper.prototype.keepAliveAgent = function() {
   return new http.Agent({ keepAlive: true });
-};
+}
+
+module.exports.DataHelper = DataHelper;
