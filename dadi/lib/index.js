@@ -216,7 +216,9 @@ Server.prototype.exitHandler = function(options, err) {
     });
   }
 
-  if (err) console.log(err);
+  if (err) {
+    console.log(err.stack.toString());
+  }
 
   if (options.exit) {
     console.log();
