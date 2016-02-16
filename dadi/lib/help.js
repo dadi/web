@@ -198,13 +198,13 @@ var DataHelper = function(datasource, requestUrl) {
 
   var self = this;
 
-  self.options = {
-    host: self.datasource.source.host || config.get('api.host'),
-    port: self.datasource.source.port || config.get('api.port'),
-    path: self.datasource.endpoint,
+  this.options = {
+    host: this.datasource.source.host || config.get('api.host'),
+    port: this.datasource.source.port || config.get('api.port'),
+    path: this.datasource.endpoint,
     method: 'GET',
-    agent: self.keepAliveAgent()
-  };
+    agent: this.keepAliveAgent()
+  }
 }
 
 DataHelper.prototype.load = function(done) {
@@ -224,7 +224,7 @@ DataHelper.prototype.load = function(done) {
         return done(err);
       }
 
-      _.extend(self.options, headers);
+      self.options = _.extend(self.options, headers);
 
       log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path);
 
@@ -277,6 +277,8 @@ DataHelper.prototype.load = function(done) {
 }
 
 DataHelper.prototype.processOutput = function(res, data, done) {
+  var self = this;
+
   // Return a 202 Accepted response immediately,
   // along with the datasource response
   if (res.statusCode === 202) {
@@ -285,7 +287,7 @@ DataHelper.prototype.processOutput = function(res, data, done) {
 
   // if the error is anything other than
   // Success or Bad Request, error
-  if (!/200|400/.exec(res.statusCode)) {
+  if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     var err = new Error();
     err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.datasource.endpoint;
     if (data) err.message += '\n' + data;
