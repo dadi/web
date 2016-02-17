@@ -200,14 +200,16 @@ Server.prototype.start = function (done) {
 
     this.readyState = 1;
 
-    //do something when app is closing
-    process.on('exit', this.exitHandler.bind(null, {server: this, cleanup: true}));
+    if (config.get('env') !== 'test') {
+      //do something when app is closing
+      process.on('exit', this.exitHandler.bind(null, {server: this, cleanup: true}));
 
-    //catches ctrl+c event
-    process.on('SIGINT', this.exitHandler.bind(null, {server: this, exit: true}));
+      //catches ctrl+c event
+      process.on('SIGINT', this.exitHandler.bind(null, {server: this, exit: true}));
 
-    //catches uncaught exceptions
-    process.on('uncaughtException', this.exitHandler.bind(null, {server: this, exit: true}));
+      //catches uncaught exceptions
+      process.on('uncaughtException', this.exitHandler.bind(null, {server: this, exit: true}));
+    }
 
     // this is all sync, so callback isn't really necessary.
     done && done();
