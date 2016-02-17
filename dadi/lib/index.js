@@ -171,7 +171,10 @@ Server.prototype.start = function (done) {
 
     server.on('connection', onConnection);
     server.on('listening', onListening);
-    server.on('error', onError);
+
+    if (config.get('env') !== 'test') {
+      server.on('error', onError);
+    }
 
     // enhance with a 'destroy' function
     enableDestroy(server);
