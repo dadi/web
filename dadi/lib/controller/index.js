@@ -75,6 +75,13 @@ Controller.prototype.attachEvents = function(done) {
   done();
 };
 
+Controller.prototype.requiredDataPresent = function (data) {
+  if (_.isEmpty(this.page.requiredDatasources)) return true;
+  return _.every(this.page.requiredDatasources, function (datasource) {
+    return data.hasOwnProperty(datasource) && data[datasource].hasOwnProperty('results') && data[datasource].results.length !== 0;
+  });
+}
+
 Controller.prototype.buildInitialViewData = function(req) {
 
   var data = {};
@@ -141,6 +148,10 @@ Controller.prototype.process = function (req, res, next) {
     }
 
     self.loadData(req, res, data, function(err, data) {
+
+      if (!self.requiredDataPresent(data)) {
+        return next();
+      }
 
       if (err) {
         if (err.statusCode && err.statusCode === 404) return next();

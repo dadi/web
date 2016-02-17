@@ -13,6 +13,7 @@ var Page = function (name, schema) {
   this.contentType = schema.contentType || 'text/html';
   this.datasources = schema.datasources;
   this.events = schema.events;
+  this.requiredDatasources = schema.requiredDatasources || []
 
   this.settings = schema.settings;
   this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
