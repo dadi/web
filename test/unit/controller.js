@@ -70,7 +70,7 @@ describe('Controller', function (done) {
     // provide empty API response
     var results = { results: [] }
 
-    sinon.stub(help, "getData").yields(null, results);
+    sinon.stub(help.DataHelper.prototype, 'load').yields(null, results);
 
     var client = request(connectionString);
 
@@ -79,7 +79,7 @@ describe('Controller', function (done) {
     .expect(404)
     .end(function (err, res) {
       if (err) return done(err);
-      help.getData.restore();
+      help.DataHelper.prototype.load.restore();
       cleanup(done);
     });
   })
@@ -107,7 +107,7 @@ describe('Controller', function (done) {
     // provide empty API response
     var results = { results: [{_id: 1, title: 'books'}] }
 
-    sinon.stub(help, "getData").yields(null, results);
+    sinon.stub(help.DataHelper.prototype, 'load').yields(null, results);
 
     var client = request(connectionString);
 
@@ -116,7 +116,7 @@ describe('Controller', function (done) {
     .expect(200)
     .end(function (err, res) {
       if (err) return done(err);
-      help.getData.restore();
+      help.DataHelper.prototype.load.restore();
       cleanup(done);
     });
   })
