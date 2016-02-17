@@ -311,6 +311,25 @@ describe('Page', function (done) {
     done();
   });
 
+  it('should attach empty `requiredDatasources` to page when not specified', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+    p.requiredDatasources.should.exist;
+    p.requiredDatasources.should.eql([]);
+    done();
+  });
+
+  it('should attach specified `requiredDatasources` to page', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    schema.requiredDatasources = ['car-reviews'];
+    var p = page(name, schema);
+    p.requiredDatasources.should.exist;
+    p.requiredDatasources.should.eql(["car-reviews"]);
+    done();
+  });
+
   it('should throw error if specified `route` is not an object', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
