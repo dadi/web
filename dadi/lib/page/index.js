@@ -1,3 +1,6 @@
+/**
+ * @module Page
+ */
 var pathToRegexp = require('path-to-regexp');
 var config = require(__dirname + '/../../../config');
 
@@ -11,8 +14,9 @@ var Page = function (name, schema) {
   this.key = schema.page.key || name;
   this.template = schema.template || name + '.dust';
   this.contentType = schema.contentType || 'text/html';
-  this.datasources = schema.datasources;
-  this.events = schema.events;
+  this.datasources = schema.datasources || [];
+  this.events = schema.events || [];
+  this.preloadEvents = schema.preloadEvents || [];
   this.requiredDatasources = schema.requiredDatasources || []
 
   this.settings = schema.settings;
