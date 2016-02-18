@@ -53,6 +53,10 @@ var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
+/**
+ * Creates a new Server instance.
+ * @constructor
+ */
 var Server = function () {
     this.components = {};
     this.monitors = {};

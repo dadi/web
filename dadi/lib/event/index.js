@@ -1,3 +1,6 @@
+/**
+ * @module Event
+ */
 var fs = require('fs');
 
 var config = require(__dirname + '/../../../config');

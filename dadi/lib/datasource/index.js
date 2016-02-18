@@ -1,3 +1,6 @@
+/**
+ * @module Datasource
+ */
 var fs = require('fs');
 var url = require('url');
 var _ = require('underscore');

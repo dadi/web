@@ -1,3 +1,6 @@
+/**
+ * @module View
+ */
 var fs = require('fs');
 var path = require('path');
 var dust = require('dustjs-linkedin');

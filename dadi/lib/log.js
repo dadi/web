@@ -1,3 +1,6 @@
+/**
+ * @module Log
+ */
 var bunyan = require('bunyan');
 var KinesisStream = require('aws-kinesis-writable');
 var fs = require('fs');

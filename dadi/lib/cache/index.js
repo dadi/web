@@ -1,3 +1,6 @@
+/**
+ * @module Cache
+ */
 var crypto = require('crypto');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
@@ -13,6 +16,11 @@ var config = require(__dirname + '/../../../config.js');
 var log = require(__dirname + '/../log');
 var help = require(__dirname + '/../help');
 
+/**
+ * Creates a new Cache instance for the server
+ * @constructor
+ * @param {Server} server - the main server instance
+ */
 var Cache = function(server) {
   log.info({module: 'cache'}, 'Cache logging started.');
 
@@ -50,6 +58,12 @@ module.exports = function(server) {
   return instance;
 };
 
+/**
+ * Determines whether caching is enabled by testing the main configuration setting and
+ * the cache setting for the page that the requested URL matches
+ * @param {IncomingMessage} req - the current HTTP request
+ * @returns {Boolean}
+ */
 Cache.prototype.cachingEnabled = function(req) {
   var query = url.parse(req.url, true).query;
   if (query.hasOwnProperty('json') && query.json !== 'false') {
@@ -75,6 +89,11 @@ Cache.prototype.cachingEnabled = function(req) {
   return (this.enabled && (this.options.cache || false));
 };
 
+/**
+ * Retrieves the page that the requested URL matches
+ * @param {IncomingMessage} req - the current HTTP request
+ * @returns {object}
+ */
 Cache.prototype.getEndpointMatchingRequest = function(req) {
   var endpoints = this.server.components;
   var requestUrl = url.parse(req.url, true).pathname;
@@ -94,18 +113,35 @@ Cache.prototype.getEndpointMatchingRequest = function(req) {
   return endpoint;
 }
 
+/**
+ * Retrieves the content-type of the page that the requested URL matches
+ * @param {IncomingMessage} req - the current HTTP request
+ * @returns {string}
+ */
 Cache.prototype.getEndpointContentType = function(req) {
   var endpoint = this.getEndpointMatchingRequest(req);
   return endpoint.page.contentType;
 }
 
+/**
+ * Initialises a RedisClient using the main configuration settings
+ * @returns {RedisClient}
+ */
 Cache.prototype.initialiseRedisClient = function() {
   return redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
 };
 
+/**
+ * Adds the Cache middleware to the stack
+ */
 Cache.prototype.init = function() {
   var self = this;
 
+  /**
+   * Retrieves the page that the requested URL matches
+   * @param {IncomingMessage} req - the current HTTP request
+   * @returns {object}
+   */
   this.server.app.use(function (req, res, next) {
     var enabled = self.cachingEnabled(req);
     if (!enabled) return next();
@@ -211,6 +247,10 @@ Cache.prototype.init = function() {
       });
     }
 
+    /**
+     * Writes the current response body to either the filesystem or a Redis server,
+     * depending on the configuration settings
+     */
     function cacheResponse() {
       // file is expired or does not exist, wrap res.end and res.write to save to cache
       var _end = res.end;
