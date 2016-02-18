@@ -1,3 +1,6 @@
+/**
+ * @module Cache
+ */
 var fs = require('fs');
 var path = require('path');
 var url = require('url');
@@ -15,6 +18,11 @@ var log = require(__dirname + '/../log');
 var cacheEncoding = 'utf8';
 var options = {};
 
+/**
+ * Creates a new DatasourceCache instance for the specified datasource.
+ * @constructor
+ * @param {object} datasource - a datasource schema object containing the datasource settings
+ */
 var DatasourceCache = function (datasource) {
   this.datasource = datasource;
 

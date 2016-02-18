@@ -1,3 +1,6 @@
+/**
+ * @module Monitor
+ */
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var fs = require('fs');
