@@ -302,6 +302,16 @@ describe('Page', function (done) {
     done();
   });
 
+  it('should attach empty `datasources` to page when not specified', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    delete schema.datasources;
+    var p = page(name, schema);
+    p.datasources.should.exist;
+    p.datasources.should.eql([]);
+    done();
+  });
+
   it('should attach specified `events` to page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
@@ -311,12 +321,32 @@ describe('Page', function (done) {
     done();
   });
 
-  it('should attach empty `requiredDatasources` to page when not specified', function (done) {
+  it('should attach empty `events` to page when not specified', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    delete schema.events;
+    var p = page(name, schema);
+    p.events.should.exist;
+    p.events.should.eql([]);
+    done();
+  });
+
+  it('should attach specified `preloadEvents` to page', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    schema.preloadEvents = ['test_event'];
+    var p = page(name, schema);
+    p.preloadEvents.should.exist;
+    p.preloadEvents.should.eql(["test_event"]);
+    done();
+  });
+
+  it('should attach empty `preloadEvents` to page when not specified', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
     var p = page(name, schema);
-    p.requiredDatasources.should.exist;
-    p.requiredDatasources.should.eql([]);
+    p.preloadEvents.should.exist;
+    p.preloadEvents.should.eql([]);
     done();
   });
 
@@ -327,6 +357,15 @@ describe('Page', function (done) {
     var p = page(name, schema);
     p.requiredDatasources.should.exist;
     p.requiredDatasources.should.eql(["car-reviews"]);
+    done();
+  });
+
+  it('should attach empty `requiredDatasources` to page when not specified', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+    p.requiredDatasources.should.exist;
+    p.requiredDatasources.should.eql([]);
     done();
   });
 
