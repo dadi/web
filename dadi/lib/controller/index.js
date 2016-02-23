@@ -270,14 +270,14 @@ Controller.prototype.loadData = function(req, res, data, done) {
       self.loadEventData(self.preloadEvents, req, res, data, function (err, result) {
         if (err) return done(err);
         help.timer.stop('preload data');
-        return callback();
+        callback(null);
       })
     },
 
     // Run datasources
     function(callback) {
       if (!hasAttachedDatasources(self.datasources)) {
-        return callback();
+        callback(null);
       }
 
       _.each(primaryDatasources, function(datasource, key) {
@@ -297,13 +297,13 @@ Controller.prototype.loadData = function(req, res, data, done) {
               console.log(e);
             }
           }
+
+          idx++;
+
+          if (idx === Object.keys(primaryDatasources).length) {
+            callback(null);
+          }
         })
-
-        idx++;
-
-        if (idx === Object.keys(primaryDatasources).length) {
-          return callback();
-        }
       })
     },
 
@@ -311,7 +311,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
     function(callback) {
       self.processChained(chainedDatasources, data, function(err, result) {
         if (err) return done(err);
-        return callback();
+        callback(null);
       })
     },
 
@@ -319,7 +319,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
     function(callback) {
       self.loadEventData(self.events, req, res, data, function (err, result) {
         if (err) return done(err);
-        return callback();
+        callback(null);
       });
     }
   ],
