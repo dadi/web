@@ -309,7 +309,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
     // Run chained datasources
     function(callback) {
-      self.processChained(chainedDatasources, data, function(err, result) {
+      self.processChained(chainedDatasources, data, req, function(err, result) {
         if (err) return done(err);
         callback(null);
       })
@@ -331,7 +331,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
   })
 }
 
-Controller.prototype.processChained = function (chainedDatasources, data, done) {
+Controller.prototype.processChained = function (chainedDatasources, data, req, done) {
 
   var idx = 0;
   var self = this;
