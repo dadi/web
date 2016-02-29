@@ -281,7 +281,16 @@ Controller.prototype.loadData = function(req, res, data, done) {
       }
 
       _.each(primaryDatasources, function(datasource, key) {
+
+        if (datasource.filterEvent) {
+          datasource.filterEvent.run(req, res, data, function(err, filter) {
+            if (err) return done(err);
+            datasource.schema.datasource.filter = _.extend(datasource.schema.datasource.filter, filter);
+          })
+        }
+
         processSearchParameters(key, datasource, req);
+
         help.timer.start('datasource: ' + datasource.name);
 
         var dataHelper = new help.DataHelper(datasource, req.url);

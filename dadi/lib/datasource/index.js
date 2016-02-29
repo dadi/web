@@ -6,6 +6,7 @@ var url = require('url');
 var _ = require('underscore');
 
 var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
+var Event = require(__dirname + '/../event');
 var config = require(__dirname + '/../../../config.js');
 var log = require(__dirname + '/../log');
 
@@ -34,9 +35,14 @@ var Datasource = function (page, datasource, options, callback) {
       callback(null, self);
     }
 
+    self.filterEvent = null;
     self.requestParams = schema.datasource.requestParams || [];
     self.chained = schema.datasource.chained || null;
     self.authStrategy = self.setAuthStrategy();
+
+    if (schema.datasource.filterEvent) {
+      self.filterEvent = new Event(null, schema.datasource.filterEvent, self.options);
+    }
 
     self.buildEndpoint(schema, function() {
       //self.endpoint = endpoint;

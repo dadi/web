@@ -1,0 +1,25 @@
+{
+	"datasource": {
+		"key": "filters",
+		"name": "Filter test datasource",
+		"source": {
+			"type": "remote",
+			"protocol": "http",
+			"host": "127.0.0.1",
+			"port": "3000",
+			"endpoint": "1.0/test/filters"
+		},
+  	"paginate": true,
+  	"count": 20,
+  	"sort": [
+      { "field": "name", "order": "asc" }
+    ],
+  	"search": {},
+    "filter": { "y": "2" },
+    "filterEvent": "test_filter_event",
+  	"fields": { "name": 1, "_id": 0 },
+    "requestParams": [
+      { "param": "category", "field": "name" }
+    ]
+	}
+}

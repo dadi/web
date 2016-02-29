@@ -187,4 +187,47 @@ describe('Controller', function (done) {
     })
   })
 
+  describe('Datasource Filter Events', function(done) {
+    it('should run an attached `filterEvent` before datasource loads', function(done) {
+
+      var name = 'test';
+      var schema = testHelper.getPageSchema();
+      schema.datasources = ['car-makes-unchained', 'filters']
+      schema.events = []
+      var page = Page(name, schema);
+      page.template = 'test.dust';
+      page.route.paths[0] = '/test';
+      page.settings.cache = false;
+      startServer(page);
+
+      // provide API response
+      var apiResults = { results: [{_id: 1, title: 'books'}] }
+      //var dataStub = sinon.stub(help.DataHelper.prototype, 'load');
+      // dataStub.onCall(0).returns(null, apiResults);
+      // dataStub.onCall(1).returns(null, apiResults);
+
+      sinon.stub(help.DataHelper.prototype, 'load').yields(null, apiResults);
+
+      var client = request(connectionString);
+
+      client
+      .get(page.route.paths[0] + '?json=true')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        help.DataHelper.prototype.load.restore();
+
+        res.body['car-makes-unchained'].should.exist;
+        res.body['filters'].should.exist;
+
+        controller.datasources['filters'].schema.datasource.filter.x.should.exist;
+        controller.datasources['filters'].schema.datasource.filter.x.should.eql('1');
+        controller.datasources['filters'].schema.datasource.filter.y.should.exist;
+        controller.datasources['filters'].schema.datasource.filter.y.should.eql('2');
+
+        cleanup(done);
+      })
+    })
+  })
+
 })
