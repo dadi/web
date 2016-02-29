@@ -20,6 +20,9 @@
 			{ "field": "_id", "order": "asc" }
 		],
 		"search": {"title": "/(third)/iu"},
-		"fields": ["title", "author"]
+		"fields": {
+			"title": 1,
+			"author": 1
+		}
 	}
 }

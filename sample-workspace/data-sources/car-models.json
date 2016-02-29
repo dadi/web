@@ -32,7 +32,11 @@
         ],
 		"search": {},
         "filter": ["{car-makes}",{"$group": {"_id" : {"make":"$makeName", "model":"$modelName","body":"$bodyStyle"}}}],
-		"fields": ["name","makeId","capId"],
+		"fields": {
+            "name": 1,
+            "makeId": 1,
+            "capId": 1
+        },
         "requestParams": [
           { "param": "model", "field": "name" }
         ],
