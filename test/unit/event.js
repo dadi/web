@@ -63,7 +63,7 @@ describe('Event', function (done) {
     done();
   });
 
-  it('should throw error if specified page name is not specified', function (done) {
+  it.skip('should throw error if specified page name is not specified', function (done) {
     var pageName = null;
     var eventName = 'car-reviews';
 

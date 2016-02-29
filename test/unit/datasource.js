@@ -258,6 +258,36 @@ describe('Datasource', function (done) {
     done();
   });
 
+  it('should attach specified `filterEvent` to datasource', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+    var dsName = 'car-makes';
+    var options = help.getPathOptions();
+    var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName);
+    dsSchema.datasource.filterEvent = "testFilterEvent"
+
+    sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+    var ds = datasource(p, dsName, options, function() {} );
+
+    datasource.Datasource.prototype.loadDatasource.restore();
+
+    ds.filterEvent.should.exist;
+    (typeof ds.filterEvent).should.eql('object');
+    ds.filterEvent.name.should.eql('testFilterEvent');
+    done();
+  });
+
+  it('should attach null `filterEvent` when not specified', function (done) {
+    var name = 'test';
+    var schema = help.getPageSchema();
+    var p = page(name, schema);
+    var dsName = 'car-makes';
+    (datasource(p, dsName, help.getPathOptions(), function() {}).filterEvent === null).should.eql(true);
+    done();
+  });
+
   it('should log an error if the specified datasource file can\'t be found', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
