@@ -51,7 +51,7 @@ function getStreams() {
   }
 }
 
-if (config.get('env') !== 'test') {
+if (config.get('env') === 'development') {
   log.addStream({ level: 'debug', stream: process.stdout });
 }
 
@@ -162,7 +162,7 @@ var self = module.exports = {
             self.access(accessRecord);
 
             // log the request method and url, and the duration
-            log.info({module: 'router'}, req.method +
+            self.info({module: 'router'}, req.method +
                 ' ' + req.url +
                 ' ' + res.statusCode +
                 ' ' + duration + 'ms');
