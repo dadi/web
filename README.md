@@ -1,6 +1,6 @@
 # DADI Web
 
-![Build Status](http://img.shields.io/badge/Release-0.4.1_Beta-green.svg?style=flat-square)&nbsp;![Coverage](https://img.shields.io/badge/Coverage-63%-yellow.svg?style=flat-square)
+![Build Status](http://img.shields.io/badge/Release-1.0.0-green.svg?style=flat-square)&nbsp;![Coverage](https://img.shields.io/badge/Coverage-64%-yellow.svg?style=flat-square)
 
 ## Overview
 

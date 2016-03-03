@@ -1,10 +1,13 @@
+/**
+ * @module Event
+ */
 var fs = require('fs');
 
 var config = require(__dirname + '/../../../config');
 var log = require(__dirname + '/../log');
 
 var Event = function (pageName, eventName, options) {
-  if (!pageName) throw new Error('Page name required');
+  //if (!pageName) throw new Error('Page name required');
 
   this.page = pageName;
   this.name = eventName;

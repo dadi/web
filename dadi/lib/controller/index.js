@@ -1,3 +1,7 @@
+/**
+ * @module Controller
+ */
+var async = require('async');
 var fs = require('fs');
 var url = require('url');
 var Q = require('q');
@@ -26,6 +30,7 @@ var Controller = function (page, options) {
 
   this.datasources = {};
   this.events = {};
+  this.preloadEvents = {};
 
   var self = this;
 
@@ -42,9 +47,6 @@ var Controller = function (page, options) {
 };
 
 Controller.prototype.attachDatasources = function(done) {
-
-  if (!this.page.datasources) return;
-
   var self = this;
   var i = 0;
 
@@ -62,14 +64,16 @@ Controller.prototype.attachDatasources = function(done) {
 };
 
 Controller.prototype.attachEvents = function(done) {
-
-  if (!this.page.events) return;
-
   var self = this;
 
   this.page.events.forEach(function(eventName) {
     var e = new Event(self.page.name, eventName, self.options);
     self.events[eventName] = e;
+  });
+
+  this.page.preloadEvents.forEach(function(eventName) {
+    var e = new Event(self.page.name, eventName, self.options);
+    self.preloadEvents[eventName] = e;
   });
 
   done();
@@ -126,7 +130,6 @@ Controller.prototype.get = function (req, res, next) {
 }
 
 Controller.prototype.process = function (req, res, next) {
-
     help.timer.start(req.method.toLowerCase());
 
     log.debug({module: 'controller'}, {req:req});
@@ -149,6 +152,7 @@ Controller.prototype.process = function (req, res, next) {
 
     self.loadData(req, res, data, function(err, data) {
 
+      // return 404 if requiredDatasources contain no data
       if (!self.requiredDataPresent(data)) {
         return next();
       }
@@ -160,6 +164,10 @@ Controller.prototype.process = function (req, res, next) {
 
       help.timer.stop(req.method.toLowerCase());
       if (data) data.stats = help.timer.getStats();
+
+      if (data.json) {
+        return done(null, data);
+      }
 
       view.setData(data);
 
@@ -188,7 +196,6 @@ function hasAttachedDatasources(datasources) {
 }
 
 Controller.prototype.loadEventData = function (events, req, res, data, done) {
-
   // return the global data object, no events to run
   if (0 === Object.keys(events).length) {
     return done(null, data);
@@ -197,7 +204,6 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
   var eventIdx = 0;
 
   _.each(events, function(value, key) {
-
       help.timer.start('event: ' + key);
 
       // add a random value to the data obj so we can check if an
@@ -209,7 +215,6 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
       // run the event
       try {
         events[key].run(req, res, data, function (err, result) {
-
           help.timer.stop('event: ' + key);
 
           if (err) {
@@ -245,19 +250,8 @@ Controller.prototype.loadData = function(req, res, data, done) {
   var idx = 0;
   var self = this;
 
-  help.timer.start('load data');
-
-  // no datasources specified for this page
-  // so start processing the attached events
-  if (!hasAttachedDatasources(self.datasources)) {
-    self.loadEventData(self.events, req, res, data, function (err, result) {
-
-      help.timer.stop('load data');
-      return done(err, result);
-    });
-  }
-
-  var primaryDatasources = {}, chainedDatasources = {};
+  var primaryDatasources = {}
+  var chainedDatasources = {};
   _.each(self.datasources, function (ds, key) {
     if (ds.chained) {
       chainedDatasources[key] = ds;
@@ -267,49 +261,86 @@ Controller.prototype.loadData = function(req, res, data, done) {
     }
   });
 
-  _.each(primaryDatasources, function(datasource, key) {
+  help.timer.start('load data');
 
-    processSearchParameters(key, datasource, req);
+  async.waterfall([
+    // Run PreLoad Events
+    function(callback) {
+      help.timer.start('preload data');
+      self.loadEventData(self.preloadEvents, req, res, data, function (err, result) {
+        if (err) return done(err);
+        help.timer.stop('preload data');
+        callback(null);
+      })
+    },
 
-    help.timer.start('datasource: ' + datasource.name);
-
-    help.getData(datasource, function(err, result) {
-
-      help.timer.stop('datasource: ' + datasource.name);
-
-      if (err) return done(err);
-
-      if (result) {
-        try {
-          data[key] = (typeof result === 'object' ? result : JSON.parse(result));
-        }
-        catch (e) {
-          console.log(e);
-        }
+    // Run datasources
+    function(callback) {
+      if (!hasAttachedDatasources(self.datasources)) {
+        callback(null);
       }
 
-      idx++;
+      _.each(primaryDatasources, function(datasource, key) {
 
-      if (idx === Object.keys(primaryDatasources).length) {
-        self.processChained(chainedDatasources, data, function(err, result) {
+        if (datasource.filterEvent) {
+          datasource.filterEvent.run(req, res, data, function(err, filter) {
+            if (err) return done(err);
+            datasource.schema.datasource.filter = _.extend(datasource.schema.datasource.filter, filter);
+          })
+        }
 
+        processSearchParameters(key, datasource, req);
+
+        help.timer.start('datasource: ' + datasource.name);
+
+        var dataHelper = new help.DataHelper(datasource, req.url);
+        dataHelper.load(function(err, result) {
+          help.timer.stop('datasource: ' + datasource.name);
           if (err) return done(err);
 
-          self.loadEventData(self.events, req, res, data, function (err, result) {
+          if (result) {
+            try {
+              data[key] = (typeof result === 'object' ? result : JSON.parse(result));
+            }
+            catch (e) {
+              console.log(e);
+            }
+          }
 
-            help.timer.stop('load data');
+          idx++;
 
-            done(err, result);
-          });
+          if (idx === Object.keys(primaryDatasources).length) {
+            callback(null);
+          }
+        })
+      })
+    },
 
-        });
-      }
-    });
+    // Run chained datasources
+    function(callback) {
+      self.processChained(chainedDatasources, data, req, function(err, result) {
+        if (err) return done(err);
+        callback(null);
+      })
+    },
 
-  });
+    // Run events
+    function(callback) {
+      self.loadEventData(self.events, req, res, data, function (err, result) {
+        if (err) return done(err);
+        callback(null);
+      });
+    }
+  ],
+
+  // final results
+  function (err) {
+    help.timer.stop('load data');
+    done(err, data);
+  })
 }
 
-Controller.prototype.processChained = function (chainedDatasources, data, done) {
+Controller.prototype.processChained = function (chainedDatasources, data, req, done) {
 
   var idx = 0;
   var self = this;
@@ -391,7 +422,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, done) 
 
     chainedDatasource.buildEndpoint(chainedDatasource.schema, function() {});
 
-    help.getData(chainedDatasource, function(err, result) {
+    var dataHelper = new help.DataHelper(chainedDatasource, req.url);
+    dataHelper.load(function(err, result) {
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)');
 

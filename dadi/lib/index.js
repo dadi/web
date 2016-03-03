@@ -53,6 +53,10 @@ var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
+/**
+ * Creates a new Server instance.
+ * @constructor
+ */
 var Server = function () {
     this.components = {};
     this.monitors = {};
@@ -103,6 +107,9 @@ Server.prototype.start = function (done) {
     // parse application/x-www-form-urlencoded
     app.use(bodyParser.urlencoded({ extended: true }));
 
+    // request logging middleware
+    app.use(log.requestLogger);
+
     // add gzip compression
     if (config.get('headers.useGzipCompression')) {
       app.use(compress());
@@ -116,9 +123,6 @@ Server.prototype.start = function (done) {
       domainConfigLoaded = true;
       return next();
     });
-
-    // request logging middleware
-    app.use(log.requestLogger);
 
     // session manager
     var sessionConfig = config.get('sessions');
@@ -141,14 +145,6 @@ Server.prototype.start = function (done) {
       // add the session middleware
       app.use(session(sessionOptions));
     }
-
-    // add gzip compression
-    if (config.get('headers.useGzipCompression')) {
-      app.use(compress());
-    }
-
-    // request logging middleware
-    app.use(log.requestLogger);
 
     app.use('/config', function(req, res, next) {
       var hash = crypto.createHash('md5').update(config.get('secret')+config.get('app.name')).digest('hex');
@@ -179,7 +175,10 @@ Server.prototype.start = function (done) {
 
     server.on('connection', onConnection);
     server.on('listening', onListening);
-    server.on('error', onError);
+
+    if (config.get('env') !== 'test') {
+      server.on('error', onError);
+    }
 
     // enhance with a 'destroy' function
     enableDestroy(server);
@@ -224,7 +223,9 @@ Server.prototype.exitHandler = function(options, err) {
     });
   }
 
-  if (err) console.log(err);
+  if (err) {
+    console.log(err.stack.toString());
+  }
 
   if (options.exit) {
     console.log();

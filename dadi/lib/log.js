@@ -1,3 +1,6 @@
+/**
+ * @module Log
+ */
 var bunyan = require('bunyan');
 var KinesisStream = require('aws-kinesis-writable');
 var fs = require('fs');
@@ -7,7 +10,7 @@ var path = require('path');
 var util = require('util');
 var _ = require('underscore');
 
-var config = require(path.resolve(__dirname + '/../../config'));
+var config = require(__dirname + '/../../config');
 var options = config.get('logging');
 var awsConfig = config.get('aws');
 var enabled = options.enabled;
@@ -26,14 +29,27 @@ mkdirp(path.resolve(options.path), {}, function(err, made) {
 });
 
 var log = bunyan.createLogger({
-    name: 'dadi-web',
-    serializers: bunyan.stdSerializers,
-    streams: [
+  name: 'dadi-web',
+  serializers: bunyan.stdSerializers,
+  streams: getStreams()
+});
+
+function getStreams() {
+  if (options.fileRotationPeriod !== '') {
+    return [
+      { level: 'info', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount },
+      { level: 'warn', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount },
+      { level: 'error', type: 'rotating-file', path: logPath, period: options.fileRotationPeriod, count: options.fileRetentionCount }
+    ]
+  }
+  else {
+    return [
       { level: 'info', path: logPath },
       { level: 'warn', path: logPath },
       { level: 'error', path: logPath }
     ]
-});
+  }
+}
 
 if (config.get('env') !== 'test') {
   log.addStream({ level: 'debug', stream: process.stdout });
@@ -155,7 +171,7 @@ var self = module.exports = {
         };
         next();
     }
-};
+}
 
 var getClientIpAddress = function (input) {
 

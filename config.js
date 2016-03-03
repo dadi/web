@@ -194,6 +194,16 @@ var conf = convict({
       format: String,
       default: "log"
     },
+    fileRotationPeriod: {
+      doc: "The period at which to rotate the log file. This is a string of the format '$number$scope' where '$scope' is one of 'ms' (milliseconds), 'h' (hours), 'd' (days), 'w' (weeks), 'm' (months), 'y' (years). The following names can be used 'hourly' (= '1h'), 'daily (= '1d'), 'weekly' ('1w'), 'monthly' ('1m'), 'yearly' ('1y').",
+      format: String,
+      default: ""  // disabled
+    },
+    fileRetentionCount: {
+      doc: "The number of rotated log files to keep.",
+      format: Number,
+      default: 7    // keep 7 back copies
+    },
     accessLog: {
       enabled: {
         doc: "If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`.",
@@ -228,17 +238,16 @@ var conf = convict({
     doc: "",
     format: Object,
     default: {
-      datasourcePath: __dirname + '/app/datasources',
-      eventPath: __dirname + '/app/events',
-      filtersPath: __dirname + '/app/utils/filters',
-      helpersPath: __dirname + '/app/utils/helpers',
-      mediaPath: __dirname + '/app/media',
-      middlewarePath: __dirname + '/app/middleware',
-      pagePath: __dirname + '/app/pages',
-      partialPath: __dirname + '/app/partials',
-      publicPath: __dirname + '/app/public',
-      routesPath: __dirname + '/app/routes',
-      workspacePath: __dirname + '/workspace'
+      datasources: __dirname + '/app/datasources',
+      events: __dirname + '/app/events',
+      filters: __dirname + '/app/utils/filters',
+      helpers: __dirname + '/app/utils/helpers',
+      media: __dirname + '/app/media',
+      middleware: __dirname + '/app/middleware',
+      pages: __dirname + '/app/pages',
+      partials: __dirname + '/app/partials',
+      public: __dirname + '/app/public',
+      routes: __dirname + '/app/routes'
     }
   },
   sessions: {

@@ -1,3 +1,6 @@
+/**
+ * @module Cache
+ */
 var fs = require('fs');
 var path = require('path');
 var url = require('url');
@@ -15,6 +18,11 @@ var log = require(__dirname + '/../log');
 var cacheEncoding = 'utf8';
 var options = {};
 
+/**
+ * Creates a new DatasourceCache instance for the specified datasource.
+ * @constructor
+ * @param {object} datasource - a datasource schema object containing the datasource settings
+ */
 var DatasourceCache = function (datasource) {
   this.datasource = datasource;
 
@@ -142,27 +150,24 @@ DatasourceCache.prototype.cacheResponse = function(data, done) {
 
   var readStream = new Readable();
 
-  readStream.on('end', function () {
-    if (self.cache.redisClient) {
-      var ttl = self.options.ttl || config.get('caching.ttl');
-      self.cache.redisClient.expire(self.filename, ttl);
-    }
-
-    done();
-  });
-
   readStream.push(data);
   readStream.push(null);
 
   if (self.cache.redisClient) {
     // save to redis
-    var writeStream = redisWStream(self.cache.redisClient, self.filename);
-    readStream.pipe(writeStream);
+    readStream.pipe(redisWStream(self.cache.redisClient, self.filename)).on('finish', function () {
+      var ttl = self.options.ttl || config.get('caching.ttl');
+      if (config.get('caching.ttl')) {
+        self.cache.redisClient.expire(self.filename, ttl);
+      }
+    });
   }
   else {
     var cacheFile = fs.createWriteStream(self.cachepath, {flags: 'w'});
     readStream.pipe(cacheFile);
   }
+
+  done();
 };
 
 module.exports = function (datasource) {
