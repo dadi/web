@@ -1,7 +1,7 @@
 {
-  "name": "dadi-web",
+  "name": "@dadi/web",
   "version": "1.0.0",
-  "description": "Web frontend and template layer for the DADI API",
+  "description": "Web frontend and template layer for [DADI API](https://www.npmjs.com/package/@dadi/api)",
   "main": "main.js",
   "scripts": {
     "start": "node ./main.js",
@@ -64,14 +64,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/dadi/web.git"
+    "url": "git+https://github.com/dadi/web.git"
   },
   "bugs": {
     "url": "https://github.com/dadi/web/issues"
   },
   "homepage": "https://github.com/dadi/web",
   "directories": {
-    "doc": "docs",
     "test": "test"
   },
   "author": "DADI <team@dadi.tech>",
