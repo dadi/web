@@ -207,6 +207,13 @@ Cache.prototype.init = function() {
       });
 
       readStream.on('end', function () {
+        
+        if (data === "") {
+          res.setHeader('X-Cache', 'MISS');
+          res.setHeader('X-Cache-Lookup', 'MISS');
+          return cacheResponse();
+        }
+
         if (noCache) {
           res.setHeader('X-Cache', 'MISS');
           res.setHeader('X-Cache-Lookup', 'HIT');
@@ -299,7 +306,71 @@ Cache.prototype.init = function() {
   });
 };
 
+// get method for redis client
+module.exports.client = function() {
+  if (instance) return instance.redisClient;
+  return null;
+};
+
 // reset method for unit tests
 module.exports.reset = function() {
   instance = null;
 };
+
+module.exports.delete = function(pattern, callback) {
+  var async = require('async');
+  var iter = '0';
+  pattern = pattern+"*";
+  var cacheKeys = [];
+  var self = this;
+
+  async.doWhilst(
+    function (acb) {
+      //scan with the current iterator, matching the given pattern
+      self.client().scan(iter, 'MATCH', pattern, function (err, result) {
+        if (err) {
+          acb(err);
+        }
+        else {
+          //update the iterator
+          iter = result[0];
+          async.each(result[1],
+            //for each key
+            function (key, ecb) {
+              cacheKeys.push(key);
+              return ecb(err);
+            },
+            function (err) {
+              //done with this scan iterator; on to the next
+              return acb(err);
+            }
+          )
+        }
+      });
+    },
+    //test to see if iterator is done
+    function () { return iter != '0'; },
+    //done
+    function (err) {
+      if (err) {
+        console.log("Error:", err);
+      }
+      else {
+        if (cacheKeys.length === 0) {
+          return callback(null);
+        }
+
+        var i = 0;
+        _.each(cacheKeys, function(key) {
+          self.client().del(key, function (err, result) {
+            i++;
+            // finished, all keys deleted
+            if (i === cacheKeys.length) {
+              return callback(null);
+            }
+          });
+        });
+      }
+    }
+  );
+}
