@@ -50,6 +50,7 @@ var monitor = require(__dirname + '/monitor');
 var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
+var datasource = require(__dirname + '/datasource');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
@@ -297,47 +298,142 @@ Server.prototype.loadPaths = function(paths) {
 
 Server.prototype.loadApi = function (options) {
 
-    var self = this;
+  var self = this;
 
-    self.ensureDirectories(options, function(text) {
+  this.app.use('/api/flush', function (req, res, next) {
+    var method = req.method && req.method.toLowerCase();
+    if (method !== 'post') return next();
+    
+    var pathname = req.body.path;
+    var endpoints = self.components;
+    var dsEndpoints = [];
+    if(pathname != '*') {
+      var requestUrl = url.parse(pathname, true).pathname;
+      var url_query = url.parse(pathname, true).query;
+      // check if there is a match in the loaded routes for the current request URL
+      var endpoint = _.find(endpoints, function (endpoint) {
+        return _.contains(endpoint.page.route.paths, requestUrl);
+      });
 
-        // load routes
-        self.updatePages(options.pagePath, options, false);
+      // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
+      var paramsData = parseRoutes(endpoints, requestUrl);
+      var queryParams = _.extend(paramsData.params, url_query);
+      if (!endpoint) {
+        endpoint = _.find(endpoints, function (endpoint) {
+          return !_.isEmpty(_.intersection(endpoint.page.route.paths, [paramsData.route_path]));
+        });
+      }
+      var apiConfig = config.get('api');
+      _.each(endpoint.page.datasources, function(ds_name) {
+        var ds = endpoint.datasources[ds_name];
+        var protocol = ds.schema.datasource.source.protocol || 'http';
+        var host = ds.schema.datasource.source.host || apiConfig.host;
+        var port = ds.schema.datasource.source.port || apiConfig.port;
+        uri = [protocol, '://', host, (port !== '' ? ':' : ''), port, '/', ds.schema.datasource.source.endpoint].join('');
+                
+        ds.schema.datasource.page = url_query.page || paramsData.params.page || 1;
+        if (queryParams.id) {
+          ds.schema.datasource.filter['_id'] = queryParams.id;
+          delete queryParams.id;
+        }
 
-        // Load middleware
-        self.initMiddleware(options.middlewarePath, options);
-
-        // compile all dust templates
-        self.dustCompile(options);
-
-        self.addMonitor(options.datasourcePath, function (dsFile) {
-            self.updatePages(options.pagePath, options, true);
+        _.each(queryParams, function(value, key) {
+          if (key === 'filter') {
+            _.extend(ds.schema.datasource.filter, JSON.parse(value));
+          }
         });
 
-        self.addMonitor(options.eventPath, function (eventFile) {
-            self.updatePages(options.pagePath, options, true);
-        });
-
-        self.addMonitor(options.pagePath, function (pageFile) {
-            self.updatePages(options.pagePath, options, true);
-            self.dustCompile(options);
-        });
-
-        self.addMonitor(options.partialPath, function (partialFile) {
-            self.dustCompile(options);
-        });
-
-        self.addMonitor(options.routesPath, function (file) {
-            if (self.app.Router) {
-                self.app.Router.loadRewrites(options, function() {
-                    self.app.Router.loadRewriteModule();
-                });
+        var paramRule = /(\"\{)(\bparams.\b)(.*?)(\}\")/gmi;
+        ds.schema.datasource.filter = JSON.parse(JSON.stringify(ds.schema.datasource.filter).replace(paramRule, function(match, p1, p2, p3, p4, offset, string) {
+          if (queryParams[p3]) {
+            return queryParams[p3];
+          } else {
+            return match;
+          }
+        }));
+        _.each(ds.schema.datasource.requestParams, function(obj) {
+          if (queryParams.hasOwnProperty(obj.param)) {
+            ds.schema.datasource.filter[obj.field] = encodeURIComponent(queryParams[obj.param]);
+          }
+          else {
+            // param not found in request, remove it from DS filter
+            if (ds.schema.datasource.filter[obj.field]) {
+              delete ds.schema.datasource.filter[obj.field];
             }
+          }
         });
 
-        log.info({module: 'server'}, 'Load complete.');
+        var params = [
+          {"count": (ds.schema.datasource.count || 0)},
+          {"skip": (ds.schema.datasource.skip)},
+          {"page": (ds.schema.datasource.page || 1)},
+          {"referer": ds.schema.datasource.referer},
+          {"filter": ds.schema.datasource.filter || {}},
+          {"fields": ds.schema.datasource.fields || {}},
+          {"sort": processSortParameter(ds.schema.datasource.sort)}
+        ];
+        var query = '?';
+        params.forEach(function(param) {
+          for (key in param) {
+            if (param.hasOwnProperty(key) && (typeof param[key] !== 'undefined')) {
+              query = query + key + "=" + (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) + '&';
+            }
+          }
+        });
+        var extension = ds.schema.datasource.caching?ds.schema.datasource.caching.extension:'json';
+        dsEndpoints.push({extension: extension, name: ds_name, endpoint: uri + query.slice(0,-1)});
+      });
+    }
 
+    return help.clearCache(pathname, dsEndpoints, function (err) {
+      help.sendBackJSON(200, res, next)(err, {
+        result: 'success',
+        message: 'Succeed to clear'
+      });
     });
+   
+    next();
+  });
+
+  self.ensureDirectories(options, function(text) {
+
+    // load routes
+    self.updatePages(options.pagePath, options, false);
+
+    // Load middleware
+    self.initMiddleware(options.middlewarePath, options);
+
+    // compile all dust templates
+    self.dustCompile(options);
+
+    self.addMonitor(options.datasourcePath, function (dsFile) {
+        self.updatePages(options.pagePath, options, true);
+    });
+
+    self.addMonitor(options.eventPath, function (eventFile) {
+        self.updatePages(options.pagePath, options, true);
+    });
+
+    self.addMonitor(options.pagePath, function (pageFile) {
+        self.updatePages(options.pagePath, options, true);
+        self.dustCompile(options);
+    });
+
+    self.addMonitor(options.partialPath, function (partialFile) {
+        self.dustCompile(options);
+    });
+
+    self.addMonitor(options.routesPath, function (file) {
+      if (self.app.Router) {
+        self.app.Router.loadRewrites(options, function() {
+          self.app.Router.loadRewriteModule();
+        });
+      }
+    });
+
+    log.info({module: 'server'}, 'Load complete.');
+
+  });
 
 };
 
@@ -803,4 +899,48 @@ function onError(err) {
     console.log();
     process.exit(0);
   }
+}
+
+function processSortParameter(obj) {
+  var sort = {};
+  if (typeof obj !== 'object' || obj === null) return sort;
+
+  _.each(obj, function(value, key) {
+    if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
+      sort[value.field] = (value.order === 'asc') ? 1 : -1;
+    }
+  });
+
+  return sort;
+}
+
+function parseRoutes(endpoints, req_path) {
+  var params = {};
+  var route_path = '';
+  _.each(endpoints, function(endpoint) {
+    var paths = endpoint.page.route.paths;
+    var req_path_items = req_path.split('/');
+    _.each(paths, function(path) {
+      path_items = path.split('/');
+      if(path_items.length == req_path_items.length) {
+        var alias = _.filter(path_items, function(item) {
+          return item == '' || item.slice(0, 1) != ':';
+        });
+
+        if(_.difference(alias, _.intersection(path_items, req_path_items)).length == 0) {
+          _.each(path_items, function(item, index) {
+            if(item != '' && item.slice(0, 1) == ':')  {
+              params[item.slice(1)] = req_path_items[index];
+            }
+          });
+          route_path = path;
+        }
+      }
+    });
+  });
+
+  return {
+    route_path : route_path,
+    params: params
+  };
 }

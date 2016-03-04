@@ -1,0 +1,16 @@
+{
+    "page": {
+        "name": "Articles",
+        "description": "A collection of articles.",
+        "language": "en"
+    },
+    "route": {
+        "path": "/articles"
+    },
+    "datasources": [
+        "articles"
+    ],
+    "settings": {
+        "cache": true
+    }
+}
