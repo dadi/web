@@ -27,9 +27,7 @@
         },
     	"paginate": true,
     	"count": 5,
-    	"sort": [
-          {"field": "name","order": "desc"}
-        ],
+    	"sort": { "name":1 },
     	"search": {},
     	"fields": {
             "name": 1,

@@ -61,10 +61,7 @@
 		"cache": false,
 		"paginate": true,
 		"count": 10,
-		"sort": {
-			"field": "title",
-			"order": "desc"
-		},
+		"sort": { "title": -1 },
 		"search": {},
 		"fields": {"_id":1,"title":1,"director":1,"poster":1,"author":1,"length":1,"score":1,"reviews":1}
 	}
