@@ -181,16 +181,19 @@ module.exports.clearCache = function (pathname, dsEndpoints, callback) {
 
   var modelDir = crypto.createHash('sha1').update(pathname).digest('hex');
   var cachePath = path.join(config.get('caching.directory.path'), modelDir + '.' + config.get('caching.directory.extension'));
-  if(pathname == '*') {
+  if (pathname == '*') {
     modelDir = '';
     cachePath = path.join(config.get('caching.directory.path'), modelDir);
   }
+
   var datasourceCachePaths = [];
-  _.each(dsEndpoints, function(endpointObj) {
-    var fileName = crypto.createHash('sha1').update(endpointObj.name + '_' + endpointObj.endpoint).digest('hex');
-    datasourceCachePaths.push(path.join(config.get('caching.directory.path'), fileName + '.' + endpointObj.extension));
+  var files = fs.readdirSync(config.get('caching.directory.path'));
+  files.filter(function(file) {
+    return file.substr(-5) === '.json';
+  }).forEach(function(file) {
+    datasourceCachePaths.push(path.join(config.get('caching.directory.path'), file));
   });
- 
+
   var walkSync = function(dir, filelist) {
     var fs = fs || require('fs'),
     files = fs.readdirSync(dir);
@@ -226,7 +229,7 @@ module.exports.clearCache = function (pathname, dsEndpoints, callback) {
         var files = fs.readdirSync(cachePath);
         if(pathname == '*') {
           files = walkSync(cachePath + '/');
-        } 
+        }
 
         files.forEach(function (filename) {
           var file = path.join(cachePath, filename);
