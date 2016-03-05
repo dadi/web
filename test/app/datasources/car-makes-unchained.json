@@ -10,7 +10,7 @@
 			"endpoint": "1.0/cars/makes"
 		},
     "caching": {
-      "enabled": false,
+      "enabled": true,
       "ttl": 50,
       "directory": "./cache/web/",
       "extension": "json"
@@ -27,7 +27,7 @@
     },
   	"paginate": true,
   	"count": 20,
-  	"sort": { "name":1 },
+  	"sort": { "name": 1 },
   	"search": {},
     "filter": {},
   	"fields": { "name": 1, "_id": 0 },
