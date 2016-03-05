@@ -317,5 +317,75 @@ describe('Cache', function(done) {
       });
     });
 
+    it('should flush datasource files when flushing all', function (done) {
+
+      config.set('api.enabled', true);
+
+      // remove original fake api data request
+      http.unregister_intercept({
+        hostname: config.get('api.host'),
+        port: config.get('api.port'),
+        path: 'http://' + config.get('api.host') + ':' + config.get('api.port') + '/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}',
+        method: 'GET',
+        agent: new http.Agent({ keepAlive: true }),
+        headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
+        body: fordResult,
+        statusCode: 200
+      });
+
+      // fake api data request
+      http.register_intercept({
+        hostname: config.get('api.host'),
+        port: config.get('api.port'),
+        path: 'http://' + config.get('api.host') + ':' + config.get('api.port') + '/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}',
+        method: 'GET',
+        agent: new http.Agent({ keepAlive: true }),
+        headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
+        body: toyotaResult,
+        statusCode: 200
+      });
+
+      // get cached version of the page
+      var client = request(clientHost);
+      client
+      .get('/test')
+      .expect('content-type', 'text/html')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+
+        res.headers['x-cache'].should.exist;
+        res.headers['x-cache'].should.eql('HIT');
+
+        res.text.should.eql('<ul><li>Ford</li></ul>');
+
+        // clear cache for this path
+        client
+        .post('/api/flush')
+        .send({path: '*'})
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          res.body.result.should.equal('success');
+
+          // get page again, should be uncached and with different data
+          var client = request(clientHost);
+          client
+          .get('/test')
+          .expect('content-type', 'text/html')
+          .expect(200)
+          .end(function (err, res) {
+            if (err) return done(err);
+
+            res.headers['x-cache'].should.exist;
+            res.headers['x-cache'].should.eql('MISS');
+
+            res.text.should.eql('<ul><li>Toyota</li></ul>');
+
+            done();
+          });
+        });
+      });
+    });
   });
 });
