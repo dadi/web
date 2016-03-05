@@ -82,7 +82,7 @@ describe('Auth', function (done) {
     delete require.cache['../../dadi/lib/auth/bearer'];
     bearer_auth = proxyquire('../../dadi/lib/auth/bearer', {'http': http});
 
-    help.startServer(function() {
+    help.startServer(null, function() {
       setTimeout(function() {
         var client = request(clientHost);
         client
@@ -158,7 +158,7 @@ describe('Auth', function (done) {
     delete require.cache['../../dadi/lib/auth/bearer'];
     bearer_auth = proxyquire('../../dadi/lib/auth/bearer', {'http': http});
 
-    help.startServer(function() {
+    help.startServer(null, function() {
 
       setTimeout(function() {
 

@@ -49,31 +49,34 @@ module.exports.shouldNotHaveHeader = function(header) {
   };
 }
 
-module.exports.startServer = function(done) {
+module.exports.startServer = function(page, done) {
 
   var options = {
     pagePath: __dirname + '/../app/pages',
     eventPath: __dirname + '/../app/events'
   };
 
+  var options = this.getPathOptions();
+
   Server.app = api();
   Server.components = {};
 
-  // create a page
-  var name = 'test';
-  var schema = this.getPageSchema();
-  var page = Page(name, schema);
-  var dsName = 'car-makes-unchained';
-  var options = this.getPathOptions();
+  if (page === null) {
+    // create a page
+    var name = 'test';
+    var schema = this.getPageSchema();
+    page = Page(name, schema);
+    var dsName = 'car-makes-unchained';
 
-  page.datasources = ['car-makes-unchained'];
+    page.datasources = ['car-makes-unchained'];
 
-  var ds = Datasource(page, dsName, options, function() {} );
+    var ds = Datasource(page, dsName, options, function() {} );
 
-  page.template = 'test.dust';
-  page.route.paths[0] = '/test';
-  page.events = [];
-  delete page.route.constraint;
+    page.template = 'test.dust';
+    page.route.paths[0] = '/test';
+    page.events = [];
+    delete page.route.constraint;
+  }
 
   Server.start(function() {
     setTimeout(function() {
