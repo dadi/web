@@ -235,10 +235,7 @@ module.exports.clearCache = function (pathname, dsEndpoints, callback) {
           var file = path.join(cachePath, filename);
           if(pathname == '*') file = filename;
 
-          // write empty string to file, as we
-          // can't effectively remove it whilst
-          // the node process is running
-          fs.writeFileSync(file, '');
+          fs.unlinkSync(file);
 
           i++;
 
@@ -248,9 +245,10 @@ module.exports.clearCache = function (pathname, dsEndpoints, callback) {
           }
         });
       } else {
-        fs.writeFileSync(cachePath, '');
+        fs.unlinkSync(cachePath);
+
         datasourceCachePaths.forEach(function(filename) {
-          fs.writeFileSync(filename, '');
+          fs.unlinkSync(filename);
           i++;
 
           // finished, all files processed
