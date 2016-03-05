@@ -4,7 +4,7 @@
 		"name": "Reviews DS",
 		"source": {
 			"type": "static",
-			"data": 
+			"data":
 				[
 					{
 						"_id": "83afa2ab-bf9d-4b7c-94f9-b63f8d6193b0",
@@ -18,12 +18,8 @@
 		"cache": false,
 		"paginate": true,
 		"count": 5,
-		"sort": {
-			"field": "_id",
-			"order": "desc"
-		},
+		"sort": { "_id":-1 },
 		"search": {},
 		"fields": ["_id","film_id","title","author","body"]
 	}
 }
-

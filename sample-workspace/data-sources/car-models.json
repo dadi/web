@@ -27,11 +27,9 @@
     },
 		"paginate": true,
 		"count": 5,
-		"sort": [
-            {"field": "name","order": "desc"}
-        ],
+		"sort": { "name": -1 },
 		"search": {},
-        "filter": ["{car-makes}",{"$group": {"_id" : {"make":"$makeName", "model":"$modelName","body":"$bodyStyle"}}}],
+    "filter": ["{car-makes}",{"$group": {"_id" : {"make":"$makeName", "model":"$modelName","body":"$bodyStyle"}}}],
 		"fields": {
             "name": 1,
             "makeId": 1,
