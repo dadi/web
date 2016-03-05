@@ -52,14 +52,16 @@
   "devDependencies": {
     "coveralls": "^2.11.4",
     "env-test": "^1.0.0",
-    "nodeunit": ">=0.5.1",
     "istanbul": "^0.3.22",
     "istanbul-cobertura-badger": "^1.1.0",
     "kinesalite": "^1.9.0",
     "mocha": "latest",
+    "nodeunit": ">=0.5.1",
     "proxyquire": "1.7.3",
     "should": "latest",
     "sinon": "latest",
+    "superagent": "^1.8.0-beta.2",
+    "superagent-mock": "^1.10.0",
     "supertest": "latest"
   },
   "repository": {

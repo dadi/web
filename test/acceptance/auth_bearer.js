@@ -25,57 +25,8 @@ var token = JSON.stringify({
   "expiresIn": 1800
 });
 
-// console.log();
-// console.log('apiHost: ' + apiHost);
-// console.log('clientHost: ' + clientHost);
-
-function startServer(done) {
-
-  var options = {
-    pagePath: __dirname + '/../app/pages',
-    eventPath: __dirname + '/../app/events'
-  };
-
-  Server.app = api();
-  Server.components = {};
-
-  // create a page
-  var name = 'test';
-  var schema = help.getPageSchema();
-  var page = Page(name, schema);
-  var dsName = 'car-makes-unchained';
-  var options = help.getPathOptions();
-
-  page.datasources = ['car-makes-unchained'];
-
-  var ds = Datasource(page, dsName, options, function() {} );
-
-  page.template = 'test.dust';
-  page.route.paths[0] = '/test';
-  page.settings.cache = false;
-  page.events = [];
-  delete page.route.constraint;
-
-  Server.start(function() {
-
-    setTimeout(function() {
-
-      // create a handler for requests to this page
-      var controller = Controller(page, options);
-
-      Server.addComponent({
-          key: page.key,
-          route: page.route,
-          component: controller
-      }, false);
-
-      done();
-    }, 200);
-  });
-}
-
-describe('Auth - Datasource', function (done) {
-
+describe('Auth', function (done) {
+  describe('Datasource', function (done) {
   var auth;
 
   before(function(done) {
@@ -131,10 +82,8 @@ describe('Auth - Datasource', function (done) {
     delete require.cache['../../dadi/lib/auth/bearer'];
     bearer_auth = proxyquire('../../dadi/lib/auth/bearer', {'http': http});
 
-    startServer(function() {
-
+    help.startServer(function() {
       setTimeout(function() {
-
         var client = request(clientHost);
         client
         .get('/test')
@@ -147,11 +96,7 @@ describe('Auth - Datasource', function (done) {
 
           //(res.text.indexOf("Datasource authentication: No token received, invalid credentials for datasource") > -1).should.eql(true);
 
-          Server.stop(function() {
-            setTimeout(function() {
-              done();
-            }, 200);
-          });
+          help.stopServer(done);
 
         });
       }, 500);
@@ -213,7 +158,7 @@ describe('Auth - Datasource', function (done) {
     delete require.cache['../../dadi/lib/auth/bearer'];
     bearer_auth = proxyquire('../../dadi/lib/auth/bearer', {'http': http});
 
-    startServer(function() {
+    help.startServer(function() {
 
       setTimeout(function() {
 
@@ -230,17 +175,12 @@ describe('Auth - Datasource', function (done) {
           var expected = JSON.stringify(JSON.parse(result));
           actual.should.eql(expected);
 
-          Server.stop(function() {
-            setTimeout(function() {
-              done();
-            }, 200);
-          });
-
+          help.stopServer(done);
         });
       }, 500);
 
     });
 
+    });
   });
-
 });
