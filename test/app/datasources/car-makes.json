@@ -10,7 +10,7 @@
 			"endpoint": "1.0/cars/makes"
 		},
     "caching": {
-      "enabled": false,
+      "enabled": true,
       "ttl": 50,
       "directory": "./cache/web/",
       "extension": "json"

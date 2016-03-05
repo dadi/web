@@ -24,6 +24,11 @@ var fs = require('fs');
 var path = require('path');
 
 var config = require(__dirname + '/../config.js');
+var api = require(__dirname + '/../dadi/lib/api');
+var Server = require(__dirname + '/../dadi/lib');
+var Controller = require(__dirname + '/../dadi/lib/controller');
+var Datasource = require(__dirname + '/../dadi/lib/datasource');
+var Page = require(__dirname + '/../dadi/lib/page');
 
 function cookie(res) {
   var setCookie = res.headers['set-cookie'];
@@ -42,6 +47,56 @@ module.exports.shouldNotHaveHeader = function(header) {
   return function (res) {
     assert.ok(!(header.toLowerCase() in res.headers), 'should not have ' + header + ' header');
   };
+}
+
+module.exports.startServer = function(done) {
+
+  var options = {
+    pagePath: __dirname + '/../app/pages',
+    eventPath: __dirname + '/../app/events'
+  };
+
+  Server.app = api();
+  Server.components = {};
+
+  // create a page
+  var name = 'test';
+  var schema = this.getPageSchema();
+  var page = Page(name, schema);
+  var dsName = 'car-makes-unchained';
+  var options = this.getPathOptions();
+
+  page.datasources = ['car-makes-unchained'];
+
+  var ds = Datasource(page, dsName, options, function() {} );
+
+  page.template = 'test.dust';
+  page.route.paths[0] = '/test';
+  page.events = [];
+  delete page.route.constraint;
+
+  Server.start(function() {
+    setTimeout(function() {
+      // create a handler for requests to this page
+      var controller = Controller(page, options);
+
+      Server.addComponent({
+          key: page.key,
+          route: page.route,
+          component: controller
+      }, false);
+
+      done();
+    }, 200);
+  });
+}
+
+module.exports.stopServer = function(done) {
+  Server.stop(function() {
+    setTimeout(function() {
+      done();
+    }, 200);
+  });
 }
 
 module.exports.getPageSchema = function () {

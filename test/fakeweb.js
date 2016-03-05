@@ -82,7 +82,7 @@ http.get_intercepts = function(){
 };
 
 http.replyWithError = function(err) {
-  
+
 }
 
 // wrap http.request with interceptor function
