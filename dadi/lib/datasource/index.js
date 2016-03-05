@@ -154,7 +154,7 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
     {"sort": schema.datasource.sort || {}}
   ];
 
-  // pass cache flag to Serama endpoint
+  // pass cache flag to API endpoint
   if (schema.datasource.hasOwnProperty('cache')) {
     params.push({"cache": schema.datasource.cache});
   }
