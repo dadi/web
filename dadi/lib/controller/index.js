@@ -280,39 +280,45 @@ Controller.prototype.loadData = function(req, res, data, done) {
         callback(null);
       }
 
-      _.each(primaryDatasources, function(datasource, key) {
+      var queue = async.queue(function(ds, cb) {
 
-        if (datasource.filterEvent) {
-          datasource.filterEvent.run(req, res, data, function(err, filter) {
+        if (ds.filterEvent) {
+          ds.filterEvent.run(req, res, data, function(err, filter) {
             if (err) return done(err);
-            datasource.schema.datasource.filter = _.extend(datasource.schema.datasource.filter, filter);
+            ds.schema.datasource.filter = _.extend(ds.schema.datasource.filter, filter);
           })
         }
 
-        processSearchParameters(key, datasource, req);
+        processSearchParameters(ds.schema.datasource.key, ds, req);
 
-        help.timer.start('datasource: ' + datasource.name);
+        help.timer.start('datasource: ' + ds.name);
 
-        var dataHelper = new help.DataHelper(datasource, req.url);
+        var dataHelper = new help.DataHelper(ds, req.url);
         dataHelper.load(function(err, result) {
-          help.timer.stop('datasource: ' + datasource.name);
+          help.timer.stop('datasource: ' + ds.name);
           if (err) return done(err);
 
           if (result) {
             try {
-              data[key] = (typeof result === 'object' ? result : JSON.parse(result));
+              data[ds.schema.datasource.key] = (typeof result === 'object' ? result : JSON.parse(result));
             }
             catch (e) {
               console.log(e);
             }
           }
 
-          idx++;
-
-          if (idx === Object.keys(primaryDatasources).length) {
-            callback(null);
-          }
+          cb()
         })
+      }, 1)
+
+      // queue finished
+      queue.drain = function() {
+        callback(null);
+      };
+
+      // add each primary datasource to the queue for processing
+      _.each(primaryDatasources, function(datasource) {
+        queue.push(datasource)
       })
     },
 
@@ -447,7 +453,6 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
 }
 
 function processSearchParameters(key, datasource, req) {
-
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
   datasource.processRequest(key, req);
