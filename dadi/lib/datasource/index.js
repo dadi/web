@@ -224,9 +224,12 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // add the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
+  // NB don't replace a property that already exists
   _.each(this.requestParams, function(obj) {
     if (req.params.hasOwnProperty(obj.param)) {
-      this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
+      if (!this.schema.datasource.filter[obj.field]) {
+        this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
+      }
     }
     else {
       // param not found in request, remove it from DS filter
