@@ -22,6 +22,7 @@ datasources
 var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
+var _ = require('underscore');
 
 var config = require(__dirname + '/../config.js');
 var api = require(__dirname + '/../dadi/lib/api');
@@ -49,7 +50,11 @@ module.exports.shouldNotHaveHeader = function(header) {
   };
 }
 
-module.exports.startServer = function(page, done) {
+module.exports.startServer = function(pages, done) {
+
+  if (pages !== null && !_.isArray(pages)) {
+    pages = [pages];
+  }
 
   var options = {
     pagePath: __dirname + '/../app/pages',
@@ -61,10 +66,11 @@ module.exports.startServer = function(page, done) {
   Server.app = api();
   Server.components = {};
 
-  if (page === null) {
+  if (pages === null) {
     // create a page
     var name = 'test';
     var schema = this.getPageSchema();
+    pages = [];
     page = Page(name, schema);
     var dsName = 'car-makes-unchained';
 
@@ -76,18 +82,22 @@ module.exports.startServer = function(page, done) {
     page.route.paths[0] = '/test';
     page.events = [];
     delete page.route.constraint;
+
+    pages.push(page);
   }
 
   Server.start(function() {
     setTimeout(function() {
-      // create a handler for requests to this page
-      var controller = Controller(page, options);
+      pages.forEach(function(page) {
+        // create a handler for requests to this page
+        var controller = Controller(page, options);
 
-      Server.addComponent({
-          key: page.key,
-          route: page.route,
-          component: controller
-      }, false);
+        Server.addComponent({
+            key: page.key,
+            route: page.route,
+            component: controller
+        }, false);
+      })
 
       done();
     }, 200);
