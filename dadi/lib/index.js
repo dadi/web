@@ -304,7 +304,7 @@ Server.prototype.loadApi = function (options) {
     var method = req.method && req.method.toLowerCase();
     if (method !== 'post') return next();
 
-    return help.clearCache(req.body.path, [], function (err) {
+    return help.clearCache(req, function (err) {
       help.sendBackJSON(200, res, next)(err, {
         result: 'success',
         message: 'Succeed to clear'
