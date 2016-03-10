@@ -177,22 +177,36 @@ module.exports.parseQuery = function (queryStr) {
     return ret;
 };
 
-module.exports.clearCache = function (pathname, dsEndpoints, callback) {
-
+module.exports.clearCache = function (req, callback) {
+  var pathname = req.body.path;
   var modelDir = crypto.createHash('sha1').update(pathname).digest('hex');
   var cachePath = path.join(config.get('caching.directory.path'), modelDir + '.' + config.get('caching.directory.extension'));
-  if (pathname == '*') {
-    modelDir = '';
-    cachePath = path.join(config.get('caching.directory.path'), modelDir);
-  }
-
   var datasourceCachePaths = [];
   var files = fs.readdirSync(config.get('caching.directory.path'));
-  files.filter(function(file) {
-    return file.substr(-5) === '.json';
-  }).forEach(function(file) {
-    datasourceCachePaths.push(path.join(config.get('caching.directory.path'), file));
-  });
+
+  if (pathname === '*') {
+    modelDir = '';
+    cachePath = path.join(config.get('caching.directory.path'), modelDir);
+
+    files.filter(function(file) {
+      return file.substr(-5) === '.json';
+    }).forEach(function(file) {
+      datasourceCachePaths.push(path.join(config.get('caching.directory.path'), file));
+    });
+  }
+  else {
+    var endpointRequest = {
+      url: req.headers['host'] + pathname
+    }
+
+    var endpoint = cache().getEndpointMatchingRequest(endpointRequest);
+
+    _.each(endpoint.page.datasources, function(datasource) {
+      var cachePrefix = crypto.createHash('sha1').update(datasource).digest('hex');
+      datasourceCachePaths = _.extend(datasourceCachePaths, _.filter(files, function(file) { return file.indexOf(cachePrefix) > -1; }));
+      datasourceCachePaths = _.map(datasourceCachePaths, function(file) { return path.join(config.get('caching.directory.path'), file); });
+    })
+  }
 
   var walkSync = function(dir, filelist) {
     var fs = fs || require('fs'),
