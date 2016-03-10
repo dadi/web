@@ -151,7 +151,7 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
     {"referer": schema.datasource.referer},
     {"filter": schema.datasource.filter || {}},
     {"fields": schema.datasource.fields || {}},
-    {"sort": schema.datasource.sort || {}}
+    {"sort": processSortParameter(schema.datasource.sort)}
   ];
 
   // pass cache flag to Serama endpoint
@@ -240,6 +240,27 @@ Datasource.prototype.processRequest = function (datasource, req) {
   }, this);
 
   this.buildEndpoint(this.schema, function() {});
+}
+
+function processSortParameter(obj) {
+  var sort = {};
+  if (typeof obj !== 'object' || obj === null) return sort;
+
+  if (_.isArray(obj)) {
+    _.each(obj, function(value, key) {
+      if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
+        sort[value.field] = (value.order === 'asc') ? 1 : -1;
+      }
+    });
+  }
+  else if (obj.hasOwnProperty('field') && obj.hasOwnProperty('order')) {
+    sort[obj.field] = (obj.order === 'asc') ? 1 : -1;
+  }
+  else {
+    sort = obj;
+  }
+
+  return sort;
 }
 
 module.exports = function (page, datasource, options, callback) {

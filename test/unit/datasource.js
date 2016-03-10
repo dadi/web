@@ -322,6 +322,133 @@ describe('Datasource', function (done) {
     done();
   });
 
+  describe('processDatasourceParameters', function(done) {
+    it('should process sort parameter when it is an array', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+      var options = help.getPathOptions();
+
+      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName, 'requestParams');
+      dsSchema.datasource.sort = [{field: "name", order: "asc"}]
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      var ds = datasource(p, dsName, options, function() {} );
+
+      var params = { "make": "bmw" };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var endpoint = ds.processDatasourceParameters(dsSchema, req.url)
+
+      datasource.Datasource.prototype.loadDatasource.restore();
+
+      endpoint.should.eql('/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should process sort parameter when it is an array with many items', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+      var options = help.getPathOptions();
+
+      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName, 'requestParams');
+      dsSchema.datasource.sort = [{field: "name", order: "asc"},{field: "age", order: "desc"}]
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      var ds = datasource(p, dsName, options, function() {} );
+
+      var params = { "make": "bmw" };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var endpoint = ds.processDatasourceParameters(dsSchema, req.url)
+
+      datasource.Datasource.prototype.loadDatasource.restore();
+
+      endpoint.should.eql('/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1,"age":-1}');
+
+      done();
+    });
+
+    it('should process sort parameter when it is an object', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+      var options = help.getPathOptions();
+
+      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName, 'requestParams');
+      dsSchema.datasource.sort = {field: "name", order: "asc"}
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      var ds = datasource(p, dsName, options, function() {} );
+
+      var params = { "make": "bmw" };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var endpoint = ds.processDatasourceParameters(dsSchema, req.url)
+
+      datasource.Datasource.prototype.loadDatasource.restore();
+
+      endpoint.should.eql('/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should process sort parameter when it is a MongoDB-style object', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+      var options = help.getPathOptions();
+
+      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName, 'requestParams');
+      dsSchema.datasource.sort = {"name": 1}
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      var ds = datasource(p, dsName, options, function() {} );
+
+      var params = { "make": "bmw" };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var endpoint = ds.processDatasourceParameters(dsSchema, req.url)
+
+      datasource.Datasource.prototype.loadDatasource.restore();
+
+      endpoint.should.eql('/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
+    it('should process sort parameter when it is a MongoDB-style object with many items', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+      var options = help.getPathOptions();
+
+      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName, 'requestParams');
+      dsSchema.datasource.sort = {"name": 1, "age": -1}
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      var ds = datasource(p, dsName, options, function() {} );
+
+      var params = { "make": "bmw" };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var endpoint = ds.processDatasourceParameters(dsSchema, req.url)
+
+      datasource.Datasource.prototype.loadDatasource.restore();
+
+      endpoint.should.eql('/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1,"age":-1}');
+
+      done();
+    });
+  })
+
   describe('processRequest', function(done) {
     it('should add requestParams to the endpoint', function (done) {
       var name = 'test';
