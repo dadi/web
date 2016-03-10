@@ -50,6 +50,7 @@ var monitor = require(__dirname + '/monitor');
 var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
+var health = require(__dirname + '/health');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
 
@@ -167,6 +168,8 @@ Server.prototype.start = function (done) {
       auth(self);
     }
 
+    health(self);
+    
     // handle routing & redirects
     router(self, options);
 
