@@ -1,3 +1,4 @@
+var fs = require('fs');
 var sinon = require('sinon');
 var should = require('should');
 var request = require('supertest');
@@ -35,6 +36,22 @@ var toyotaResult = JSON.stringify({
   results: [
     {
       makeName: 'Toyota'
+    }
+  ]
+});
+
+var categoriesResult1 = JSON.stringify({
+  results: [
+    {
+      name: 'Crime'
+    }
+  ]
+});
+
+var categoriesResult2 = JSON.stringify({
+  results: [
+    {
+      name: 'Horror'
     }
   ]
 });
@@ -81,6 +98,18 @@ describe('Cache', function(done) {
         statusCode: 200
       });
 
+      // fake api data request
+      http.register_intercept({
+        hostname: config.get('api.host'),
+        port: config.get('api.port'),
+        path: 'http://' + config.get('api.host') + ':' + config.get('api.port') + '/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}',
+        method: 'GET',
+        agent: new http.Agent({ keepAlive: true }),
+        headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
+        body: categoriesResult1,
+        statusCode: 200
+      });
+
       // create a page
       var name = 'test';
       var schema = help.getPageSchema();
@@ -98,7 +127,21 @@ describe('Cache', function(done) {
       page.events = [];
       delete page.route.constraint;
 
-      help.startServer(page, function() {
+      // create a second page
+      var page2 = Page('page2', help.getPageSchema());
+      page2.datasources = ['categories'];
+      page2.template = 'test.dust';
+
+      // add two routes to the page for testing specific path cache clearing
+      page2.route.paths[0] = '/page2';
+      page2.events = [];
+      delete page2.route.constraint;
+
+      var pages = [];
+      pages.push(page)
+      pages.push(page2)
+
+      help.startServer(pages, function() {
 
         var client = request(clientHost);
 
@@ -119,7 +162,17 @@ describe('Cache', function(done) {
             if (err) return done(err);
             res.headers['x-cache'].should.exist;
             res.headers['x-cache'].should.eql('MISS');
-            done()
+
+            client
+            .get('/page2')
+            .expect('content-type', 'text/html')
+            .expect(200)
+            .end(function (err, res) {
+              if (err) return done(err);
+              res.headers['x-cache'].should.exist;
+              res.headers['x-cache'].should.eql('MISS');
+              done()
+            })
           })
         })
       });
@@ -243,7 +296,7 @@ describe('Cache', function(done) {
       });
     });
 
-    it('should flush datasource files when flushing by path', function (done) {
+    it('should flush associated datasource files when flushing by path', function (done) {
 
       config.set('api.enabled', true);
 
@@ -271,6 +324,30 @@ describe('Cache', function(done) {
         statusCode: 200
       });
 
+      // remove original fake api data request
+      http.unregister_intercept({
+        hostname: config.get('api.host'),
+        port: config.get('api.port'),
+        path: 'http://' + config.get('api.host') + ':' + config.get('api.port') + '/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}',
+        method: 'GET',
+        agent: new http.Agent({ keepAlive: true }),
+        headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
+        body: categoriesResult1,
+        statusCode: 200
+      });
+
+      // fake api data request
+      http.register_intercept({
+        hostname: config.get('api.host'),
+        port: config.get('api.port'),
+        path: 'http://' + config.get('api.host') + ':' + config.get('api.port') + '/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}',
+        method: 'GET',
+        agent: new http.Agent({ keepAlive: true }),
+        headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
+        body: categoriesResult2,
+        statusCode: 200
+      });
+
       // get cached version of the page
       var client = request(clientHost);
       client
@@ -285,30 +362,72 @@ describe('Cache', function(done) {
 
         res.text.should.eql('<ul><li>Ford</li></ul>');
 
-        // clear cache for this path
+        // get cached version of page2
+        var client = request(clientHost);
         client
-        .post('/api/flush')
-        .send({path: '/test'})
+        .get('/page2')
+        .expect('content-type', 'text/html')
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
-          res.body.result.should.equal('success');
 
-          // get page again, should be uncached and with different data
-          var client = request(clientHost);
+          res.headers['x-cache'].should.exist;
+          res.headers['x-cache'].should.eql('HIT');
+
+          res.text.should.eql('<h3>Crime</h3>');
+
+          // clear cache for page1
           client
-          .get('/test')
-          .expect('content-type', 'text/html')
+          .post('/api/flush')
+          .send({path: '/test'})
           .expect(200)
           .end(function (err, res) {
             if (err) return done(err);
+            res.body.result.should.equal('success');
 
-            res.headers['x-cache'].should.exist;
-            res.headers['x-cache'].should.eql('MISS');
+            // get first page again, should be uncached and with different data
+            var client = request(clientHost);
+            client
+            .get('/test')
+            .expect('content-type', 'text/html')
+            .expect(200)
+            .end(function (err, res) {
+              if (err) return done(err);
 
-            res.text.should.eql('<ul><li>Toyota</li></ul>');
+              res.headers['x-cache'].should.exist;
+              res.headers['x-cache'].should.eql('MISS');
 
-            done();
+              res.text.should.eql('<ul><li>Toyota</li></ul>');
+
+              setTimeout(function() {
+                // remove html files so the ds files have to be used to generate
+                // new ones
+                var files = fs.readdirSync(config.get('caching.directory.path'));
+                files.filter(function(file) {
+                  return file.substr(-5) === '.html';
+                }).forEach(function(file) {
+                  fs.unlinkSync(path.join(config.get('caching.directory.path'), file))
+                });
+
+                // get second page again, should return same data
+                var client = request(clientHost);
+                client
+                .get('/page2')
+                .expect('content-type', 'text/html')
+                .expect(200)
+                .end(function (err, res) {
+                  if (err) return done(err);
+
+                  res.headers['x-cache'].should.exist;
+                  res.headers['x-cache'].should.eql('MISS');
+
+                  res.text.should.eql('<h3>Crime</h3>');
+
+                  done();
+                });
+              }, 500)
+
+            });
           });
         });
       });
