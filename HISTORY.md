@@ -1,4 +1,77 @@
 
+Version 1.1.0 / 2016-03-11
+
+### Cache Invalidation
+Version 1.1.0 introduces a cache invalidation endpoint which allows an authorised user to flush the cache
+for either a specific path or the entire website. This process clears both page and datasource cache files.
+
+The user must send a POST request to `/api/flush` with a request body containing the path to flush and
+a set of credentials that match those held in the configuration file:
+
+**Flush all cache files**
+```
+POST /api/flush HTTP/1.1
+Host: www.example.com
+
+{ "path": "*", "clientId": "testClient", "secret": "superSecret" }
+```
+
+**Flush cache files for a specific path**
+```
+POST /api/flush HTTP/1.1
+Host: www.example.com
+
+{ "path": "/books/crime", "clientId": "testClient", "secret": "superSecret" }
+```
+
+### Datasource Sort property
+
+The sort property in a datasource schema has been extended to allow a variety of styles.
+The sort property can now take one of the following forms:
+
+To sort by the field "name" ascending, as an array of field names:
+```
+"sort": [{ "field": "name", "order": "asc" }]
+```
+
+To sort by the field "name" ascending, as a single field name:
+```
+"sort": { "field": "name", "order": "asc" }
+```
+
+To sort by the field "name" ascending, as a MongoDB-style object:
+```
+"sort": { "name": 1 }
+```
+
+To sort by multiple fields, as a MongoDB-style object:
+```
+"sort": { "name": 1, "age": -1 }
+```
+
+### Datasource filter events
+
+A datasource can now specify a `filterEvent` property. Before the datasource attempts to load data
+it will load and run an event file matching the `filterEvent` property. Filter events are identical to normal
+event files, but they should return a filter object that the datasource will use when querying the API for data.
+
+**Example filter event: /app/events/datasourceFilterTest.js**
+```js
+// the `data` parameter contains the data already loaded by
+// the page's datasources
+var Event = function (req, res, data, callback) {
+  var filter = { "x": "1" };
+  callback(null, filter);
+};
+
+module.exports = function (req, res, data, callback) {
+  return new Event(req, res, data, callback);
+};
+
+module.exports.Event = Event;
+```
+
+
 0.5.0 / 2016-01-08
 ===================
 
