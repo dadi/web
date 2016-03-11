@@ -17,6 +17,7 @@ var config = require(__dirname + '/../../config.js');
 
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port');
+var credentials = { clientId: config.get('auth.clientId'), secret: config.get('auth.secret') }
 
 var token = JSON.stringify({
   "accessToken": "da6f610b-6f91-4bce-945d-9829cac5de71",
@@ -185,6 +186,38 @@ describe('Cache', function(done) {
       help.stopServer(done);
     });
 
+    it('should return 401 if clientId and secret are not passed', function (done) {
+
+      config.set('api.enabled', true);
+
+      // attempt to clear cache
+      var client = request(clientHost);
+      client
+      .post('/api/flush')
+      .send({path: '/test'})
+      .expect(401)
+      .end(function (err, res) {
+        if (err) return done(err);
+        done();
+      });
+    });
+
+    it('should return 401 if clientId and secret are invalid', function (done) {
+
+      config.set('api.enabled', true);
+
+      // attempt to clear cache
+      var client = request(clientHost);
+      client
+      .post('/api/flush')
+      .send({path: '/test', clientId: 'x', secret: 'y'})
+      .expect(401)
+      .end(function (err, res) {
+        if (err) return done(err);
+        done();
+      });
+    });
+
     it('should flush only cached items matching the specified path', function (done) {
 
       config.set('api.enabled', true);
@@ -204,7 +237,7 @@ describe('Cache', function(done) {
         // clear cache for this path
         client
         .post('/api/flush')
-        .send({path: '/test'})
+        .send(_.extend({path: '/test'}, credentials))
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
@@ -259,7 +292,7 @@ describe('Cache', function(done) {
         // clear cache for this path
         client
         .post('/api/flush')
-        .send({path: '*'})
+        .send(_.extend({path: '*'}, credentials))
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
@@ -379,7 +412,7 @@ describe('Cache', function(done) {
           // clear cache for page1
           client
           .post('/api/flush')
-          .send({path: '/test'})
+          .send(_.extend({path: '/test'}, credentials))
           .expect(200)
           .end(function (err, res) {
             if (err) return done(err);
@@ -478,7 +511,7 @@ describe('Cache', function(done) {
         // clear cache for this path
         client
         .post('/api/flush')
-        .send({path: '*'})
+        .send(_.extend({path: '*'}, credentials))
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
