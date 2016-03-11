@@ -2,9 +2,6 @@ var fs = require('fs');
 var sinon = require('sinon');
 var should = require('should');
 var request = require('supertest');
-// var superagentconfig = require('../superagent-mock-config');
-// var superagentMock = require('superagent-mock')(request, superagentconfig);
-
 // loaded customised fakeweb module
 var fakeweb = require(__dirname + '/../fakeweb');
 var http = require('http');
