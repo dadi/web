@@ -304,6 +304,13 @@ Server.prototype.loadApi = function (options) {
     var method = req.method && req.method.toLowerCase();
     if (method !== 'post') return next();
 
+    var clientId = req.body.clientId;
+    var secret = req.body.secret;
+    if (!clientId || !secret || (clientId !== config.get('auth.clientId') && secret !== config.get('auth.secret') )) {
+      res.statusCode = 401;
+      return res.end();
+    }
+
     return help.clearCache(req, function (err) {
       help.sendBackJSON(200, res, next)(err, {
         result: 'success',
