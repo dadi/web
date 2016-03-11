@@ -22,6 +22,14 @@ datasources
 var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
+var _ = require('underscore');
+
+var config = require(__dirname + '/../config.js');
+var api = require(__dirname + '/../dadi/lib/api');
+var Server = require(__dirname + '/../dadi/lib');
+var Controller = require(__dirname + '/../dadi/lib/controller');
+var Datasource = require(__dirname + '/../dadi/lib/datasource');
+var Page = require(__dirname + '/../dadi/lib/page');
 
 function cookie(res) {
   var setCookie = res.headers['set-cookie'];
@@ -40,6 +48,68 @@ module.exports.shouldNotHaveHeader = function(header) {
   return function (res) {
     assert.ok(!(header.toLowerCase() in res.headers), 'should not have ' + header + ' header');
   };
+}
+
+module.exports.startServer = function(pages, done) {
+
+  if (pages !== null && !_.isArray(pages)) {
+    pages = [pages];
+  }
+
+  var options = {
+    pagePath: __dirname + '/../app/pages',
+    eventPath: __dirname + '/../app/events'
+  };
+
+  var options = this.getPathOptions();
+
+  Server.app = api();
+  Server.components = {};
+
+  if (pages === null) {
+    // create a page
+    var name = 'test';
+    var schema = this.getPageSchema();
+    pages = [];
+    page = Page(name, schema);
+    var dsName = 'car-makes-unchained';
+
+    page.datasources = ['car-makes-unchained'];
+
+    var ds = Datasource(page, dsName, options, function() {} );
+
+    page.template = 'test.dust';
+    page.route.paths[0] = '/test';
+    page.events = [];
+    delete page.route.constraint;
+
+    pages.push(page);
+  }
+
+  Server.start(function() {
+    setTimeout(function() {
+      pages.forEach(function(page) {
+        // create a handler for requests to this page
+        var controller = Controller(page, options);
+
+        Server.addComponent({
+            key: page.key,
+            route: page.route,
+            component: controller
+        }, false);
+      })
+
+      done();
+    }, 200);
+  });
+}
+
+module.exports.stopServer = function(done) {
+  Server.stop(function() {
+    setTimeout(function() {
+      done();
+    }, 200);
+  });
 }
 
 module.exports.getPageSchema = function () {
@@ -86,4 +156,28 @@ module.exports.getSchemaFromFile = function (path, name, propertyToDelete) {
 		}
 		return schema;
   }
+}
+
+module.exports.clearCache = function () {
+    var deleteFolderRecursive = function(filepath) {
+      if( fs.existsSync(filepath) && fs.lstatSync(filepath).isDirectory() ) {
+        fs.readdirSync(filepath).forEach(function(file,index){
+          var curPath = filepath + "/" + file;
+          if(fs.lstatSync(curPath).isDirectory()) { // recurse
+            deleteFolderRecursive(curPath);
+          } else { // delete file
+            fs.unlinkSync(path.resolve(curPath));
+          }
+        });
+        fs.rmdirSync(filepath);
+      } else if(fs.existsSync(filepath) && fs.lstatSync(filepath).isFile()) {
+      	fs.unlinkSync(filepath);
+      }
+    };
+
+    // for each directory in the cache folder, remove all files then
+    // delete the folder
+    fs.readdirSync(config.get('caching.directory.path')).forEach(function (dirname) {
+        deleteFolderRecursive(path.join(config.get('caching.directory.path'), dirname));
+    });
 }

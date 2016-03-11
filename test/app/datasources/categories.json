@@ -7,10 +7,10 @@
 			"protocol": "http",
 			"host": "127.0.0.1",
 			"port": "3000",
-			"endpoint": "1.0/cars/makes"
+			"endpoint": "1.0/library/categories"
 		},
     "caching": {
-      "enabled": false,
+      "enabled": true,
       "ttl": 50,
       "directory": "./cache/web/",
       "extension": "json"
@@ -20,7 +20,7 @@
   	"sort": { "name":1 },
   	"search": {},
     "filter": {},
-  	"fields": { "name": 1, "_id": 0 },
+  	"fields": { "name": 1 },
     "requestParams": [
       { "param": "category", "field": "name" }
     ]

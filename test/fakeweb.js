@@ -63,10 +63,22 @@ http.unregister_intercept = function(options){
     intercept_rules.forEach(function(rule, i){
         var equal = true;
         Object.keys(rule).forEach(function(k){
-            if(rule[k] != options[k]){
-                equal = false;
+            // if(rule[k] != options[k]){
+            //     equal = false;
+            // }
+            if (options[k]) {
+              if (rule[k] instanceof RegExp) {
+                equal = rule[k].test(options[k]);
+              }
+              else if (typeof options[k] === 'object' && typeof rule[k] === 'object') {
+                equal = JSON.stringify(options[k]) ===  JSON.stringify(rule[k]);
+              }
+              else {
+                equal = options[k].toString() === rule[k].toString();
+              }
             }
         });
+
         if(equal){
             intercept_rules.splice(i, 1);
         }
@@ -82,7 +94,7 @@ http.get_intercepts = function(){
 };
 
 http.replyWithError = function(err) {
-  
+
 }
 
 // wrap http.request with interceptor function
@@ -91,10 +103,11 @@ http.request = function(options, callback) {
     var rule = match_rule(options);
 
     if (rule) {
-
         var res = new events.EventEmitter();
         res.headers = rule.headers || {'Content-Type': 'text/html'};
         res.setTimeout = function(ms) { };
+
+        if (rule.statusCode) res.statusCode = rule.statusCode;
 
         return {
           on: function(event, callback) {

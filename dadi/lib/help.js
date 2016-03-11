@@ -8,10 +8,12 @@ var url = require('url');
 var util = require('util');
 var _ = require('underscore');
 var perfy = require('perfy');
+var crypto = require('crypto');
 
 var log = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
 var config = require(__dirname + '/../../config.js');
+var cache = require(__dirname + '/cache');
 var DatasourceCache = require(__dirname + '/cache/datasource');
 
 var self = this;
@@ -173,6 +175,104 @@ module.exports.parseQuery = function (queryStr) {
     // handle case where queryStr is "null" or some other malicious string
     if (typeof ret !== 'object' || ret === null) ret = {};
     return ret;
+};
+
+module.exports.clearCache = function (req, callback) {
+  var pathname = req.body.path;
+  var modelDir = crypto.createHash('sha1').update(pathname).digest('hex');
+  var cachePath = path.join(config.get('caching.directory.path'), modelDir + '.' + config.get('caching.directory.extension'));
+  var datasourceCachePaths = [];
+  var files = fs.readdirSync(config.get('caching.directory.path'));
+
+  if (pathname === '*') {
+    modelDir = '';
+    cachePath = path.join(config.get('caching.directory.path'), modelDir);
+
+    files.filter(function(file) {
+      return file.substr(-5) === '.json';
+    }).forEach(function(file) {
+      datasourceCachePaths.push(path.join(config.get('caching.directory.path'), file));
+    });
+  }
+  else {
+    var endpointRequest = {
+      url: req.headers['host'] + pathname
+    }
+
+    var endpoint = cache().getEndpointMatchingRequest(endpointRequest);
+
+    _.each(endpoint.page.datasources, function(datasource) {
+      var cachePrefix = crypto.createHash('sha1').update(datasource).digest('hex');
+      datasourceCachePaths = _.extend(datasourceCachePaths, _.filter(files, function(file) { return file.indexOf(cachePrefix) > -1; }));
+      datasourceCachePaths = _.map(datasourceCachePaths, function(file) { return path.join(config.get('caching.directory.path'), file); });
+    })
+  }
+
+  var walkSync = function(dir, filelist) {
+    var fs = fs || require('fs'),
+    files = fs.readdirSync(dir);
+    filelist = filelist || [];
+    files.forEach(function(file) {
+      if (fs.statSync(dir + file).isDirectory()) {
+        filelist = walkSync(dir + file + '/', filelist);
+      }
+      else {
+        filelist.push(dir + file);
+      }
+    });
+    return filelist;
+  };
+  // delete using Redis client
+  if (cache.client()) {
+    setTimeout(function() {
+      cache.delete(modelDir, function(err) {
+        return callback(null);
+      });
+    }, 200);
+  }
+  else {
+    var i = 0;
+    var exists = fs.existsSync(cachePath);
+
+    if (!exists) {
+      return callback(null);
+    }
+    else {
+      if(fs.statSync(cachePath).isDirectory()) {
+
+        var files = fs.readdirSync(cachePath);
+        if(pathname == '*') {
+          files = walkSync(cachePath + '/');
+        }
+
+        files.forEach(function (filename) {
+          var file = path.join(cachePath, filename);
+          if(pathname == '*') file = filename;
+
+          fs.unlinkSync(file);
+
+          i++;
+
+          // finished, all files processed
+          if (i == files.length) {
+            return callback(null);
+          }
+        });
+      } else {
+        fs.unlinkSync(cachePath);
+
+        datasourceCachePaths.forEach(function(filename) {
+          fs.unlinkSync(filename);
+          i++;
+
+          // finished, all files processed
+          if (i == datasourceCachePaths.length) {
+            return callback(null);
+          }
+        });
+      }
+    }
+  }
 };
 
 // creates a new function in the underscore.js namespace
