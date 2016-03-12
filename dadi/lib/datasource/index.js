@@ -227,9 +227,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // NB don't replace a property that already exists
   _.each(this.requestParams, function(obj) {
     if (req.params.hasOwnProperty(obj.param)) {
-      if (!this.schema.datasource.filter[obj.field]) {
-        this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
-      }
+      this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
     }
     else {
       // param not found in request, remove it from DS filter
@@ -238,6 +236,10 @@ Datasource.prototype.processRequest = function (datasource, req) {
       }
     }
   }, this);
+
+  if (this.schema.datasource.filterEventResult) {
+    this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult);
+  }
 
   this.buildEndpoint(this.schema, function() {});
 }
