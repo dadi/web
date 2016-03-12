@@ -285,7 +285,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
         if (ds.filterEvent) {
           ds.filterEvent.run(req, res, data, function(err, filter) {
             if (err) return done(err);
-            ds.schema.datasource.filter = _.extend(ds.schema.datasource.filter, filter);
+            ds.schema.datasource.filterEventResult = filter;
           })
         }
 
