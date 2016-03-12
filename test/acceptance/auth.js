@@ -18,15 +18,13 @@ var config = require(__dirname + '/../../config.js');
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port');
 
-var token = JSON.stringify({
+var token = require(__dirname + '/../../dadi/lib/auth/token');
+
+var tokenResult = JSON.stringify({
   "accessToken": "da6f610b-6f91-4bce-945d-9829cac5de71",
   "tokenType": "Bearer",
   "expiresIn": 2592000
 });
-
-// console.log();
-// console.log('apiHost: ' + apiHost);
-// console.log('clientHost: ' + clientHost);
 
 function startServer(done) {
 
@@ -73,7 +71,7 @@ describe('Auth', function (done) {
   var auth;
 
   before(function(done) {
-
+    http.clear_intercepts();
     done();
   });
 
@@ -81,37 +79,38 @@ describe('Auth', function (done) {
 
     // intercept the api test at server startup
     sinon.stub(libHelp, "isApiAvailable").yields(null, true);
-
     done();
   });
 
   afterEach(function(done) {
-
     libHelp.isApiAvailable.restore();
-
     http.clear_intercepts();
-
-    done();
+    help.stopServer(done);
   });
 
   it('should attach to the provided server instance', function (done) {
 
     config.set('api.enabled', true);
 
-    Server.app = api();
-    var server = Server;
+    startServer(function() {
+      Server.app = api();
+      var server = Server;
 
-    auth = proxyquire('../../dadi/lib/auth', {'http': http});
+      auth = proxyquire('../../dadi/lib/auth', {'http': http});
 
-    auth(server);
-    server.app.all.length.should.eql(1);
+      auth(server);
+      server.app.all.length.should.eql(1);
 
-    done();
+      done();
+    })
   });
 
   it('should return error if no token was obtained', function (done) {
 
     config.set('api.enabled', true);
+
+    var authToken = token.authToken
+    token.authToken = null
 
     http.register_intercept({
       hostname: '127.0.0.1',
@@ -131,18 +130,13 @@ describe('Auth', function (done) {
 
         var client = request(clientHost);
         client
-        .get('/')
+        .get('/test')
         .expect('content-type', 'text/html')
         .expect(500)
         .end(function (err, res) {
           if (err) return done(err);
-
-          Server.stop(function() {
-            setTimeout(function() {
-              done();
-            }, 200);
-          });
-
+          token.authToken = authToken
+          done();
         });
       }, 700);
 
@@ -153,6 +147,9 @@ describe('Auth', function (done) {
   it('should return error if api can\'t be reached', function (done) {
 
     config.set('api.enabled', true);
+
+    var authToken = token.authToken
+    token.authToken = null
 
     http.register_intercept({
       hostname: '127.0.0.1',
@@ -179,13 +176,8 @@ describe('Auth', function (done) {
         .expect(500)
         .end(function (err, res) {
           if (err) return done(err);
-
-          Server.stop(function() {
-            setTimeout(function() {
-              done();
-            }, 200);
-          });
-
+          token.authToken = authToken
+          done();
         });
       }, 700);
 
@@ -204,7 +196,7 @@ describe('Auth', function (done) {
       method: 'POST',
       agent: new http.Agent({ keepAlive: true }),
       headers: { 'Content-Type': 'application/json' },
-      body: token
+      body: tokenResult
     });
 
     delete require.cache['../../dadi/lib/auth'];
@@ -220,17 +212,9 @@ describe('Auth', function (done) {
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
-
-          Server.stop(function() {
-            setTimeout(function() {
-              done();
-            }, 200);
-          });
-
+          done();
         });
       }, 200);
     });
-
   });
-
 });

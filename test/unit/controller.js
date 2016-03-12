@@ -215,17 +215,25 @@ describe('Controller', function (done) {
       .expect(200)
       .end(function (err, res) {
         if (err) return done(err);
-        help.DataHelper.prototype.load.restore();
 
-        res.body['car-makes-unchained'].should.exist;
-        res.body['filters'].should.exist;
+        cleanup(function() {
+          help.DataHelper.prototype.load.restore();
 
-        controller.datasources['filters'].schema.datasource.filter.x.should.exist;
-        controller.datasources['filters'].schema.datasource.filter.x.should.eql('1');
-        controller.datasources['filters'].schema.datasource.filter.y.should.exist;
-        controller.datasources['filters'].schema.datasource.filter.y.should.eql('2');
+          res.body['car-makes-unchained'].should.exist;
+          res.body['filters'].should.exist;
 
-        cleanup(done);
+          controller.datasources['filters'].schema.datasource.filterEventResult.should.exist;
+          controller.datasources['filters'].schema.datasource.filterEventResult.x.should.exist;
+          controller.datasources['filters'].schema.datasource.filterEventResult.x.should.eql('1');
+
+          controller.datasources['filters'].schema.datasource.filter.x.should.exist;
+          controller.datasources['filters'].schema.datasource.filter.x.should.eql('1');
+
+          controller.datasources['filters'].schema.datasource.filter.y.should.exist;
+          controller.datasources['filters'].schema.datasource.filter.y.should.eql('2');
+
+          done();
+        })
       })
     })
   })

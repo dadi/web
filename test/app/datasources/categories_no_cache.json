@@ -1,0 +1,28 @@
+{
+	"datasource": {
+		"key": "categories",
+		"name": "Category datasource",
+		"source": {
+			"type": "remote",
+			"protocol": "http",
+			"host": "127.0.0.1",
+			"port": "3000",
+			"endpoint": "1.0/library/categories"
+		},
+    "caching": {
+      "enabled": false,
+      "ttl": 50,
+      "directory": "./cache/web/",
+      "extension": "json"
+    },
+  	"paginate": true,
+  	"count": 20,
+  	"sort": { "name":1 },
+  	"search": {},
+    "filter": {},
+  	"fields": { "name": 1 },
+    "requestParams": [
+      { "param": "category", "field": "name" }
+    ]
+	}
+}

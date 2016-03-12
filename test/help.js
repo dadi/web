@@ -22,6 +22,9 @@ datasources
 var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
+// loaded customised fakeweb module
+var fakeweb = require(__dirname + '/fakeweb');
+var http = require('http');
 var _ = require('underscore');
 
 var config = require(__dirname + '/../config.js');
@@ -48,6 +51,19 @@ module.exports.shouldNotHaveHeader = function(header) {
   return function (res) {
     assert.ok(!(header.toLowerCase() in res.headers), 'should not have ' + header + ' header');
   };
+}
+
+module.exports.addHttpIntercept = function(endpoint, status, body) {
+  http.register_intercept({
+    hostname: config.get('api.host'),
+    port: config.get('api.port'),
+    path: 'http://' + config.get('api.host') + ':' + config.get('api.port') + endpoint,
+    method: 'GET',
+    agent: new http.Agent({ keepAlive: true }),
+    headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
+    body: body,
+    statusCode: status
+  });
 }
 
 module.exports.startServer = function(pages, done) {
