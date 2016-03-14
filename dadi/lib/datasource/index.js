@@ -227,7 +227,11 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // NB don't replace a property that already exists
   _.each(this.requestParams, function(obj) {
     if (req.params.hasOwnProperty(obj.param)) {
-      this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
+      if (obj.type == "Number") {
+        this.schema.datasource.filter[obj.field] = Number(req.params[obj.param]);
+      } else {
+        this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param]);
+      }
     }
     else {
       // param not found in request, remove it from DS filter
