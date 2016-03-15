@@ -37,6 +37,7 @@ function startServer(page) {
 }
 
 function cleanup(done) {
+  config.set('globalEvents', [])
   Server.stop(function() {
     done();
   });
@@ -153,59 +154,11 @@ describe('Controller', function (done) {
     page.settings.cache = false;
 
     page.datasources = [];
-    page.events = ['test_event'];
+    page.events = [];
     delete page.route.constraint;
 
     return page;
   }
-
-  describe('Events', function(done) {
-    it('should load events in the order they are specified', function(done) {
-      config.set('api.enabled', false);
-
-      var page = getPage();
-      page.events = ['b','a']
-      controller = Controller(page, options);
-      controller.events.should.exist;
-      controller.events[0].name.should.eql('b');
-      controller.events[1].name.should.eql('a');
-      done();
-    })
-
-    it('should run events in the order they are specified', function(done) {
-      config.set('allowJsonView', true);
-      var page = getPage();
-      page.events = ['b','a']
-
-      startServer(page);
-
-      // provide API response
-      var apiResults = { results: [{_id: 1, title: 'books'}] }
-      sinon.stub(help.DataHelper.prototype, 'load').yields(null, apiResults);
-
-      // provide event response
-      var method = sinon.spy(Controller.Controller.prototype, 'loadEventData');
-
-      var client = request(connectionString);
-
-      client
-      .get(page.route.paths[0] + '?json=true')
-      //.expect(200)
-      .end(function (err, res) {
-        if (err) return done(err);
-
-        method.called.should.eql(true);
-        method.secondCall.args[0][0].should.eql(controller.events[0])
-        method.restore()
-        help.DataHelper.prototype.load.restore();
-
-        res.body['b'].should.eql('I came from B');
-        res.body['a'].should.eql('Results for B found: true');
-
-        cleanup(done);
-      });
-    })
-  })
 
   describe('Preload Events', function(done) {
     it('should load preloadEvents in the controller instance', function(done) {
@@ -247,6 +200,53 @@ describe('Controller', function (done) {
 
         res.body['preload'].should.eql(true);
         res.body['run'].should.eql(true);
+
+        cleanup(done);
+      });
+    })
+  })
+
+  describe('Global Events', function(done) {
+    it('should load globalEvents in the controller instance', function(done) {
+      config.set('api.enabled', false);
+      config.set('globalEvents', ['test_global_event'])
+
+      var page = getPage();
+      controller = Controller(page, options);
+      controller.preloadEvents.should.exist;
+      controller.preloadEvents['test_global_event'].should.exist;
+      done();
+    })
+
+    it('should run globalEvents within the get request', function(done) {
+      config.set('api.enabled', false);
+      config.set('allowJsonView', true);
+      config.set('globalEvents', ['test_global_event'])
+
+      var page = getPage();
+      startServer(page);
+
+      // provide API response
+      var apiResults = { results: [{_id: 1, title: 'books'}] }
+      sinon.stub(help.DataHelper.prototype, 'load').yields(null, apiResults);
+
+      // provide event response
+      var results = { results: [{_id: 1, title: 'books'}] }
+      var method = sinon.spy(Controller.Controller.prototype, 'loadEventData');
+
+      var client = request(connectionString);
+
+      client
+      .get(page.route.paths[0] + '?json=true')
+      //.expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        method.called.should.eql(true);
+        method.firstCall.args[0].should.eql(controller.preloadEvents);
+        method.restore()
+        help.DataHelper.prototype.load.restore();
+
+        res.body['global_event'].should.eql('FIRED');
 
         cleanup(done);
       });
