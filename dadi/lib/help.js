@@ -9,6 +9,7 @@ var util = require('util');
 var _ = require('underscore');
 var perfy = require('perfy');
 var crypto = require('crypto');
+var zlib = require('zlib');
 
 var log = require(__dirname + '/log');
 var token = require(__dirname + '/auth/token');
