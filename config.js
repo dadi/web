@@ -234,6 +234,11 @@ var conf = convict({
       }
     }
   },
+  globalEvents: {
+    doc: "",
+    format: Array,
+    default: []
+  },
   paths: {
     doc: "",
     format: Object,
