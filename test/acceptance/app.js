@@ -79,6 +79,63 @@ describe('Application', function(done) {
     help.stopServer(done);
   });
 
+  it('should not error if the template is found when calling `view.render()`', function (done) {
+
+    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
+    var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });
+    help.addHttpIntercept(endpoint1, 200, categoriesResult1);
+
+    // create page 1
+    var page1 = Page('page1', help.getPageSchema());
+    page1.datasources = ['categories_no_cache'];
+    page1.template = 'test.dust';
+    page1.route.paths[0] = '/categories/:category';
+    page1.events = [];
+    delete page1.route.constraint;
+
+    var pages = [];
+    pages.push(page1)
+
+    help.startServer(pages, function() {
+
+      var client = request(clientHost);
+
+      client
+      .get('/categories/Crime')
+      .expect('content-type', 'text/html')
+      .expect(200)
+      .end(done);
+    });
+  });
+  it('should throw an error if the template is not found when calling `view.render()`', function (done) {
+
+    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
+    var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });
+    help.addHttpIntercept(endpoint1, 200, categoriesResult1);
+
+    // create page 1
+    var page1 = Page('page1', help.getPageSchema());
+    page1.datasources = ['categories_no_cache'];
+    page1.template = 'testxxxxxxxx.dust';
+    page1.route.paths[0] = '/categories/:category';
+    page1.events = [];
+    delete page1.route.constraint;
+
+    var pages = [];
+    pages.push(page1)
+
+    help.startServer(pages, function() {
+
+      var client = request(clientHost);
+
+      client
+      .get('/categories/Crime')
+      .expect('content-type', 'text/html')
+      .expect(500)
+      .end(done);
+    });
+  });
+
   it('should renew datasource endpoints when new requests are made', function(done) {
 
     var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
