@@ -622,16 +622,23 @@ Server.prototype.dustCompile = function (options) {
     });
 
     // handle templates that are requested but not found in the cache
+    // `templateName` is the name of the template requested by dust.render / dust.stream
+    // or via a partial include, like {> "hello-world" /}
     dust.onLoad = function(templateName, opts, callback) {
-      // `templateName` is the name of the template requested by dust.render / dust.stream
-      // or via a partial include, like {> "hello-world" /}
-      fs.readFile(options.workspacePath + '/' + templateName + '.dust', { encoding: 'utf8' }, function (err, data) {
+      var template = templateName + '.dust';
+      if (template.indexOf('partials') > -1) {
+        template = partialPath + '/' + template.replace('partials/', '');
+      } else {
+        template = templatePath + '/' + template;
+      }
+
+      fs.readFile(template, { encoding: 'utf8' }, function (err, data) {
         if (err) {
-          log.error({module: 'server'}, err);
-          console.log(err);
+          // no template file found? 
+          return callback(err, null);
         }
 
-        callback(null, data);
+        return callback(null, data);
       });
     };
 }
