@@ -77,6 +77,12 @@ Controller.prototype.attachEvents = function(done) {
     self.preloadEvents.push(e);
   });
 
+  // add global events first
+  config.get('globalEvents').forEach(function(eventName) {
+    var e = new Event(self.page.name, eventName, self.options);
+    self.preloadEvents[eventName] = e;
+  });
+
   this.page.preloadEvents.forEach(function(eventName) {
     var e = new Event(self.page.name, eventName, self.options);
     self.preloadEvents.push(e);
