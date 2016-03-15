@@ -71,6 +71,12 @@ Controller.prototype.attachEvents = function(done) {
     self.events[eventName] = e;
   });
 
+  // add global events first
+  config.get('globalEvents').forEach(function(eventName) {
+    var e = new Event(self.page.name, eventName, self.options);
+    self.preloadEvents[eventName] = e;
+  });
+
   this.page.preloadEvents.forEach(function(eventName) {
     var e = new Event(self.page.name, eventName, self.options);
     self.preloadEvents[eventName] = e;
@@ -171,23 +177,10 @@ Controller.prototype.process = function (req, res, next) {
 
       view.setData(data);
 
-      //try {
       view.render(function(err, result) {
         if (err) return next(err);
         return done(null, result);
       });
-      // }
-      // catch (e) {
-      //   console.log(e)
-      //   var err = new Error(e.message);
-      //   err.statusCode = 500;
-      //   if (next) {
-      //     return next(err);
-      //   }
-      //   else {
-      //     return done(err);
-      //   }
-      // }
     });
 }
 
