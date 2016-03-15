@@ -29,8 +29,8 @@ var Controller = function (page, options) {
   this.options = options || {};
 
   this.datasources = {};
-  this.events = {};
-  this.preloadEvents = {};
+  this.events = [];
+  this.preloadEvents = [];
 
   var self = this;
 
@@ -68,12 +68,12 @@ Controller.prototype.attachEvents = function(done) {
 
   this.page.events.forEach(function(eventName) {
     var e = new Event(self.page.name, eventName, self.options);
-    self.events[eventName] = e;
+    self.events.push(e);
   });
 
   this.page.preloadEvents.forEach(function(eventName) {
     var e = new Event(self.page.name, eventName, self.options);
-    self.preloadEvents[eventName] = e;
+    self.preloadEvents.push(e);
   });
 
   done();
@@ -203,8 +203,8 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 
   var eventIdx = 0;
 
-  _.each(events, function(value, key) {
-      help.timer.start('event: ' + key);
+  _.each(events, function(event) {
+      help.timer.start('event: ' + event.name);
 
       // add a random value to the data obj so we can check if an
       // event has sent back the obj - in which case we assign it back
@@ -214,8 +214,8 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 
       // run the event
       try {
-        events[key].run(req, res, data, function (err, result) {
-          help.timer.stop('event: ' + key);
+        event.run(req, res, data, function (err, result) {
+          help.timer.stop('event: ' + event.name);
 
           if (err) {
             return done(err, data);
@@ -228,14 +228,14 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
           }
           else if (result) {
             // add the result to our global data object
-            data[key] = result;
+            data[event.name] = result;
           }
 
           eventIdx++;
 
           // return the data if we're at the end of the events
           // array, we have all the responses to render the page
-          if (eventIdx === Object.keys(events).length) {
+          if (eventIdx === events.length) {
             return done(null, data);
           }
         });
