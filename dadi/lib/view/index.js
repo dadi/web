@@ -33,16 +33,7 @@ View.prototype.setData = function(data) {
 }
 
 View.prototype.render = function(done) {
-
   var self = this;
-
-  if (!this.template) {
-    var err = new Error();
-    err.name = "DustTemplate";
-    err.message = "Template not found: '" + this.page.template + "'. (Rendering page '" + this.page.key + "')";
-    err.path = this.url;
-    throw err;
-  }
 
   // add common dust helpers
   new commonDustHelpers.CommonDustjsHelpers().export_helpers_to(dust);
@@ -58,7 +49,7 @@ View.prototype.render = function(done) {
     dust.render(this.pageTemplate, this.data, function(err, result) {
 
       if (err) {
-        err = new Error(err.message);
+        console.log(err)
         err.statusCode = 500;
         return done(err, null);
       }

@@ -93,26 +93,6 @@ describe('View', function (done) {
     done();
   });
 
-  it('should throw an error if the template is null when calling `render()`', function (done) {
-    var name = 'test';
-    var schema = help.getPageSchema();
-    schema.template = 'testxxxxx.dust';
-
-    var req = {
-      url: '/test'
-    };
-
-    var p = page(name, schema);
-    var v = view(req.url, p, false);
-
-    var data = { "title": "Sir", "names": [{ "name": "Moe" }, { "name": "Larry" }, { "name": "Curly" }] };
-
-    v.setData(data);
-
-    should.throws(function() { v.render(function() {}); }, Error);
-    done();
-  });
-
   it('should return json when calling `render()`', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
@@ -198,7 +178,7 @@ describe('View', function (done) {
 
     // reset helper path in config
     config.set('paths.helpers', 'test/app/utils/helpers');
-    
+
     done();
   });
 
