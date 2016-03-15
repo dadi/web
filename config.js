@@ -11,7 +11,7 @@ var conf = convict({
       default: "DADI Web (Repo Default)"
     }
   },
-	server: {
+  server: {
     host: {
       doc: "The IP address the web application will run on",
       format: '*',
@@ -33,7 +33,7 @@ var conf = convict({
       default: 120
     }
   },
-	api: {
+  api: {
     host: {
       doc: "The IP address the DADI API application runs on",
       format: '*',
@@ -131,7 +131,7 @@ var conf = convict({
     }
   },
   dust: {
-  	cache: {
+    cache: {
       doc: "If true, compiled templates are saved to the Dust cache. Recommended setting: true",
       format: Boolean,
       default: true
@@ -169,7 +169,7 @@ var conf = convict({
     }
   },
   logging: {
-  	enabled: {
+    enabled: {
       doc: "If true, logging is enabled using the following settings.",
       format: Boolean,
       default: true
