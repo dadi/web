@@ -248,15 +248,21 @@ module.exports = function (server, options) {
         _.extend(ds.schema.datasource.filter, { "rule": req.url });
         ds.processRequest(ds.page.name, req);
 
-        help.getData(ds, function(err, result) {
-
+        var dataHelper = new help.DataHelper(ds, req.url);
+        dataHelper.load(function(err, result) {
           if (err) {
             console.log('Error loading data in Router Rewrite module');
             return next(err);
           }
 
           if (result) {
-            var results = JSON.parse(result);
+            var results;
+            if (typeof result === 'object') {
+              results = result;
+            }
+            else {
+              results = JSON.parse(result);
+            }
 
             if (results && results.results && results.results.length > 0) {
               var rule = results.results[0];
