@@ -113,7 +113,6 @@ describe('Router', function (done) {
       config.set('rewrites.datasource', 'redirects');
 
       var page = getPage();
-      page.events = ['b','a']
       var pages = [page]
 
       var options = testHelper.getPathOptions();
@@ -133,11 +132,11 @@ describe('Router', function (done) {
         .end(function (err, res) {
           if (err) return done(err);
 
-          res.statusCode.should.eql(301)
-          res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/books')
-
           libHelp.DataHelper.prototype.load.restore();
           datasource.Datasource.prototype.loadDatasource.restore();
+
+          res.statusCode.should.eql(301)
+          res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/books')
 
           config.set('rewrites.datasource', '');
 
