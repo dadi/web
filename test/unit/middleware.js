@@ -51,23 +51,22 @@ describe('Middleware', function (done) {
     done();
   });
 
-  it('should use the attached middleware');
+  it.skip('should use the attached middleware', function(done) {
+    done();
+  });
 
-  it('should throw errors when they occur in the attached middleware');//, function (done) {
+  it.skip('should throw errors when they occur in the attached middleware', function (done) {
+    var mware = middleware('test', { "middlewarePath": path.join(__dirname, '../app/middleware') });
 
-    //var mware = middleware('test', { "middlewarePath": path.join(__dirname, '../app/middleware') });
+    should.throws(function() {
+      mware.init(app)({}, {}, data, function(err, result) {
+      })
+    });
 
-    // should.throws(function() {
-    //   mware.init(app)({}, {}, data, function(err, result) {
-    //   })
-    // });
-    //
-    // done();
-
-//  });
+    done();
+ });
 
   it('should load the referenced middleware file from the filesystem', function (done) {
-
     var mware = middleware('test', { "middlewarePath": path.join(__dirname, '../app/middleware') });
     var file = mware.load();
 
@@ -78,7 +77,6 @@ describe('Middleware', function (done) {
   })
 
   it('should throw an error if the referenced middleware file can\'t be found', function (done) {
-
     var mware = middleware('MISSING', { "middlewarePath": path.join(__dirname, '../app/middleware') });
     var file = mware.loadEvent;
 
