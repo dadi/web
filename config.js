@@ -310,10 +310,20 @@ var conf = convict({
       format: String,
       default: ""
     },
-    forceTrailingSlash: {
-      doc: "",
+    forceLowerCase: {
+      doc: "If true, converts URLs to lowercase and redirects",
       format: Boolean,
       default: false
+    },
+    forceTrailingSlash: {
+      doc: "If true, adds a trailing slash to URLs and redirects",
+      format: Boolean,
+      default: false
+    },
+    stripIndexPages: {
+      doc: "A set of filenames to remove from URLs. For example ['index.php', 'default.aspx']",
+      format: Array,
+      default: []
     }
   },
   env: {
