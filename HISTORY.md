@@ -1,4 +1,14 @@
 
+Version 1.2.0 / 2016-03-18
+
+Add: additional routing/rewriting config properties
+Add: #37 Global events loader
+Fix: #38 replace datasource loader in router
+Fix: #36 load events in the order they were specified
+Fix: #32 load template from filesystem if Dust cache is_disabled
+Fix: #31 define the zlib variable
+Fix: #29 refresh endpoint filter on subsequent page loads
+
 Version 1.1.0 / 2016-03-11
 
 ### Cache Invalidation
