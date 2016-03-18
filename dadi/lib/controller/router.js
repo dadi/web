@@ -304,7 +304,7 @@ module.exports = function (server, options) {
       }
 
       // stripIndexPages
-      if (config.get('rewrites.stripIndexPages') !== []) {
+      if (!_.isEmpty(config.get('rewrites.stripIndexPages'))) {
         var files = config.get('rewrites.stripIndexPages');
         var re = new RegExp(files.join('|'), 'gi');
         if (location.match(re)) {
