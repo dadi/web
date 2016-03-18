@@ -291,26 +291,48 @@ module.exports = function (server, options) {
       });
     });
 
-    if (config.get('rewrites.forceTrailingSlash')) {
+    server.app.use(function (req, res, next) {
+      var redirect = false;
+      var location = req.url;
+
+      // force a URL to lowercase
+      if (config.get('rewrites.forceLowerCase')) {
+        if (location !== location.toLowerCase()) {
+          location = location.toLowerCase();
+          redirect = true;
+        }
+      }
+
+      // stripIndexPages
+      if (!_.isEmpty(config.get('rewrites.stripIndexPages'))) {
+        var files = config.get('rewrites.stripIndexPages');
+        var re = new RegExp(files.join('|'), 'gi');
+        if (location.match(re)) {
+          location = location.replace(re, '');
+          redirect = true;
+        }
+      }
+
       // force a trailing slash
-      server.app.use(function (req, res, next) {
-        var parsed = url.parse(req.url, true);
+      if (config.get('rewrites.forceTrailingSlash')) {
+        var parsed = url.parse(location, true);
         if (/^([^.]*[^/])$/.test(parsed.pathname) === true) {
-          var location = 'http' + '://' + req.headers.host + parsed.pathname + '/' + parsed.search;
-          res.writeHead(301, {
-            Location : location
-          });
-          res.end();
+          location = parsed.pathname + '/' + parsed.search;
+          redirect = true;
         }
-        else {
-          return next();
-        }
-      });
-    }
+      }
 
-
+      if (redirect) {
+        res.writeHead(301, {
+          Location : 'http' + '://' + req.headers.host + location
+        });
+        res.end();
+      }
+      else {
+        return next();
+      }
+    })
   });
-
 };
 
 module.exports.Router = Router;
