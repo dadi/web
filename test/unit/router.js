@@ -107,6 +107,126 @@ describe('Router', function (done) {
   });
 
   describe('Redirects/Rewrites', function(done) {
+    describe('Configurable', function(done) {
+      config.set('api.enabled', false);
+
+      it('should redirect to lowercased URL if the current request URL is not all lowercase', function(done) {
+        config.set('rewrites.forceLowerCase', true)
+
+        var page = getPage();
+        var pages = [page]
+        var options = testHelper.getPathOptions();
+        var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
+        sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+        testHelper.startServer(pages, function() {
+
+          var client = request(connectionString);
+          client
+          .get('/TeSt')
+          .end(function (err, res) {
+            if (err) return done(err);
+
+            datasource.Datasource.prototype.loadDatasource.restore();
+
+            res.statusCode.should.eql(301)
+            res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/test')
+
+            config.set('rewrites.forceLowerCase', false)
+            cleanup(done);
+          });
+        });
+      })
+
+      it('should add a trailing slash and redirect if the current request URL does not end with a slash', function(done) {
+        config.set('rewrites.forceTrailingSlash', true)
+
+        var page = getPage();
+        var pages = [page]
+        var options = testHelper.getPathOptions();
+        var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
+        sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+        testHelper.startServer(pages, function() {
+
+          var client = request(connectionString);
+          client
+          .get('/test')
+          .end(function (err, res) {
+            if (err) return done(err);
+
+            datasource.Datasource.prototype.loadDatasource.restore();
+
+            res.statusCode.should.eql(301)
+            res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/test/')
+
+            config.set('rewrites.forceTrailingSlash', false)
+            cleanup(done);
+          });
+        });
+      })
+
+      it('should strip specified index pages from the current request URL', function(done) {
+        config.set('rewrites.stripIndexPages', ['index.php', 'default.aspx'])
+        config.set('rewrites.forceLowerCase', true)
+
+        var page = getPage();
+        var pages = [page]
+        var options = testHelper.getPathOptions();
+        var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
+        sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+        testHelper.startServer(pages, function() {
+
+          var client = request(connectionString);
+          client
+          .get('/tEsT/dEfaUlt.aspx')
+          .end(function (err, res) {
+            if (err) return done(err);
+
+            datasource.Datasource.prototype.loadDatasource.restore();
+
+            res.statusCode.should.eql(301)
+            res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/test/')
+
+            config.set('rewrites.stripIndexPages', [])
+            config.set('rewrites.forceLowerCase', false)
+            cleanup(done);
+          });
+        });
+      })
+
+      it('should add a trailing slash and lowercase the URL if both settings are true', function(done) {
+        config.set('rewrites.forceLowerCase', true)
+        config.set('rewrites.forceTrailingSlash', true)
+
+        var page = getPage();
+        var pages = [page]
+        var options = testHelper.getPathOptions();
+        var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
+        sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+        testHelper.startServer(pages, function() {
+
+          var client = request(connectionString);
+          client
+          .get('/tESt')
+          .end(function (err, res) {
+            if (err) return done(err);
+
+            datasource.Datasource.prototype.loadDatasource.restore();
+
+            res.statusCode.should.eql(301)
+            res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/test/')
+
+            config.set('rewrites.forceLowerCase', false)
+            config.set('rewrites.forceTrailingSlash', false)
+            cleanup(done);
+          });
+        });
+      })
+    })
+
     it('should redirect to new location if the current request URL is found in a datasource query result', function(done) {
       config.set('api.enabled', false);
       config.set('allowJsonView', true);
@@ -114,7 +234,6 @@ describe('Router', function (done) {
 
       var page = getPage();
       var pages = [page]
-
       var options = testHelper.getPathOptions();
       var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
       sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
