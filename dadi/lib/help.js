@@ -155,7 +155,7 @@ module.exports.sendBackHTML = function (method, successCode, contentType, res, n
 module.exports.validateRequestCredentials = function(req, res) {
   var clientId = req.body.clientId;
   var secret = req.body.secret;
-  console.log(req.body)
+
   if (!clientId || !secret || (clientId !== config.get('auth.clientId') && secret !== config.get('auth.secret') )) {
     res.statusCode = 401;
     res.end();
