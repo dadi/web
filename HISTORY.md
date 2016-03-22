@@ -1,3 +1,33 @@
+Version 1.3.0 / 2016-03-22
+
+## Status endpoint
+
+Adds an endpoint at `/api/status` which returns server/application data in JSON format.
+
+The request must be a POST and the body must have a `clientId` and `secret` that match those stored in the application's config file.
+
+```
+POST /api/status HTTP/1.1
+Host: www.example.com
+Content-Type: application/json
+
+{"clientId": "testClient","secret": "superSecret"}
+```
+
+## Partials in subdirectories
+
+Storing partials in subdirectories of the main partials folder previously caused the application crash. Now it doesn't. Thanks @eduardoboucas!
+
+## requestParams type definition
+
+Now allows the ability to specify a type definition of 'Number' on requestParams in a datasource
+schema to override default of String. Thanks @mingard!
+
+```
+"requestParams": [
+  { "param": "author", "field": "authorId", "type": "Number" }
+]
+```
 
 Version 1.2.0 / 2016-03-18
 
