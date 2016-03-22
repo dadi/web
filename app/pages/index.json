@@ -1,0 +1,9 @@
+{
+  "page": {
+    "name": "Index",
+    "description": "Index page.",
+    "language": "en"
+  },
+  "datasources": [],
+  "events": []
+}
