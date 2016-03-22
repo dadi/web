@@ -1,32 +1,29 @@
-var http = require('http');
-var url = require('url');
-var pathToRegexp = require('path-to-regexp');
+var util = require('util');
+var MiddlewareEngine = require('../../../../middleware'); // TODO: replace this when private npm is updated
 var raven = require('raven');
 var _ = require('underscore');
 
 var log = require(__dirname + '/../log');
 var config = require(__dirname + '/../../../config');
 
-var MiddlewareEngine = require('../../../../middleware');
 
 /**
  * Represents the main server.
  * @constructor
  */
 var Api = function () {
-
-    var api = new MiddlewareEngine();
+    MiddlewareEngine.call(this);
 
     // Sentry error handler
     if (config.get('logging.sentry.dsn') !== '') {
-      api.use(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')));
+      this.use(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')));
     }
 
     // Fallthrough error handler
-    api.use(onError);
-
-    return api;
+    this.use(onError);
 };
+
+util.inherits(Api, MiddlewareEngine);
 
 /**
  * Add Api methods here...
