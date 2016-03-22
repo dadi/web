@@ -244,7 +244,7 @@ function notFound(api, req, res) {
         }
         // otherwise, respond with default message
         else {
-            res.end("404: Ain't nothing here but you and me.");
+            res.end("HTTP 404 Not Found");
         }
     };
 }
@@ -267,7 +267,10 @@ function routePriority(path, keys) {
     }).length;
 
     var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength);
-    if (path.indexOf('/config') > 0) order = -10;
+
+    // make internal routes less important...
+    if (path.indexOf('/config') > 0) order = -100;
+    if (path.indexOf('/api/') > 0) order = -100;
 
     return order;
 }
