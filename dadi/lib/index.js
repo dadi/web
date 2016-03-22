@@ -162,6 +162,33 @@ Server.prototype.start = function (done) {
       }
     });
 
+    app.use('/api/status', function(req, res, next) {
+      var params = {
+        site: site,
+        package: '@dadi/web',
+        version: version,
+        healthCheck: {
+          baseUrl: 'http://127.0.0.1:3001',
+          authorization: 'Bearer 123abcdef',
+          routes: [{
+            route: '/',
+            expectedResponseTime: 10
+          }]
+        }
+      }
+
+      dadiStatus(params, function(err, data) {
+        if (err) return next(err);
+        var resBody = JSON.stringify(data, null, 2);
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('content-length', Buffer.byteLength(resBody));
+        res.end(resBody);
+      });
+    });
+
+
     if (config.get('api.enabled')) {
       // caching layer
       cache(self).init();
