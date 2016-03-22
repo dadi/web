@@ -467,6 +467,32 @@ describe('Datasource', function (done) {
       done();
     });
 
+    it('should use specified type when adding requestParams to the endpoint', function (done) {
+      var name = 'test';
+      var schema = help.getPageSchema();
+      var p = page(name, schema);
+      var dsName = 'car-makes';
+      var options = help.getPathOptions();
+      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName);
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      // add type
+      dsSchema.datasource.requestParams[0].type = 'Number'
+
+      var params = { "make": "1337" };
+      var req = { params: params, url: '/1.0/cars/makes' };
+
+      var ds = datasource(p, dsName, options, function() {});
+
+      datasource.Datasource.prototype.loadDatasource.restore();
+
+      ds.processRequest(dsName, req);
+
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"name":1337}&fields={"name":1,"_id":0}&sort={"name":1}');
+
+      done();
+    });
+
     it('should pass cache param to the endpoint', function (done) {
       var name = 'test';
       var schema = help.getPageSchema();
