@@ -604,22 +604,35 @@ Server.prototype.dustCompile = function (options) {
         }
     });
 
-    var partials = fs.readdirSync(partialPath);
-    partials.forEach(function (partial) {
-        //Load the template from file
-        var name = partial.slice(0, partial.indexOf('.'));
-        var template =  fs.readFileSync(path.join(partialPath, partial), "utf8");
+    var loadPartialsDirectory = function (directory) {
+      directory = directory || '';
 
-        try {
-            var compiled = dust.compile(template, "partials/" + name, true);
-            dust.loadSource(compiled);
+      var directoryList = fs.readdirSync(path.join(partialPath, directory));
+
+      directoryList.forEach(function (itemPath) {
+        var item = fs.statSync(path.join(partialPath, directory, itemPath));
+
+        if (item.isDirectory()) {
+          loadPartialsDirectory(directory + itemPath + '/');
+        } else {
+          // Load the template from file
+          var name = itemPath.slice(0, itemPath.lastIndexOf('.'));
+          var template = fs.readFileSync(path.join(partialPath, directory, itemPath), 'utf8');
+
+          try {
+              var compiled = dust.compile(template, 'partials/' + directory + name, true);
+              dust.loadSource(compiled);
+          }
+          catch (e) {
+              var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, directory, itemPath) + '". ' + e + '\n';
+              console.log(message);
+              throw e;
+          }
         }
-        catch (e) {
-            var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, partial) + '". ' + e + '\n';
-            console.log(message);
-            throw e;
-        }
-    });
+      });
+    };
+
+    loadPartialsDirectory();
 
     // handle templates that are requested but not found in the cache
     // `templateName` is the name of the template requested by dust.render / dust.stream

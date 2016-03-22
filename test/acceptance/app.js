@@ -2,6 +2,7 @@ var fs = require('fs');
 var sinon = require('sinon');
 var should = require('should');
 var request = require('supertest');
+var mkdirp = require('mkdirp');
 // loaded customised fakeweb module
 var fakeweb = require(__dirname + '/../fakeweb');
 var http = require('http');
@@ -10,6 +11,7 @@ var path = require('path');
 var assert = require('assert');
 
 var Server = require(__dirname + '/../../dadi/lib');
+var api = require(__dirname + '/../../dadi/lib/api');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/../help');
 var libHelp = require(__dirname + '/../../dadi/lib/help');
@@ -25,7 +27,25 @@ var token = JSON.stringify({
   "expiresIn": 1800
 });
 
-describe.skip('Application', function(done) {
+function cleanupPath(path, done) {
+  try {
+    var stats = fs.stat(path, function(err, stats) {
+      if (stats.isFile()) {
+        fs.unlinkSync(path)
+        return done();
+      }
+      if (stats.isDirectory()) {
+        fs.rmdirSync(path)
+        return done();
+      }
+    })
+  }
+  catch (err) {
+    console.log(err);
+  }
+}
+
+describe('Application', function(done) {
 
   var auth;
   var body = '<html><body>Test</body></html>';
@@ -68,9 +88,32 @@ describe.skip('Application', function(done) {
     help.stopServer(done);
   });
 
-  it('should not error if the template is found when calling `view.render()`', function (done) {
+  it('should not throw an error when starting the server with partial subdirectories', function(done) {
 
-    console.log(config.get('rewrites'))
+    var partialPath = __dirname + '/../app/partials/component1';
+
+    mkdirp(partialPath, function(err, result) {
+
+      var partial = "<h1>Test Partial</h1>\n\n";
+      var filePath = partialPath + '/partial.js';
+      fs.writeFileSync(filePath, partial);
+
+      Server.app = api();
+      Server.components = {};
+      Server.start(function() {
+
+        cleanupPath(filePath, function() {
+          cleanupPath(partialPath, function() {
+            // test the result
+            //result.should.eql(expected);
+            done();
+          });
+        });
+      });
+    })
+  })
+
+  it('should not error if the template is found when calling `view.render()`', function (done) {
 
     var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
     var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });

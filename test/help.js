@@ -1,23 +1,11 @@
 /*
 
-TO DO
-
-page with request params
-page with query params
-page with request params and query params
-
-routing
- - req.params
- - querystring append
- - trailing slash
- - test constraints
-
+TO D)
 datasources
  - chained, param
  - chained, query
 
  */
-
 
 var assert = require('assert');
 var fs = require('fs');
