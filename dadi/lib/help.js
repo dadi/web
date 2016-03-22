@@ -148,7 +148,42 @@ module.exports.sendBackHTML = function (method, successCode, contentType, res, n
 }
 
 /**
- * Adds hewders defined in the configuration file to the response
+ * Checks for valid client credentials in the request body
+ * @param {req} req - the HTTP request
+ * @param {res} res - the HTTP response
+ */
+module.exports.validateRequestCredentials = function(req, res) {
+  var clientId = req.body.clientId;
+  var secret = req.body.secret;
+
+  if (!clientId || !secret || (clientId !== config.get('auth.clientId') && secret !== config.get('auth.secret') )) {
+    res.statusCode = 401;
+    res.end();
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Checks for valid HTTP method
+ * @param {req} req - the HTTP request
+ * @param {res} res - the HTTP response
+ * @param {String} allowedMethod - the HTTP method valid for the current request
+ */
+module.exports.validateRequestMethod = function(req, res, allowedMethod) {
+  var method = req.method && req.method.toLowerCase();
+  if (method !== allowedMethod.toLowerCase()) {
+    res.statusCode = 405;
+    res.end();
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Adds headers defined in the configuration file to the response
  * @param {res} res - the HTTP response
  */
 module.exports.addHeaders = function(res) {

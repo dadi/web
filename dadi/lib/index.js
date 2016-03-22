@@ -1,5 +1,6 @@
 
 var version = require('../../package.json').version;
+var site = require('../../package.json').name;
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
 
 var _ = require('underscore');
@@ -19,6 +20,7 @@ var serveStatic = require('serve-static');
 var session = require('express-session');
 var toobusy = require('toobusy-js');
 var url = require('url');
+var dadiStatus = require('@dadi/status');
 
 var mongoStore;
 if (nodeVersion < 1) {
@@ -301,25 +303,42 @@ Server.prototype.loadApi = function (options) {
   var self = this;
 
   this.app.use('/api/flush', function (req, res, next) {
-    var method = req.method && req.method.toLowerCase();
-    if (method !== 'post') return next();
-
-    var clientId = req.body.clientId;
-    var secret = req.body.secret;
-    if (!clientId || !secret || (clientId !== config.get('auth.clientId') && secret !== config.get('auth.secret') )) {
-      res.statusCode = 401;
-      return res.end();
-    }
-
-    return help.clearCache(req, function (err) {
-      help.sendBackJSON(200, res, next)(err, {
-        result: 'success',
-        message: 'Succeed to clear'
+    if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
+      return help.clearCache(req, function (err) {
+        help.sendBackJSON(200, res, next)(err, {
+          result: 'success',
+          message: 'Succeed to clear'
+        });
       });
-    });
 
-    next();
+      next();
+    }
   });
+
+  this.app.use('/api/status', function(req, res, next) {
+    if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
+      var params = {
+        site: site,
+        package: '@dadi/web',
+        version: version,
+        healthCheck: {
+          baseUrl: 'http://' + config.get('server.host') + ':' + config.get('server.port'),
+          routes: config.get('status.routes')
+        }
+      }
+
+      dadiStatus(params, function(err, data) {
+        if (err) return next(err);
+        var resBody = JSON.stringify(data, null, 2);
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('content-length', Buffer.byteLength(resBody));
+        res.end(resBody);
+      });
+    }
+  });
+
 
   self.ensureDirectories(options, function(text) {
 
@@ -647,7 +666,7 @@ Server.prototype.dustCompile = function (options) {
 
       fs.readFile(template, { encoding: 'utf8' }, function (err, data) {
         if (err) {
-          // no template file found? 
+          // no template file found?
           return callback(err, null);
         }
 

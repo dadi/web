@@ -41,6 +41,33 @@ module.exports.shouldNotHaveHeader = function(header) {
   };
 }
 
+module.exports.addHttpInterceptForApiCheck = function() {
+  var fakeToken = {
+    "accessToken": "da6f610b-6f91-4bce-945d-9829cac5de71",
+    "tokenType": "Bearer",
+    "expiresIn": 1800
+  }
+
+  http.register_intercept({
+    hostname: config.get('api.host'),
+    port: config.get('api.port'),
+    path: '/',
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  // fake token post
+  http.register_intercept({
+    hostname: config.get('api.host'),
+    port: config.get('api.port'),
+    path: '/token',
+    method: 'POST',
+    agent: new http.Agent({ keepAlive: true }),
+    headers: { 'Content-Type': 'application/json' },
+    body: fakeToken
+  });
+}
+
 module.exports.addHttpIntercept = function(endpoint, status, body) {
   http.register_intercept({
     hostname: config.get('api.host'),
@@ -109,6 +136,8 @@ module.exports.startServer = function(pages, done) {
 }
 
 module.exports.stopServer = function(done) {
+  http.clear_intercepts();
+
   Server.stop(function() {
     setTimeout(function() {
       done();
