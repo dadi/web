@@ -162,7 +162,7 @@ Controller.prototype.process = function (req, res, next) {
       done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next);
     }
 
-    self.loadData(req, res, data, function(err, data) {
+    self.loadData(req, res, data, function(err, data, dsResponse) {
 
       // return 404 if requiredDatasources contain no data
       if (!self.requiredDataPresent(data)) {
@@ -172,6 +172,15 @@ Controller.prototype.process = function (req, res, next) {
       if (err) {
         if (err.statusCode && err.statusCode === 404) return next();
         return done(err);
+      }
+
+      // If we received a response back from the datasource, and
+      // not just the data, send the whole response back
+      if (dsResponse) {
+        if (dsResponse.statusCode === 202) {
+          done = sendBackJSON(dsResponse.statusCode, res, next);
+          return done(null, data);
+        }
       }
 
       help.timer.stop(req.method.toLowerCase());
@@ -293,9 +302,13 @@ Controller.prototype.loadData = function(req, res, data, done) {
         help.timer.start('datasource: ' + ds.name);
 
         var dataHelper = new help.DataHelper(ds, req.url);
-        dataHelper.load(function(err, result) {
+        dataHelper.load(function(err, result, dsResponse) {
           help.timer.stop('datasource: ' + ds.name);
           if (err) return done(err);
+
+          if (dsResponse) {
+            return done(null, result, dsResponse);
+          }
 
           if (result) {
             try {
