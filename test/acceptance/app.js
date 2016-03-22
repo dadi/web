@@ -3,9 +3,6 @@ var sinon = require('sinon');
 var should = require('should');
 var request = require('supertest');
 var mkdirp = require('mkdirp');
-// loaded customised fakeweb module
-var fakeweb = require(__dirname + '/../fakeweb');
-var http = require('http');
 var _ = require('underscore');
 var path = require('path');
 var assert = require('assert');
@@ -20,12 +17,6 @@ var config = require(__dirname + '/../../config.js');
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port');
 var credentials = { clientId: config.get('auth.clientId'), secret: config.get('auth.secret') }
-
-var token = JSON.stringify({
-  "accessToken": "da6f610b-6f91-4bce-945d-9829cac5de71",
-  "tokenType": "Bearer",
-  "expiresIn": 1800
-});
 
 function cleanupPath(path, done) {
   try {
@@ -45,46 +36,22 @@ function cleanupPath(path, done) {
   }
 }
 
-describe('Application', function(done) {
-
-  var auth;
-  var body = '<html><body>Test</body></html>';
+describe.skip('Application', function(done) {
 
   beforeEach(function(done) {
-
     help.clearCache();
 
     // fake api available check
-    http.register_intercept({
-      hostname: config.get('api.host'),
-      port: config.get('api.port'),
-      path: '/',
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    // fake token post
-    http.register_intercept({
-      hostname: config.get('api.host'),
-      port: config.get('api.port'),
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' },
-      body: token
-    });
-
+    help.addHttpInterceptForApiCheck();
     done();
   });
 
   after(function(done) {
     help.clearCache();
-    http.clear_intercepts();
     done()
   });
 
   afterEach(function(done) {
-    http.clear_intercepts();
     help.stopServer(done);
   });
 
@@ -141,6 +108,7 @@ describe('Application', function(done) {
       .end(done);
     });
   });
+
   it('should throw an error if the template is not found when calling `view.render()`', function (done) {
 
     var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
