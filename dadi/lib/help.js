@@ -11,8 +11,8 @@ var perfy = require('perfy');
 var crypto = require('crypto');
 var zlib = require('zlib');
 
+var auth = require(__dirname + '/auth');
 var log = require(__dirname + '/log');
-var token = require(__dirname + '/auth/token');
 var config = require(__dirname + '/../../config.js');
 var cache = require(__dirname + '/cache');
 var DatasourceCache = require(__dirname + '/cache/datasource');
@@ -311,6 +311,32 @@ module.exports.clearCache = function (req, callback) {
   }
 };
 
+/**
+ * Creates a URL/filename friendly version (slug) of any object that implements `toString()`
+ * @param {Object} input - object to be slugified
+ */
+module.exports.slugify = function (input) {
+  return input.toString()
+            .toLowerCase()
+            .replace(/[\?\#][\s\S]*$/g, '')
+            .replace(/\/+/g, '-')
+            .replace(/\s+/g, '')
+            .replace(/[^\w\-]+/g, '')
+            .replace(/\-\-+/g, '-')
+            .replace(/^-+/, '')
+            .replace(/-+$/, '');
+};
+
+/**
+ * Generates a filename for a token wallet file
+ * @param {String} host - Issuer host
+ * @param {Number} port - Issuer port
+ * @param {String} clientId - Client ID
+ */
+module.exports.generateTokenWalletFilename = function (host, port, clientId) {
+  return 'token.' + self.slugify(host + port) + '.' + self.slugify(clientId) + '.json';
+};
+
 // creates a new function in the underscore.js namespace
 // allowing us to pluck multiple properties - used to return only the
 // fields we require from an array of objects
@@ -448,14 +474,35 @@ DataHelper.prototype.processOutput = function(res, data, done) {
 }
 
 DataHelper.prototype.getHeaders = function(done) {
-  if (this.datasource.authStrategy){
-    this.datasource.authStrategy.getToken(this.datasource, function (err, token){
-      if (err) return done(err);
-      return done(null, { headers: { 'Authorization': 'Bearer ' + token, 'accept-encoding': 'gzip' } } );
-    });
-  }
-  else {
-    return done(null, { headers: { 'Authorization': 'Bearer ' + token.authToken.accessToken, 'accept-encoding': 'gzip' } } );
+  var headers = {
+    'accept-encoding': 'gzip'
+  };
+
+  // If the data-source has its own auth strategy, use it.
+  // Otherwise, authenticate with the main server via bearer token
+  if (this.datasource.authStrategy) {
+    // This could eventually become a switch statement that handles different auth types
+    if (this.datasource.authStrategy.getType() === 'bearer') {
+      this.datasource.authStrategy.getToken(this.datasource, function (err, bearerToken) {
+        if (err) {
+          return done(err);
+        }
+
+        headers['Authorization'] = 'Bearer ' + bearerToken;
+
+        return done(null, {headers: headers});
+      });
+    }
+  } else {
+    auth.getToken(this.datasource, function (err, bearerToken) {
+      if (err) {
+        return done(err);
+      }
+
+      headers['Authorization'] = 'Bearer ' + bearerToken;
+
+      return done(null, {headers: headers});
+    });    
   }
 }
 
