@@ -39,6 +39,11 @@ var conf = convict({
       format: '*',
       default: '0.0.0.0'
     },
+    protocol: {
+      doc: "The protocol for the DADI API application",
+      format: String,
+      default: "http"
+    },
     port: {
       doc: "The port for the DADI API application",
       format: 'port',
@@ -55,6 +60,11 @@ var conf = convict({
       doc: "",
       format: String,
       default: "/token"
+    },
+    protocol: {
+      doc: "",
+      format: String,
+      default: "http"
     },
     clientId: {
       doc: "",
