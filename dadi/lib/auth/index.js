@@ -24,7 +24,7 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: __dirname + '/' + help.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+      path: config.get('paths.tokenWallet') + '/' + help.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
     }
   });
 };
@@ -44,7 +44,7 @@ module.exports = function (server) {
       log.info({module: 'auth'}, 'Retrieving access token for "' + req.url + '"');
       help.timer.start('auth');
 
-      self.getToken().then(function (bearerToken) {
+      return self.getToken().then(function (bearerToken) {
         help.timer.stop('auth');
 
         return next();
