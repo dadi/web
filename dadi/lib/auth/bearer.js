@@ -1,3 +1,4 @@
+var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
 var Passport = require(__dirname + '/../../../../passport/node/src'); // !!! TODO: Replace with NPM
@@ -15,18 +16,18 @@ BearerAuthStrategy.prototype.getType = function () {
 };
 
 BearerAuthStrategy.prototype.getToken = function (datasource, done) {
-  var config = datasource.authStrategy.config;
+  var strategy = datasource.authStrategy.config;
 
   Passport({
     issuer: {
-      uri: (config.protocol || 'http') + '://' + config.host,
-      port: config.port,
-      endpoint: config.tokenUrl
+      uri: (strategy.protocol || 'http') + '://' + strategy.host,
+      port: strategy.port,
+      endpoint: strategy.tokenUrl
     },
-    credentials: config.credentials,
+    credentials: strategy.credentials,
     wallet: 'file',
     walletOptions: {
-      path: __dirname + '/' + help.generateTokenWalletFilename(config.host, config.port, config.credentials.clientId)
+      path: config.get('paths.tokenWallet') + '/' + help.generateTokenWalletFilename(strategy.host, strategy.port, strategy.credentials.clientId)
     }
   }).then(function (bearerToken) {
     return done(null, bearerToken);
