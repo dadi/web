@@ -262,7 +262,8 @@ var conf = convict({
       pages: __dirname + '/app/pages',
       partials: __dirname + '/app/partials',
       public: __dirname + '/app/public',
-      routes: __dirname + '/app/routes'
+      routes: __dirname + '/app/routes',
+      tokenWallet: __dirname + '/.wallet'
     }
   },
   sessions: {
