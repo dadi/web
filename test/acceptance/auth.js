@@ -152,11 +152,6 @@ describe.only('Auth', function (done) {
         .expect('content-type', 'text/html')
         .expect(404)
         .end(function (err, res) {
-          console.log('');
-          console.log('** ERR:', err);
-          console.log('--> res:', res);
-          console.log('');
-
           res.text.indexOf('URL not found: The request for URL \'http://invalid.url:' + config.get('api.port') + config.get('auth.tokenUrl') + '\' returned a 404')
                   .should.be.above(-1);
 
