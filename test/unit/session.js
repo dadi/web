@@ -182,7 +182,16 @@ describe('Session', function (done) {
       done();
     });
 
-    it('should use a Redis store if one is specified');
+    it('should use a Redis store if one is specified', function(done) {
+
+      config.set('sessions.store', 'redis://localhost:6379');
+
+      var store = Server.getSessionStore(config.get('sessions'));
+      (typeof store).should.eql('object');
+      store.client.address.should.eql('localhost:6379');
+
+      done();
+    });
 
     it('should throw error if an in-memory session store is used in production', function(done) {
 

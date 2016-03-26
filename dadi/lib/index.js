@@ -29,6 +29,8 @@ if (nodeVersion < 1) {
 else {
   mongoStore = require('connect-mongo')(session);
 }
+var RedisStore = require('connect-redis')(session);
+
 
 // let's ensure there's at least a dev config file here
 var devConfigPath = __dirname + '/../../config/config.development.json';
@@ -710,8 +712,10 @@ Server.prototype.getSessionStore = function(sessionConfig) {
 		  url: sessionConfig.store
     });
   }
-  else if (sessionConfig.store.indexOf(':') > 0) {
-    // redis
+  else if (sessionConfig.store.indexOf('redis') > -1) {
+    return new RedisStore({
+      url: sessionConfig.store
+    });
   }
 }
 
