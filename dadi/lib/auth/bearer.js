@@ -1,7 +1,7 @@
 var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
-var Passport = require(__dirname + '/../../../../passport/node/src'); // !!! TODO: Replace with NPM
+var Passport = require('@dadi/passport');
 
 var BearerAuthStrategy = function(options) {
   this.config = options;

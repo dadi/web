@@ -9,6 +9,7 @@
     "posttest": "./scripts/coverage.js"
   },
   "dependencies": {
+    "@dadi/passport": "^1.0.0",
     "@dadi/status": "git+https://git@github.com/dadi/status.git",
     "async": "^1.4.2",
     "aws-kinesis-writable": "^1.3.1",

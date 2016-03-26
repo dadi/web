@@ -7,7 +7,7 @@ var log = require(__dirname + '/../log');
 var mkdirp = require('mkdirp');
 var path = require('path');
 
-var Passport = require(__dirname + '/../../../../passport/node/src'); // !!! TODO: Replace with NPM
+var Passport = require('@dadi/passport');
 
 var self = this;
 
