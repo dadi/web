@@ -16,6 +16,7 @@ var log = require(__dirname + '/log');
 var config = require(__dirname + '/../../config.js');
 var cache = require(__dirname + '/cache');
 var DatasourceCache = require(__dirname + '/cache/datasource');
+var Passport = require('@dadi/passport');
 
 var self = this;
 
@@ -337,6 +338,24 @@ module.exports.generateTokenWalletFilename = function (host, port, clientId) {
   return 'token.' + self.slugify(host + port) + '.' + self.slugify(clientId) + '.json';
 };
 
+module.exports.getToken = function () {
+  return Passport({
+    issuer: {
+      uri: config.get('api.protocol') + '://' + config.get('api.host'),
+      port: config.get('api.port'),
+      endpoint: config.get('auth.tokenUrl')
+    },
+    credentials: {
+      clientId: config.get('auth.clientId'),
+      secret: config.get('auth.secret')
+    },
+    wallet: 'file',
+    walletOptions: {
+      path: config.get('paths.tokenWallet') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+    }
+  });
+}
+
 // creates a new function in the underscore.js namespace
 // allowing us to pluck multiple properties - used to return only the
 // fields we require from an array of objects
@@ -366,7 +385,7 @@ var DataHelper = function(datasource, requestUrl) {
   this.options = {
     host: this.datasource.source.host || config.get('api.host'),
     port: this.datasource.source.port || config.get('api.port'),
-    path: this.datasource.endpoint,
+    path: url.parse(this.datasource.endpoint).path,
     method: 'GET',
     agent: this.keepAliveAgent()
   }
@@ -494,15 +513,27 @@ DataHelper.prototype.getHeaders = function(done) {
       });
     }
   } else {
-    auth.getToken(this.datasource, function (err, bearerToken) {
-      if (err) {
+    try {
+      module.exports.getToken(this.datasource).then(function (bearerToken) {
+        headers['Authorization'] = 'Bearer ' + bearerToken;
+
+        module.exports.timer.stop('auth');
+        return done(null, {headers: headers});
+      }).catch(function (errorData) {
+        var err = new Error();
+        err.name = errorData.title;
+        err.message = errorData.detail;
+        err.remoteIp = config.get('api.host');
+        err.remotePort = config.get('api.port');
+        err.path = config.get('auth.tokenUrl');
+
+        module.exports.timer.stop('auth');
         return done(err);
-      }
-
-      headers['Authorization'] = 'Bearer ' + bearerToken;
-
-      return done(null, {headers: headers});
-    });    
+      });
+    }
+    catch (err) {
+      console.log(err.stack)
+    }
   }
 }
 
