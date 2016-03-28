@@ -1,7 +1,7 @@
 var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
-var Passport = require(__dirname + '/../../../../passport/node/src'); // !!! TODO: Replace with NPM
+var Passport = require('@dadi/passport');
 
 var BearerAuthStrategy = function(options) {
   this.config = options;
@@ -17,6 +17,7 @@ BearerAuthStrategy.prototype.getType = function () {
 
 BearerAuthStrategy.prototype.getToken = function (datasource, done) {
   var strategy = datasource.authStrategy.config;
+  var self = this;
 
   Passport({
     issuer: {
@@ -35,9 +36,9 @@ BearerAuthStrategy.prototype.getToken = function (datasource, done) {
     var err = new Error();
     err.name = errorData.title;
     err.message = errorData.detail;
-    err.remoteIp = options.issuer.uri;
-    err.remotePort = options.issuer.port;
-    err.path = options.issuer.endpoint;
+    err.remoteIp = self.config.host;
+    err.remotePort = self.config.port;
+    err.path = self.config.tokenUrl;
 
     return done(err);
   });
