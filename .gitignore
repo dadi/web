@@ -1,3 +1,6 @@
+# Auth wallet
+.wallet
+
 public/*
 app/*
 workspace/*
