@@ -689,7 +689,7 @@ Server.prototype.getSessionStore = function(sessionConfig) {
       message += JSON.stringify(sessionConfig, null, 2);
       message += '\n\n';
 
-      sessionConfig.store = '<redis_server_host>:<redis_server_port>';
+      sessionConfig.store = 'redis://<redis_server_host>:<redis_server_port>';
       message += 'Redis\n'.green;
       message += JSON.stringify(sessionConfig, null, 2);
       message += '\n\n';
