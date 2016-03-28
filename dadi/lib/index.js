@@ -280,6 +280,8 @@ Server.prototype.loadPaths = function(paths) {
   options.filtersPath = path.resolve(paths.filters || __dirname + '/../../app/utils/filters');
   options.helpersPath = path.resolve(paths.helpers || __dirname + '/../../app/utils/helpers');
 
+  options.tokenWalletsPath = path.resolve(paths.tokenWallets || __dirname + '/../../.wallet');
+
   if (paths.media) options.mediaPath = path.resolve(paths.media);
   if (paths.public) options.publicPath = path.resolve(paths.public);
 

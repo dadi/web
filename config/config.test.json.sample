@@ -27,6 +27,8 @@
     "middleware": "test/app/middleware",
     "media": "test/app/media",
     "public": "test/app/public",
-    "routes": "test/app/routes"
+    "routes": "test/app/routes",
+    "filters": "test/app/utils/filters",
+    "helpers": "test/app/utils/helpers"
   }
 }

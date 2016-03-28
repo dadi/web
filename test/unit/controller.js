@@ -262,7 +262,7 @@ describe('Controller', function (done) {
       var page = getPage();
       controller = Controller(page, options);
       controller.preloadEvents.should.exist;
-      controller.preloadEvents['test_global_event'].should.exist;
+      controller.preloadEvents[0].name.should.eql('test_global_event');
       done();
     })
 

@@ -3,8 +3,7 @@ var should = require('should');
 var request = require('supertest');
 // loaded customised fakeweb module
 var fakeweb = require(__dirname + '/../fakeweb');
-var http = require('http');
-var proxyquire =  require('proxyquire');
+var nock = require('nock')
 var _ = require('underscore');
 
 var Controller = require(__dirname + '/../../dadi/lib/controller');
@@ -18,7 +17,7 @@ var config = require(__dirname + '/../../config.js');
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port');
 
-var token = require(__dirname + '/../../dadi/lib/auth/token');
+var auth = require(__dirname + '/../../dadi/lib/auth');
 
 var tokenResult = JSON.stringify({
   "accessToken": "da6f610b-6f91-4bce-945d-9829cac5de71",
@@ -68,10 +67,7 @@ function startServer(done) {
 
 describe('Auth', function (done) {
 
-  var auth;
-
   before(function(done) {
-    http.clear_intercepts();
     done();
   });
 
@@ -84,7 +80,6 @@ describe('Auth', function (done) {
 
   afterEach(function(done) {
     libHelp.isApiAvailable.restore();
-    http.clear_intercepts();
     help.stopServer(done);
   });
 
@@ -96,8 +91,6 @@ describe('Auth', function (done) {
       Server.app = api();
       var server = Server;
 
-      auth = proxyquire('../../dadi/lib/auth', {'http': http});
-
       auth(server);
       server.app.all.length.should.eql(1);
 
@@ -107,80 +100,68 @@ describe('Auth', function (done) {
 
   it('should return error if no token was obtained', function (done) {
 
+    var oldClientId = config.get('auth.clientId');
+
+    config.set('auth.clientId', 'wrongClient');
     config.set('api.enabled', true);
 
-    var authToken = token.authToken
-    token.authToken = null
 
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    delete require.cache['../../dadi/lib/auth'];
-    auth = proxyquire('../../dadi/lib/auth', {'http': http});
+    var scope = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(401);
 
     startServer(function() {
+      Server.app = api();
+      var server = Server;
 
-      setTimeout(function() {
+      auth(server);
 
-        var client = request(clientHost);
-        client
-        .get('/test')
+      var client = request(clientHost);
+      client
+        .get('/')
+        .set('Connection', 'keep-alive')
         .expect('content-type', 'text/html')
         .expect(500)
         .end(function (err, res) {
-          if (err) return done(err);
-          token.authToken = authToken
+
+          var message = 'Credentials not found or invalid: The authorization process failed for the clientId/secret pair provided'
+          res.text.toString().indexOf(message).should.be.above(-1);
+
+          config.set('auth.clientId', oldClientId);
+
           done();
         });
-      }, 700);
-
     });
 
   });
 
   it('should return error if api can\'t be reached', function (done) {
 
+    var oldApiHost = config.get('api.host');
+
+    config.set('api.host', 'invalid.url');
     config.set('api.enabled', true);
 
-    var authToken = token.authToken
-    token.authToken = null
-
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    http.replyWithError();
-
-    delete require.cache['../../dadi/lib/auth'];
-    auth = proxyquire('../../dadi/lib/auth', {'http': http});
-
     startServer(function() {
+      Server.app = api();
+      var server = Server;
 
-      setTimeout(function() {
+      auth(server);
 
-        var client = request(clientHost);
-        client
+      var client = request(clientHost);
+      client
         .get('/')
+        .set('Connection', 'keep-alive')
         .expect('content-type', 'text/html')
-        .expect(500)
+        //.expect(404)
         .end(function (err, res) {
-          if (err) return done(err);
-          token.authToken = authToken
+          var message = "URL not found: The request for URL \'http://invalid.url:" + config.get('api.port') + config.get('auth.tokenUrl') + "\' returned a 404"
+          res.text.toString().indexOf(message).should.be.above(-1);
+
+          config.set('api.host', oldApiHost);
+
           done();
         });
-      }, 700);
-
     });
 
   });
@@ -189,18 +170,11 @@ describe('Auth', function (done) {
 
     config.set('api.enabled', true);
 
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' },
-      body: tokenResult
-    });
-
-    delete require.cache['../../dadi/lib/auth'];
-    auth = proxyquire('../../dadi/lib/auth', {'http': http});
+    var scope = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(200, {
+        accessToken: 'xx'
+      });
 
     startServer(function() {
       setTimeout(function() {
@@ -212,6 +186,9 @@ describe('Auth', function (done) {
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
+
+          res.statusCode.should.eql(200);
+
           done();
         });
       }, 200);

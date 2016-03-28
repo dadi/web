@@ -1,101 +1,55 @@
 /**
  * @module Auth
  */
-var http = require('http');
-var url = require('url');
-var querystring = require('querystring');
-
 var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
 var log = require(__dirname + '/../log');
-var token = require(__dirname + '/token');
+var mkdirp = require('mkdirp');
+var path = require('path');
+
+var Passport = require('@dadi/passport');
+
+var self = this;
+
+// module.exports.getToken = function () {
+//   return Passport({
+//     issuer: {
+//       uri: config.get('api.protocol') + '://' + config.get('api.host'),
+//       port: config.get('api.port'),
+//       endpoint: config.get('auth.tokenUrl')
+//     },
+//     credentials: {
+//       clientId: config.get('auth.clientId'),
+//       secret: config.get('auth.secret')
+//     },
+//     wallet: 'file',
+//     walletOptions: {
+//       path: config.get('paths.tokenWallet') + '/' + help.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+//     }
+//   });
+// };
 
 // This attaches middleware to the passed in app instance
 module.exports = function (server) {
+  server.app.use(function (req, res, next) {
+    log.info({module: 'auth'}, 'Retrieving access token for "' + req.url + '"');
+    help.timer.start('auth');
 
-    var tokenRoute = config.get('auth.tokenUrl') || '/token';
+    return help.getToken().then(function (bearerToken) {
+      help.timer.stop('auth');
 
-    // Authorize
-    server.app.use(function (req, res, next) {
+      return next();
+    }).catch(function (errorData) {
+      var err = new Error();
+      err.name = errorData.title;
+      err.message = errorData.detail;
+      err.remoteIp = config.get('api.host');
+      err.remotePort = config.get('api.port');
+      err.path = config.get('auth.tokenUrl');
 
-        var self = this;
+      help.timer.stop('auth');
 
-        // don't authenticate *.jpg GET requests
-        var path = url.parse(req.url).pathname;
-        if (path.split(".").pop() === 'jpg') return next();
-
-        if (token.authToken.accessToken) {
-          var now = Math.floor(Date.now() / 1000);
-          // if the token creation date + expiry in seconds is greater
-          // than the current time, we don't need to generate a new token
-          if ((token.created_at + token.authToken.expiresIn) > now) {
-            return next();
-          }
-        }
-
-        log.info({module: 'auth'}, 'Generating new access token for "' + req.url + '"');
-        help.timer.start('auth');
-
-        var postData = JSON.stringify({
-          clientId : config.get('auth.clientId'),
-          secret : config.get('auth.secret')
-        });
-
-        var options = {
-          hostname: config.get('api.host'),
-          port: config.get('api.port'),
-          path: tokenRoute,
-          method: 'POST',
-          agent: new http.Agent({ keepAlive: true }),
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        };
-
-        var request = http.request(options, function(res) {
-          var output = '';
-
-          res.on('data', function(chunk) {
-            output += chunk;
-          });
-
-          res.on('end', function() {
-            if (!output) {
-              var err = new Error();
-              var message = 'No token received, invalid credentials.';
-              err.name = 'Authentication';
-              err.message = message;
-              err.remoteIp = options.hostname;
-              err.remotePort = options.port;
-              err.path = options.path;
-              return next(err);
-            }
-
-            var tokenResponse = JSON.parse(output);
-            token.authToken = tokenResponse;
-            token.created_at = Math.floor(Date.now() / 1000);
-
-            help.timer.stop('auth');
-
-            return next();
-          });
-        });
-
-        request.on('error', function(err) {
-          var message = 'Couldn\'t request accessToken';
-          err.name = 'Authentication';
-          err.message = message;
-          err.remoteIp = options.hostname;
-          err.remotePort = options.port;
-
-          help.timer.stop('auth');
-          next(err);
-        });
-
-        // write data to request body
-        request.write(postData);
-
-        request.end();
+      return next(err);
     });
-
+  });
 };
