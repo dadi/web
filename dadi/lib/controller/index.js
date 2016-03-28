@@ -66,26 +66,20 @@ Controller.prototype.attachDatasources = function(done) {
 Controller.prototype.attachEvents = function(done) {
   var self = this;
 
-  this.page.events.forEach(function(eventName) {
-    var e = new Event(self.page.name, eventName, self.options);
-    self.events.push(e);
-  });
-
   // add global events first
   config.get('globalEvents').forEach(function(eventName) {
     var e = new Event(self.page.name, eventName, self.options);
     self.preloadEvents.push(e);
-  });
-
-  // add global events first
-  config.get('globalEvents').forEach(function(eventName) {
-    var e = new Event(self.page.name, eventName, self.options);
-    self.preloadEvents[eventName] = e;
   });
 
   this.page.preloadEvents.forEach(function(eventName) {
     var e = new Event(self.page.name, eventName, self.options);
     self.preloadEvents.push(e);
+  });
+
+  this.page.events.forEach(function(eventName) {
+    var e = new Event(self.page.name, eventName, self.options);
+    self.events.push(e);
   });
 
   done();
