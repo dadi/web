@@ -5,12 +5,15 @@ var request = require('supertest');
 var fakeweb = require(__dirname + '/../fakeweb');
 var http = require('http');
 var proxyquire =  require('proxyquire');
+var nock =  require('nock');
+var url =  require('url');
 var _ = require('underscore');
 
 var Controller = require(__dirname + '/../../dadi/lib/controller');
 var Datasource = require(__dirname + '/../../dadi/lib/datasource');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var api = require(__dirname + '/../../dadi/lib/api');
+var auth = require(__dirname + '/../../dadi/lib/auth');
 var Server = require(__dirname + '/../../dadi/lib');
 var help = require(__dirname + '/../help');
 var libHelp = require(__dirname + '/../../dadi/lib/help');
@@ -27,7 +30,6 @@ var token = JSON.stringify({
 
 describe('Auth', function (done) {
   describe('Datasource', function (done) {
-  var auth;
 
   before(function(done) {
 
@@ -54,33 +56,6 @@ describe('Auth', function (done) {
   it.skip('should return error if no token was obtained', function (done) {
 
     config.set('api.enabled', true);
-
-    // first intercept is for the main auth
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' },
-      body: token
-    });
-
-    // second intercept is for the datasource
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    delete require.cache['../../dadi/lib/auth'];
-    auth = proxyquire('../../dadi/lib/auth', {'http': http});
-
-    delete require.cache['../../dadi/lib/auth/bearer'];
-    bearer_auth = proxyquire('../../dadi/lib/auth/bearer', {'http': http});
 
     help.startServer(null, function() {
       setTimeout(function() {
@@ -111,26 +86,17 @@ describe('Auth', function (done) {
     config.set('allowJsonView', true);
 
     // first intercept is for the main auth
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' },
-      body: token
-    });
+    var scope = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(200, {
+        accessToken: 'xx'
+      });
 
-    // second intercept is for the datasource
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' },
-      body: token
-    });
+    var scope2 = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(200, {
+        accessToken: 'xx'
+      });
 
     var result = JSON.stringify({
       results: [
@@ -140,23 +106,17 @@ describe('Auth', function (done) {
       ]
     });
 
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: 'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}',
-      method: 'GET',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
-      body: result
-    });
+    var scope3 = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(200, {
+        accessToken: 'xx'
+      });
 
-    //console.log(http.get_intercepts())
-
-    delete require.cache['../../dadi/lib/auth'];
-    auth = proxyquire('../../dadi/lib/auth', {'http': http});
-
-    delete require.cache['../../dadi/lib/auth/bearer'];
-    bearer_auth = proxyquire('../../dadi/lib/auth/bearer', {'http': http});
+    var dsEndpoint = 'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}';
+    var dsPath = url.parse(dsEndpoint).path;
+    var scope4 = nock('http://127.0.0.1:3000')
+      .get(dsPath)
+      .reply(200, result);
 
     help.startServer(null, function() {
 
@@ -168,7 +128,6 @@ describe('Auth', function (done) {
         .expect('content-type', 'application/json')
         .expect(200)
         .end(function (err, res) {
-
           if (err) return done(err);
 
           var actual = JSON.stringify(res.body['car-makes-unchained']);

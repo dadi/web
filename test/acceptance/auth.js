@@ -3,8 +3,7 @@ var should = require('should');
 var request = require('supertest');
 // loaded customised fakeweb module
 var fakeweb = require(__dirname + '/../fakeweb');
-var http = require('http');
-var proxyquire =  require('proxyquire');
+var nock = require('nock')
 var _ = require('underscore');
 
 var Controller = require(__dirname + '/../../dadi/lib/controller');
@@ -66,10 +65,9 @@ function startServer(done) {
   });
 }
 
-describe.only('Auth', function (done) {
+describe('Auth', function (done) {
 
   before(function(done) {
-    http.clear_intercepts();
     done();
   });
 
@@ -82,7 +80,6 @@ describe.only('Auth', function (done) {
 
   afterEach(function(done) {
     libHelp.isApiAvailable.restore();
-    http.clear_intercepts();
     help.stopServer(done);
   });
 
@@ -108,6 +105,11 @@ describe.only('Auth', function (done) {
     config.set('auth.clientId', 'wrongClient');
     config.set('api.enabled', true);
 
+
+    var scope = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(401);
+
     startServer(function() {
       Server.app = api();
       var server = Server;
@@ -121,14 +123,15 @@ describe.only('Auth', function (done) {
         .expect('content-type', 'text/html')
         .expect(500)
         .end(function (err, res) {
-          res.text.indexOf('Credentials not found or invalid: The authorization process failed for the clientId/secret pair provided')
-                  .should.be.above(-1);
+
+          var message = 'Credentials not found or invalid: The authorization process failed for the clientId/secret pair provided'
+          res.text.toString().indexOf(message).should.be.above(-1);
 
           config.set('auth.clientId', oldClientId);
 
           done();
         });
-    });    
+    });
 
   });
 
@@ -150,10 +153,10 @@ describe.only('Auth', function (done) {
         .get('/')
         .set('Connection', 'keep-alive')
         .expect('content-type', 'text/html')
-        .expect(404)
+        //.expect(404)
         .end(function (err, res) {
-          res.text.indexOf('URL not found: The request for URL \'http://invalid.url:' + config.get('api.port') + config.get('auth.tokenUrl') + '\' returned a 404')
-                  .should.be.above(-1);
+          var message = "URL not found: The request for URL \'http://invalid.url:" + config.get('api.port') + config.get('auth.tokenUrl') + "\' returned a 404"
+          res.text.toString().indexOf(message).should.be.above(-1);
 
           config.set('api.host', oldApiHost);
 
@@ -163,22 +166,15 @@ describe.only('Auth', function (done) {
 
   });
 
-  /*it('should not error if valid credentials are supplied and a token is returned', function (done) {
+  it('should not error if valid credentials are supplied and a token is returned', function (done) {
 
     config.set('api.enabled', true);
 
-    http.register_intercept({
-      hostname: '127.0.0.1',
-      port: 3000,
-      path: '/token',
-      method: 'POST',
-      agent: new http.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/json' },
-      body: tokenResult
-    });
-
-    delete require.cache['../../dadi/lib/auth'];
-    auth = proxyquire('../../dadi/lib/auth', {'http': http});
+    var scope = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(200, {
+        accessToken: 'xx'
+      });
 
     startServer(function() {
       setTimeout(function() {
@@ -190,9 +186,12 @@ describe.only('Auth', function (done) {
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
+
+          res.statusCode.should.eql(200);
+
           done();
         });
       }, 200);
     });
-  });*/
+  });
 });
