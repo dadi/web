@@ -17,6 +17,7 @@
     "body-parser": "^1.11.0",
     "bunyan": "^1.5.1",
     "colors": "latest",
+    "commitplease": "^2.3.0",
     "common-dustjs-helpers": "^0.1.0",
     "compression": "^1.6.0",
     "connect-mongo": "1.0.1",
