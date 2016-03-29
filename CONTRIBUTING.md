@@ -18,21 +18,21 @@ Here are the guidelines we'd like you to follow:
 Documentation is maintained under the `docs` branch and can be found on the [dadi.tech](https://dadi.tech) site.
 
 If the documentation doesn't answer your problem please feel free to email the
-DADI team [directly](team@dadi.tech).
+DADI team directly on: team@dadi.tech
 
 ## <a name="issue"></a> Found an Issue?
 If you find a bug in the source code or a mistake in the documentation, you can help us by
-submitting an issue to our [GitHub Repository][github]. We'd love it if you
+submitting an issue to our [GitHub Repository][github]. But we'd love it if you
 submitted a Pull Request with a fix instead!
 
 **Please see the Submission Guidelines below**.
 
 ## <a name="feature"></a> Want a Feature?
-You can request a new feature by submitting an issue to our [GitHub][github] issue tracker.
+You can request a new feature by submitting an issue to our [GitHub][issues] issue tracker.
 If you would like to implement a new feature then consider what kind of change it is:
 
 * **Major Changes** that you wish to contribute to the project should be added as
-a Feature Request in the [GitHub][github] issue tracker. This will get the conversation
+a Feature Request in the [GitHub][issues] issue tracker. This will get the conversation
 started.
 * **Small Changes** can be crafted and submitted to the [GitHub Repository][github] as a Pull Request.
 
@@ -53,7 +53,7 @@ chances of your issue being dealt with quickly:
 * **Steps to Reproduce** - provide a set of steps to follow to reproduce the error.
 * **Related Issues** - has a similar issue been reported before?
 * **Suggest a Fix** - if you can't fix the bug yourself, perhaps you can point to what might be
-  causing the problem (line of code or commit)
+  causing the problem (e.g. a line of code or a commit)
 
 ### Submitting a Pull Request
 Before you submit your pull request consider the following guidelines:
