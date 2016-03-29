@@ -18,7 +18,6 @@
     "body-parser": "^1.11.0",
     "bunyan": "^1.5.1",
     "colors": "latest",
-    "commit-msg": "^0.2.1",
     "common-dustjs-helpers": "^0.1.0",
     "compression": "^1.6.0",
     "connect-mongo": "1.0.1",
@@ -81,29 +80,6 @@
   "homepage": "https://github.com/dadi/web",
   "directories": {
     "test": "test"
-  },
-  "commitMsg": {
-    "types": {
-      "allowedTypes": "^[A-Z][\\w-]*: ",
-      "required": true
-    },
-    "strictTypes": false,
-    "capitalized": false,
-    "subjectPreferredMaxLineLength": false,
-    "subjectMaxLineLength": {
-      "length": 70
-    },
-    "bodyMaxLineLength": {
-      "length": 80,
-      "type": "error"
-    },
-    "references": {
-      "github": {
-        "user": "dadi",
-        "repo": "web"
-      }
-    },
-    "imperativeVerbsInSubject": false
   },
   "author": "DADI <team@dadi.tech>",
   "license": "SEE LICENSE IN GPL.md"
