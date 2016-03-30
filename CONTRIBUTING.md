@@ -11,7 +11,7 @@ Here are the guidelines we'd like you to follow:
  - [Feature Requests](#feature)
  - [Submission Guidelines](#submit)
  - [Coding Rules](#rules)
- - [Commit Message Guidelines](#commit)
+ - [Git Commit Guidelines](#commit)
 
 ## <a name="question"></a> Got a Question or Problem?
 
@@ -60,10 +60,17 @@ Before you submit your pull request consider the following guidelines:
 
 * Search [GitHub][pulls] for an open or closed Pull Request
   that relates to your submission. You don't want to duplicate effort.
-* Make your changes in a new git branch:
+* Fork the original repository and clone your fork ([see this GitHub article](https://help.github.com/articles/fork-a-repo/)).
+* Add the original repository as an upstream remote: `git remote add upstream https://github.com/dadi/web.git`
+
+* Make your changes in a new git branch. Name your branch using the format `topic/branch_name`.
+Use `fix` for fixes and `feature` for features:
 
  ```shell
- git checkout -b my-fix-branch master
+ git checkout -b fix/my-fix-branch master
+ ```
+ ```shell
+ git checkout -b feature/my-new-feature-branch master
  ```
 
 * Create your patch, **including appropriate test cases**.
@@ -80,26 +87,31 @@ Before you submit your pull request consider the following guidelines:
 * Push your branch to GitHub:
 
   ```shell
-  git push origin my-fix-branch
+  git push origin fix/my-fix-branch
   ```
 
-* In GitHub, send a pull request to `web:master`.
+* In GitHub, send a pull request to `dadi/web:master`.
 * If we suggest changes then:
   * Make the required updates.
   * Re-run the full test suite to ensure tests are still passing.
-  * Commit your changes to your branch (e.g. `my-fix-branch`).
+  * Commit your changes to your branch (e.g. `fix/my-fix-branch`).
   * Push the changes to GitHub (this will update your Pull Request).
 
-If the PR gets too outdated we may ask you to rebase and force push to update the PR:
+If the pull request gets too outdated we may ask you to rebase and force push to update the pull request:
 
-  ```shell
-  git rebase master -i
-  git push origin my-fix-branch -f
-  ```
+```shell
+git rebase master -i
+git push origin fix/my-fix-branch -f
+```
 
 *WARNING. Squashing or reverting commits and forced push thereafter may remove GitHub comments on code that were previously made by you and others in your commits.*
 
-That's it! Thank you for your contribution!
+* Documentation! Please add relevant documentation to the pull request. If this is a new feature then
+please document it fully within the pull request. If you're making changes to an existing feature, please
+point give us a link to the existing [documentation][docs] along with your documentation changes. If you need
+an example of excellent pull request documentation, have a look at the [effort put in here](https://github.com/dadi/api/pull/27).
+
+> That's it! Thank you for your contribution!
 
 #### After your pull request is merged
 
@@ -132,17 +144,31 @@ After your pull request is merged, you can safely delete your branch and pull th
 ## <a name="rules"></a> Coding Rules
 To ensure consistency throughout the source code, keep these rules in mind as you are working:
 
+* Please use **two-space indentation**, as used in Node.JS itself.
 * All features or bug fixes **must be tested** by one or more tests. Browse the [test
 suite][tests] for examples.
 * All public API methods **must be documented** with [JSDoc](http://usejsdoc.org/).
 
 ## <a name="commit"></a> Git Commit Guidelines
 
+### One Change Per Commit
+
+A commit should contain exactly one logical change. A logical change includes adding a new feature, fixing a specific bug, etc. If it's not possible to describe the high level change in a few words, it is most likely too complex for a single commit. The diff itself should be as concise as reasonably possibly and it's almost always better to err on the side of too many patches than too few. As a rule of thumb, given only the commit message, another developer should be able to implement the same patch in a reasonable amount of time.
+
+Please don't include more than one change in each patch. If your commit message requires an "and" in the middle, it's likely you need separate commits.
+
+### Commit Message Format
+
 We have very precise rules over how our git commit messages can be formatted. This leads to **more readable messages** that are easy to follow when looking through the **project history**.  We also use the git commit messages to **generate the change log**.
 
 The commit message format validation can be initialised by running `npm run init` from the root of the repository. This will add a symlink at `.git/hooks/commit-msg` which will be run every time you commit.
 
-### Commit Message Format
+#### Line Length
+
+Any line of the commit message cannot be longer 100 characters. This allows the message to be easier to read on GitHub as well as in various git tools.
+
+#### Message Format
+
 Each commit message consists of a **header**, a **body** and a **footer**.  The header has a special format that includes a **type** and a **subject**:
 
 ```
@@ -150,12 +176,14 @@ type: subject
 
 Optional long description
 
-Fix #xxx
-Close #yyy
-Ref #zzz
+Fix #xxx (for fixing an issue)
+Close #yyy (for closing a pull request)
+Ref #zzz (for referencing another commit)
 ```
 
-Any line of the commit message cannot be longer 100 characters. This allows the message to be easier to read on GitHub as well as in various git tools.
+* Use `Fix #xxx` when the commit fixes an open issue.
+* Use `Close #xxx` when the commit closes an open pull request.
+* Use `Ref gh-xxx` when referencing an issue or pull request that is already closed or should remain open. Examples include partial fixes and commits that add a test but not a fix.
 
 ### Reverting
 If the commit reverts a previous commit, it should begin with `revert: `, followed by the header of the reverted commit. In the body it should say: `This reverts commit <hash>.`, where the hash is the SHA of the commit being reverted.
@@ -194,3 +222,4 @@ The footer should contain any information about **Breaking Changes** and is also
 [issues]: https://github.com/dadi/web/issues
 [pulls]: https://github.com/dadi/web/pulls
 [tests]: https://github.com/dadi/web/tree/master/test
+[docs]: https://github.com/dadi/web/tree/docs/
