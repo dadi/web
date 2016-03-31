@@ -78,12 +78,6 @@ Use `fix` for fixes and `feature` for features:
 * Run the full test suite using `npm test` and ensure that all tests pass.
 * Commit your changes using a descriptive commit message that follows our
   [commit message conventions](#commit-message-format) and passes our commit message presubmit hook. Adherence to the [commit message conventions](#commit-message-format) is required because release notes are automatically generated from these messages.
-
-   ```shell
-   git commit -a
-   ```
-  Note: the optional commit `-a` command line option will automatically "add" and "rm" edited files.
-
 * Push your branch to GitHub:
 
   ```shell
@@ -108,7 +102,7 @@ git push origin fix/my-fix-branch -f
 
 * Documentation! Please add relevant documentation to the pull request. If this is a new feature then
 please document it fully within the pull request. If you're making changes to an existing feature, please
-point give us a link to the existing [documentation][docs] along with your documentation changes. If you need
+give us a link to the existing [documentation][docs] along with your documentation changes. If you need
 an example of excellent pull request documentation, have a look at the [effort put in here](https://github.com/dadi/api/pull/27).
 
 > That's it! Thank you for your contribution!
@@ -176,14 +170,14 @@ type: subject
 
 Optional long description
 
-Fix #xxx (for fixing an issue)
-Close #yyy (for closing a pull request)
-Ref #zzz (for referencing another commit)
+Fix #xxx
+Close #yyy
+Ref #zzz
 ```
 
 * Use `Fix #xxx` when the commit fixes an open issue.
 * Use `Close #xxx` when the commit closes an open pull request.
-* Use `Ref gh-xxx` when referencing an issue or pull request that is already closed or should remain open. Examples include partial fixes and commits that add a test but not a fix.
+* Use `Ref #xxx` when referencing an issue or pull request that is already closed or should remain open. Examples include partial fixes and commits that add a test but not a fix.
 
 ### Reverting
 If the commit reverts a previous commit, it should begin with `revert: `, followed by the header of the reverted commit. In the body it should say: `This reverts commit <hash>.`, where the hash is the SHA of the commit being reverted.
