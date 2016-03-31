@@ -300,7 +300,7 @@ var conf = convict({
     cookie: {
       maxAge: {
         doc: "Set the cookie’s expiration as an interval of seconds in the future, relative to the time the browser received the cookie. Null means no 'expires' parameter is set so the cookie becomes a browser-session cookie. When the user closes the browser the cookie (and session) will be removed.",
-        format: Number,
+        format: '*',
         default: 60000
       },
       secure: {
