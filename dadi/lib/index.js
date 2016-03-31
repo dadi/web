@@ -11,6 +11,7 @@ var crypto = require('crypto');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var enableDestroy = require('server-destroy');
+var forceDomain = require('forcedomain');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
@@ -86,6 +87,12 @@ Server.prototype.start = function (done) {
 
     if (config.get('logging.sentry.dsn') !== "") {
       app.use(raven.middleware.express.requestHandler(config.get('logging.sentry.dsn')));
+    }
+
+    if (config.get('rewrites.forceDomain') !== "") {
+      app.use(forceDomain({
+        hostname: config.get('rewrites.forceDomain')
+      }));
     }
 
     // serve static files (css,js,fonts)

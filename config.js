@@ -335,6 +335,11 @@ var conf = convict({
       doc: "A set of filenames to remove from URLs. For example ['index.php', 'default.aspx']",
       format: Array,
       default: []
+    },
+    forceDomain: {
+      doc: "The domain to force requests to",
+      format: String,
+      default: ""
     }
   },
   env: {
