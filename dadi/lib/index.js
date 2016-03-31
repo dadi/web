@@ -11,7 +11,6 @@ var crypto = require('crypto');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
 var enableDestroy = require('server-destroy');
-var forceDomain = require('forcedomain');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
@@ -45,6 +44,7 @@ catch(err) {
 }
 
 var controller = require(__dirname + '/controller');
+var forceDomain = require(__dirname + '/controller/forceDomain');
 var router = require(__dirname + '/controller/router');
 var Page = require(__dirname + '/page');
 var middleware = require(__dirname + '/middleware');
@@ -91,7 +91,8 @@ Server.prototype.start = function (done) {
 
     if (config.get('rewrites.forceDomain') !== "") {
       app.use(forceDomain({
-        hostname: config.get('rewrites.forceDomain')
+        hostname: config.get('rewrites.forceDomain'),
+        port: 80
       }));
     }
 
