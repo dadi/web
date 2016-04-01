@@ -62,7 +62,7 @@ var categoriesResult2 = JSON.stringify({
 var carscope;
 var catscope;
 
-describe('Cache', function(done) {
+describe.skip('Cache', function(done) {
   describe('Invalidation API', function (done) {
 
     var auth;

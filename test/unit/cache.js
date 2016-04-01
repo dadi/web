@@ -19,6 +19,7 @@ describe('Cache', function (done) {
     server.object.app = api();
 
     var method = sinon.spy(server.object.app, 'use');
+    cache.reset()
     cache(server.object).init();
 
     method.called.should.eql(true);
@@ -85,7 +86,7 @@ describe('Cache', function (done) {
       paths: ['/fakeUrl'],
       url: 'http://www.example.com/fakeUrl'
     };
-
+    cache.reset()
     cache(server.object).cachingEnabled(req).should.eql(false);
 
     done();

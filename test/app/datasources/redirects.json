@@ -1,0 +1,24 @@
+{
+	"datasource": {
+		"key": "redirects",
+		"name": "redirects ds",
+		"source": {
+			"type": "remote",
+			"protocol": "http",
+      "host": "127.0.0.1",
+			"port": "3000",
+			"endpoint": "1.0/test/redirects"
+		},
+    "caching": {
+      "enabled": false,
+      "ttl": 1800
+    },
+		"paginate": false,
+		"count": 3,
+		"sort": {},
+		"filter": {},
+		"search": {},
+		"fields": {},
+		"requestParams": []
+	}
+}

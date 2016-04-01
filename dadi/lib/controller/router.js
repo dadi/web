@@ -264,7 +264,7 @@ module.exports = function (server, options) {
               results = JSON.parse(result);
             }
 
-            if (results && results.results && results.results.length > 0) {
+            if (results && results.results && results.results.length > 0 && results.results[0].rule === req.url) {
               var rule = results.results[0];
               var location;
               if (/\:\/\//.test(rule.replacement)) {

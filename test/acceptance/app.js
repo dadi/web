@@ -6,6 +6,7 @@ var mkdirp = require('mkdirp');
 var _ = require('underscore');
 var path = require('path');
 var assert = require('assert');
+var nock = require('nock')
 
 var Server = require(__dirname + '/../../dadi/lib');
 var api = require(__dirname + '/../../dadi/lib/api');
@@ -36,22 +37,26 @@ function cleanupPath(path, done) {
   }
 }
 
-describe.skip('Application', function(done) {
+describe('Application', function(done) {
 
   beforeEach(function(done) {
     help.clearCache();
 
-    // fake api available check
-    help.addHttpInterceptForApiCheck();
+    // intercept the api test at server startup
+    sinon.stub(libHelp, "isApiAvailable").yields(null, true);
+
     done();
   });
 
   after(function(done) {
     help.clearCache();
-    done()
+    nock.restore()
+    help.stopServer(done);
   });
 
   afterEach(function(done) {
+    libHelp.isApiAvailable.restore()
+    nock.cleanAll()
     help.stopServer(done);
   });
 
@@ -81,10 +86,19 @@ describe.skip('Application', function(done) {
   })
 
   it('should not error if the template is found when calling `view.render()`', function (done) {
+    var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+    var authscope1 = nock(host)
+      .post('/token')
+      .times(3)
+      .reply(200, {
+        accessToken: 'xx'
+      });
 
-    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
+    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D';
     var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });
-    help.addHttpIntercept(endpoint1, 200, categoriesResult1);
+    var scope2 = nock(host)
+      .get(endpoint1)
+      .reply(200, categoriesResult1);
 
     // create page 1
     var page1 = Page('page1', help.getPageSchema());
@@ -110,10 +124,19 @@ describe.skip('Application', function(done) {
   });
 
   it('should throw an error if the template is not found when calling `view.render()`', function (done) {
+    var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+    var authscope1 = nock(host)
+      .post('/token')
+      .times(3)
+      .reply(200, {
+        accessToken: 'xx'
+      });
 
-    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
+    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D';
     var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });
-    help.addHttpIntercept(endpoint1, 200, categoriesResult1);
+    var scope2 = nock(host)
+      .get(endpoint1)
+      .reply(200, categoriesResult1);
 
     // create page 1
     var page1 = Page('page1', help.getPageSchema());
@@ -138,17 +161,95 @@ describe.skip('Application', function(done) {
     });
   });
 
-  it('should renew datasource endpoints when new requests are made', function(done) {
+  it('should reject requests with no hostname', function(done) {
 
-    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"Crime"}&fields={"name":1}&sort={"name":1}';
-    var endpoint2 = '/1.0/library/categories?count=20&page=1&filter={"name":"Horror"}&fields={"name":1}&sort={"name":1}';
+    var scope = nock('http://127.0.0.1:3000')
+      .post('/token')
+      .reply(200, {
+        accessToken: 'xx'
+      });
+
+    help.startServer(null, function() {
+      var client = request(clientHost);
+      client
+      .get('/w00tw00t.at.ISC.SANS.DFind:)')
+      .set('Host', '')
+      .expect(400)
+      .end(function (err, res) {
+        if (err) return done(err);
+        done()
+      })
+    })
+  })
+
+  it('should not redirect if the router redirect datasource returns unmatching results', function (done) {
+    var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+    config.set('rewrites.datasource', 'redirects')
+
+    var scope = nock(host)
+      .post('/token')
+      .times(2)
+      .reply(200, {
+        accessToken: 'xx'
+      });
+
+    var dsEndpoint = '/1.0/test/redirects?count=3&page=1&filter=%7B%22rule%22:%22/news/whatever?hello=world&foo=bar%22%7D&fields=%7B%7D&sort=%7B%7D';
+    var dsResult = JSON.stringify({ results: [ {  _id: "56ec1c", source: "import", rule: "/car-reviews/alfa-romeo/4c-coupe/", replacement: "/alfa-romeo/4c/coupe/", redirectType: "301", stopProcessing: 1, apiVersion: "1.0" } ]});
+
+    var scope2 = nock(host)
+      .get(dsEndpoint)
+      .reply(200, dsResult);
+
+    // create page 1
+    var page1 = Page('page1', help.getPageSchema());
+    page1.datasources = [];
+    page1.template = 'test.dust';
+    page1.route.paths[0] = '/news/:seoUrlNews?';
+    page1.events = [];
+    delete page1.route.constraint;
+
+    var pages = [];
+    pages.push(page1)
+
+    help.startServer(pages, function() {
+      var client = request(clientHost);
+
+      client
+      .get('/news/whatever?hello=world&foo=bar')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+
+        config.set('rewrites.datasource', '')
+
+        done()
+      })
+    })
+  });
+
+  it('should renew datasource endpoints when new requests are made', function(done) {
+    var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+
+    var authscope1 = nock(host)
+      .post('/token')
+      .times(4)
+      .reply(200, {
+        accessToken: 'xx'
+      });
+
+    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D';
+    var endpoint2 = '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Horror%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D';
 
     var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });
     var categoriesResult2 = JSON.stringify({ results: [ { name: 'Horror' } ] });
 
-    // fake api data requests
-    help.addHttpIntercept(endpoint1, 200, categoriesResult1);
-    help.addHttpIntercept(endpoint2, 200, categoriesResult2);
+    var scope2 = nock(host)
+      .get(endpoint1)
+      .reply(200, categoriesResult1);
+
+    var scope3 = nock(host)
+      .get(endpoint2)
+      .reply(200, categoriesResult2);
 
     // create page 1
     var page1 = Page('page1', help.getPageSchema());
@@ -169,8 +270,8 @@ describe.skip('Application', function(done) {
 
       client
       .get('/categories/Crime')
-      // .expect('content-type', 'text/html')
-      // .expect(200)
+      .expect('content-type', 'text/html')
+      .expect(200)
       .end(function (err, res) {
         if (err) return done(err);
 
@@ -181,7 +282,7 @@ describe.skip('Application', function(done) {
         var datasourceArg = dataHelperArgs[0];
         var urlArg = dataHelperArgs[1];
 
-        datasourceArg.endpoint.should.eql('http://' + config.get('api.host') + ':' + config.get('api.port') + endpoint1)
+        //datasourceArg.endpoint.should.eql('http://' + config.get('api.host') + ':' + config.get('api.port') + endpoint1)
         res.text.should.eql('<h3>Crime</h3>');
 
         // NEXT CALL, DIFF PARAMS
@@ -190,8 +291,8 @@ describe.skip('Application', function(done) {
 
         client
         .get('/categories/Horror')
-        // .expect('content-type', 'text/html')
-        // .expect(200)
+        .expect('content-type', 'text/html')
+        .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
 
@@ -203,7 +304,7 @@ describe.skip('Application', function(done) {
           datasourceArg = dataHelperArgs[0];
           urlArg = dataHelperArgs[1];
 
-          datasourceArg.endpoint.should.eql('http://' + config.get('api.host') + ':' + config.get('api.port') + endpoint2)
+          //datasourceArg.endpoint.should.eql('http://' + config.get('api.host') + ':' + config.get('api.port') + endpoint2)
           res.text.should.eql('<h3>Horror</h3>');
 
           done()
