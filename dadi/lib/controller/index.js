@@ -21,12 +21,13 @@ var View = require(__dirname + '/../view');
 var sendBackHTML = help.sendBackHTML;
 var sendBackJSON = help.sendBackJSON;
 
-var Controller = function (page, options) {
+var Controller = function (page, options, meta) {
   if (!page) throw new Error('Page instance required');
 
   this.page = page;
 
   this.options = options || {};
+  this.meta = meta || {};
 
   this.datasources = {};
   this.events = [];
@@ -101,6 +102,7 @@ Controller.prototype.buildInitialViewData = function(req) {
   data.params = {};
   data.pathname = "";
   data.host = req.headers.host;
+  data.meta = this.meta;
 
   if (urlData.pathname.length) data.pathname = urlData.pathname;
 
@@ -464,8 +466,8 @@ function processSearchParameters(key, datasource, req) {
   datasource.processRequest(key, req);
 }
 
-module.exports = function (page, options) {
-  return new Controller(page, options);
+module.exports = function (page, options, meta) {
+  return new Controller(page, options, meta);
 };
 
 module.exports.Controller = Controller;
