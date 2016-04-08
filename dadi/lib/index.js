@@ -592,12 +592,17 @@ Server.prototype.dustCompile = function (options) {
     // templates can be reloaded
     dust.cache = {};
 
+    var compiledTemplates = {};
+
     _.each(self.components, function(component) {
         try {
             var filepath = path.join(templatePath, component.page.template);
             var template =  fs.readFileSync(filepath, "utf8");
             var name = component.page.template.slice(0, component.page.template.indexOf('.'));
             var compiled = dust.compile(template, name, true);
+
+            compiledTemplates[name] = compiled;
+
             dust.loadSource(compiled);
         }
         catch (e) {
@@ -618,13 +623,16 @@ Server.prototype.dustCompile = function (options) {
         var pageTemplateName = path.basename(file, '.dust');
 
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
-
+            console.log('--> COMPILING HERE!');
             log.info({module: 'server'}, "Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
 
             var template =  fs.readFileSync(file, "utf8");
 
             try {
                 var compiled = dust.compile(template, pageTemplateName, true);
+
+                compiledTemplates[pageTemplateName] = compiled;
+
                 dust.loadSource(compiled);
             }
             catch (e) {
@@ -651,7 +659,15 @@ Server.prototype.dustCompile = function (options) {
           var template = fs.readFileSync(path.join(partialPath, directory, itemPath), 'utf8');
 
           try {
-              var compiled = dust.compile(template, 'partials/' + directory + name, true);
+              var partialName = 'partials/' + directory + name;
+              var compiled = dust.compile(template, partialName, true);
+              
+              if (config.get('dust.clientRender.enabled')) {
+                compiledTemplates[partialName] = compiled;
+              }
+
+              console.log('--> compiled:', compiled);
+
               dust.loadSource(compiled);
           }
           catch (e) {
@@ -664,6 +680,54 @@ Server.prototype.dustCompile = function (options) {
     };
 
     loadPartialsDirectory();
+
+    console.log('');
+    console.log('** compiledTemplates:', compiledTemplates);
+    console.log('');
+
+    // Writing compiled partials
+    if (config.get('dust.clientRender.enabled')) {
+      if (config.get('dust.clientRender.outputFormat') === 'combined') {
+        var outputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.outputPath'));
+        var clientRenderOutput = '';
+
+        Object.keys(compiledTemplates).forEach(function (name) {
+          clientRenderOutput += compiledTemplates[name];
+        });
+
+        mkdirp(path.dirname(outputFile), {}, function (err, made) {
+          if (err) {
+            log.error({module: 'server'}, {err: err}, 'Error creating directory for compiled template');
+
+            return;
+          }
+
+          fs.writeFile(outputFile, clientRenderOutput, function (err) {
+            if (err) {
+              log.error({module: 'server'}, {err: err}, "Error writing compiled template to file '%s'", outputFile);
+            }
+          });
+        });
+      } else {
+        Object.keys(compiledTemplates).forEach(function (name) {
+          var outputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.outputPath'), name) + '.js';
+
+          mkdirp(path.dirname(outputFile), {}, function (err, made) {
+            if (err) {
+              log.error({module: 'server'}, {err: err}, 'Error creating directory for compiled template');
+
+              return;
+            }
+
+            fs.writeFile(outputFile, compiledTemplates[name], function (err) {
+              if (err) {
+                log.error({module: 'server'}, {err: err}, "Error writing compiled template to file '%s'", outputFile);
+              }
+            });
+          });
+        });
+      }
+    }
 
     // handle templates that are requested but not found in the cache
     // `templateName` is the name of the template requested by dust.render / dust.stream
