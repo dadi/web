@@ -623,7 +623,6 @@ Server.prototype.dustCompile = function (options) {
         var pageTemplateName = path.basename(file, '.dust');
 
         if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
-            console.log('--> COMPILING HERE!');
             log.info({module: 'server'}, "Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
 
             var template =  fs.readFileSync(file, "utf8");
