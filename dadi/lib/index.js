@@ -666,8 +666,6 @@ Server.prototype.dustCompile = function (options) {
                 compiledTemplates[partialName] = compiled;
               }
 
-              console.log('--> compiled:', compiled);
-
               dust.loadSource(compiled);
           }
           catch (e) {
@@ -680,10 +678,6 @@ Server.prototype.dustCompile = function (options) {
     };
 
     loadPartialsDirectory();
-
-    console.log('');
-    console.log('** compiledTemplates:', compiledTemplates);
-    console.log('');
 
     // Writing compiled partials
     if (config.get('dust.clientRender.enabled')) {
