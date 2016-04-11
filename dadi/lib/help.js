@@ -233,10 +233,12 @@ module.exports.clearCache = function (req, callback) {
   }
   else {
     var endpointRequest = {
-      url: req.headers['host'] + pathname
+      url: 'http://' + req.headers['host'] + pathname
     }
 
     var endpoint = cache().getEndpointMatchingRequest(endpointRequest);
+
+    if (!endpoint || !endpoint.page) return callback({"error":"Page route not found","stack":""})
 
     _.each(endpoint.page.datasources, function(datasource) {
       var cachePrefix = crypto.createHash('sha1').update(datasource).digest('hex');
