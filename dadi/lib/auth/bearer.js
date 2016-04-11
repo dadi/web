@@ -28,7 +28,7 @@ BearerAuthStrategy.prototype.getToken = function (datasource, done) {
     credentials: strategy.credentials,
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallet') + '/' + help.generateTokenWalletFilename(strategy.host, strategy.port, strategy.credentials.clientId)
+      path: config.get('paths.tokenWallets') + '/' + help.generateTokenWalletFilename(strategy.host, strategy.port, strategy.credentials.clientId)
     }
   }).then(function (bearerToken) {
     return done(null, bearerToken);

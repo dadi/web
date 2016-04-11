@@ -24,7 +24,7 @@ var self = this;
 //     },
 //     wallet: 'file',
 //     walletOptions: {
-//       path: config.get('paths.tokenWallet') + '/' + help.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+//       path: config.get('paths.tokenWallets') + '/' + help.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
 //     }
 //   });
 // };

@@ -5,6 +5,7 @@ var crypto = require('crypto');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
+var pathToRegexp = require('path-to-regexp');
 var redis = require('redis');
 var redisRStream = require('redis-rstream');
 var redisWStream = require('redis-wstream');
@@ -99,9 +100,9 @@ Cache.prototype.getEndpointMatchingRequest = function(req) {
   var requestUrl = url.parse(req.url, true).pathname;
 
   // check if there is a match in the loaded routes for the current request URL
-  var endpoint = _.find(endpoints, function (endpoint) {
-    return _.contains(endpoint.page.route.paths, requestUrl);
-  });
+  var endpointKey = _.find(_.keys(endpoints), function (k) { return pathToRegexp(k).exec(requestUrl); });
+
+  var endpoint = endpoints[endpointKey]
 
   // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
   if (!endpoint) {
@@ -207,7 +208,7 @@ Cache.prototype.init = function() {
       });
 
       readStream.on('end', function () {
-        
+
         if (data === "") {
           res.setHeader('X-Cache', 'MISS');
           res.setHeader('X-Cache-Lookup', 'MISS');
