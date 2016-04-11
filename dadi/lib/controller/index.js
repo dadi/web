@@ -102,7 +102,7 @@ Controller.prototype.buildInitialViewData = function(req) {
   data.params = {};
   data.pathname = "";
   data.host = req.headers.host;
-  data.meta = this.meta;
+  data.page = this.meta;
 
   if (urlData.pathname.length) data.pathname = urlData.pathname;
 
