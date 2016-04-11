@@ -263,7 +263,7 @@ var conf = convict({
       partials: __dirname + '/app/partials',
       public: __dirname + '/app/public',
       routes: __dirname + '/app/routes',
-      tokenWallet: __dirname + '/.wallet'
+      tokenWallets: __dirname + '/.wallet'
     }
   },
   sessions: {
