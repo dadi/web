@@ -206,11 +206,15 @@ module.exports.clearCache = function () {
       } else if(fs.existsSync(filepath) && fs.lstatSync(filepath).isFile()) {
       	fs.unlinkSync(filepath);
       }
-    };
+    }
 
     // for each directory in the cache folder, remove all files then
     // delete the folder
-    fs.readdirSync(config.get('caching.directory.path')).forEach(function (dirname) {
-        deleteFolderRecursive(path.join(config.get('caching.directory.path'), dirname));
-    });
+    var cachePath = path.resolve(config.get('caching.directory.path'));
+    fs.stat(cachePath, function(err, stats) {
+      if (err) return;
+      fs.readdirSync(cachePath).forEach(function (dirname) {
+        deleteFolderRecursive(path.join(cachePath, dirname));
+      });
+    })
 }
