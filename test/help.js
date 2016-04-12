@@ -206,7 +206,7 @@ module.exports.clearCache = function () {
       } else if(fs.existsSync(filepath) && fs.lstatSync(filepath).isFile()) {
       	fs.unlinkSync(filepath);
       }
-    };
+    }
 
     // for each directory in the cache folder, remove all files then
     // delete the folder
