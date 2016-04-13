@@ -161,7 +161,7 @@ describe('Application', function(done) {
     });
   });
 
-  it('should reject requests with no hostname', function(done) {
+  it.skip('should reject requests with no hostname', function(done) {
 
     var scope = nock('http://127.0.0.1:3000')
       .post('/token')

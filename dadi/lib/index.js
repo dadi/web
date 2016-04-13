@@ -465,7 +465,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
     var page = Page(obj.name, schema);
 
     // create a handler for requests to this page
-    var control = controller(page, options);
+    var control = controller(page, options, schema.page);
 
     // add the component to the api by adding a route to the app and mapping
     // `req.method` to component methods
