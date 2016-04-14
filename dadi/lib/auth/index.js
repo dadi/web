@@ -11,24 +11,6 @@ var Passport = require('@dadi/passport');
 
 var self = this;
 
-// module.exports.getToken = function () {
-//   return Passport({
-//     issuer: {
-//       uri: config.get('api.protocol') + '://' + config.get('api.host'),
-//       port: config.get('api.port'),
-//       endpoint: config.get('auth.tokenUrl')
-//     },
-//     credentials: {
-//       clientId: config.get('auth.clientId'),
-//       secret: config.get('auth.secret')
-//     },
-//     wallet: 'file',
-//     walletOptions: {
-//       path: config.get('paths.tokenWallet') + '/' + help.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
-//     }
-//   });
-// };
-
 // This attaches middleware to the passed in app instance
 module.exports = function (server) {
   server.app.use(function (req, res, next) {

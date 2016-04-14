@@ -209,22 +209,22 @@ function onError(api) {
 
     log.error({module: 'api'}, err);
 
-    var message = "<html><head><title>DADI Web - 500 Internal Server Error</title></head>";
-    message += "<body>";
-    message += "<h1>Internal Server Error</h1>";
-    message += "<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>";
+    var data = {
+      "code": err.name,
+      "message": err.message,
+      "stack" : err.stack.split('\n')
+    }
 
-    // The error id is attached to `res.sentry` to be returned and optionally displayed to the user for support.
-    if (res.sentry) message += "<p>This error has been logged and the development team notified. The unique ID associated with this error is <b>" + res.sentry + "</b>.</p>";
-
-    message += "<blockquote>";
-    message += "<pre>" + err.stack.toString(); + "</pre>";
-    message += "</blockquote>";
-    message += "</body></html>";
-
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'text/html');
-    res.end(message);
+    var path = _.findWhere(api.paths, { path: '/error' });
+    if (path) {
+      req.error = data;
+      path.handler(req, res);
+    }
+    else {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(data, null, 2));
+    }
   };
 }
 

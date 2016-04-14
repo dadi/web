@@ -351,7 +351,7 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallet') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+      path: config.get('paths.tokenWallets') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
     }
   });
 }
