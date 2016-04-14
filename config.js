@@ -40,7 +40,7 @@ var conf = convict({
       default: '0.0.0.0'
     },
     protocol: {
-      doc: "The protocol for the DADI API application",
+      doc: "The protocol to use for the DADI API application",
       format: String,
       default: "http"
     },
@@ -263,7 +263,7 @@ var conf = convict({
       partials: __dirname + '/app/partials',
       public: __dirname + '/app/public',
       routes: __dirname + '/app/routes',
-      tokenWallet: __dirname + '/.wallet'
+      tokenWallets: __dirname + '/.wallet'
     }
   },
   sessions: {
