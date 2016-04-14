@@ -96,7 +96,7 @@ var conf = convict({
   },
   caching: {
     ttl: {
-      doc: "",
+      doc: "The time, in seconds, after which cached data is considered stale",
       format: Number,
       default: 300
     },
