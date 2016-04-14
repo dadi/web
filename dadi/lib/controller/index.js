@@ -112,6 +112,8 @@ Controller.prototype.buildInitialViewData = function(req) {
   // add query params (params from the querystring, e.g. /reviews?page=2);
   _.extend(data.params, data.query);
 
+  if (req.error) data.error = req.error;
+
   // add id component from the request
   if (req.params.id) data.id = decodeURIComponent(req.params.id);
 
