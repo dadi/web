@@ -4,6 +4,7 @@
 var fs = require('fs');
 var path = require('path');
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var util = require('util');
 var _ = require('underscore');
@@ -70,11 +71,23 @@ module.exports.isApiAvailable = function(done) {
     method: 'GET'
   };
 
-  var request = http.request(options, function(res) {
-    if (/200|401|404/.exec(res.statusCode)) {
-      return done(null, true);
-    }
-  });
+  var request;
+
+  if (config.get('api.protocol') === 'https') {
+    options.protocol = 'https:'
+    request = https.request(options, function(res) {
+      if (/200|401|404/.exec(res.statusCode)) {
+        return done(null, true);
+      }
+    })
+  }
+  else {
+    request = http.request(options, function(res) {
+      if (/200|401|404/.exec(res.statusCode)) {
+        return done(null, true);
+      }
+    })
+  }
 
   request.on('error', function(e) {
     e.message = 'Error connecting to API: ' + e.message + '. Check the \'api\' settings in config file \'config/config.' + config.get('env') + '.json';
@@ -351,7 +364,7 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallet') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+      path: config.get('paths.tokenWallets') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
     }
   });
 }
@@ -383,6 +396,7 @@ var DataHelper = function(datasource, requestUrl) {
   var self = this;
 
   this.options = {
+    protocol: this.datasource.source.protocol || config.get('api.protocol'),
     host: this.datasource.source.host || config.get('api.host'),
     port: this.datasource.source.port || config.get('api.port'),
     path: url.parse(this.datasource.endpoint).path,
@@ -412,39 +426,18 @@ DataHelper.prototype.load = function(done) {
 
       log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path);
 
-      var request = http.request(self.options, function(res) {
-        var output = '';
-        var encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : '';
-
-        if (encoding === 'gzip') {
-          var gunzip = zlib.createGunzip();
-          var buffer = [];
-
-          gunzip.on('data', function(data) {
-            buffer.push(data.toString());
-          }).on('end', function() {
-            output = buffer.join("");
-            self.processOutput(res, output, function(err, data, res) {
-              return done(null, data, res);
-            });
-          }).on('error', function(err) {
-            done(err);
-          });
-
-          res.pipe(gunzip);
-        }
-        else {
-          res.on('data', function(chunk) {
-            output += chunk;
-          });
-
-          res.on('end', function() {
-            self.processOutput(res, output, function(err, data, res) {
-              return done(null, data, res);
-            });
-          });
-        }
-      });
+      var request;
+      if (config.get('api.protocol') === 'https') {
+        self.options.protocol = 'https:'
+        request = https.request(self.options, function(res) {
+          self.handleResponse(res, done)
+        })
+      }
+      else {
+        request = http.request(self.options, function(res) {
+          self.handleResponse(res, done)
+        })
+      }
 
       request.on('error', function(err) {
         var message = err.toString() + '. Couldn\'t request data from ' + self.datasource.endpoint;
@@ -458,6 +451,42 @@ DataHelper.prototype.load = function(done) {
       request.end();
     });
   });
+}
+
+DataHelper.prototype.handleResponse = function(res, done) {
+  var self = this;
+
+  var output = '';
+  var encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : '';
+
+  if (encoding === 'gzip') {
+    var gunzip = zlib.createGunzip();
+    var buffer = [];
+
+    gunzip.on('data', function(data) {
+      buffer.push(data.toString());
+    }).on('end', function() {
+      output = buffer.join("");
+      self.processOutput(res, output, function(err, data, res) {
+        return done(null, data, res);
+      });
+    }).on('error', function(err) {
+      done(err);
+    });
+
+    res.pipe(gunzip);
+  }
+  else {
+    res.on('data', function(chunk) {
+      output += chunk;
+    });
+
+    res.on('end', function() {
+      self.processOutput(res, output, function(err, data, res) {
+        return done(null, data, res);
+      });
+    });
+  }
 }
 
 DataHelper.prototype.processOutput = function(res, data, done) {
@@ -538,7 +567,12 @@ DataHelper.prototype.getHeaders = function(done) {
 }
 
 DataHelper.prototype.keepAliveAgent = function() {
-  return new http.Agent({ keepAlive: true });
+  if (config.get('api.protocol') === 'https') {
+    return new https.Agent({ keepAlive: true });
+  }
+  else {
+    return new http.Agent({ keepAlive: true });
+  }
 }
 
 DataHelper.prototype.getStaticData = function(done) {
