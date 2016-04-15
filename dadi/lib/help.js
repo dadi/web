@@ -400,9 +400,10 @@ var DataHelper = function(datasource, requestUrl) {
     host: this.datasource.source.host || config.get('api.host'),
     port: this.datasource.source.port || config.get('api.port'),
     path: url.parse(this.datasource.endpoint).path,
-    method: 'GET',
-    agent: this.keepAliveAgent()
+    method: 'GET'
   }
+
+  this.options.agent = this.keepAliveAgent(this.options.protocol)
 }
 
 DataHelper.prototype.load = function(done) {
@@ -566,8 +567,8 @@ DataHelper.prototype.getHeaders = function(done) {
   }
 }
 
-DataHelper.prototype.keepAliveAgent = function() {
-  if (config.get('api.protocol') === 'https') {
+DataHelper.prototype.keepAliveAgent = function(protocol) {
+  if (protocol === 'https') {
     return new https.Agent({ keepAlive: true });
   }
   else {
