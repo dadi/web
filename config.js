@@ -168,6 +168,11 @@ var conf = convict({
         format: Boolean,
         default: false
       },
+      helpersOutputPath: {
+        doc: "The location where helpers should be written to. If empty, helpers will not be included.",
+        format: String,
+        default: ""
+      },
       outputFormat: {
         doc: "Defines whether compiled templates are written to individual JS files ('separate') or combined into a single one ('combined')",
         format: ["separate", "combined"],
