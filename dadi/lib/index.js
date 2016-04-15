@@ -8,8 +8,7 @@ var bodyParser = require('body-parser');
 var colors = require('colors');
 var compress = require('compression');
 var crypto = require('crypto');
-var dust = require('dustjs-linkedin');
-var dustHelpers = require('dustjs-helpers');
+var dust = require('./dust');
 var enableDestroy = require('server-destroy');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
@@ -54,7 +53,6 @@ var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
 var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
-var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var datasource = require(__dirname + '/datasource');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
@@ -205,10 +203,11 @@ Server.prototype.start = function (done) {
     });
 
     // dust configuration
-    dust.isDebug = config.get('dust.debug');
-    dust.debugLevel = config.get('dust.debugLevel');
-    dust.config.cache = config.get('dust.cache');
-    dust.config.whitespace = config.get('dust.whitespace');
+    dust.setOptions(options);
+    dust.setDebug(config.get('dust.debug'));
+    dust.setDebugLevel(config.get('dust.debugLevel'));
+    dust.setConfig('cache', config.get('dust.cache'));
+    dust.setConfig('whitespace', config.get('dust.whitespace'));
 
     this.readyState = 1;
 
@@ -361,7 +360,7 @@ Server.prototype.loadApi = function (options) {
     self.initMiddleware(options.middlewarePath, options);
 
     // compile all dust templates
-    self.dustCompile(options);
+    self.compile(options);
 
     self.addMonitor(options.datasourcePath, function (dsFile) {
         self.updatePages(options.pagePath, options, true);
@@ -373,11 +372,11 @@ Server.prototype.loadApi = function (options) {
 
     self.addMonitor(options.pagePath, function (pageFile) {
         self.updatePages(options.pagePath, options, true);
-        self.dustCompile(options);
+        self.compile(options);
     });
 
     self.addMonitor(options.partialPath, function (partialFile) {
-        self.dustCompile(options);
+        self.compile(options);
     });
 
     self.addMonitor(options.routesPath, function (file) {
@@ -580,9 +579,8 @@ Server.prototype.removeMonitor = function (filepath) {
     delete this.monitors[filepath];
 };
 
-Server.prototype.dustCompile = function (options) {
+Server.prototype.compile = function (options) {
 
-    var pagePath = options.pagePath;
     var templatePath = options.pagePath;
     var partialPath = options.partialPath;
 
@@ -590,20 +588,27 @@ Server.prototype.dustCompile = function (options) {
 
     // reset the dust cache so
     // templates can be reloaded
-    dust.cache = {};
+    dust.clearCache();
 
-    var compiledTemplates = {};
+    // Load filters and helpers
+    dust.loadFilters()
+          .then(function () {
+            return dust.loadHelpers()
+          })
+          .then(function () {
+            dust.writeClientsideTemplates();
+          })
+          .catch(function (err) {
+            console.log('**** ERR:', err);
+          });
 
     _.each(self.components, function(component) {
         try {
             var filepath = path.join(templatePath, component.page.template);
             var template =  fs.readFileSync(filepath, "utf8");
             var name = component.page.template.slice(0, component.page.template.indexOf('.'));
-            var compiled = dust.compile(template, name, true);
 
-            compiledTemplates[name] = compiled;
-
-            dust.loadSource(compiled);
+            dust.compile(template, name);
         }
         catch (e) {
             var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
@@ -622,23 +627,19 @@ Server.prototype.dustCompile = function (options) {
 
         var pageTemplateName = path.basename(file, '.dust');
 
-        if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
-            log.info({module: 'server'}, "Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
+        if (!dust.isLoaded(pageTemplateName)) {
+          log.info({module: 'server'}, "Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
 
-            var template =  fs.readFileSync(file, "utf8");
+          var template =  fs.readFileSync(file, "utf8");
 
-            try {
-                var compiled = dust.compile(template, pageTemplateName, true);
-
-                compiledTemplates[pageTemplateName] = compiled;
-
-                dust.loadSource(compiled);
-            }
-            catch (e) {
-                var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
-                console.log(message);
-                throw e;
-            }
+          try {
+            dust.compile(template, pageTemplateName);
+          }
+          catch (e) {
+            var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
+            console.log(message);
+            throw e;
+          }
         }
     });
 
@@ -658,90 +659,20 @@ Server.prototype.dustCompile = function (options) {
           var template = fs.readFileSync(path.join(partialPath, directory, itemPath), 'utf8');
 
           try {
-              var partialName = 'partials/' + directory + name;
-              var compiled = dust.compile(template, partialName, true);
-              
-              if (config.get('dust.clientRender.enabled')) {
-                compiledTemplates[partialName] = compiled;
-              }
+            var partialName = 'partials/' + directory + name;
 
-              dust.loadSource(compiled);
+            dust.compile(template, partialName);
           }
           catch (e) {
-              var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, directory, itemPath) + '". ' + e + '\n';
-              console.log(message);
-              throw e;
+            var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, directory, itemPath) + '". ' + e + '\n';
+            console.log(message);
+            throw e;
           }
         }
       });
     };
 
     loadPartialsDirectory();
-
-    // Writing compiled partials
-    if (config.get('dust.clientRender.enabled')) {
-      if (config.get('dust.clientRender.outputFormat') === 'combined') {
-        var outputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.outputPath'));
-        var clientRenderOutput = '';
-
-        Object.keys(compiledTemplates).forEach(function (name) {
-          clientRenderOutput += compiledTemplates[name];
-        });
-
-        mkdirp(path.dirname(outputFile), {}, function (err, made) {
-          if (err) {
-            log.error({module: 'server'}, {err: err}, 'Error creating directory for compiled template');
-
-            return;
-          }
-
-          fs.writeFile(outputFile, clientRenderOutput, function (err) {
-            if (err) {
-              log.error({module: 'server'}, {err: err}, "Error writing compiled template to file '%s'", outputFile);
-            }
-          });
-        });
-      } else {
-        Object.keys(compiledTemplates).forEach(function (name) {
-          var outputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.outputPath'), name) + '.js';
-
-          mkdirp(path.dirname(outputFile), {}, function (err, made) {
-            if (err) {
-              log.error({module: 'server'}, {err: err}, 'Error creating directory for compiled template');
-
-              return;
-            }
-
-            fs.writeFile(outputFile, compiledTemplates[name], function (err) {
-              if (err) {
-                log.error({module: 'server'}, {err: err}, "Error writing compiled template to file '%s'", outputFile);
-              }
-            });
-          });
-        });
-      }
-    }
-
-    // handle templates that are requested but not found in the cache
-    // `templateName` is the name of the template requested by dust.render / dust.stream
-    // or via a partial include, like {> "hello-world" /}
-    dust.onLoad = function(templateName, opts, callback) {
-      var template = templateName + '.dust';
-      if (template.indexOf('partials') > -1) {
-        template = partialPath + '/' + template.replace('partials/', '');
-      } else {
-        template = templatePath + '/' + template;
-      }
-
-      fs.readFile(template, { encoding: 'utf8' }, function (err, data) {
-        if (err) {
-          // no template file found?
-          return callback(err, null);
-        }
-
-        return callback(null, data);
-      });
-    };
 }
 
 Server.prototype.getSessionStore = function(sessionConfig) {
