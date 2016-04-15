@@ -155,9 +155,12 @@ describe('Application', function(done) {
 
       client
       .get('/categories/Crime')
-      .expect('content-type', 'text/html')
+      .expect('content-type', 'application/json')
       .expect(500)
-      .end(done);
+      .end(function(err, res) {
+        //console.log(res.body)
+        done()
+      });
     });
   });
 
