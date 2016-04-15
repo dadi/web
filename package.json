@@ -23,6 +23,7 @@
     "connect-mongo": "1.0.1",
     "connect-redis": "3.0.2",
     "convict": "1.0.1",
+    "dadi-dustjs-helpers": "github:eduardoboucas/dadi-dustjs-helpers",
     "dustjs-helpers": "^1.7.3",
     "dustjs-linkedin": "^2.7.2",
     "event-stream": "^3.3.1",
