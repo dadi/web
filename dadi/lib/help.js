@@ -427,7 +427,7 @@ DataHelper.prototype.load = function(done) {
       log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path);
 
       var request;
-      if (config.get('api.protocol') === 'https') {
+      if (self.options.protocol === 'https') {
         self.options.protocol = 'https:'
         request = https.request(self.options, function(res) {
           self.handleResponse(res, done)

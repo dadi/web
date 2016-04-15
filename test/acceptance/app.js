@@ -10,6 +10,7 @@ var nock = require('nock')
 
 var Server = require(__dirname + '/../../dadi/lib');
 var api = require(__dirname + '/../../dadi/lib/api');
+var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/../help');
 var libHelp = require(__dirname + '/../../dadi/lib/help');
@@ -312,4 +313,97 @@ describe('Application', function(done) {
       })
     });
   })
-});
+
+  it('should use http when the datasource specifies http protocol', function(done) {
+    var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+    var authscope1 = nock(host).post('/token').times(4).reply(200, { accessToken: 'xx' });
+
+    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D';
+    var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });
+    var scope2 = nock(host).get(endpoint1).reply(200, categoriesResult1);
+
+    var dsName = 'categories_no_cache';
+    var options = help.getPathOptions();
+    var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName);
+
+    sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+    var page1 = Page('page1', help.getPageSchema());
+    page1.datasources = ['categories_no_cache'];
+    page1.template = 'test.dust';
+    page1.route.paths[0] = '/categories/:category';
+    page1.events = [];
+
+    var pages = [];
+    pages.push(page1)
+
+    help.startServer(pages, function() {
+      var spy = sinon.spy(libHelp, 'DataHelper');
+      var client = request(clientHost);
+
+      client
+      .get('/categories/Crime')
+      .expect('content-type', 'text/html')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        // check the args that the data loader was called with
+        var dataHelperArgs = spy.args[0];
+        spy.restore();
+        datasource.Datasource.prototype.loadDatasource.restore()
+        var datasourceArg = dataHelperArgs[0];
+        var urlArg = dataHelperArgs[1];
+
+        spy.firstCall.thisValue.options.proto.should.eql('http')
+        done()
+      })
+    })
+  })
+
+  it('should use https when the datasource specifies https protocol', function(done) {
+    var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+    var authscope1 = nock(host).post('/token').times(4).reply(200, { accessToken: 'xx' });
+
+    var endpoint1 = '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D';
+    var categoriesResult1 = JSON.stringify({ results: [ { name: 'Crime' } ] });
+    var scope2 = nock(host).get(endpoint1).reply(200, categoriesResult1);
+
+    var dsName = 'categories_no_cache';
+    var options = help.getPathOptions();
+    var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName);
+    dsSchema.datasource.source.protocol = 'https'
+
+    sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+    var page1 = Page('page1', help.getPageSchema());
+    page1.datasources = ['categories_no_cache'];
+    page1.template = 'test.dust';
+    page1.route.paths[0] = '/categories/:category';
+    page1.events = [];
+
+    var pages = [];
+    pages.push(page1)
+
+    help.startServer(pages, function() {
+      var spy = sinon.spy(libHelp, 'DataHelper');
+      var client = request(clientHost);
+
+      client
+      .get('/categories/Crime')
+      .expect('content-type', 'text/html')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        // check the args that the data loader was called with
+        var dataHelperArgs = spy.args[0];
+        spy.restore();
+        datasource.Datasource.prototype.loadDatasource.restore()
+        var datasourceArg = dataHelperArgs[0];
+        var urlArg = dataHelperArgs[1];
+
+        spy.firstCall.thisValue.options.proto.should.eql('https')
+        done()
+      })
+    })
+  })
+})
