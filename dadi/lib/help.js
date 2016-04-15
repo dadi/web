@@ -404,6 +404,9 @@ var DataHelper = function(datasource, requestUrl) {
   }
 
   this.options.agent = this.keepAliveAgent(this.options.protocol)
+
+  // add : to protocol
+  this.options.protocol = this.options.protocol + ':'
 }
 
 DataHelper.prototype.load = function(done) {
@@ -429,7 +432,6 @@ DataHelper.prototype.load = function(done) {
 
       var request;
       if (self.options.protocol === 'https') {
-        self.options.protocol = 'https:'
         request = https.request(self.options, function(res) {
           self.handleResponse(res, done)
         })
@@ -556,6 +558,10 @@ DataHelper.prototype.getHeaders = function(done) {
         err.remoteIp = config.get('api.host');
         err.remotePort = config.get('api.port');
         err.path = config.get('auth.tokenUrl');
+
+        if (errorData.stack) {
+          console.log(errorData.stack)
+        }
 
         module.exports.timer.stop('auth');
         return done(err);
