@@ -210,9 +210,10 @@ function onError(api) {
     log.error({module: 'api'}, err);
 
     var data = {
-      "code": err.name,
-      "message": err.message,
-      "stack" : err.stack.split('\n')
+      statusCode: err.statusCode || 500,
+      code: err.name,
+      message: err.message,
+      stack : err.stack.split('\n')
     }
 
     var path = _.findWhere(api.paths, { path: '/error' });
