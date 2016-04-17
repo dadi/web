@@ -203,7 +203,6 @@ Server.prototype.start = function (done) {
     });
 
     // dust configuration
-    dust.setOptions(options);
     dust.setDebug(config.get('dust.debug'));
     dust.setDebugLevel(config.get('dust.debugLevel'));
     dust.setConfig('cache', config.get('dust.cache'));
@@ -590,89 +589,36 @@ Server.prototype.compile = function (options) {
     // templates can be reloaded
     dust.clearCache();
 
-    // Load filters and helpers
-    dust.loadFilters()
-          .then(function () {
-            return dust.loadHelpers()
-          })
-          .then(function () {
-            dust.writeClientsideTemplates();
-          })
-          .catch(function (err) {
-            console.log('**** ERR:', err);
-          });
-
-    _.each(self.components, function(component) {
-        try {
-            var filepath = path.join(templatePath, component.page.template);
-            var template =  fs.readFileSync(filepath, "utf8");
-            var name = component.page.template.slice(0, component.page.template.indexOf('.'));
-
-            dust.compile(template, name);
-        }
-        catch (e) {
-            var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n';
-            console.log(message);
-            throw e;
-        }
+    // Get a list of templates to render based on the registered components
+    var componentTemplates = Object.keys(self.components).map(function (route) {
+      return path.join(templatePath, self.components[route].page.template);
     });
 
-    // load templates in the template folder that haven't already been loaded
-    var templates = fs.readdirSync(templatePath);
-    templates.map(function (file) {
-        return path.join(templatePath, file);
-    }).filter(function (file) {
-        return path.extname(file) === '.dust';
-    }).forEach(function (file) {
-
-        var pageTemplateName = path.basename(file, '.dust');
-
-        if (!dust.isLoaded(pageTemplateName)) {
-          log.info({module: 'server'}, "Template not found in cache, loading '%s' (%s)", pageTemplateName, file);
-
-          var template =  fs.readFileSync(file, "utf8");
-
-          try {
-            dust.compile(template, pageTemplateName);
-          }
-          catch (e) {
-            var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n';
-            console.log(message);
-            throw e;
-          }
-        }
-    });
-
-    var loadPartialsDirectory = function (directory) {
-      directory = directory || '';
-
-      var directoryList = fs.readdirSync(path.join(partialPath, directory));
-
-      directoryList.forEach(function (itemPath) {
-        var item = fs.statSync(path.join(partialPath, directory, itemPath));
-
-        if (item.isDirectory()) {
-          loadPartialsDirectory(directory + itemPath + '/');
-        } else {
-          // Load the template from file
-          var name = itemPath.slice(0, itemPath.lastIndexOf('.'));
-          var template = fs.readFileSync(path.join(partialPath, directory, itemPath), 'utf8');
-
-          try {
-            var partialName = 'partials/' + directory + name;
-
-            dust.compile(template, partialName);
-          }
-          catch (e) {
-            var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, directory, itemPath) + '". ' + e + '\n';
-            console.log(message);
-            throw e;
-          }
-        }
-      });
-    };
-
-    loadPartialsDirectory();
+    // Load component templates
+    dust.compileFiles(componentTemplates)
+        .then(function () {
+          // Load templates in the template folder that haven't already been loaded
+          return dust.compileDirectory(templatePath);
+        })
+        .then(function () {
+          // Load partials
+          return dust.compileDirectory(partialPath, 'partials', true);
+        })
+        .then(function () {
+          // Load filters
+          return dust.loadDirectory(options.filtersPath);
+        })
+        .then(function () {
+          // Load helpers
+          return dust.loadDirectory(options.helpersPath);
+        })
+        .then(function () {
+          // Write client-side files
+          dust.writeClientsideFiles();
+        })
+        .catch(function (err) {
+          log.error({module: 'server'}, err);
+        });
 }
 
 Server.prototype.getSessionStore = function(sessionConfig) {
