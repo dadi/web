@@ -167,20 +167,31 @@ var conf = convict({
         format: Boolean,
         default: false
       },
-      helpersOutputPath: {
-        doc: "The location where helpers should be written to. If empty, helpers will not be included.",
-        format: String,
-        default: ""
+      filters: {
+        path: {
+          doc: "The location where filters should be written to. If empty, filters will not be included.",
+          format: String,
+          default: ""
+        }
       },
-      outputFormat: {
-        doc: "Defines whether compiled templates are written to individual JS files ('separate') or combined into a single one ('combined')",
-        format: ["separate", "combined"],
-        default: "separate"
+      helpers: {
+        path: {
+          doc: "The location where helpers should be written to. If empty, helpers will not be included.",
+          format: String,
+          default: ""
+        }
       },
-      outputPath: {
-        doc: "The location where compiled templates should be written to, relative to 'public'. This should be a folder when 'outputFormat' is 'separate' and a file when 'combined'",
-        format: String,
-        default: "templates"
+      templates: {
+        format: {
+          doc: "Defines whether compiled templates are written to individual JS files ('separate') or combined into a single one ('combined')",
+          format: ["separate", "combined"],
+          default: "separate"
+        },
+        path: {
+          doc: "The location where compiled templates should be written to, relative to 'public'. This should be a folder when 'outputFormat' is 'separate' and a file when 'combined'",
+          format: String,
+          default: "templates"
+        }
       }
     }
   },
