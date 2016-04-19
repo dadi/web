@@ -3,6 +3,7 @@ var dust = require('dustjs-linkedin');
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
+var uglify = require('uglify-js');
 
 var Dust = function () {
   this.templates = {};
@@ -46,7 +47,7 @@ Dust.prototype._exportFunctionsAs = function (type) {
   return output;
 };
 
-Dust.prototype._writeToFile = function (filePath, content, append) {
+Dust.prototype._writeToFile = function (filePath, content, append, minify) {
   return new Promise(function (resolve, reject) {
     mkdirp(path.dirname(filePath), function (err, made) {
       if (err) {
@@ -56,6 +57,10 @@ Dust.prototype._writeToFile = function (filePath, content, append) {
       }
 
       var writeFunction = append ? fs.appendFile : fs.writeFile;
+
+      if (minify) {
+        content = uglify.minify(content, {fromString: true}).code;
+      }
 
       writeFunction.call(this, filePath, content, function (err) {
         if (err) {
@@ -214,11 +219,10 @@ Dust.prototype.setOptions = function (options) {
 Dust.prototype.writeClientsideFiles = function () {
   var self = this;
   var compiledTemplates = this.templates;
+  var queue = [];
 
-  if (config.get('dust.clientRender.enabled')) {
-    var templatesQueue = [];
-
-    // Step 1. Write templates
+  // Write templates
+  if (config.get('dust.clientRender.templates.enabled')) {
     if (config.get('dust.clientRender.templates.format') === 'combined') {
       var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.templates.path'));
       var templatesOutput = '';
@@ -227,42 +231,36 @@ Dust.prototype.writeClientsideFiles = function () {
         templatesOutput += compiledTemplates[name];
       });
 
-      templatesQueue.push(this._writeToFile(templatesOutputFile, templatesOutput));
+      queue.push(this._writeToFile(templatesOutputFile, templatesOutput));
     } else {
       Object.keys(compiledTemplates).forEach((function (name) {
         var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.templates.path'), name) + '.js';
 
-        templatesQueue.push(this._writeToFile(templatesOutputFile, compiledTemplates[name]));
+        queue.push(this._writeToFile(templatesOutputFile, compiledTemplates[name]));
       }).bind(this));
     }
-
-    return Promise.all(templatesQueue)
-                  .then(function (templates) {
-                    // Step 2. Write filters
-                    if (config.get('dust.clientRender.filters.path') !== '') {
-                      var filtersOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.filters.path'));
-                      var filtersOutput = self._exportFunctionsAs('filters');
-                      var fileAppend = (config.get('dust.clientRender.filters.path') === config.get('dust.clientRender.templates.path'));
-
-                      return self._writeToFile(filtersOutputFile, filtersOutput, fileAppend);
-                    }
-
-                    return Promise.resolve(true);
-                  })
-                  .then(function (filters) {
-                    // Step 3. Write helpers
-                    if (config.get('dust.clientRender.helpers.path') !== '') {
-                      var helpersOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.helpers.path'));
-                      var helpersOutput = self._exportFunctionsAs('helpers');
-                      var fileAppend = ((config.get('dust.clientRender.helpers.path') === config.get('dust.clientRender.templates.path')) ||
-                                        (config.get('dust.clientRender.helpers.path') === config.get('dust.clientRender.filters.path')));
-
-                      return self._writeToFile(helpersOutputFile, helpersOutput, fileAppend);
-                    }
-
-                    return Promise.resolve(true);
-                  });
   }
+
+  // Write filters
+  if (config.get('dust.clientRender.filters.enabled')) {
+    var filtersOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.filters.path'));
+    var filtersOutput = this._exportFunctionsAs('filters');
+    var fileAppend = (queue.length > 0) && ((config.get('dust.clientRender.filters.path') === config.get('dust.clientRender.templates.path')));
+
+    queue.push(this._writeToFile(filtersOutputFile, filtersOutput, fileAppend, true));
+  }
+
+  // Write helpers
+  if (config.get('dust.clientRender.helpers.enabled')) {
+    var helpersOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.helpers.path'));
+    var helpersOutput = this._exportFunctionsAs('helpers');
+    var fileAppend = (queue.length > 0) && ((config.get('dust.clientRender.helpers.path') === config.get('dust.clientRender.templates.path')) ||
+                                            (config.get('dust.clientRender.helpers.path') === config.get('dust.clientRender.filters.path')));
+
+    queue.push(this._writeToFile(helpersOutputFile, helpersOutput, fileAppend, true));
+  }
+
+  return Promise.all(queue);
 };
 
 module.exports = new Dust();
