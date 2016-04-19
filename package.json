@@ -51,6 +51,7 @@
     "server-destroy": "1.0.1",
     "stack-trace": "latest",
     "toobusy-js": "^0.4.2",
+    "uglify-js": "^2.6.2",
     "underscore": "~1.6.0",
     "underscore.string": "^3.2.2",
     "validate-commit-message": "^3.0.1"
