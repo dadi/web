@@ -172,16 +172,16 @@ Server.prototype.start = function (done) {
       }
     });
 
-    if (config.get('api.enabled')) {
-      // caching layer
-      cache(self).init();
-
-      // authentication layer
-      auth(self);
-    }
-
     // handle routing & redirects
     router(self, options);
+
+    if (config.get('api.enabled')) {
+      // authentication layer
+      auth(self);
+
+      // caching layer
+      cache(self).init();
+    }
 
     // start listening
     var server = this.server = app.listen(config.get('server.port'), config.get('server.host'));

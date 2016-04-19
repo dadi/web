@@ -401,7 +401,8 @@ describe('Application', function(done) {
         var datasourceArg = dataHelperArgs[0];
         var urlArg = dataHelperArgs[1];
 
-        spy.firstCall.thisValue.options.proto.should.eql('https')
+        spy.firstCall.thisValue.options.protocol.should.eql('https:')
+        spy.firstCall.thisValue.options.agent.protocol.should.eql('https:')
         done()
       })
     })
