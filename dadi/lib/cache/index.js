@@ -207,7 +207,7 @@ Cache.prototype.init = function() {
       });
 
       readStream.on('end', function () {
-        
+
         if (data === "") {
           res.setHeader('X-Cache', 'MISS');
           res.setHeader('X-Cache-Lookup', 'MISS');
@@ -283,10 +283,6 @@ Cache.prototype.init = function() {
         stream.push(null);
 
         if (self.redisClient) {
-          self.redisClient.on("error", function (err) {
-            log.error({module: 'cache'}, err);
-          });
-
           // save to redis
           stream.pipe(redisWStream(self.redisClient, filename)).on('finish', function () {
             if (config.get('caching.ttl')) {
