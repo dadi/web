@@ -20,7 +20,8 @@ var conf = convict({
     port: {
       doc: "The port the web application will bind to",
       format: 'port',
-      default: 8080
+      default: 8080,
+      env: "PORT"
     },
     name: {
       doc: "The server name.",
