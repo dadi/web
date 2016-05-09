@@ -6,6 +6,7 @@ var pluralist = require('pluralist');
 var _ = require('underscore');
 var s = require('underscore.string');
 var html_strip = require('htmlstrip-native');
+var url  = require('url');
 
 /*
 * Returns the supplied 'data' parameter truncated using the supplied 'length' parameter
@@ -406,7 +407,7 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
   if(!(isFinite(current) && isFinite(totalPages))) {
     err = new Error('Parameters provided to @paginate helper are not integers');
   }
-  var path = params.path;
+  var queryParam = params.param;
   var paginateContext = {
     n: current,
     path: ''
@@ -417,14 +418,31 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
   }
   var context = context.push(paginateContext);
 
+  function constructPath(pathPattern, n) {
+    var outputPath = context.resolve(pathPattern);
+    if(queryParam) {
+      var parsedPath = url.parse(outputPath, true); //parse search string to query object
+      parsedPath.query[queryParam] = n;
+      if(n === 1) {
+        delete parsedPath.query[queryParam];
+      }
+      delete parsedPath.search; //otherwise the search string is used instead of the query object
+      outputPath = url.format(parsedPath);
+    }
+    else {
+      if(n === 1) {
+        // this is to make the path just the base path, without the number
+        outputPath = (outputPath || '').replace(/1\/?$/, '');
+      }
+    }
+    return outputPath;
+  }
   function printStep(body, n) {
     paginateContext.n = n;
-    paginateContext.path = context.resolve(params.path);
-    if(n === 1) {
-      // this is to make the path just the base path, without the number
-      paginateContext.path = (paginateContext.path || '').replace(/1\/?$/, '');
+    paginateContext.path = constructPath(params.path, n);
+    if(body) {
+      chunk.render(body, context);
     }
-    chunk.render(body, context);
   }
   var printGap = bodies.gap ? printStep.bind(null, bodies.gap) : function(){};
   function printStepOrGap(step) {
@@ -492,9 +510,7 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
 
   if(current > 1) {
     // Prev
-    if(bodies.prev) {
-      printStep(bodies.prev, current - 1);
-    }
+    printStep(bodies.prev, current - 1);
     // First step
     printStep(bodies.block, 1);
     // Pre current
@@ -510,9 +526,7 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
     // Last step
     printStep(bodies.block, totalPages);
     // Next
-    if(bodies.next) {
-      printStep(bodies.next, current + 1);
-    }
+    printStep(bodies.next, current + 1);
   }
 
   return chunk;
