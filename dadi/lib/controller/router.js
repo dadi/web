@@ -34,6 +34,10 @@ var Router = function (server, options) {
 
   this.server = server;
 
+  // set latency values
+  toobusy.maxLag(config.get('toobusy.maxLag'));
+  toobusy.interval(config.get('toobusy.interval'));
+
   var self = this;
 
   // load the route constraint specifications if they exist
@@ -207,17 +211,15 @@ module.exports = function (server, options) {
   server.app.Router = new Router(server, options);
 
   // middleware which blocks requests when we're too busy
-	// server.app.use(function (req, res, next) {
-	//   if (toobusy()) {
-	//     var err = new Error();
- //      err.statusCode = 503;
- //      err.json = { 'error' : 'HTTP Error 503 - Service unavailable' };
- //      next(err);
-	//   }
-	//   else {
-	//     next();
-	//   }
-	// });
+	server.app.use(function (req, res, next) {
+	  if (toobusy()) {
+      res.statusCode = 503;
+      return res.end('HTTP Error 503 - Server Busy')
+	  }
+	  else {
+	    next();
+	  }
+	});
 
   // load the rewrites from the filesystem
   server.app.Router.loadRewrites(options, function(err) {

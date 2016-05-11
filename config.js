@@ -360,6 +360,18 @@ var conf = convict({
     format: Boolean,
     default: false
   },
+  toobusy: {
+    maxLag: {
+      doc: "The maximum amount of time in milliseconds that the event queue is behind before we consider the process 'too busy'.",
+      format: Number,
+      default: 70
+    },
+    interval: {
+      doc: "The time in milliseconds between each latency check.",
+      format: Number,
+      default: 500
+    }
+  },
   debug: {
     doc: "If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.",
     format: Boolean,
