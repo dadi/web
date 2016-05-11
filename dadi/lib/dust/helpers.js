@@ -382,9 +382,10 @@ function escapeRegExp(string) {
 /*
 * Paginate pages
 * Usage:
-* For arrays of objects each object has its property at key checked for a match with the provided value, much like underscore's `findWhere`
+* Send in current page, total pages, and a pattern for the path to generate.
+* In the path pattern, use the  dust variable `n` where you want the page number inserted.
 * ```
-* {@paginate page=currentPageNumber totalPages=totalPageCount}
+* {@paginate page=currentPageNumber totalPages=totalPageCount path="/page/{n}"}
 *   <a href="{path}">{n}</a>
 * {:current}
 *   <a href="{path}">Current page {n}</a>
