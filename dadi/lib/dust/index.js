@@ -217,47 +217,42 @@ Dust.prototype.setOptions = function (options) {
 };
 
 Dust.prototype.writeClientsideFiles = function () {
-  var self = this;
-  var compiledTemplates = this.templates;
   var queue = [];
+  var templates = Object.keys(this.templates);
+
+  if (config.get('dust.clientRender.whitelist').length > 0) {
+    var wildcard = require('wildcard');
+    var whitelist = config.get('dust.clientRender.whitelist');
+
+    templates = templates.filter(function (templateName) {
+      var match = false;
+
+      whitelist.forEach(function (item) {
+        match = match || wildcard(item, templateName);
+      });
+
+      return match;
+    });
+  }
 
   // Write templates
-  if (config.get('dust.clientRender.templates.enabled')) {
-    if (config.get('dust.clientRender.templates.format') === 'combined') {
-      var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.templates.path'));
+  if (config.get('dust.clientRender.enabled')) {
+    if (config.get('dust.clientRender.format') === 'combined') {
+      var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'));
       var templatesOutput = '';
 
-      Object.keys(compiledTemplates).forEach(function (name) {
-        templatesOutput += compiledTemplates[name];
-      });
+      templates.forEach((function (name) {
+        templatesOutput += this.templates[name];
+      }).bind(this));
 
       queue.push(this._writeToFile(templatesOutputFile, templatesOutput));
     } else {
-      Object.keys(compiledTemplates).forEach((function (name) {
-        var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.templates.path'), name) + '.js';
+      templates.forEach((function (name) {
+        var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'), name) + '.js';
 
-        queue.push(this._writeToFile(templatesOutputFile, compiledTemplates[name]));
+        queue.push(this._writeToFile(templatesOutputFile, this.templates[name]));
       }).bind(this));
     }
-  }
-
-  // Write filters
-  if (config.get('dust.clientRender.filters.enabled')) {
-    var filtersOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.filters.path'));
-    var filtersOutput = this._exportFunctionsAs('filters');
-    var fileAppend = (queue.length > 0) && ((config.get('dust.clientRender.filters.path') === config.get('dust.clientRender.templates.path')));
-
-    queue.push(this._writeToFile(filtersOutputFile, filtersOutput, fileAppend, true));
-  }
-
-  // Write helpers
-  if (config.get('dust.clientRender.helpers.enabled')) {
-    var helpersOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.helpers.path'));
-    var helpersOutput = this._exportFunctionsAs('helpers');
-    var fileAppend = (queue.length > 0) && ((config.get('dust.clientRender.helpers.path') === config.get('dust.clientRender.templates.path')) ||
-                                            (config.get('dust.clientRender.helpers.path') === config.get('dust.clientRender.filters.path')));
-
-    queue.push(this._writeToFile(helpersOutputFile, helpersOutput, fileAppend, true));
   }
 
   return Promise.all(queue);
