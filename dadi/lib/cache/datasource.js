@@ -50,7 +50,7 @@ DatasourceCache.prototype.setCachePath = function() {
     cachePath = path.join(this.options.directory, this.filename + '.' + this.options.extension);
   }
   else {
-    cachePath = path.join(this.cache.dir, this.filename + '.' + this.cache.extension);
+    cachePath = path.join(this.cache.dir, this.filename + '.json');
   }
 
   this.cachepath = cachePath;

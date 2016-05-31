@@ -110,6 +110,24 @@ describe('Datasource Cache', function (done) {
       done();
     });
 
+    it('should use .json for extension if the datasource doesn\'t provide any options', function (done) {
+
+      config.set('caching.directory.enabled', true);
+      config.set('caching.directory.path', '/Users');
+      config.set('caching.directory.extension', 'cache');
+      config.set('caching.redis.enabled', false);
+
+      delete ds.schema.datasource.caching.directory;
+
+      var c = cache(server.object);
+
+      var dsCache = new datasourceCache(ds);
+
+      dsCache.cachepath.indexOf('.json').should.be.above(-1);
+
+      done();
+    });
+
     it('should reference main module\'s redis client if configured', function (done) {
 
       config.set('caching.directory.enabled', false);
