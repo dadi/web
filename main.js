@@ -50,20 +50,23 @@ if (config.get('cluster')) {
   else {
     // Start Workers
     var app = require(__dirname + '/index.js')
-    app.start()
+    app.start(function() {
+      console.log('Process ' + process.pid + ' is listening for incoming requests')
 
-    console.log('Process ' + process.pid + ' is listening for incoming requests')
-
-    process.on('message', function(message) {
-      if (message.type === 'shutdown') {
-        console.log('Process ' + process.pid + ' is shutting down...')
-        process.exit(0)
-      }
+      process.on('message', function(message) {
+        if (message.type === 'shutdown') {
+          console.log('Process ' + process.pid + ' is shutting down...')
+          process.exit(0)
+        }
+      })
     })
   }
 } else {
+  // Single thread start
   var app = require(__dirname + '/index.js')
-  app.start()
+  app.start(function() {
+    console.log('Process ' + process.pid + ' is listening for incoming requests')
+  })
 }
 
 function restartWorkers() {
