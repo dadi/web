@@ -31,6 +31,7 @@ var Router = function (server, options) {
 
   this.rewritesFile = config.get('rewrites.path') === '' ? null : path.resolve(config.get('rewrites.path'));
   this.rewritesDatasource = config.get('rewrites.datasource');
+  this.loadDatasourceAsFile = config.get('rewrites.loadDatasourceAsFile');
 
   this.server = server;
 
@@ -57,26 +58,60 @@ Router.prototype.loadRewrites = function(options, done) {
 
   self.rules = [];
 
-  if (!self.rewritesFile) return done();
+  if (self.rewritesDatasource && self.loadDatasourceAsFile) {
+    // Get the rewritesDatasource
+    var DadiAPI = require('@dadi/api-wrapper')
+    var datasource = new Datasource(self.rewritesDatasource, self.rewritesDatasource, this.options, function(err, ds) {
+      if (err) {
+        log.error({module: 'router'}, err);
+      }
 
-  var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
+      var endpointParts = ds.source.endpoint.split('/')
 
-  stream.pipe(es.split("\n"))
-        .pipe(es.mapSync(function (data) {
-          if (data !== "") rules.push(data);
+      var api = new DadiAPI({
+        uri: config.get('api.protocol') + '://' + config.get('api.host'),
+        port: config.get('api.port'),
+        credentials: {
+          clientId: config.get('auth.clientId'),
+          secret: config.get('auth.secret')
+        },
+        version: endpointParts[0],
+        database: endpointParts[1]
+      })
+
+      // Get redirects from API collection
+      api.in(self.rewritesDatasource).find().then(function (response) {
+        var idx = 0
+        _.each(response.results, function(rule) {
+          self.rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]')
+          idx++
+          if (idx === response.results.length) return done(null)
         })
-  );
+      })
+    })
+  }
+  else if (self.rewritesFile) {
+    var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
-  stream.on('error', function (err) {
-    log.error({module: 'router'}, 'No rewrites loaded, file not found (' + self.rewritesFile + ')');
-    done(err);
-  });
+    stream.pipe(es.split("\n"))
+          .pipe(es.mapSync(function (data) {
+            if (data !== "") rules.push(data);
+          })
+    );
 
-  stream.on('end', function() {
-    self.rules = rules.slice(0);
+    stream.on('error', function (err) {
+      log.error({module: 'router'}, 'No rewrites loaded, file not found (' + self.rewritesFile + ')');
+      done(err);
+    });
+
+    stream.on('end', function() {
+      self.rules = rules.slice(0);
+      done(null);
+    });
+  }
+  else {
     done(null);
-  });
-
+  }
 }
 
 /**
@@ -238,7 +273,7 @@ module.exports = function (server, options) {
 
       log.debug({module: 'router'}, '[Router] processing: ' + req.url);
 
-      if (!server.app.Router.rewritesDatasource || server.app.Router.rewritesDatasource === '') return next();
+      if (!server.app.Router.rewritesDatasource || server.app.Router.loadDatasourceAsFile || server.app.Router.rewritesDatasource === '') return next();
 
       var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function(err, ds) {
 
