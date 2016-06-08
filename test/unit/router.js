@@ -230,6 +230,7 @@ describe('Router', function (done) {
     it('should redirect to new location if the current request URL is found in a datasource query result', function(done) {
       config.set('api.enabled', false);
       config.set('allowJsonView', true);
+      config.set('loadDatasourceAsFile', false);
       config.set('rewrites.datasource', 'redirects');
 
       var page = getPage();

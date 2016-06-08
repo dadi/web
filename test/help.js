@@ -1,12 +1,3 @@
-/*
-
-TO D)
-datasources
- - chained, param
- - chained, query
-
- */
-
 var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
@@ -119,6 +110,7 @@ module.exports.startServer = function(pages, done) {
 
   Server.start(function() {
     setTimeout(function() {
+
       pages.forEach(function(page) {
         // create a handler for requests to this page
         var controller = Controller(page, options);
