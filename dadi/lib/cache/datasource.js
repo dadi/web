@@ -64,7 +64,7 @@ DatasourceCache.prototype.cachingEnabled = function() {
 
   // check the querystring for a no cache param
   var query = url.parse(this.datasource.endpoint, true).query;
-  if (query.hasOwnProperty('cache') && query.cache === 'false' || config.get('debug')) {
+  if (query.cache && query.cache === 'false' || config.get('debug')) {
     enabled = false;
   }
 
