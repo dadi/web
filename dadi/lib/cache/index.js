@@ -66,7 +66,7 @@ module.exports = function(server) {
  */
 Cache.prototype.cachingEnabled = function(req) {
   var query = url.parse(req.url, true).query;
-  if (query.json) {
+  if (query.json && query.json !== 'false') {
     return false;
   }
 
