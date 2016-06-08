@@ -573,7 +573,7 @@ describe('Datasource', function (done) {
       done();
     });
 
-    it('should pass req.params id param to the endpoint when the datasource matches the page name', function (done) {
+    it.skip('should pass req.params id param to the endpoint when the datasource matches the page name', function (done) {
       var name = 'test';
       var schema = help.getPageSchema();
       schema.settings.passFilters = false;
@@ -591,7 +591,7 @@ describe('Datasource', function (done) {
       done();
     });
 
-    it('should pass req.params id param to the endpoint when page.passFilters is true', function (done) {
+    it.skip('should pass req.params id param to the endpoint when page.passFilters is true', function (done) {
       var name = 'test';
       var schema = help.getPageSchema();
       schema.settings.passFilters = true;
@@ -609,7 +609,7 @@ describe('Datasource', function (done) {
       done();
     });
 
-    it('should pass querystring id param to the endpoint when the datasource matches the page name', function (done) {
+    it.skip('should pass querystring id param to the endpoint when the datasource matches the page name', function (done) {
       var name = 'test';
       var schema = help.getPageSchema();
       schema.settings.passFilters = false;
@@ -626,7 +626,7 @@ describe('Datasource', function (done) {
       done();
     });
 
-    it('should pass querystring id param to the endpoint when page.passFilters is true', function (done) {
+    it.skip('should pass querystring id param to the endpoint when page.passFilters is true', function (done) {
       var name = 'test';
       var schema = help.getPageSchema();
       schema.settings.passFilters = true;
