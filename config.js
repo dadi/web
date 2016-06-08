@@ -317,6 +317,11 @@ var conf = convict({
       format: String,
       default: ""
     },
+    loadDatasourceAsFile: {
+      doc: "",
+      format: Boolean,
+      default: false
+    },
     path: {
       doc: "",
       format: String,
