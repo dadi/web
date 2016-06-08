@@ -372,6 +372,11 @@ var conf = convict({
       default: 500
     }
   },
+  cluster: {
+    doc: "If true, Web runs in cluster mode, starting a worker for each CPU core",
+    format: Boolean,
+    default: false
+  },
   debug: {
     doc: "If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.",
     format: Boolean,
