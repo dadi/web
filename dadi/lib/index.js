@@ -844,7 +844,7 @@ function onListening(e) {
     //   apiMessage += "Attached to DADI API on " + config.get('api.host') + ":" + config.get('api.port');
     // }
 
-    var startText = '';
+    var startText = '\n';
     startText += '  ----------------------------\n';
     startText += '  ' + config.get('app.name').green + '\n';
     startText += '  Started \'DADI Web\'\n';
