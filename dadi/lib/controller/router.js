@@ -80,10 +80,12 @@ Router.prototype.loadRewrites = function(options, done) {
       })
 
       // Get redirects from API collection
-      api.in(self.rewritesDatasource).find().then(function (response) {
+      api.in(self.rewritesDatasource).sortBy('sortOrder', 'asc').find().then(function (response) {
         var idx = 0
         _.each(response.results, function(rule) {
-          self.rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]')
+          if (rule.rule) {
+            self.rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',' + rule.stopProcessing + ']')
+          }
           idx++
           if (idx === response.results.length) return done(null)
         })
