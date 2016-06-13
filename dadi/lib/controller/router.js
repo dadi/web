@@ -96,7 +96,7 @@ Router.prototype.loadRewrites = function(options, done) {
         });
       }
 
-      setInterval(refreshRewrites, 5 * 60 * 1000);
+      setInterval(refreshRewrites, config.get('rewrites.datasourceRefreshTime') * 60 * 1000);
       refreshRewrites(done);
 
     });
