@@ -18,6 +18,8 @@ var rewrite = require(__dirname + '/rewrite');
 
 var Datasource = require(__dirname + '/../datasource');
 
+var rewriteFunction = null;
+
 var Router = function (server, options) {
 
   log.info({module: 'router'}, 'Router logging started.');
@@ -55,7 +57,6 @@ Router.prototype.loadRewrites = function(options, done) {
 
   var self = this;
   self.rules = [];
-  var rules = self.rules;
 
   if (self.rewritesDatasource && self.loadDatasourceAsFile) {
     // Get the rewritesDatasource
@@ -87,14 +88,15 @@ Router.prototype.loadRewrites = function(options, done) {
             fresh_rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]');
             idx++;
             if (idx === response.results.length) {
-              rules = fresh_rules;
+              self.rules = fresh_rules;
+              if(rewriteFunction) rewriteFunction = rewrite(self.rules);
               if(cb) return cb(null);
             }
           });
         });
       }
 
-      setInterval(refreshRewrites, 60 * 1000); //@TODO set back to 5 minutes
+      setInterval(refreshRewrites, 5 * 60 * 1000);
       refreshRewrites(done);
 
     });
@@ -266,7 +268,7 @@ module.exports = function (server, options) {
   // load the rewrites from the filesystem
   server.app.Router.loadRewrites(options, function(err) {
     this.shouldCall = true;
-    var rewriteFunction = rewrite(server.app.Router.rules);
+    rewriteFunction = rewrite(server.app.Router.rules);
 
     //determine if we need to even call
     server.app.use(function(req, res, next) {
