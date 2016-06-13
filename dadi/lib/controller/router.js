@@ -64,7 +64,6 @@ Router.prototype.loadRewrites = function(options, done) {
       if (err) {
         log.error({module: 'router'}, err);
       }
-      console.log('DATASOURCE', err, ds);
 
       var endpointParts = ds.source.endpoint.split('/');
 
@@ -95,7 +94,7 @@ Router.prototype.loadRewrites = function(options, done) {
         });
       }
 
-      setInterval(refreshRewrites, 60 * 1000);
+      setInterval(refreshRewrites, 60 * 1000); //@TODO set back to 5 minutes
       refreshRewrites(done);
 
     });
