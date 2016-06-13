@@ -20,7 +20,7 @@ var Datasource = require(__dirname + '/../datasource');
 
 var Router = function (server, options) {
 
-  log.info({module: 'router'}, 'Router logging started.')
+  log.info({module: 'router'}, 'Router logging started.');
 
   this.data = {};
   this.params = {};
@@ -49,24 +49,24 @@ var Router = function (server, options) {
   catch (err) {
     log.info({module: 'router'}, 'No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
   }
-}
+};
 
 Router.prototype.loadRewrites = function(options, done) {
 
-  var rules = [];
   var self = this;
-
   self.rules = [];
+  var rules = self.rules;
 
   if (self.rewritesDatasource && self.loadDatasourceAsFile) {
     // Get the rewritesDatasource
-    var DadiAPI = require('@dadi/api-wrapper')
+    var DadiAPI = require('@dadi/api-wrapper');
     var datasource = new Datasource(self.rewritesDatasource, self.rewritesDatasource, this.options, function(err, ds) {
       if (err) {
         log.error({module: 'router'}, err);
       }
+      console.log('DATASOURCE', err, ds);
 
-      var endpointParts = ds.source.endpoint.split('/')
+      var endpointParts = ds.source.endpoint.split('/');
 
       var api = new DadiAPI({
         uri: config.get('api.protocol') + '://' + config.get('api.host'),
@@ -77,28 +77,35 @@ Router.prototype.loadRewrites = function(options, done) {
         },
         version: endpointParts[0],
         database: endpointParts[1]
-      })
+      });
 
-      // Get redirects from API collection
-      api.in(self.rewritesDatasource).sortBy('sortOrder', 'asc').find().then(function (response) {
-        var idx = 0
-        _.each(response.results, function(rule) {
-          if (rule.rule) {
-            self.rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',' + rule.stopProcessing + ']')
-          }
-          idx++
-          if (idx === response.results.length) return done(null)
-        })
-      })
-    })
-  }
-  else if (self.rewritesFile) {
+      function refreshRewrites(cb){
+        // Get redirects from API collection
+        var fresh_rules = [];
+        api.in(self.rewritesDatasource).find().then(function (response) {
+          var idx = 0;
+          _.each(response.results, function(rule) {
+            fresh_rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]');
+            idx++;
+            if (idx === response.results.length) {
+              rules = fresh_rules;
+              if(cb) return cb(null);
+            }
+          });
+        });
+      }
+
+      setInterval(refreshRewrites, 60 * 1000);
+      refreshRewrites(done);
+
+    });
+  } else if (self.rewritesFile) {
     var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
     stream.pipe(es.split("\n"))
-          .pipe(es.mapSync(function (data) {
-            if (data !== "") rules.push(data);
-          })
+      .pipe(es.mapSync(function (data) {
+        if (data !== "") rules.push(data);
+      })
     );
 
     stream.on('error', function (err) {
@@ -110,11 +117,10 @@ Router.prototype.loadRewrites = function(options, done) {
       self.rules = rules.slice(0);
       done(null);
     });
-  }
-  else {
+  } else {
     done(null);
   }
-}
+};
 
 /**
  *  Attaches a function from /{routesPath}/constraints.js or a datasource to the specified route
@@ -161,7 +167,7 @@ Router.prototype.constrain = function(route, constraint) {
   }
 
   return;
-}
+};
 
 /**
  *  Attaches a function from /{routesPath}/constraints.js to the specified route
@@ -234,12 +240,12 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
       });
     }
   }
-}
+};
 
 Router.prototype.loadRewriteModule = function() {
   log.info({module: 'router'}, "Rewrite module reload.");
   log.info({module: 'router'}, this.rules.length + " rewrites/redirects loaded.");
-}
+};
 
 module.exports = function (server, options) {
 
@@ -251,7 +257,7 @@ module.exports = function (server, options) {
 	server.app.use(function (req, res, next) {
 	  if (toobusy()) {
       res.statusCode = 503;
-      return res.end('HTTP Error 503 - Server Busy')
+      return res.end('HTTP Error 503 - Server Busy');
 	  }
 	  else {
 	    next();
@@ -260,15 +266,16 @@ module.exports = function (server, options) {
 
   // load the rewrites from the filesystem
   server.app.Router.loadRewrites(options, function(err) {
-
     this.shouldCall = true;
     var rewriteFunction = rewrite(server.app.Router.rules);
 
+    //determine if we need to even call
     server.app.use(function(req, res, next) {
       this.shouldCall = rewriteFunction.call(server.app.Router, req, res, next);
       if (!res.finished) next();
     });
 
+    //load rewrites from our DS and handle them
     server.app.use(function (req, res, next) {
 
       if (!this.shouldCall) return next();
@@ -330,6 +337,7 @@ module.exports = function (server, options) {
       });
     });
 
+    //handle generic url rewrite rules
     server.app.use(function (req, res, next) {
       var redirect = false;
       var location = req.url;
@@ -370,7 +378,8 @@ module.exports = function (server, options) {
       else {
         return next();
       }
-    })
+    });
+
   });
 };
 
