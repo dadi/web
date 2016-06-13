@@ -322,6 +322,11 @@ var conf = convict({
       format: Boolean,
       default: false
     },
+    datasourceRefreshTime: {
+      format: Number,
+      default: 5,
+      doc: "How often to refresh the datasource in minutes"
+    },
     path: {
       doc: "",
       format: String,
