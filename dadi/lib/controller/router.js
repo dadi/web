@@ -18,6 +18,8 @@ var rewrite = require(__dirname + '/rewrite');
 
 var Datasource = require(__dirname + '/../datasource');
 
+var rewriteFunction = null;
+
 var Router = function (server, options) {
 
   log.info({module: 'router'}, 'Router logging started.')
@@ -53,9 +55,7 @@ var Router = function (server, options) {
 
 Router.prototype.loadRewrites = function(options, done) {
 
-  var rules = [];
   var self = this;
-
   self.rules = [];
 
   if (self.rewritesDatasource && self.loadDatasourceAsFile) {
@@ -63,7 +63,7 @@ Router.prototype.loadRewrites = function(options, done) {
     var DadiAPI = require('@dadi/api-wrapper')
     var datasource = new Datasource(self.rewritesDatasource, self.rewritesDatasource, this.options, function(err, ds) {
       if (err) {
-        log.error({module: 'router'}, err);
+        log.error({module: 'router'}, err)
       }
 
       var endpointParts = ds.source.endpoint.split('/')
@@ -79,26 +79,34 @@ Router.prototype.loadRewrites = function(options, done) {
         database: endpointParts[1]
       })
 
-      // Get redirects from API collection
-      api.in(self.rewritesDatasource).sortBy('sortOrder', 'asc').find().then(function (response) {
-        var idx = 0
-        _.each(response.results, function(rule) {
-          if (rule.rule) {
-            self.rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',' + rule.stopProcessing + ']')
-          }
-          idx++
-          if (idx === response.results.length) return done(null)
-        })
-      })
-    })
-  }
-  else if (self.rewritesFile) {
+      function refreshRewrites(cb){
+        // Get redirects from API collection
+        var fresh_rules = [];
+        api.in(self.rewritesDatasource).find().then(function (response) {
+          var idx = 0;
+          _.each(response.results, function(rule) {
+            fresh_rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]');
+            idx++;
+            if (idx === response.results.length) {
+              self.rules = fresh_rules;
+              if(rewriteFunction) rewriteFunction = rewrite(self.rules);
+              if(cb) return cb(null);
+            }
+          });
+        });
+      }
+
+      setInterval(refreshRewrites, config.get('rewrites.datasourceRefreshTime') * 60 * 1000);
+      refreshRewrites(done);
+
+    });
+  } else if (self.rewritesFile) {
     var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
     stream.pipe(es.split("\n"))
-          .pipe(es.mapSync(function (data) {
-            if (data !== "") rules.push(data);
-          })
+      .pipe(es.mapSync(function (data) {
+        if (data !== "") rules.push(data);
+      })
     );
 
     stream.on('error', function (err) {
@@ -110,8 +118,7 @@ Router.prototype.loadRewrites = function(options, done) {
       self.rules = rules.slice(0);
       done(null);
     });
-  }
-  else {
+  } else {
     done(null);
   }
 }
@@ -260,15 +267,16 @@ module.exports = function (server, options) {
 
   // load the rewrites from the filesystem
   server.app.Router.loadRewrites(options, function(err) {
-
     this.shouldCall = true;
-    var rewriteFunction = rewrite(server.app.Router.rules);
+    rewriteFunction = rewrite(server.app.Router.rules);
 
+    //determine if we need to even call
     server.app.use(function(req, res, next) {
       this.shouldCall = rewriteFunction.call(server.app.Router, req, res, next);
       if (!res.finished) next();
     });
 
+    //load rewrites from our DS and handle them
     server.app.use(function (req, res, next) {
 
       if (!this.shouldCall) return next();
@@ -330,6 +338,7 @@ module.exports = function (server, options) {
       });
     });
 
+    //handle generic url rewrite rules
     server.app.use(function (req, res, next) {
       var redirect = false;
       var location = req.url;
@@ -370,7 +379,8 @@ module.exports = function (server, options) {
       else {
         return next();
       }
-    })
+    });
+
   });
 };
 
