@@ -165,27 +165,6 @@ describe('Application', function(done) {
     });
   });
 
-  it.skip('should reject requests with no hostname', function(done) {
-
-    var scope = nock('http://127.0.0.1:3000')
-      .post('/token')
-      .reply(200, {
-        accessToken: 'xx'
-      });
-
-    help.startServer(null, function() {
-      var client = request(clientHost);
-      client
-      .get('/w00tw00t.at.ISC.SANS.DFind:)')
-      .set('Host', '')
-      .expect(400)
-      .end(function (err, res) {
-        if (err) return done(err);
-        done()
-      })
-    })
-  })
-
   it('should not redirect if the router redirect datasource returns unmatching results', function (done) {
     var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
     config.set('rewrites.datasource', 'redirects')
