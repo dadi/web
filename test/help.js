@@ -32,44 +32,19 @@ module.exports.shouldNotHaveHeader = function(header) {
   };
 }
 
-module.exports.addHttpInterceptForApiCheck = function() {
-  var fakeToken = {
-    "accessToken": "da6f610b-6f91-4bce-945d-9829cac5de71",
-    "tokenType": "Bearer",
-    "expiresIn": 1800
-  }
+module.exports.setUpPages = function () {
+  // create page 1
+  var page1 = Page('page1', this.getPageSchema())
+  page1.datasources = []
+  page1.template = 'test.dust'
+  page1.route.paths[0] = '/test'
+  page1.events = []
+  delete page1.route.constraint
 
-  http.register_intercept({
-    hostname: config.get('api.host'),
-    port: config.get('api.port'),
-    path: '/',
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' }
-  });
+  var pages = []
+  pages.push(page1)
 
-  // fake token post
-  http.register_intercept({
-    hostname: config.get('api.host'),
-    port: config.get('api.port'),
-    path: '/token',
-    method: 'POST',
-    agent: new http.Agent({ keepAlive: true }),
-    headers: { 'Content-Type': 'application/json' },
-    body: fakeToken
-  });
-}
-
-module.exports.addHttpIntercept = function(endpoint, status, body) {
-  http.register_intercept({
-    hostname: config.get('api.host'),
-    port: config.get('api.port'),
-    path: 'http://' + config.get('api.host') + ':' + config.get('api.port') + endpoint,
-    method: 'GET',
-    agent: new http.Agent({ keepAlive: true }),
-    headers: { Authorization: 'Bearer da6f610b-6f91-4bce-945d-9829cac5de71', 'accept-encoding': 'gzip' },
-    body: body,
-    statusCode: status
-  });
+  return pages
 }
 
 module.exports.startServer = function(pages, done) {

@@ -348,6 +348,18 @@ var conf = convict({
       default: ""
     }
   },
+  security: {
+    useSSL: {
+      doc: "WIP",
+      format: Boolean,
+      default: false
+    },
+    trustProxy: {
+      doc: "If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address",
+      format: "*",
+      default: true
+    }
+  },
   env: {
     doc: "The applicaton environment.",
     format: ["production", "development", "test", "qa"],

@@ -49,6 +49,7 @@ var router = require(__dirname + '/controller/router');
 var Page = require(__dirname + '/page');
 var middleware = require(__dirname + '/middleware');
 var api = require(__dirname + '/api');
+var apiMiddleware = require(__dirname + '/api/middleware');
 var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
@@ -95,6 +96,10 @@ Server.prototype.start = function (done) {
         port: 80
       }));
     }
+
+    app.use(apiMiddleware.handleHostHeader())
+    app.use(apiMiddleware.setUpRequest())
+    app.use(apiMiddleware.transportSecurity())
 
     // serve static files (css,js,fonts)
     if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }));
