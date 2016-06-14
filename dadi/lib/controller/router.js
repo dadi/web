@@ -22,7 +22,7 @@ var rewriteFunction = null;
 
 var Router = function (server, options) {
 
-  log.info({module: 'router'}, 'Router logging started.');
+  log.info({module: 'router'}, 'Router logging started.')
 
   this.data = {};
   this.params = {};
@@ -51,7 +51,7 @@ var Router = function (server, options) {
   catch (err) {
     log.info({module: 'router'}, 'No route constraints loaded, file not found (' + options.routesPath + '/constraints.js' + ')');
   }
-};
+}
 
 Router.prototype.loadRewrites = function(options, done) {
 
@@ -60,13 +60,13 @@ Router.prototype.loadRewrites = function(options, done) {
 
   if (self.rewritesDatasource && self.loadDatasourceAsFile) {
     // Get the rewritesDatasource
-    var DadiAPI = require('@dadi/api-wrapper');
+    var DadiAPI = require('@dadi/api-wrapper')
     var datasource = new Datasource(self.rewritesDatasource, self.rewritesDatasource, this.options, function(err, ds) {
       if (err) {
-        log.error({module: 'router'}, err);
+        log.error({module: 'router'}, err)
       }
 
-      var endpointParts = ds.source.endpoint.split('/');
+      var endpointParts = ds.source.endpoint.split('/')
 
       var api = new DadiAPI({
         uri: config.get('api.protocol') + '://' + config.get('api.host'),
@@ -77,7 +77,7 @@ Router.prototype.loadRewrites = function(options, done) {
         },
         version: endpointParts[0],
         database: endpointParts[1]
-      });
+      })
 
       function refreshRewrites(cb){
         // Get redirects from API collection
@@ -121,7 +121,7 @@ Router.prototype.loadRewrites = function(options, done) {
   } else {
     done(null);
   }
-};
+}
 
 /**
  *  Attaches a function from /{routesPath}/constraints.js or a datasource to the specified route
@@ -168,7 +168,7 @@ Router.prototype.constrain = function(route, constraint) {
   }
 
   return;
-};
+}
 
 /**
  *  Attaches a function from /{routesPath}/constraints.js to the specified route
@@ -241,12 +241,12 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
       });
     }
   }
-};
+}
 
 Router.prototype.loadRewriteModule = function() {
   log.info({module: 'router'}, "Rewrite module reload.");
   log.info({module: 'router'}, this.rules.length + " rewrites/redirects loaded.");
-};
+}
 
 module.exports = function (server, options) {
 
@@ -258,7 +258,7 @@ module.exports = function (server, options) {
 	server.app.use(function (req, res, next) {
 	  if (toobusy()) {
       res.statusCode = 503;
-      return res.end('HTTP Error 503 - Server Busy');
+      return res.end('HTTP Error 503 - Server Busy')
 	  }
 	  else {
 	    next();
