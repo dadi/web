@@ -223,6 +223,7 @@ function onError(api) {
 
     if (path) {
       req.error = data
+      res.statusCode = data.statusCode
       path.handler(req, res)
     }
     else {
