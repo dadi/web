@@ -200,14 +200,14 @@ module.exports.Api = Api;
 function onError(api) {
   return function (err, req, res, next) {
 
-    if (res.finished) return;
+    if (res.finished) return
 
     if (config.get('env') === 'development') {
-      console.log();
-      console.log(err.stack.toString());
+      console.log()
+      console.log(err.stack.toString())
     }
 
-    log.error({module: 'api'}, err);
+    log.error({module: 'api'}, err)
 
     var data = {
       statusCode: err.statusCode || 500,
@@ -216,17 +216,22 @@ function onError(api) {
       stack : err.stack.split('\n')
     }
 
-    var path = _.findWhere(api.paths, { path: '/error' });
+    // look for a loaded path that matches the error code
+    var path = _.findWhere(api.paths, { path: '/' + data.statusCode })
+    // fallback to a generic /error path
+    if (!path) path = _.findWhere(api.paths, { path: '/error' })
+
     if (path) {
-      req.error = data;
-      path.handler(req, res);
+      req.error = data
+      path.handler(req, res)
     }
     else {
-      res.statusCode = 500;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify(data, null, 2));
+      // no page found to display the error, output raw data
+      res.statusCode = 500
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify(data, null, 2))
     }
-  };
+  }
 }
 
 // return a 404
