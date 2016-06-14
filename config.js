@@ -357,7 +357,7 @@ var conf = convict({
     trustProxy: {
       doc: "If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address",
       format: "*",
-      default: ['loopback', 'linklocal', 'uniquelocal']
+      default: true
     }
   },
   env: {
