@@ -595,22 +595,22 @@ Server.prototype.compile = function (options) {
     });
 
     // Load component templates
-    dust.compileFiles(componentTemplates)
+    dust.loadFiles(componentTemplates)
         .then(function () {
           // Load templates in the template folder that haven't already been loaded
-          return dust.compileDirectory(templatePath);
+          return dust.loadDirectory(templatePath);
         })
         .then(function () {
           // Load partials
-          return dust.compileDirectory(partialPath, 'partials', true);
+          return dust.loadDirectory(partialPath, 'partials', true);
         })
         .then(function () {
           // Load filters
-          return dust.loadDirectory(options.filtersPath);
+          return dust.requireDirectory(options.filtersPath);
         })
         .then(function () {
           // Load helpers
-          return dust.loadDirectory(options.helpersPath);
+          return dust.requireDirectory(options.helpersPath);
         })
         .then(function () {
           // Write client-side files
