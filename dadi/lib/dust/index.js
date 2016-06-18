@@ -1,9 +1,10 @@
 var config = require(__dirname + '/../../../config.js');
 var dust = require('dustjs-linkedin');
 var fs = require('fs');
+var log = require(__dirname + '/../log');
 var mkdirp = require('mkdirp');
 var path = require('path');
-var uglify = require('uglify-js');
+var wildcard = require('wildcard');
 
 var Dust = function () {
   this.templates = {};
@@ -11,43 +12,16 @@ var Dust = function () {
   // Loading core Dust helpers
   require('dustjs-helpers');
 
-	dust.onLoad = (function (templateName, opts, callback) {
-    var template = templateName + '.dust';
-
-    if (template.indexOf('partials') > -1) {
-      template = this.options.partialPath + '/' + template.replace('partials/', '');
-    } else {
-      template = this.options.pagePath + '/' + template;
+	dust.onLoad = ((templateName, opts, callback) => {
+    if (!this.templates[templateName]) {
+      return callback({message: 'Template not found: ' + templateName}, null);
     }
 
-    fs.readFile(template, { encoding: 'utf8' }, function (err, data) {
-      if (err) {
-        // no template file found?
-        return callback(err, null);
-      }
-
-      return callback(null, data);
-    });
-  }).bind(this);
-};
-
-Dust.prototype._exportFunctionsAs = function (type) {
-  var output = '';
-
-  Object.keys(dust[type]).forEach(function (item) {
-    var itemCode = dust[type][item].toString();
-
-    if (itemCode.indexOf('[native code]') !== -1) {
-      return;
-    }
-
-    output += ('dust.' + type +  '.' + item + '=' + itemCode + ';');
+    return callback(null, this.templates[templateName]);
   });
-
-  return output;
 };
 
-Dust.prototype._writeToFile = function (filePath, content, append, minify) {
+Dust.prototype._writeToFile = function (filePath, content, append) {
   return new Promise(function (resolve, reject) {
     mkdirp(path.dirname(filePath), function (err, made) {
       if (err) {
@@ -57,10 +31,6 @@ Dust.prototype._writeToFile = function (filePath, content, append, minify) {
       }
 
       var writeFunction = append ? fs.appendFile : fs.writeFile;
-
-      if (minify) {
-        content = uglify.minify(content, {fromString: true}).code;
-      }
 
       writeFunction.call(this, filePath, content, function (err) {
         if (err) {
@@ -79,28 +49,17 @@ Dust.prototype.clearCache = function () {
   dust.cache = {};
 };
 
-Dust.prototype.compile = function (source, templateName, load) {
-  load = (load !== false);
-
-  // Skipping compilation if template is already loaded
-  if (this.isLoaded(templateName)) return;
-
-  try {
-    var compiled = dust.compile(source, templateName);
-
-    if (load) {
-      dust.loadSource(compiled);
-    }
-
-    this.templates[templateName] = compiled;
-  } catch (err) {
-    log.error({module: 'dust'}, {err: err}, "Couldn\'t compile Dust template '%s'", templateName);
-  }
-
-  return compiled;
+Dust.prototype.getEngine = function () {
+  return dust;
 };
 
-Dust.prototype.compileDirectory = function (directory, prefix, recursive) {
+Dust.prototype.load = function (source, templateName) {
+  this.templates[templateName] = source;
+
+  return source;
+};
+
+Dust.prototype.loadDirectory = function (directory, prefix, recursive) {
   prefix = prefix || '';
 
   var self = this;
@@ -111,12 +70,12 @@ Dust.prototype.compileDirectory = function (directory, prefix, recursive) {
         return path.join(directory, file);
       });
 
-      resolve(self.compileFiles(filesAbsolute, prefix, recursive));
+      resolve(self.loadFiles(filesAbsolute, prefix, recursive));
     });
   });
 };
 
-Dust.prototype.compileFiles = function (files, prefix, recursive) {
+Dust.prototype.loadFiles = function (files, prefix, recursive) {
   prefix = prefix || '';
 
   var self = this;
@@ -129,12 +88,12 @@ Dust.prototype.compileFiles = function (files, prefix, recursive) {
         var basename = path.basename(file, '.dust');
 
         if (stats.isDirectory() && recursive) {
-          queue.push(self.compileDirectory(file, path.join(prefix, basename)));
+          queue.push(self.loadDirectory(file, path.join(prefix, basename)));
         } else if (stats.isFile() && (path.extname(file) === '.dust')) {
           var name = path.join(prefix, basename);
 
           fs.readFile(file, 'utf8', function (err, data) {
-            queue.push(Promise.resolve(self.compile(data, name)));
+            queue.push(Promise.resolve(self.load(data, name)));
           });
         }
       });
@@ -144,15 +103,18 @@ Dust.prototype.compileFiles = function (files, prefix, recursive) {
   });
 };
 
-Dust.prototype.getEngine = function () {
-  return dust;
+Dust.prototype.render = function (templateName, data, templateCache, callback) {
+  var globalCacheEnabled = config.get('dust.cache');
+  var globalCachePages = config.get('dust.cachePages');
+
+  if (globalCacheEnabled && (!globalCachePages || (templateCache === false))) {
+    delete dust.cache[templateName];
+  }
+
+  dust.render(templateName, data, callback);
 };
 
-Dust.prototype.isLoaded = function (templateName) {
-  return dust.cache.hasOwnProperty(templateName);
-};
-
-Dust.prototype.loadDirectory = function (directory) {
+Dust.prototype.requireDirectory = function (directory) {
   return new Promise(function (resolve, reject) {
     fs.stat(directory, function (err, stats) {
       if (err) {
@@ -196,10 +158,6 @@ Dust.prototype.loadDirectory = function (directory) {
   });
 };
 
-Dust.prototype.render = function (templateName, data, callback) {
-  dust.render(templateName, data, callback);
-};
-
 Dust.prototype.setConfig = function (key, value) {
   dust.config[key] = value;
 };
@@ -221,7 +179,6 @@ Dust.prototype.writeClientsideFiles = function () {
   var templates = Object.keys(this.templates);
 
   if (config.get('dust.clientRender.whitelist').length > 0) {
-    var wildcard = require('wildcard');
     var whitelist = config.get('dust.clientRender.whitelist');
 
     templates = templates.filter(function (templateName) {
