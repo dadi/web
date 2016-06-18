@@ -35,8 +35,10 @@ View.prototype.render = function(done) {
   else {
     dust.setConfig('whitespace', this.page.keepWhitespace);
 
+    var pageCacheSettings = this.page.settings && this.page.settings.cache;
+
     // Render the compiled template
-    dust.render(this.pageTemplate, this.data, function(err, result) {
+    dust.render(this.pageTemplate, this.data, pageCacheSettings, function (err, result) {
 
       if (err) {
         console.log(err)
