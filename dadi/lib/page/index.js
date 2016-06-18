@@ -125,7 +125,7 @@ function checkRouteSetting(schema, name) {
  * @api private
  */
 function checkCacheSetting(schema, name) {
-  if (schema.page.cache) {
+  if (schema.page.cache !== undefined) {
     schema.settings.cache = schema.page.cache;
     delete schema.page.cache;
 
