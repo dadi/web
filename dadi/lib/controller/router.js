@@ -38,8 +38,10 @@ var Router = function (server, options) {
   this.server = server;
 
   // set latency values
-  toobusy.maxLag(config.get('toobusy.maxLag'));
-  toobusy.interval(config.get('toobusy.interval'));
+  if (config.get('toobusy.enabled')) {
+    toobusy.maxLag(config.get('toobusy.maxLag'));
+    toobusy.interval(config.get('toobusy.interval'));
+  }
 
   var self = this;
 
@@ -256,7 +258,7 @@ module.exports = function (server, options) {
 
   // middleware which blocks requests when we're too busy
 	server.app.use(function (req, res, next) {
-	  if (toobusy()) {
+	  if (config.get('toobusy.enabled') && toobusy()) {
       res.statusCode = 503;
       return res.end('HTTP Error 503 - Server Busy')
 	  }

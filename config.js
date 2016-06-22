@@ -383,6 +383,11 @@ var conf = convict({
     default: false
   },
   toobusy: {
+    enabled: {
+      doc: "If true, server will respond with HTTP 503 if the server is deemed too busy.",
+      format: Boolean,
+      default: false
+    },
     maxLag: {
       doc: "The maximum amount of time in milliseconds that the event queue is behind before we consider the process 'too busy'.",
       format: Number,
