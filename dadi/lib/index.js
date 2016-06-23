@@ -177,15 +177,18 @@ Server.prototype.start = function (done) {
       }
     });
 
+    // set up cache
+    var cacheLayer = cache(self)
+
     // handle routing & redirects
-    router(self, options);
+    router(self, options)
 
     if (config.get('api.enabled')) {
       // authentication layer
-      auth(self);
+      auth(self)
 
-      // caching layer
-      cache(self).init();
+      // initialise the cache
+      cacheLayer.init()
     }
 
     // start listening

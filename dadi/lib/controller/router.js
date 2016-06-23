@@ -68,33 +68,51 @@ Router.prototype.loadRewrites = function(options, done) {
         log.error({module: 'router'}, err)
       }
 
-      var endpointParts = ds.source.endpoint.split('/')
+      // var endpointParts = ds.source.endpoint.split('/')
+      //
+      // var api = new DadiAPI({
+      //   uri: config.get('api.protocol') + '://' + config.get('api.host'),
+      //   port: config.get('api.port'),
+      //   credentials: {
+      //     clientId: config.get('auth.clientId'),
+      //     secret: config.get('auth.secret')
+      //   },
+      //   version: endpointParts[0],
+      //   database: endpointParts[1]
+      // })
 
-      var api = new DadiAPI({
-        uri: config.get('api.protocol') + '://' + config.get('api.host'),
-        port: config.get('api.port'),
-        credentials: {
-          clientId: config.get('auth.clientId'),
-          secret: config.get('auth.secret')
-        },
-        version: endpointParts[0],
-        database: endpointParts[1]
-      })
-
-      function refreshRewrites(cb){
+      function refreshRewrites (cb) {
         // Get redirects from API collection
         var fresh_rules = [];
-        api.in(self.rewritesDatasource).find().then(function (response) {
-          var idx = 0;
-          _.each(response.results, function(rule) {
-            fresh_rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]');
-            idx++;
-            if (idx === response.results.length) {
-              self.rules = fresh_rules;
-              if(rewriteFunction) rewriteFunction = rewrite(self.rules);
-              if(cb) return cb(null);
-            }
-          });
+        var dataHelper = new help.DataHelper(ds, null);
+        dataHelper.load(function(err, response) {
+          if (err) {
+            console.log('Error loading data in Router Rewrite module');
+            return next(err);
+          }
+
+          if (response) {
+            response = JSON.parse(response)
+          }
+
+          if (response.results) {
+            //api.in(self.rewritesDatasource).find().then(function (response)
+            var idx = 0;
+
+            _.each(response.results, function(rule) {
+              fresh_rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]');
+              idx++;
+              if (idx === response.results.length) {
+                self.rules = fresh_rules;
+                log.info('Loaded ' + idx + ' rewrites')
+                if (rewriteFunction) rewriteFunction = rewrite(self.rules);
+                if (cb) return cb(null);
+              }
+            });
+          }
+          else {
+            if (cb) return cb(null);
+          }
         });
       }
 
