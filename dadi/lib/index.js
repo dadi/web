@@ -618,6 +618,8 @@ Server.prototype.compile = function (options) {
         })
         .catch(function (err) {
           log.error({module: 'server'}, err);
+
+          throw err;
         });
 }
 
