@@ -6,6 +6,7 @@ var pluralist = require('pluralist');
 var _ = require('underscore');
 var s = require('underscore.string');
 var html_strip = require('htmlstrip-native');
+var url  = require('url');
 
 /*
 * Returns the supplied 'data' parameter truncated using the supplied 'length' parameter
@@ -384,6 +385,13 @@ function escapeRegExp(string) {
 * Usage:
 * Send in current page, total pages, and a pattern for the path to generate.
 * In the path pattern, use the  dust variable `n` where you want the page number inserted.
+* The helper exposes five different blocks: default/initial, current, prev, next, else & gap.
+* The default/initial/unnamed block is rendered for all steps but the current one, as well as
+* for gaps if the gap block isn't defined. Leave the gap block blank to supress output of gaps.
+* If there is only one page, the {:else} block is the only block that is rendered.
+* When printing the path, if there's a searchstring, use the `|s` filter to
+* disable escaping, as the url will render incorrectly (with `&amp;`'s) otherwise.
+* Please note that this is not safe when printing user input!
 * ```
 * {@paginate page=currentPageNumber totalPages=totalPageCount path="/page/{n}"}
 *   <a href="{path}">{n}</a>
@@ -395,6 +403,20 @@ function escapeRegExp(string) {
 *   <a href="{path}">Next</a>
 * {/paginate}
 * ```
+* If you instead of having the page number in the pathname want it in the querystring, use the `param` option:
+* ```
+* {@paginate page=currentPage totalPages=totalPageCount path="/root" param="page"}
+* - {path|s}
+* {:current}- {path|s} (on)
+* {/paginate}
+* ```
+* Which in the case of example above with `currentPage=2` & `totalPageCount=3` would give the following output:
+* ```
+* - /root
+* - /root?page=2 (on)
+* - /root?page=3
+* ```
+* If the `path` sent in already has a querystring the right param will be set/updated.
 */
 dust.helpers.paginate = function(chunk, context, bodies, params) {
   var err;
@@ -406,7 +428,7 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
   if(!(isFinite(current) && isFinite(totalPages))) {
     err = new Error('Parameters provided to @paginate helper are not integers');
   }
-  var path = params.path;
+  var queryParam = params.param;
   var paginateContext = {
     n: current,
     path: ''
@@ -417,14 +439,31 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
   }
   var context = context.push(paginateContext);
 
+  function constructPath(pathPattern, n) {
+    var outputPath = context.resolve(pathPattern);
+    if(queryParam) {
+      var parsedPath = url.parse(outputPath, true); //parse search string to query object
+      parsedPath.query[queryParam] = n;
+      if(n === 1) {
+        delete parsedPath.query[queryParam];
+      }
+      delete parsedPath.search; //otherwise the search string is used instead of the query object
+      outputPath = url.format(parsedPath);
+    }
+    else {
+      if(n === 1) {
+        // this is to make the path just the base path, without the number
+        outputPath = (outputPath || '').replace(/1\/?$/, '');
+      }
+    }
+    return outputPath;
+  }
   function printStep(body, n) {
     paginateContext.n = n;
-    paginateContext.path = context.resolve(params.path);
-    if(n === 1) {
-      // this is to make the path just the base path, without the number
-      paginateContext.path = (paginateContext.path || '').replace(/1\/?$/, '');
+    paginateContext.path = constructPath(params.path, n);
+    if(body) {
+      chunk.render(body, context);
     }
-    chunk.render(body, context);
   }
   var printGap = bodies.gap ? printStep.bind(null, bodies.gap) : function(){};
   function printStepOrGap(step) {
@@ -492,9 +531,7 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
 
   if(current > 1) {
     // Prev
-    if(bodies.prev) {
-      printStep(bodies.prev, current - 1);
-    }
+    printStep(bodies.prev, current - 1);
     // First step
     printStep(bodies.block, 1);
     // Pre current
@@ -510,9 +547,7 @@ dust.helpers.paginate = function(chunk, context, bodies, params) {
     // Last step
     printStep(bodies.block, totalPages);
     // Next
-    if(bodies.next) {
-      printStep(bodies.next, current + 1);
-    }
+    printStep(bodies.next, current + 1);
   }
 
   return chunk;
