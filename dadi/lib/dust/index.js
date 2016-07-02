@@ -103,14 +103,7 @@ Dust.prototype.loadFiles = function (files, prefix, recursive) {
   });
 };
 
-Dust.prototype.render = function (templateName, data, templateCache, callback) {
-  var globalCacheEnabled = config.get('dust.cache');
-  var globalCachePages = config.get('dust.cachePages');
-
-  if (globalCacheEnabled && (!globalCachePages || (templateCache === false))) {
-    delete dust.cache[templateName];
-  }
-
+Dust.prototype.render = function (templateName, data, callback) {
   dust.render(templateName, data, callback);
 };
 

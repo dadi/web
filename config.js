@@ -147,11 +147,6 @@ var conf = convict({
       format: Boolean,
       default: true
     },
-    cachePages: {
-      doc: "If false, only partials are saved to the Dust cache, not pages.",
-      format: Boolean,
-      default: true
-    },
     debug: {
       doc: "",
       format: Boolean,
