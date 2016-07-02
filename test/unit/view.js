@@ -8,6 +8,7 @@ var should = require('should');
 var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
 var page = require(__dirname + '/../../dadi/lib/page');
+var path = require('path');
 var view = require(__dirname + '/../../dadi/lib/view');
 var help = require(__dirname + '/../help');
 var config = require(__dirname + '/../../config.js');
@@ -233,7 +234,7 @@ describe('View', function (done) {
     helper += "    return chunk;\n";
     helper += "}";
 
-    var helperPath = __dirname + '/../app/utils/helpers/code.js';
+    var helperPath = path.join(config.get('paths.helpers'), 'code.js');
     fs.writeFileSync(helperPath, helper);
 
     // load a template
