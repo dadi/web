@@ -88,7 +88,8 @@ Router.prototype.loadRewrites = function(options, done) {
         dataHelper.load(function(err, response) {
           if (err) {
             console.log('Error loading data in Router Rewrite module');
-            return next(err);
+            console.log(err)
+            return cb(null)
           }
 
           if (response) {
