@@ -174,7 +174,6 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
 
 Datasource.prototype.processRequest = function (datasource, req) {
 
-  var self = this;
   var originalFilter = _.clone(this.schema.datasource.filter);
   var query = url.parse(req.url, true).query;
 
@@ -193,9 +192,15 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // if the current datasource matches the page name
   // add some params from the query string or request params
   if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters) {
+    var requestParamsPage = this.requestParams.find((obj) => {
+      return (obj.filter === 'page') && obj.param
+    })
 
     // handle pagination param
-    this.schema.datasource.page = query.page || req.params.page || 1;
+    this.schema.datasource.page = query.page ||
+                                  (requestParamsPage && req.params[requestParamsPage]) ||
+                                  req.params.page ||
+                                  1;
 
     // add an ID filter if it was present in the querystring
     // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
@@ -226,7 +231,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // in the querystring's request params e.g. /car-reviews/:make/:model
   // NB don't replace a property that already exists
   _.each(this.requestParams, function(obj) {
-    if (req.params.hasOwnProperty(obj.param)) {
+    if (obj.field && req.params.hasOwnProperty(obj.param)) {
       if (obj.type == "Number") {
         this.schema.datasource.filter[obj.field] = Number(req.params[obj.param]);
       } else {
