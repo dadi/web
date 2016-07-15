@@ -5,10 +5,10 @@ var fs = require('fs');
 var url = require('url');
 var _ = require('underscore');
 
-var BearerAuthStrategy = require(__dirname + '/../auth/bearer');
 var Event = require(__dirname + '/../event');
 var config = require(__dirname + '/../../../config.js');
 var log = require(__dirname + '/../log');
+var providers = require(__dirname + '/../providers')
 
 /**
  * Represents a Datasource.
@@ -27,6 +27,11 @@ var Datasource = function (page, datasource, options, callback) {
       return callback(err);
     }
 
+    /* DEBUG */
+    console.log('-- ds schema'.green)
+    console.log(schema)
+    console.log('!-- ds schema'.green)
+
     self.schema = schema;
     self.source = schema.datasource.source;
     self.schema.datasource.filter = self.schema.datasource.filter || {};
@@ -35,19 +40,23 @@ var Datasource = function (page, datasource, options, callback) {
       callback(null, self);
     }
 
+    if (!providers[self.source.type]) {
+      err = new Error(`no provider available for datasource type ${self.source.type}`, __filename)
+      console.error(err.message)
+      return callback(err)
+    }
+
+    self.provider = new providers[self.source.type]()
     self.filterEvent = null;
     self.requestParams = schema.datasource.requestParams || [];
     self.chained = schema.datasource.chained || null;
-    self.authStrategy = self.setAuthStrategy();
 
     if (schema.datasource.filterEvent) {
       self.filterEvent = new Event(null, schema.datasource.filterEvent, self.options);
     }
 
-    self.buildEndpoint(schema, function() {
-      //self.endpoint = endpoint;
-      callback(null, self);
-    });
+    self.provider.initialise(schema)
+    callback(null, self)
   });
 
 };
@@ -82,97 +91,10 @@ Datasource.prototype.loadDatasource = function(done) {
   }
 };
 
-Datasource.prototype.setAuthStrategy = function() {
-
-  if (!this.schema.datasource.auth) return null;
-
-//  var authConfig = {};
-
-  // load the auth configuration file
-  // var authConfigPath = __dirname + '/../../../config.auth.json';
-  // if (fs.existsSync(authConfigPath)) {
-  //   try {
-  //     var body = fs.readFileSync(authConfigPath, {encoding: 'utf-8'});
-  //     authConfig = JSON.parse(body);
-  //   }
-  //   catch (err) {
-  //     throw new Error('Error loading datasource auth config "' + filepath + '". Is it valid JSON? ' + err);
-  //   }
-  // }
-
-  // var authBlock = this.schema.datasource.auth;
-
-  // if (typeof authBlock === 'string' && authConfig[authBlock]) {
-  //   this.schema.datasource.auth = authConfig[authBlock];
-  // }
-
-  return new BearerAuthStrategy(this.schema.datasource.auth);
-};
-
-/**
- *  Constructs the datasource endpoint using properties defined in the schema
- *  @param {JSON} schema - the callback that handles the response
- *  @param done - the callback that handles the response
- *  @public
- */
-Datasource.prototype.buildEndpoint = function(schema, done) {
-
-  if (schema.datasource.source.type === 'static') return;
-
-  var self = this;
-  var uri = "";
-
-  var apiConfig = config.get('api');
-
-  var protocol = schema.datasource.source.protocol || 'http';
-  var host = schema.datasource.source.host || apiConfig.host;
-  var port = schema.datasource.source.port || apiConfig.port;
-
-  uri = [protocol, '://', host, (port !== '' ? ':' : ''), port, '/', schema.datasource.source.endpoint].join('');
-
-  self.endpoint = self.processDatasourceParameters(schema, uri);
-  done();
-};
-
-/**
- *  Adds querystring parameters to the datasource endpoint using properties defined in the schema
- *  @param {JSON} schema - the datasource schema
- *  @param {String} uri - the original datasource endpoint
- *  @public
- */
-Datasource.prototype.processDatasourceParameters = function (schema, uri) {
-
-  var query = '?';
-
-  var params = [
-    {"count": (schema.datasource.count || 0)},
-    {"skip": (schema.datasource.skip)},
-    {"page": (schema.datasource.page || 1)},
-    {"referer": schema.datasource.referer},
-    {"filter": schema.datasource.filter || {}},
-    {"fields": schema.datasource.fields || {}},
-    {"sort": processSortParameter(schema.datasource.sort)}
-  ];
-
-  // pass cache flag to API endpoint
-  if (schema.datasource.hasOwnProperty('cache')) {
-    params.push({"cache": schema.datasource.cache});
-  }
-
-  params.forEach(function(param) {
-    for (key in param) {
-      if (param.hasOwnProperty(key) && (typeof param[key] !== 'undefined')) {
-        query = query + key + "=" + (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) + '&';
-      }
-    }
-    // if (params.indexOf(param) === (params.length-1)) {
-    //   done(uri + query.slice(0,-1));
-    // }
-  });
-  return uri + query.slice(0,-1);
-}
-
 Datasource.prototype.processRequest = function (datasource, req) {
+
+  /* DEBUG */
+  console.log('(before) Datasource.prototype.processRequest:'.green, this.schema.datasource)
 
   var self = this;
   var originalFilter = _.clone(this.schema.datasource.filter);
@@ -244,6 +166,9 @@ Datasource.prototype.processRequest = function (datasource, req) {
   if (this.schema.datasource.filterEventResult) {
     this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult);
   }
+
+  /* DEBUG */
+  console.log('(after) Datasource.prototype.processRequest:'.green, this.schema.datasource)
 
   this.buildEndpoint(this.schema, function() {});
 }
