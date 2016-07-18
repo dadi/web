@@ -84,8 +84,7 @@ Router.prototype.loadRewrites = function(options, done) {
       function refreshRewrites (cb) {
         // Get redirects from API collection
         var fresh_rules = [];
-        var dataHelper = new help.DataHelper(ds, null);
-        dataHelper.load(function(err, response) {
+        ds.provider.load(null, function(err, response) {
           if (err) {
             console.log('Error loading data in Router Rewrite module');
             return next(err);
@@ -231,10 +230,9 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
 
       help.timer.start('router constraint: ' + datasource);
 
-      datasource.processRequest(datasource.page.name, req);
+      datasource.provider.processRequest(datasource.page.name, req);
 
-      var dataHelper = new help.DataHelper(datasource, req.url);
-      dataHelper.load(function(err, result) {
+      datasource.provider.load(req.url, function(err, result) {
 
         help.timer.stop('router constraint: ' + datasource);
 
@@ -313,10 +311,10 @@ module.exports = function (server, options) {
         }
 
         _.extend(ds.schema.datasource.filter, { "rule": req.url });
-        ds.processRequest(ds.page.name, req);
 
-        var dataHelper = new help.DataHelper(ds, req.url);
-        dataHelper.load(function(err, result) {
+        ds.provider.processRequest(ds.page.name, req);
+
+        ds.provider.load(req.url, function(err, result) {
           if (err) {
             console.log('Error loading data in Router Rewrite module');
             return next(err);

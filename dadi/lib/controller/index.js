@@ -51,6 +51,11 @@ Controller.prototype.attachDatasources = function(done) {
   var self = this;
   var i = 0;
 
+  /* DEBUG */
+  console.log('| self.page:'.green, JSON.stringify(self.page))
+  console.log('| datasources:'.green, this.page.datasources)
+  //console.log('| self.options:'.green, self.options)
+
   this.page.datasources.forEach(function(datasource) {
     var ds = new Datasource(self.page, datasource, self.options, function(err, ds) {
       if (err) {
@@ -144,6 +149,9 @@ Controller.prototype.process = function (req, res, next) {
 
     log.debug({module: 'controller'}, {req:req});
 
+    /* DEBUG */
+    console.log('Controller.prototype.process:'.green, req.url)
+
     var self = this;
     var settings = {};
     var done;
@@ -159,6 +167,9 @@ Controller.prototype.process = function (req, res, next) {
     else {
       done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next);
     }
+
+    /* DEBUG */
+    console.log('* self.loadData()'.green)
 
     self.loadData(req, res, data, function(err, data, dsResponse) {
 
@@ -267,6 +278,10 @@ Controller.prototype.loadData = function(req, res, data, done) {
     }
   });
 
+  /* DEBUG */
+  console.log('* primaryDatasources:'.green, primaryDatasources)
+  console.log('* chainedDatasources:'.green, chainedDatasources)
+
   help.timer.start('load data');
 
   async.waterfall([
@@ -288,6 +303,9 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
       var queue = async.queue(function(ds, cb) {
 
+        /* DEBUG */
+        console.log('. Controller.prototype.loadData:'.green, ds.name)
+
         if (ds.filterEvent) {
           ds.filterEvent.run(req, res, data, function(err, filter) {
             if (err) return done(err);
@@ -299,8 +317,8 @@ Controller.prototype.loadData = function(req, res, data, done) {
 
         help.timer.start('datasource: ' + ds.name);
 
-        var dataHelper = new help.DataHelper(ds, req.url);
-        dataHelper.load(function(err, result, dsResponse) {
+        /* DEBUG */
+        ds.provider.load(req.url, function(err, result, dsResponse) {
           help.timer.stop('datasource: ' + ds.name);
           if (err) return done(err);
 
@@ -436,10 +454,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
       chainedDatasource.schema.datasource.filter = JSON.parse(filter);
     }
 
-    chainedDatasource.buildEndpoint(chainedDatasource.schema, function() {});
-
-    var dataHelper = new help.DataHelper(chainedDatasource, req.url);
-    dataHelper.load(function(err, result) {
+    chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {});
+    chainedDatasource.provider.loadData(req.url, function(err, result) {
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)');
 

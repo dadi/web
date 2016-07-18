@@ -460,6 +460,10 @@ Server.prototype.addRoute = function (obj, options, reload) {
     // get the page schema
     var schema;
 
+    /* DEBUG */
+    console.log()
+    console.log(`* ${obj.filepath} in addRoute`.green)
+
     try {
       schema = require(obj.filepath);
     }
@@ -477,6 +481,12 @@ Server.prototype.addRoute = function (obj, options, reload) {
 
     // add the component to the api by adding a route to the app and mapping
     // `req.method` to component methods
+
+    /* DEBUG */
+    console.log('--> key:'.green, page.key)
+    console.log('--> route:'.green, page.route)
+    console.log('--> filepath:'.green, obj.filepath)
+
     this.addComponent({
         key: page.key,
         route: page.route,

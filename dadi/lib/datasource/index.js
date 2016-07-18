@@ -56,6 +56,7 @@ var Datasource = function (page, datasource, options, callback) {
     }
 
     self.provider.initialise(schema)
+
     callback(null, self)
   });
 
@@ -92,6 +93,9 @@ Datasource.prototype.loadDatasource = function(done) {
 };
 
 Datasource.prototype.processRequest = function (datasource, req) {
+  // called from lib/controller:processSearchParameters for reason:
+  // | process each of the datasource's requestParams, testing for their existence
+  // | in the querystring's request params e.g. /car-reviews/:make/:model
 
   /* DEBUG */
   console.log('(before) Datasource.prototype.processRequest:'.green, this.schema.datasource)
@@ -170,28 +174,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   /* DEBUG */
   console.log('(after) Datasource.prototype.processRequest:'.green, this.schema.datasource)
 
-  this.buildEndpoint(this.schema, function() {});
-}
-
-function processSortParameter(obj) {
-  var sort = {};
-  if (typeof obj !== 'object' || obj === null) return sort;
-
-  if (_.isArray(obj)) {
-    _.each(obj, function(value, key) {
-      if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
-        sort[value.field] = (value.order === 'asc') ? 1 : -1;
-      }
-    });
-  }
-  else if (obj.hasOwnProperty('field') && obj.hasOwnProperty('order')) {
-    sort[obj.field] = (obj.order === 'asc') ? 1 : -1;
-  }
-  else {
-    sort = obj;
-  }
-
-  return sort;
+  this.provider.processRequest(datasource, req)
 }
 
 module.exports = function (page, datasource, options, callback) {
