@@ -318,6 +318,7 @@ Controller.prototype.loadData = function(req, res, data, done) {
         help.timer.start('datasource: ' + ds.name);
 
         /* DEBUG */
+        console.log('-->'.blue, 'controller')
         ds.provider.load(req.url, function(err, result, dsResponse) {
           help.timer.stop('datasource: ' + ds.name);
           if (err) return done(err);
@@ -454,7 +455,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
       chainedDatasource.schema.datasource.filter = JSON.parse(filter);
     }
 
-    chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {});
+    // needed?
+    //chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {});
     chainedDatasource.provider.load(req.url, function(err, result) {
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)');

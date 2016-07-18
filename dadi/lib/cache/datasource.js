@@ -34,7 +34,12 @@ var DatasourceCache = function (datasource) {
 
   // we build the filename with a hashed hex string so we can be unique
   // and avoid using file system reserved characters in the name
-  this.filename = crypto.createHash('sha1').update(this.datasource.name).digest('hex') + '_' + crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
+  console.log('CACHE'.red, this.datasource)
+  console.log('endpoint'.red, this.datasource.provider.endpoint)
+
+  var name = this.datasource.name
+  var endpoint = this.datasource.provider.endpoint || ''
+  this.filename = crypto.createHash('sha1').update(name).digest('hex') + '_' + crypto.createHash('sha1').update(endpoint).digest('hex');
 
   this.setCachePath();
 
@@ -63,7 +68,7 @@ DatasourceCache.prototype.cachingEnabled = function() {
   if (!this.cachepath) enabled = false;
 
   // check the querystring for a no cache param
-  var query = url.parse(this.datasource.endpoint, true).query;
+  var query = url.parse(this.datasource.provider.endpoint, true).query;
   if (query.cache && query.cache === 'false' || config.get('debug')) {
     enabled = false;
   }

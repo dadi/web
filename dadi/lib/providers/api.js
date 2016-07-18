@@ -2,11 +2,25 @@
  * TODO: move API related things to here
  */
 
+var _ = require('underscore')
+var url = require('url')
+var http = require('http')
+var https = require('https')
+var zlib = require('zlib')
+
+var config = require(__dirname + '/../../../config.js');
+var log = require(__dirname + '/../log');
+var help = require(__dirname + '/../help');
 var BearerAuthStrategy = require(__dirname + '/../auth/bearer')
+var DatasourceCache = require(__dirname + '/../cache/datasource');
 
 var ApiProvider = function () {}
 
-ApiProvider.prototype.initialise = function (schema) {
+ApiProvider.prototype.initialise = function (datasource, schema) {
+  console.log('--> initialise'.red)
+  console.log('--> datasource'.red, datasource)
+  console.log('--> schema'.red, schema)
+  this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
   this.buildEndpoint()
@@ -18,7 +32,9 @@ ApiProvider.prototype.setAuthStrategy = function () {
 }
 
 ApiProvider.prototype.processRequest = function (datasource, req) {
-  this.buildEndpoint(this.schema, function() {})
+  // (datasource, req) unused
+  console.log('--> processRequest'.red)
+  this.buildEndpoint()
 }
 
 /**
@@ -27,8 +43,8 @@ ApiProvider.prototype.processRequest = function (datasource, req) {
  *  @param done - the callback that handles the response
  *  @public
  */
-ApiProvider.prototype.buildEndpoint = function (schema, done) {
-  var self = this
+ApiProvider.prototype.buildEndpoint = function () {
+  console.log('--> buildEndpoint'.red)
   var schema = this.schema
   var uri = ''
 
@@ -40,7 +56,9 @@ ApiProvider.prototype.buildEndpoint = function (schema, done) {
 
   uri = [protocol, '://', host, (port !== '' ? ':' : ''), port, '/', schema.datasource.source.endpoint].join('')
 
-  self.endpoint = self.processDatasourceParameters(schema, uri)
+  this.endpoint = this.processDatasourceParameters(schema, uri)
+
+  console.log('<-- buildEndpoint'.red, this.endpoint)
 }
 
 /**
@@ -50,7 +68,7 @@ ApiProvider.prototype.buildEndpoint = function (schema, done) {
  *  @public
  */
 ApiProvider.prototype.processDatasourceParameters = function (schema, uri) {
-
+  console.log('--> processDatasourceParameters'.red, schema, uri)
   var query = '?';
 
   var params = [
@@ -92,7 +110,7 @@ ApiProvider.prototype.load = function (requestUrl, done) {
     protocol: this.datasource.source.protocol || config.get('api.protocol'),
     host: this.datasource.source.host || config.get('api.host'),
     port: this.datasource.source.port || config.get('api.port'),
-    path: url.parse(this.datasource.endpoint).path,
+    path: url.parse(this.endpoint).path,
     method: 'GET'
   }
   this.options.agent = this.keepAliveAgent(this.options.protocol)
@@ -101,7 +119,7 @@ ApiProvider.prototype.load = function (requestUrl, done) {
   this.dataCache.getFromCache(function (cachedData) {
     if (cachedData) return done(null, cachedData);
 
-    this.getHeaders(function(err, headers) {
+    self.getHeaders(function(err, headers) {
       if (err) {
         return done(err);
       }
@@ -240,10 +258,10 @@ ApiProvider.prototype.getHeaders = function(done) {
     }
   } else {
     try {
-      module.exports.getToken(this.datasource).then(function (bearerToken) {
+      help.getToken(this.datasource).then(function (bearerToken) {
         headers['Authorization'] = 'Bearer ' + bearerToken;
 
-        module.exports.timer.stop('auth');
+        help.timer.stop('auth');
         return done(null, {headers: headers});
       }).catch(function (errorData) {
         var err = new Error();
@@ -257,7 +275,7 @@ ApiProvider.prototype.getHeaders = function(done) {
           console.log(errorData.stack)
         }
 
-        module.exports.timer.stop('auth');
+        help.timer.stop('auth');
         return done(err);
       });
     }

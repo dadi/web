@@ -55,7 +55,7 @@ var Datasource = function (page, datasource, options, callback) {
       self.filterEvent = new Event(null, schema.datasource.filterEvent, self.options);
     }
 
-    self.provider.initialise(schema)
+    self.provider.initialise(self, schema)
 
     callback(null, self)
   });
