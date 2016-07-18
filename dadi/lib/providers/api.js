@@ -4,7 +4,7 @@
 
 var BearerAuthStrategy = require(__dirname + '/../auth/bearer')
 
-var ApiProvider =  = function () {}
+var ApiProvider = function () {}
 
 ApiProvider.prototype.initialise = function (schema) {
   this.schema = schema
@@ -32,7 +32,7 @@ ApiProvider.prototype.buildEndpoint = function (schema, done) {
 
   var protocol = schema.datasource.source.protocol || 'http'
   var host = schema.datasource.source.host || apiConfig.host
-  var port = schema.datasource.source.port || apiConfig.portt
+  var port = schema.datasource.source.port || apiConfig.port
 
   uri = [protocol, '://', host, (port !== '' ? ':' : ''), port, '/', schema.datasource.source.endpoint].join('')
 

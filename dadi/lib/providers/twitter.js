@@ -1,7 +1,7 @@
 var Purest = require('purest')
 var provider = new Purest({ provider: 'twitter' })
 
-var TwitterProvider =  = function () {}
+var TwitterProvider = function () {}
 
 TwitterProvider.prototype.initialise = function (schema) {
   this.schema = schema
