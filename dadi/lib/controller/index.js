@@ -455,7 +455,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     }
 
     chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {});
-    chainedDatasource.provider.loadData(req.url, function(err, result) {
+    chainedDatasource.provider.load(req.url, function(err, result) {
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)');
 
