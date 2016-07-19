@@ -230,8 +230,7 @@ Router.prototype.testConstraint = function(route, req, res, callback) {
 
       help.timer.start('router constraint: ' + datasource);
 
-      datasource.provider.processRequest(datasource.page.name, req);
-
+      datasource.processRequest(datasource.page.name, req)
       datasource.provider.load(req.url, function(err, result) {
 
         help.timer.stop('router constraint: ' + datasource);
