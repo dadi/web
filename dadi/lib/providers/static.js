@@ -1,32 +1,41 @@
-/* TODO: migrate logic and test, test, test!!
- */
+'use strict'
 
-var StaticProvider = function () {}
+const _ = require('underscore')
 
-StaticProvider.prototype.initialise = function (schema) {
+const StaticProvider = function () {}
+
+StaticProvider.prototype.initialise = function (datasource, schema) {
+  this.datasource = datasource
   this.schema = schema
 }
 
-StaticProvider.prototype.loadData = function(done) {
-  var data = this.schema.source.data;
+StaticProvider.prototype.processRequest = function () {
+  // do nothing, build no end point
+}
 
-  if (_.isArray(data)) {
-    var sortField = this.schema.datasource.sort.field;
-    var sortDir = this.schema.datasource.sort.order;
-    var search = this.schema.datasource.search;
-    var count = this.schema.datasource.count;
-    var fields = this.schema.datasource.fields;
+StaticProvider.prototype.load = function (requestUrl, done) {
+  try {
+    var data = this.schema.datasource.source.data
 
-    if (search) data = _.where(data, search);
-    if (sortField) data = _.sortBy(data, sortField);
-    if (sortDir === 'desc') data = data.reverse();
+    if (_.isArray(data)) {
+      const sortField = this.schema.datasource.sort.field
+      const sortDir = this.schema.datasource.sort.order
+      const search = this.schema.datasource.search
+      const count = this.schema.datasource.count
+      const fields = this.schema.datasource.fields
 
-    if (count) data = _.first(data, count);
+      if (search) data = _.where(data, search)
+      if (sortField) data = _.sortBy(data, sortField)
+      if (sortDir === 'desc') data = data.reverse()
 
-    if (fields) data = _.chain(data).selectFields(fields.join(",")).value();
+      if (count) data = _.first(data, count)
+      if (fields) data = _.chain(data).selectFields(fields.join(',')).value()
+    }
+
+    done(null, data)
+  } catch (ex) {
+    done(ex, null)
   }
-
-  done(data);
 }
 
 module.exports = StaticProvider
