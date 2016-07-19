@@ -204,7 +204,7 @@ function onError(api) {
 
     if (config.get('env') === 'development') {
       console.log()
-      console.log(err.stack.toString())
+      console.log(err.stack && err.stack.toString() || err)
     }
 
     log.error({module: 'api'}, err)
@@ -213,7 +213,7 @@ function onError(api) {
       statusCode: err.statusCode || 500,
       code: err.name,
       message: err.message,
-      stack : err.stack.split('\n')
+      stack : err.stack && err.stack.split('\n') || ''
     }
 
     // look for a loaded path that matches the error code
