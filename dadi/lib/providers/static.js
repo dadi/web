@@ -15,7 +15,7 @@ StaticProvider.prototype.processRequest = function () {
 
 StaticProvider.prototype.load = function (requestUrl, done) {
   try {
-    var data = this.schema.datasource.source.data
+    let data = this.schema.datasource.source.data
 
     if (_.isArray(data)) {
       const sortField = this.schema.datasource.sort.field
