@@ -27,11 +27,6 @@ var Datasource = function (page, datasource, options, callback) {
       return callback(err);
     }
 
-    /* DEBUG */
-    console.log('-- ds schema'.green)
-    console.log(schema)
-    console.log('!-- ds schema'.green)
-
     self.schema = schema;
     self.source = schema.datasource.source;
     self.schema.datasource.filter = self.schema.datasource.filter || {};
@@ -99,9 +94,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // called from lib/controller:processSearchParameters for reason:
   // | process each of the datasource's requestParams, testing for their existence
   // | in the querystring's request params e.g. /car-reviews/:make/:model
-
-  /* DEBUG */
-  console.log('(before) Datasource.prototype.processRequest:'.green, this.schema.datasource)
 
   var self = this;
   var originalFilter = _.clone(this.schema.datasource.filter);
@@ -173,9 +165,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
   if (this.schema.datasource.filterEventResult) {
     this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult);
   }
-
-  /* DEBUG */
-  console.log('(after) Datasource.prototype.processRequest:'.green, this.schema.datasource)
 
   if (typeof this.provider.processRequest === 'function') {
     this.provider.processRequest(req)
