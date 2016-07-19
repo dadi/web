@@ -1,11 +1,31 @@
-var Purest = require('purest')
-var provider = new Purest({ provider: 'twitter' })
+'use strict'
 
-var TwitterProvider = function () {}
+const _ = require('underscore')
+const Purest = require('purest')
+const provider = new Purest({ provider: 'twitter' })
 
-TwitterProvider.prototype.initialise = function (schema) {
+const TwitterProvider = function () {}
+
+TwitterProvider.prototype.initialise = function (datasource, schema) {
+  this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
+}
+
+TwitterProvider.prototype.load = function (requestUrl, done) {
+  try {
+    let data = []
+
+    // TODO
+
+    done(null, data)
+  } catch (ex) {
+    done(ex, null)
+  }
+}
+
+TwitterProvider.prototype.processRequest = function () {
+  // do nothing, build no end point
 }
 
 TwitterProvider.prototype.setAuthStrategy = function() {

@@ -9,10 +9,6 @@ StaticProvider.prototype.initialise = function (datasource, schema) {
   this.schema = schema
 }
 
-StaticProvider.prototype.processRequest = function () {
-  // do nothing, build no end point
-}
-
 StaticProvider.prototype.load = function (requestUrl, done) {
   try {
     let data = this.schema.datasource.source.data
@@ -36,6 +32,10 @@ StaticProvider.prototype.load = function (requestUrl, done) {
   } catch (ex) {
     done(ex, null)
   }
+}
+
+StaticProvider.prototype.processRequest = function () {
+  // do nothing, build no end point
 }
 
 module.exports = StaticProvider
