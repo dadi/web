@@ -95,6 +95,32 @@ var conf = convict({
       default: ""
     }
   },
+  twitter: {
+    consumerKey: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_CONSUMER_KEY"
+    },
+    consumerSecret: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_CONSUMER_SECRET"
+    },
+    accessTokenKey: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_ACCESS_TOKEN_KEY"
+    },
+    accessTokenSecret: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_ACCESS_TOKEN_SECRET"
+    }
+  },
   caching: {
     ttl: {
       doc: "The time, in seconds, after which cached data is considered stale",

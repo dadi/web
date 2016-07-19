@@ -2,7 +2,7 @@
 
 const _ = require('underscore')
 const Purest = require('purest')
-const provider = new Purest({ provider: 'twitter' })
+const config = require(__dirname + '/../../../config.js')
 
 const TwitterProvider = function () {}
 
@@ -17,6 +17,11 @@ TwitterProvider.prototype.initialise = function initialise(datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
+  this.twitterApi = new Purest({
+    provider: 'twitter',
+    key: this.consumerKey,
+    secret: this.consumerSecret
+  })
 }
 
 /**
@@ -28,11 +33,16 @@ TwitterProvider.prototype.initialise = function initialise(datasource, schema) {
  */
 TwitterProvider.prototype.load = function load(requestUrl, done) {
   try {
-    let data = []
-
-    // TODO
-
-    done(null, data)
+    console.log('this.accessTokenKey', this.accessTokenKey)
+    console.log('this.accessTokenSecret', this.accessTokenSecret)
+    this.twitterApi.query()
+      .select('statuses/user_timeline')
+      .where({ screen_name: 'imdsm', count: 10 })
+      .auth(this.accessTokenKey, this.accessTokenSecret)
+      .request((err, res, body) => {
+        if (err) return done(err, null)
+        done(null, body)
+      })
   } catch (ex) {
     done(ex, null)
   }
@@ -53,10 +63,12 @@ TwitterProvider.prototype.processRequest = function processRequest() {
  * @return {void}
  */
 TwitterProvider.prototype.setAuthStrategy = function setAuthStrategy() {
-  if (!this.schema.datasource.auth) return
+  const auth = this.schema.datasource.auth
 
-  this.accessTokenKey = this.schema.datasource.auth.access_token_key || ''
-  this.accessTokenSecret = this.schema.datasource.auth.access_token_secret || ''
+  this.consumerKey = auth && auth.consumer_key || config.get('twitter.consumerKey')
+  this.consumerSecret = auth && auth.consumer_secret || config.get('twitter.consumerSecret')
+  this.accessTokenKey = auth && auth.access_token_key || config.get('twitter.accessTokenKey')
+  this.accessTokenSecret = auth && auth.access_token_secret || config.get('twitter.accessTokenSecret')
 }
 
 module.exports = TwitterProvider
