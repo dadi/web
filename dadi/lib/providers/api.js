@@ -14,7 +14,14 @@ const DatasourceCache = require(__dirname + '/../cache/datasource')
 
 const ApiProvider = function () {}
 
-ApiProvider.prototype.initialise = function (datasource, schema) {
+/**
+ * initialise - initialises the datasource provider
+ *
+ * @param  {obj} datasource - the datasource to which this provider belongs
+ * @param  {obj} schema - the schema that this provider works with
+ * @return {void}
+ */
+ApiProvider.prototype.initialise = function initialise(datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
@@ -22,12 +29,11 @@ ApiProvider.prototype.initialise = function (datasource, schema) {
 }
 
 /**
- *  Constructs the datasource endpoint using properties defined in the schema
- *  @param {JSON} schema - ?
- *  @param done - the callback that handles the response
- *  @public
+ * buildEndpoint - constructs the datasource endpoint using properties defined in the schema
+ *
+ * @return {void}
  */
-ApiProvider.prototype.buildEndpoint = function () {
+ApiProvider.prototype.buildEndpoint = function buildEndpoint() {
   const apiConfig = config.get('api')
   const source = this.schema.datasource.source
 
@@ -41,7 +47,14 @@ ApiProvider.prototype.buildEndpoint = function () {
   this.endpoint = this.processDatasourceParameters(this.schema, uri)
 }
 
-ApiProvider.prototype.getHeaders = function (done) {
+
+/**
+ * getHeaders
+ *
+ * @param  {fn} done - callback
+ * @return {void}
+ */
+ApiProvider.prototype.getHeaders = function getHeaders(done) {
   const headers = {
     'accept-encoding': 'gzip'
   }
@@ -91,7 +104,15 @@ ApiProvider.prototype.getHeaders = function (done) {
   }
 }
 
-ApiProvider.prototype.handleResponse = function (res, done) {
+
+/**
+ * handleResponse
+ *
+ * @param  {response} res - response
+ * @param  {fn} done - callback
+ * @return {void}
+ */
+ApiProvider.prototype.handleResponse = function handleResponse(res, done) {
   const self = this
   const encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : ''
   let output = ''
@@ -125,12 +146,26 @@ ApiProvider.prototype.handleResponse = function (res, done) {
   }
 }
 
-ApiProvider.prototype.keepAliveAgent = function (protocol) {
+
+/**
+ * keepAliveAgent - returns http|https module depending on config
+ *
+ * @param  {string} protocol
+ * @return {module} http|https
+ */
+ApiProvider.prototype.keepAliveAgent = function keepAliveAgent(protocol) {
   return (protocol === 'https')
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
 }
 
+/**
+ * load - loads data form the datasource
+ *
+ * @param  {string} requestUrl - url of the web request (not used)
+ * @param  {fn} done - callback on error or completion
+ * @return {void}
+ */
 ApiProvider.prototype.load = function (requestUrl, done) {
   const self = this
 
@@ -177,12 +212,13 @@ ApiProvider.prototype.load = function (requestUrl, done) {
 }
 
 /**
- *  Adds querystring parameters to the datasource endpoint using properties defined in the schema
- *  @param {JSON} schema - the datasource schema
- *  @param {String} uri - the original datasource endpoint
- *  @public
+ * processDatasourceParameters - adds querystring parameters to the datasource endpoint using properties defined in the schema
+ *
+ * @param  {json} schema - the datasource schema
+ * @param  {type} uri - the original datasource endpoint
+ * @return {string} uri with query string appended
  */
-ApiProvider.prototype.processDatasourceParameters = function (schema, uri) {
+ApiProvider.prototype.processDatasourceParameters = function processDatasourceParameters(schema, uri) {
   let query = '?'
 
   const params = [
@@ -211,7 +247,16 @@ ApiProvider.prototype.processDatasourceParameters = function (schema, uri) {
   return uri + query.slice(0, -1)
 }
 
-ApiProvider.prototype.processOutput = function (res, data, done) {
+
+/**
+ * processOutput
+ *
+ * @param  {response} res
+ * @param  {string} data
+ * @param  {fn} done
+ * @return {void}
+ */
+ApiProvider.prototype.processOutput = function processOutput(res, data, done) {
   const self = this
 
   // Return a 202 Accepted response immediately,
@@ -243,11 +288,24 @@ ApiProvider.prototype.processOutput = function (res, data, done) {
   return done(null, data)
 }
 
-ApiProvider.prototype.processRequest = function () {
+
+/**
+ * processRequest - called on every request, rebuild buildEndpoint
+ *
+ * @return {void}
+ */
+ApiProvider.prototype.processRequest = function processRequest() {
   this.buildEndpoint()
 }
 
-ApiProvider.prototype.processSortParameter = function (obj) {
+
+/**
+ * processSortParameter
+ *
+ * @param  {?} obj - sort parameter
+ * @return {?}
+ */
+ApiProvider.prototype.processSortParameter = function processSortParameter(obj) {
   let sort = {}
 
   if (typeof obj !== 'object' || obj === null) return sort
@@ -267,7 +325,13 @@ ApiProvider.prototype.processSortParameter = function (obj) {
   return sort
 }
 
-ApiProvider.prototype.setAuthStrategy = function () {
+
+/**
+ * setAuthStrategy
+ *
+ * @return {void}
+ */
+ApiProvider.prototype.setAuthStrategy = function setAuthStrategy() {
   if (!this.schema.datasource.auth) return null
   this.authStrategy = new BearerAuthStrategy(this.schema.datasource.auth)
 }

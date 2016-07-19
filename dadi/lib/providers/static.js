@@ -4,12 +4,27 @@ const _ = require('underscore')
 
 const StaticProvider = function () {}
 
-StaticProvider.prototype.initialise = function (datasource, schema) {
+/**
+ * initialise - initialises the datasource provider
+ *
+ * @param  {obj} datasource - the datasource to which this provider belongs
+ * @param  {obj} schema - the schema that this provider works with
+ * @return {void}
+ */
+StaticProvider.prototype.initialise = function initialise(datasource, schema) {
   this.datasource = datasource
   this.schema = schema
 }
 
-StaticProvider.prototype.load = function (requestUrl, done) {
+
+/**
+ * load - loads data form the datasource
+ *
+ * @param  {string} requestUrl - url of the web request (not used)
+ * @param  {fn} done - callback on error or completion
+ * @return {void}
+ */
+StaticProvider.prototype.load = function load(requestUrl, done) {
   try {
     let data = this.schema.datasource.source.data
 
@@ -32,10 +47,6 @@ StaticProvider.prototype.load = function (requestUrl, done) {
   } catch (ex) {
     done(ex, null)
   }
-}
-
-StaticProvider.prototype.processRequest = function () {
-  // do nothing, build no end point
 }
 
 module.exports = StaticProvider

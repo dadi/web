@@ -6,13 +6,27 @@ const provider = new Purest({ provider: 'twitter' })
 
 const TwitterProvider = function () {}
 
-TwitterProvider.prototype.initialise = function (datasource, schema) {
+/**
+ * initialise - initialises the datasource provider
+ *
+ * @param  {obj} datasource - the datasource to which this provider belongs
+ * @param  {obj} schema - the schema that this provider works with
+ * @return {void}
+ */
+TwitterProvider.prototype.initialise = function initialise(datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
 }
 
-TwitterProvider.prototype.load = function (requestUrl, done) {
+/**
+ * load - loads data form the datasource
+ *
+ * @param  {string} requestUrl - url of the web request (not used)
+ * @param  {fn} done - callback on error or completion
+ * @return {void}
+ */
+TwitterProvider.prototype.load = function load(requestUrl, done) {
   try {
     let data = []
 
@@ -24,27 +38,25 @@ TwitterProvider.prototype.load = function (requestUrl, done) {
   }
 }
 
-TwitterProvider.prototype.processRequest = function () {
-  // do nothing, build no end point
+/**
+ * processRequest - called on every request, rebuild buildEndpoint
+ *
+ * @return {void}
+ */
+TwitterProvider.prototype.processRequest = function processRequest() {
+  // this.buildEndpoint()
 }
 
-TwitterProvider.prototype.setAuthStrategy = function() {
+/**
+ * setAuthStrategy
+ *
+ * @return {void}
+ */
+TwitterProvider.prototype.setAuthStrategy = function setAuthStrategy() {
   if (!this.schema.datasource.auth) return
 
   this.accessTokenKey = this.schema.datasource.auth.access_token_key || ''
   this.accessTokenSecret = this.schema.datasource.auth.access_token_secret || ''
-}
-
-TwitterProvider.prototype.test = function () {
-  // provider.query()
-  //   .select('users/show')
-  //   .where({ screen_name: 'imdsm' })
-  //   .auth(this.accessTokenKey, this.accessTokenSecret)
-  //   .request(function (err, res, body) {
-  //     if (err) console.log(err)
-  //     console.log('body.name:', body.name)
-  //     console.log('body.screen_name:', body.screen_name)
-  //   })
 }
 
 module.exports = TwitterProvider
