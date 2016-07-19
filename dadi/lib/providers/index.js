@@ -1,14 +1,16 @@
-var fs = require('fs')
-var path = require('path')
+'use strict'
 
-var dir = __dirname
-var entries = fs.readdirSync(dir)
-var modules = {}
+const fs = require('fs')
+const path = require('path')
+
+const dir = __dirname
+const entries = fs.readdirSync(dir)
+const modules = {}
 
 entries.forEach((entry) => {
-  var filename = path.join(dir, entry)
-  var name = entry.replace(/\.[^/.]+$/, '')
-  var stat = fs.statSync(filename)
+  const filename = path.join(dir, entry)
+  const name = entry.replace(/\.[^/.]+$/, '')
+  const stat = fs.statSync(filename)
 
   if (stat.isFile() && name !== 'index') {
     modules[name] = require(filename)
