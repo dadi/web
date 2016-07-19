@@ -92,6 +92,9 @@ Datasource.prototype.loadDatasource = function(done) {
   }
 };
 
+/**
+ * @param  {string} datasource - datasource key
+ */
 Datasource.prototype.processRequest = function (datasource, req) {
   // called from lib/controller:processSearchParameters for reason:
   // | process each of the datasource's requestParams, testing for their existence
@@ -174,7 +177,9 @@ Datasource.prototype.processRequest = function (datasource, req) {
   /* DEBUG */
   console.log('(after) Datasource.prototype.processRequest:'.green, this.schema.datasource)
 
-  this.provider.processRequest(datasource, req)
+  if (typeof this.provider.processRequest === 'function') {
+    this.provider.processRequest(req)
+  }
 }
 
 module.exports = function (page, datasource, options, callback) {
