@@ -39,7 +39,13 @@ var DatasourceCache = function (datasource) {
 
   var name = this.datasource.name
   var endpoint = this.datasource.provider.endpoint || ''
-  this.filename = crypto.createHash('sha1').update(name).digest('hex') + '_' + crypto.createHash('sha1').update(endpoint).digest('hex');
+  var cacheKey = this.datasource.provider.cacheKey || ''
+
+  // not all datasource providers work with url endpoints
+  // so we allow the use of a unique cacheKey instead
+  this.filename = crypto.createHash('sha1').update(name).digest('hex')
+  if (cacheKey !== '') this.filename += '_' + crypto.createHash('sha1').update(cacheKey).digest('hex')
+  else this.filename += '_' + crypto.createHash('sha1').update(endpoint).digest('hex')
 
   this.setCachePath();
 
@@ -48,6 +54,7 @@ var DatasourceCache = function (datasource) {
 
 DatasourceCache.prototype.setCachePath = function() {
   var cachePath = '.';
+  var defaultExtension = config.get('caching.directory.extension') || 'json';
 
   // if the datasource file defines a directory and extension, use those, otherwise
   // fallback to using the main cache module settings
@@ -55,7 +62,7 @@ DatasourceCache.prototype.setCachePath = function() {
     cachePath = path.join(this.options.directory, this.filename + '.' + this.options.extension);
   }
   else {
-    cachePath = path.join(this.cache.dir, this.filename + '.json');
+    cachePath = path.join(this.cache.dir, this.filename + '.' + defaultExtension);
   }
 
   this.cachepath = cachePath;
@@ -68,9 +75,16 @@ DatasourceCache.prototype.cachingEnabled = function() {
   if (!this.cachepath) enabled = false;
 
   // check the querystring for a no cache param
-  var query = url.parse(this.datasource.provider.endpoint, true).query;
-  if (query.cache && query.cache === 'false' || config.get('debug')) {
-    enabled = false;
+  if (typeof this.datasource.provider.endpoint !== 'undefined') {
+    var query = url.parse(this.datasource.provider.endpoint, true).query;
+    if (query.cache && query.cache === 'false') {
+      enabled = false;
+    }
+  }
+
+  // allow debug to overrride unless allowCachingInDebug is set
+  if (config.get('debug') && !config.get('allowCachingInDebug')) {
+    enabled = false
   }
 
   // enabled if the datasource caching block says it's enabled
