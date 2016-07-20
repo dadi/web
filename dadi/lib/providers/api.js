@@ -292,9 +292,10 @@ ApiProvider.prototype.processOutput = function processOutput(res, data, done) {
 /**
  * processRequest - called on every request, rebuild buildEndpoint
  *
+ * @param  {obj} req - web request object
  * @return {void}
  */
-ApiProvider.prototype.processRequest = function processRequest() {
+ApiProvider.prototype.processRequest = function processRequest(req) {
   this.buildEndpoint()
 }
 
