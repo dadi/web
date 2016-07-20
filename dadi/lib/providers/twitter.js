@@ -25,6 +25,24 @@ TwitterProvider.prototype.initialise = function initialise(datasource, schema) {
 }
 
 /**
+ * buildQueryParams
+ *
+ * @return {obj} query params to pass to the twitter api
+ */
+TwitterProvider.prototype.buildQueryParams = function buildQueryParams() {
+  const params = {}
+  const datasource = this.schema.datasource
+
+  params.count = datasource.count
+
+  for (let f in datasource.filter) {
+    params[f] = datasource.filter[f]
+  }
+
+  return params
+}
+
+/**
  * load - loads data form the datasource
  *
  * @param  {string} requestUrl - url of the web request (not used)
@@ -33,15 +51,16 @@ TwitterProvider.prototype.initialise = function initialise(datasource, schema) {
  */
 TwitterProvider.prototype.load = function load(requestUrl, done) {
   try {
-    console.log('this.accessTokenKey', this.accessTokenKey)
-    console.log('this.accessTokenSecret', this.accessTokenSecret)
+    const endpoint = this.schema.datasource.source.endpoint
+    const queryParams = this.buildQueryParams()
+
     this.twitterApi.query()
-      .select('statuses/user_timeline')
-      .where({ screen_name: 'imdsm', count: 10 })
+      .select(endpoint)
+      .where(queryParams)
       .auth(this.accessTokenKey, this.accessTokenSecret)
       .request((err, res, body) => {
         if (err) return done(err, null)
-        done(null, body)
+        this.processOutput(res, body, done)
       })
   } catch (ex) {
     done(ex, null)
@@ -49,12 +68,39 @@ TwitterProvider.prototype.load = function load(requestUrl, done) {
 }
 
 /**
- * processRequest - called on every request, rebuild buildEndpoint
+ * processOutput
  *
+ * @param  {response} res
+ * @param  {string} data
+ * @param  {fn} done
  * @return {void}
  */
-TwitterProvider.prototype.processRequest = function processRequest() {
-  // this.buildEndpoint()
+TwitterProvider.prototype.processOutput = function processOutput(res, data, done) {
+  // if the error is anything other than Success or Bad Request, error
+  if (res.statusCode && !/200|400/.exec(res.statusCode)) {
+    const err = new Error()
+    const info = `${res.statusMessage} (${res.statusCode}): ${this.endpoint}`
+
+    err.remoteIp = this.options.host
+    err.remotePort = this.options.port
+    err.message = `Datasource "${this.datasource.name}" failed. ${info}`
+    if (data) err.message += '\n' + data
+
+    log.error({ module: 'helper' }, info)
+    return done(err)
+  }
+
+  return done(null, data)
+}
+
+/**
+ * processRequest - called on every request, rebuild buildEndpoint
+ *
+ * @param  {obj} req - web request object
+ * @return {void}
+ */
+TwitterProvider.prototype.processRequest = function processRequest(req) {
+  // not used
 }
 
 /**
