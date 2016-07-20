@@ -3,6 +3,7 @@
 const _ = require('underscore')
 const Purest = require('purest')
 const config = require(__dirname + '/../../../config.js')
+const DatasourceCache = require(__dirname + '/../cache/datasource')
 
 const TwitterProvider = function () {}
 
@@ -54,14 +55,21 @@ TwitterProvider.prototype.load = function load(requestUrl, done) {
     const endpoint = this.schema.datasource.source.endpoint
     const queryParams = this.buildQueryParams()
 
-    this.twitterApi.query()
-      .select(endpoint)
-      .where(queryParams)
-      .auth(this.accessTokenKey, this.accessTokenSecret)
-      .request((err, res, body) => {
-        if (err) return done(err, null)
-        this.processOutput(res, body, done)
-      })
+    this.cacheKey = [endpoint, encodeURIComponent(JSON.stringify(queryParams))].join('+')
+    this.dataCache = new DatasourceCache(this.datasource)
+
+    this.dataCache.getFromCache((cachedData) => {
+      if (cachedData) return done(null, cachedData)
+
+      this.twitterApi.query()
+        .select(endpoint)
+        .where(queryParams)
+        .auth(this.accessTokenKey, this.accessTokenSecret)
+        .request((err, res, body) => {
+          if (err) return done(err, null)
+          this.processOutput(res, body, done)
+        })
+    })
   } catch (ex) {
     done(ex, null)
   }
@@ -88,6 +96,10 @@ TwitterProvider.prototype.processOutput = function processOutput(res, data, done
 
     log.error({ module: 'helper' }, info)
     return done(err)
+  }
+
+  if (res.statusCode === 200) {
+    this.dataCache.cacheResponse(JSON.stringify(data), () => {})
   }
 
   return done(null, data)
