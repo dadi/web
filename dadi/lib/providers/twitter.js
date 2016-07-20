@@ -55,7 +55,7 @@ TwitterProvider.prototype.load = function load(requestUrl, done) {
     const endpoint = this.schema.datasource.source.endpoint
     const queryParams = this.buildQueryParams()
 
-    this.cacheKey = [endpoint, encodeURIComponent(JSON.stringify(queryParams))].join('+')
+    this.cacheKey = [endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
     this.dataCache = new DatasourceCache(this.datasource)
 
     this.dataCache.getFromCache((cachedData) => {
