@@ -269,13 +269,13 @@ RemoteProvider.prototype.processOutput = function processOutput(res, data, done)
   // Success or Bad Request, error
   if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     const err = new Error()
-    err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.datasource.endpoint
+    err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
     if (data) err.message += '\n' + data
 
     err.remoteIp = self.options.host
     err.remotePort = self.options.port
 
-    log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.datasource.endpoint)
+    log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint)
     //return done(err)
     throw(err)
   }
