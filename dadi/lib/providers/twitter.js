@@ -99,10 +99,43 @@ TwitterProvider.prototype.processOutput = function processOutput(res, data, done
   }
 
   if (res.statusCode === 200) {
+    data = this.processFields(data)
     this.dataCache.cacheResponse(JSON.stringify(data), () => {})
   }
 
   return done(null, data)
+}
+
+
+/**
+ * processFields - remove any unwanted fields from the dataset
+ *
+ * @param  {obj} data before it's been processed
+ * @return {obj} data after it's been processed
+ */
+TwitterProvider.prototype.processFields = function processFields(data) {
+  const fields = this.schema.datasource.fields
+
+  console.log('**fields'.red, fields)
+
+  if (fields && Object.keys(fields).length)
+  {
+    const keys = Object.keys(fields)
+    console.log('**keys'.red, keys)
+
+    if (_.isArray(data)) {
+      for (let i = 0; i < data.length; i++) {
+        data[i] = _.pick(data[i], keys)
+      }
+    } else {
+      data = _.pick(data, keys)
+    }
+
+
+    console.log('data', data)
+  }
+
+  return data
 }
 
 /**
