@@ -12,7 +12,7 @@ const help = require(__dirname + '/../help')
 const BearerAuthStrategy = require(__dirname + '/../auth/bearer')
 const DatasourceCache = require(__dirname + '/../cache/datasource')
 
-const ApiProvider = function () {}
+const RemoteProvider = function () {}
 
 /**
  * initialise - initialises the datasource provider
@@ -21,7 +21,7 @@ const ApiProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-ApiProvider.prototype.initialise = function initialise(datasource, schema) {
+RemoteProvider.prototype.initialise = function initialise(datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
@@ -33,7 +33,7 @@ ApiProvider.prototype.initialise = function initialise(datasource, schema) {
  *
  * @return {void}
  */
-ApiProvider.prototype.buildEndpoint = function buildEndpoint() {
+RemoteProvider.prototype.buildEndpoint = function buildEndpoint() {
   const apiConfig = config.get('api')
   const source = this.schema.datasource.source
 
@@ -54,7 +54,7 @@ ApiProvider.prototype.buildEndpoint = function buildEndpoint() {
  * @param  {fn} done - callback
  * @return {void}
  */
-ApiProvider.prototype.getHeaders = function getHeaders(done) {
+RemoteProvider.prototype.getHeaders = function getHeaders(done) {
   const headers = {
     'accept-encoding': 'gzip'
   }
@@ -112,7 +112,7 @@ ApiProvider.prototype.getHeaders = function getHeaders(done) {
  * @param  {fn} done - callback
  * @return {void}
  */
-ApiProvider.prototype.handleResponse = function handleResponse(res, done) {
+RemoteProvider.prototype.handleResponse = function handleResponse(res, done) {
   const self = this
   const encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : ''
   let output = ''
@@ -153,7 +153,7 @@ ApiProvider.prototype.handleResponse = function handleResponse(res, done) {
  * @param  {string} protocol
  * @return {module} http|https
  */
-ApiProvider.prototype.keepAliveAgent = function keepAliveAgent(protocol) {
+RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent(protocol) {
   return (protocol === 'https')
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
@@ -166,7 +166,7 @@ ApiProvider.prototype.keepAliveAgent = function keepAliveAgent(protocol) {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-ApiProvider.prototype.load = function (requestUrl, done) {
+RemoteProvider.prototype.load = function (requestUrl, done) {
   const self = this
 
   this.requestUrl = requestUrl
@@ -218,7 +218,7 @@ ApiProvider.prototype.load = function (requestUrl, done) {
  * @param  {type} uri - the original datasource endpoint
  * @return {string} uri with query string appended
  */
-ApiProvider.prototype.processDatasourceParameters = function processDatasourceParameters(schema, uri) {
+RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters(schema, uri) {
   let query = '?'
 
   const params = [
@@ -256,7 +256,7 @@ ApiProvider.prototype.processDatasourceParameters = function processDatasourcePa
  * @param  {fn} done
  * @return {void}
  */
-ApiProvider.prototype.processOutput = function processOutput(res, data, done) {
+RemoteProvider.prototype.processOutput = function processOutput(res, data, done) {
   const self = this
 
   // Return a 202 Accepted response immediately,
@@ -295,7 +295,7 @@ ApiProvider.prototype.processOutput = function processOutput(res, data, done) {
  * @param  {obj} req - web request object
  * @return {void}
  */
-ApiProvider.prototype.processRequest = function processRequest(req) {
+RemoteProvider.prototype.processRequest = function processRequest(req) {
   this.buildEndpoint()
 }
 
@@ -306,7 +306,7 @@ ApiProvider.prototype.processRequest = function processRequest(req) {
  * @param  {?} obj - sort parameter
  * @return {?}
  */
-ApiProvider.prototype.processSortParameter = function processSortParameter(obj) {
+RemoteProvider.prototype.processSortParameter = function processSortParameter(obj) {
   let sort = {}
 
   if (typeof obj !== 'object' || obj === null) return sort
@@ -332,9 +332,9 @@ ApiProvider.prototype.processSortParameter = function processSortParameter(obj) 
  *
  * @return {void}
  */
-ApiProvider.prototype.setAuthStrategy = function setAuthStrategy() {
+RemoteProvider.prototype.setAuthStrategy = function setAuthStrategy() {
   if (!this.schema.datasource.auth) return null
   this.authStrategy = new BearerAuthStrategy(this.schema.datasource.auth)
 }
 
-module.exports = ApiProvider
+module.exports = RemoteProvider
