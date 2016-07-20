@@ -75,14 +75,13 @@ RemoteProvider.prototype.getHeaders = function getHeaders(done) {
       })
     }
   } else {
-    // try {
+    try {
       help.getToken(this.datasource).then((bearerToken) => {
         headers['Authorization'] = 'Bearer ' + bearerToken
 
         help.timer.stop('auth')
         return done(null, { headers: headers })
       }).catch((errorData) => {
-        console.log('!!!'.red, errorData)
         const err = new Error()
         err.name = errorData.title
         err.message = errorData.detail
@@ -97,10 +96,10 @@ RemoteProvider.prototype.getHeaders = function getHeaders(done) {
         help.timer.stop('auth')
         return done(err)
       })
-    // }
-    // catch (err) {
-    //   console.log(err.stack)
-    // }
+    }
+    catch (err) {
+      console.log(err.stack)
+    }
   }
 }
 
