@@ -33,16 +33,13 @@ var DatasourceCache = function (datasource) {
   this.enabled = this.cache.enabled && this.datasource.source.type !== 'static';
 
   // we build the filename with a hashed hex string so we can be unique
-  // and avoid using file system reserved characters in the name
-  console.log('CACHE'.red, this.datasource)
-  console.log('endpoint'.red, this.datasource.provider.endpoint)
-
+  // and avoid using file system reserved characters in the name, but not
+  // datasource providers work with url endpoints so we allow the use of
+  // a unique cacheKey instead
   var name = this.datasource.name
   var endpoint = this.datasource.provider.endpoint || ''
   var cacheKey = this.datasource.provider.cacheKey || ''
 
-  // not all datasource providers work with url endpoints
-  // so we allow the use of a unique cacheKey instead
   this.filename = crypto.createHash('sha1').update(name).digest('hex')
   if (cacheKey !== '') this.filename += '_' + crypto.createHash('sha1').update(cacheKey).digest('hex')
   else this.filename += '_' + crypto.createHash('sha1').update(endpoint).digest('hex')
