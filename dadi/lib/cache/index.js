@@ -45,20 +45,20 @@ var Cache = function(server) {
     self.redisClient = self.initialiseRedisClient();
     console.log(self.redisClient);
 
-    self.redisClient.on('error', function (err) {
+    self.redisClient.on('error', function (err) { //<-- not firing correctly
       log.error({module: 'cache'}, err);
       console.log('REDIS ERROR', err);
     });
 
-    self.redisClient.on('end', function(){
+    self.redisClient.on('end', function(){ //should fire only on graceful dc
       console.log('REDIS DISCONNECTED');
     });
 
-    self.redisClient.on('ready', function(){
+    self.redisClient.on('ready', function(){ //when we are connected
       console.log('REDIS CONNECTED');
     });
 
-    self.redisClient.on('reconnecting', function(attempt){
+    self.redisClient.on('reconnecting', function(attempt){ //every attempt
       console.log('REDIS RECONNECTING');
     });
 
