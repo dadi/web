@@ -7,6 +7,7 @@ var log = require(__dirname + '/../../dadi/lib/log')
 var config = require(__dirname + '/../../config.js')
 
 describe('Datasource', function (done) {
+
   it('should export constructor', function (done) {
     datasource.Datasource.should.be.Function
     done()
@@ -38,6 +39,10 @@ describe('Datasource', function (done) {
   // self.authStrategy = self.setAuthStrategy()
 
   it('should attach the datasource `schema` to datasource', function (done) {
+
+    delete require.cache[__dirname + '/../../dadi/lib/datasource']
+    datasource = require(__dirname + '/../../dadi/lib/datasource')
+
     var name = 'test'
     var schema = help.getPageSchema()
     var p = page(name, schema)
@@ -51,6 +56,10 @@ describe('Datasource', function (done) {
   })
 
   it('should attach `source` to datasource', function (done) {
+
+    delete require.cache[__dirname + '/../../dadi/lib/datasource']
+    datasource = require(__dirname + '/../../dadi/lib/datasource')
+
     var name = 'test'
     var schema = help.getPageSchema()
     var p = page(name, schema)
@@ -64,6 +73,10 @@ describe('Datasource', function (done) {
   })
 
   it('should attach default `requestParams` to datasource if not specified', function (done) {
+
+    delete require.cache[__dirname + '/../../dadi/lib/datasource']
+    datasource = require(__dirname + '/../../dadi/lib/datasource')
+
     var name = 'test'
     var schema = help.getPageSchema()
     var p = page(name, schema)
