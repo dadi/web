@@ -43,10 +43,25 @@ var Cache = function(server) {
   }
   else if (config.get('caching.redis.enabled')) {
     self.redisClient = self.initialiseRedisClient();
+    console.log(self.redisClient);
 
-    self.redisClient.on("error", function (err) {
+    self.redisClient.on('error', function (err) {
       log.error({module: 'cache'}, err);
+      console.log('REDIS ERROR', err);
     });
+
+    self.redisClient.on('end', function(){
+      console.log('REDIS DISCONNECTED');
+    });
+
+    self.redisClient.on('ready', function(){
+      console.log('REDIS CONNECTED');
+    });
+
+    self.redisClient.on('reconnecting', function(attempt){
+      console.log('REDIS RECONNECTING');
+    });
+
   }
 };
 
@@ -128,7 +143,30 @@ Cache.prototype.getEndpointContentType = function(req) {
  * @returns {RedisClient}
  */
 Cache.prototype.initialiseRedisClient = function() {
-  return redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
+  console.log('CREATING REDIS CLIENT');
+  function retryStrategy(options){
+    console.log('ATTEMPTING RECONNECT', options);
+    var baseRetryTime = 1024;
+    var maxRetryTime = 4096;
+    var maxConnectedTimes = 3;
+
+    var currentRetryTime = baseRetryTime * options.attempt;
+
+    // if (options.error && options.error.code && options.error.code === 'ECONNREFUSED') {
+    //   return new Error('The server refused the connection');
+    // }
+
+    if(currentRetryTime > maxRetryTime){
+      return new Error('Exceeded max retry time');
+    }
+    if(options.times_connected > maxConnectedTimes){
+      return new Error('Exceeded max times connected; Redis appears unstable');
+    }
+    console.log('Submitting re-attempt:', currentRetryTime);
+    return currentRetryTime;
+  }
+
+  return redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, retry_strategy: retryStrategy});
 };
 
 /**
