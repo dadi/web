@@ -36,33 +36,46 @@ var Cache = function(server) {
 
   // create cache directory or initialise Redis
   if (config.get('caching.directory.enabled')) {
+    self.createCacheDirectory();
+  }
+  else if (config.get('caching.redis.enabled')) {
+    self.redisClient = self.initialiseRedisClient();
+
+    self.redisClient.on('error', function (err) { //Doesn't get fired on dc errors
+      log.error({module: 'cache'}, err);
+    });
+
+    self.redisClient.on('end', function(){ //should fire only on graceful dc
+      log.info({module: 'cache'}, 'REDIS disconnecting');
+    });
+
+    self.redisClient.on('ready', function(){ //when we are connected
+      log.info({module: 'cache'}, 'REDIS connected');
+    });
+
+    self.redisClient.on('reconnecting', function(attempt){ //every attempt
+      log.info({module: 'cache'}, 'REDIS reconnecting');
+    });
+
+  }
+
+  this.createCacheDirectory = function(){
     mkdirp(self.dir, {}, function (err, made) {
       if (err) log.error({module: 'cache'}, err);
       if (made) log.info({module: 'cache'}, 'Created cache directory ' + made);
     });
-  }
-  else if (config.get('caching.redis.enabled')) {
-    self.redisClient = self.initialiseRedisClient();
-    console.log(self.redisClient);
+  };
+};
 
-    self.redisClient.on('error', function (err) { //<-- not firing correctly
-      log.error({module: 'cache'}, err);
-      console.log('REDIS ERROR', err);
-    });
-
-    self.redisClient.on('end', function(){ //should fire only on graceful dc
-      console.log('REDIS DISCONNECTED');
-    });
-
-    self.redisClient.on('ready', function(){ //when we are connected
-      console.log('REDIS CONNECTED');
-    });
-
-    self.redisClient.on('reconnecting', function(attempt){ //every attempt
-      console.log('REDIS RECONNECTING');
-    });
-
-  }
+Cache.prototype.handleRedisFailure = function(){
+  log.warn({module:'cache'}, 'Redis has failed');
+  log.info({module:'cache'}, 'Falling back to local caching');
+  //disable redis
+  config.set('caching.redis.enabled', false);
+  this.redisClient = null;
+  //enable directory caching
+  this.createCacheDirectory();
+  config.set('caching.directory.enabled', true);
 };
 
 var instance;
@@ -143,26 +156,22 @@ Cache.prototype.getEndpointContentType = function(req) {
  * @returns {RedisClient}
  */
 Cache.prototype.initialiseRedisClient = function() {
-  console.log('CREATING REDIS CLIENT');
   function retryStrategy(options){
-    console.log('ATTEMPTING RECONNECT', options);
     var baseRetryTime = 1024;
     var maxRetryTime = 4096;
     var maxConnectedTimes = 3;
 
     var currentRetryTime = baseRetryTime * options.attempt;
 
-    // if (options.error && options.error.code && options.error.code === 'ECONNREFUSED') {
-    //   return new Error('The server refused the connection');
-    // }
-
     if(currentRetryTime > maxRetryTime){
+      instance.handleRedisFailure();
       return new Error('Exceeded max retry time');
     }
     if(options.times_connected > maxConnectedTimes){
+      instance.handleRedisFailure();
       return new Error('Exceeded max times connected; Redis appears unstable');
     }
-    console.log('Submitting re-attempt:', currentRetryTime);
+
     return currentRetryTime;
   }
 
