@@ -34,11 +34,14 @@ var Cache = function(server) {
 
   var self = this;
 
-  // create cache directory or initialise Redis
-  if (config.get('caching.directory.enabled')) {
-    self.createCacheDirectory();
-  }
-  else if (config.get('caching.redis.enabled')) {
+  this.createCacheDirectory = function(){
+    mkdirp(self.dir, {}, function (err, made) {
+      if (err) log.error({module: 'cache'}, err);
+      if (made) log.info({module: 'cache'}, 'Created cache directory ' + made);
+    });
+  };
+
+  this.setupRedis = function(){
     self.redisClient = self.initialiseRedisClient();
 
     self.redisClient.on('error', function (err) { //Doesn't get fired on dc errors
@@ -46,36 +49,54 @@ var Cache = function(server) {
     });
 
     self.redisClient.on('end', function(){ //should fire only on graceful dc
-      log.info({module: 'cache'}, 'REDIS disconnecting');
+      if( config.get('caching.redis.enabled') ) log.info({module: 'cache'}, 'REDIS disconnecting');
     });
 
     self.redisClient.on('ready', function(){ //when we are connected
       log.info({module: 'cache'}, 'REDIS connected');
+      //if this is a re-attempt and we've gotten this far, turn redis back on as our cache
+      if(config.get('caching.directory.enabled') && !config.get('caching.redis.enabled')){
+        config.set('caching.directory.enabled', false);
+        config.set('caching.redis.enabled', true);
+      }
     });
 
     self.redisClient.on('reconnecting', function(attempt){ //every attempt
-      log.info({module: 'cache'}, 'REDIS reconnecting');
-    });
-
-  }
-
-  this.createCacheDirectory = function(){
-    mkdirp(self.dir, {}, function (err, made) {
-      if (err) log.error({module: 'cache'}, err);
-      if (made) log.info({module: 'cache'}, 'Created cache directory ' + made);
+      if( config.get('caching.redis.enabled') ) log.info({module: 'cache'}, 'REDIS reconnecting');
     });
   };
+
+  // create cache directory or initialise Redis
+  if ( config.get('caching.directory.enabled') ) {
+    self.createCacheDirectory();
+  }
+  else if ( config.get('caching.redis.enabled') ) {
+    self.setupRedis();
+  }
 };
 
 Cache.prototype.handleRedisFailure = function(){
-  log.warn({module:'cache'}, 'Redis has failed');
-  log.info({module:'cache'}, 'Falling back to local caching');
-  //disable redis
-  config.set('caching.redis.enabled', false);
-  this.redisClient = null;
-  //enable directory caching
-  this.createCacheDirectory();
-  config.set('caching.directory.enabled', true);
+  var self = this;
+  var redisRetryTime = 1000 * 60 * 5;
+
+  if(!config.get('caching.directory.enabled') && config.get('caching.redis.enabled')){
+    log.warn({module:'cache'}, 'Redis has failed');
+    log.info({module:'cache'}, 'Falling back to local caching');
+    //disable redis
+    config.set('caching.redis.enabled', false);
+    this.redisClient = null;
+    //enable directory caching
+    this.createCacheDirectory();
+    config.set('caching.directory.enabled', true);
+  }else{
+    log.warn({module:'cache'}, 'Unable to re-establish Redis connection');
+  }
+
+  //create an event to try redis again
+  setTimeout(function(){
+    log.info({module:'cache'}, 'Attempting to establish Redis connection again');
+    self.setupRedis();
+  }, redisRetryTime);
 };
 
 var instance;
@@ -139,7 +160,7 @@ Cache.prototype.getEndpointMatchingRequest = function(req) {
   }
 
   return endpoint;
-}
+};
 
 /**
  * Retrieves the content-type of the page that the requested URL matches
@@ -149,7 +170,7 @@ Cache.prototype.getEndpointMatchingRequest = function(req) {
 Cache.prototype.getEndpointContentType = function(req) {
   var endpoint = this.getEndpointMatchingRequest(req);
   return endpoint.page.contentType;
-}
+};
 
 /**
  * Initialises a RedisClient using the main configuration settings
@@ -387,7 +408,7 @@ module.exports.delete = function(pattern, callback) {
               //done with this scan iterator; on to the next
               return acb(err);
             }
-          )
+          );
         }
       });
     },
@@ -416,4 +437,4 @@ module.exports.delete = function(pattern, callback) {
       }
     }
   );
-}
+};
