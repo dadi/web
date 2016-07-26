@@ -70,29 +70,34 @@ var conf = convict({
     clientId: {
       doc: "",
       format: String,
-      default: "testClient"
+      default: "testClient",
+      env: "AUTH_TOKEN_ID"
     },
     secret: {
       doc: "",
       format: String,
-      default: "superSecret"
+      default: "superSecret",
+      env: "AUTH_TOKEN_SECRET"
     }
   },
   aws: {
     accessKeyId: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_ACCESS_KEY"
     },
     secretAccessKey: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_SECRET_KEY"
     },
     region: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_REGION"
     }
   },
   caching: {
@@ -127,17 +132,20 @@ var conf = convict({
       host: {
         doc: "The Redis server host",
         format: String,
-        default: "127.0.0.1"
+        default: "127.0.0.1",
+        env: "REDIS_HOST"
       },
       port: {
         doc: "The port for the Redis server",
         format: 'port',
-        default: 6379
+        default: 6379,
+        env: "REDIS_PORT"
       },
       password: {
         doc: "",
         format: String,
-        default: ""
+        default: "",
+        env: "REDIS_PASSWORD"
       }
     }
   },
@@ -281,7 +289,8 @@ var conf = convict({
     secret: {
       doc: "This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.",
       format: String,
-      default: "dadiwebsecretsquirrel"
+      default: "dadiwebsecretsquirrel",
+      env: "SESSION_SECRET"
     },
     resave: {
       doc: "Forces the session to be saved back to the session store, even if the session was never modified during the request.",
@@ -412,7 +421,8 @@ var conf = convict({
   secret: {
     doc: "A value that must be passed to requests for the /config route, which allows viewing the application config in the browser",
     format: String,
-    default: "1dc10073-ca36-4373-a646-0d1092caf4a5"
+    default: "1dc10073-ca36-4373-a646-0d1092caf4a5",
+    env: "CONFIG_SECRET"
   },
 });
 
