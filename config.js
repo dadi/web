@@ -438,4 +438,8 @@ conf.updateConfigDataForDomain = function(domain) {
 // Perform validation
 conf.validate({strict: false});
 
+conf.configPath = function() {
+  return './config/config.' + conf.get('env') + '.json';
+}
+
 module.exports = conf;
