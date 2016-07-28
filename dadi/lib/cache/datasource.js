@@ -5,6 +5,7 @@ var fs = require('fs')
 var path = require('path')
 var url = require('url')
 var crypto = require('crypto')
+var mkdirp = require('mkdirp')
 var redis = require('redis')
 var redisRStream = require('redis-rstream')
 var redisWStream = require('redis-wstream')
@@ -41,12 +42,20 @@ var DatasourceCache = function (datasource) {
   var self = this
 }
 
+DatasourceCache.prototype.createCacheDirectory = function (dir) {
+  mkdirp(dir, {}, function (err, made) {
+    if (err) log.error({module: 'cache'}, err)
+    if (made) log.info({module: 'cache'}, 'Created cache directory ' + made)
+  })
+}
+
 DatasourceCache.prototype.setCachePath = function () {
   var cachePath = '.'
 
   // if the datasource file defines a directory and extension, use those, otherwise
   // fallback to using the main cache module settings
   if (!s.isBlank(this.options.directory) && !s.isBlank(this.options.extension)) {
+    this.createCacheDirectory(this.options.directory)
     cachePath = path.join(this.options.directory, this.filename + '.' + this.options.extension)
   } else {
     cachePath = path.join(this.cache.dir, this.filename + '.json')

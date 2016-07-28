@@ -22,8 +22,6 @@ var help = require(__dirname + '/../help')
  * @param {Server} server - the main server instance
  */
 var Cache = function (server) {
-  log.info({module: 'cache'}, 'Cache logging started.')
-
   this.server = server
   this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled')
   this.dir = config.get('caching.directory.path')
@@ -32,13 +30,10 @@ var Cache = function (server) {
   this.encoding = 'utf8'
   this.options = {}
 
-  console.log(this)
-  console.log(config.get('caching'))
-
   var self = this
 
-  this.createCacheDirectory = function () {
-    mkdirp(self.dir, {}, function (err, made) {
+  this.createCacheDirectory = function (dir) {
+    mkdirp(dir, {}, function (err, made) {
       if (err) log.error({module: 'cache'}, err)
       if (made) log.info({module: 'cache'}, 'Created cache directory ' + made)
     })
@@ -76,10 +71,8 @@ var Cache = function (server) {
 
   // create cache directory or initialise Redis
   if (config.get('caching.directory.enabled')) {
-    console.log('1')
-    self.createCacheDirectory()
+    self.createCacheDirectory(self.dir)
   } else if (config.get('caching.redis.enabled')) {
-    console.log('2')
     self.setupRedis()
   }
 }
@@ -243,8 +236,6 @@ Cache.prototype.init = function () {
 
     var readStream
 
-    //console.log(self)
-
     if (self.redisClient) {
       self.redisClient.exists(filename, function (err, exists) {
         if (exists > 0) {
@@ -365,8 +356,6 @@ Cache.prototype.init = function () {
             }
           })
         } else {
-          // TODO: do we need to grab a lock here?
-
           var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'})
           stream.pipe(cacheFile)
         }
