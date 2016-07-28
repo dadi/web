@@ -327,7 +327,7 @@ Server.prototype.loadApi = function (options) {
       return help.clearCache(req, function (err) {
         help.sendBackJSON(200, res, next)(err, {
           result: 'success',
-          message: 'Succeed to clear'
+          message: req.body.path ? req.body.path + ' flushed' : 'Cache flushed'
         });
       });
 

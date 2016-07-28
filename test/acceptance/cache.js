@@ -1,3 +1,4 @@
+var crypto = require('crypto')
 var fs = require('fs')
 var nock = require('nock')
 var sinon = require('sinon')
@@ -14,6 +15,7 @@ var url = require('url')
 var assert = require('assert')
 
 var Server = require(__dirname + '/../../dadi/lib')
+var cache = require(__dirname + '/../../dadi/lib/cache')
 var Page = require(__dirname + '/../../dadi/lib/page')
 var help = require(__dirname + '/../help')
 var libHelp = require(__dirname + '/../../dadi/lib/help')
@@ -29,36 +31,22 @@ var token = JSON.stringify({
   'expiresIn': 1800
 })
 
+var pages = []
+
 var fordResult = JSON.stringify({
-  results: [
-    {
-      makeName: 'Ford'
-    }
-  ]
+  results: [{makeName: 'Ford'}]
 })
 
 var toyotaResult = JSON.stringify({
-  results: [
-    {
-      makeName: 'Toyota'
-    }
-  ]
+  results: [{makeName: 'Toyota'}]
 })
 
 var categoriesResult1 = JSON.stringify({
-  results: [
-    {
-      name: 'Crime'
-    }
-  ]
+  results: [{name: 'Crime'}]
 })
 
 var categoriesResult2 = JSON.stringify({
-  results: [
-    {
-      name: 'Horror'
-    }
-  ]
+  results: [{name: 'Horror'}]
 })
 
 var carscope
@@ -70,11 +58,9 @@ var body = '<html><body>Test</body></html>'
 describe('Cache', function (done) {
 
   beforeEach(function (done) {
-
     // intercept the api test at server startup
     sinon.stub(libHelp, 'isApiAvailable').yields(null, true)
 
-    help.clearCache()
 
     // fake token post
     var scope = nock('http://127.0.0.1:3000')
@@ -83,21 +69,6 @@ describe('Cache', function (done) {
       .reply(200, {
         accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
       })
-
-    // fake api data request
-    var dsEndpoint = 'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
-    var dsPath = url.parse(dsEndpoint).path
-    carscope = nock('http://127.0.0.1:3000')
-      .get(dsPath)
-      .times(2)
-      .reply(200, fordResult)
-
-    dsEndpoint = 'http://127.0.0.1:3000/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}'
-    dsPath = url.parse(dsEndpoint).path
-    catscope = nock('http://127.0.0.1:3000')
-      .get(dsPath)
-      .times(2)
-      .reply(200, categoriesResult1)
 
     // create a page
     var name = 'test'
@@ -126,54 +97,18 @@ describe('Cache', function (done) {
     page2.events = []
     delete page2.route.constraint
 
-    var pages = []
     pages.push(page)
     pages.push(page2)
 
-    help.startServer(pages, function () {
-
-      console.log(pages)
-      var client = request(clientHost)
-
-      client
-        .get('/test')
-        // .expect('content-type', 'text/html')
-        // .expect(200)
-        .end(function (err, res) {
-          if (err) return done(err)
-          res.headers['x-cache'].should.exist
-          res.headers['x-cache'].should.eql('MISS')
-
-          client
-            .get('/extra_test')
-            // .expect('content-type', 'text/html')
-            // .expect(200)
-            .end(function (err, res) {
-              if (err) return done(err)
-              res.headers['x-cache'].should.exist
-              res.headers['x-cache'].should.eql('MISS')
-
-              client
-                .get('/page2')
-                // .expect('content-type', 'text/html')
-                // .expect(200)
-                .end(function (err, res) {
-                  if (err) return done(err)
-
-                  res.headers['x-cache'].should.exist
-                  res.headers['x-cache'].should.eql('MISS')
-                  done()
-                })
-            })
-        })
-    })
+    done()
   })
 
   afterEach(function (done) {
-    nock.cleanAll()
     libHelp.isApiAvailable.restore()
     help.clearCache()
+    cache.reset()
     help.stopServer(done)
+    nock.cleanAll()
   })
 
   after(function (done) {
@@ -181,97 +116,64 @@ describe('Cache', function (done) {
     done()
   })
 
-  describe.only('cacheResponse', function (done) {
-    it.skip('should write data to a file', function (done) {
-      config.set('caching.directory.enabled', true)
-      config.set('caching.redis.enabled', false)
+  describe('Invalidation API', function (done) {
 
-      ds.schema.datasource.caching.enabled = true
+    beforeEach(function (done) {
 
-      var c = cache(server.object)
-
-      // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + '_' + crypto.createHash('sha1').update(ds.endpoint).digest('hex')
-      cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension)
-
-      var data = 'ds content from filesystem'
-      var dsCache = new datasourceCache(ds)
-
-      dsCache.cacheResponse(data, function () {
-        fs.readFile(cachepath, function (err, content) {
-          content.toString().should.eql(data)
-          done()
-        })
-      })
-    })
-
-    it('should write to a redis client if configured', function (done) {
-      config.set('api.enabled', true)
-
-      var testConfigPath = config.configPath()
-      var testConfigOriginal = fs.readFileSync(testConfigPath)
-
-      var newConfig = JSON.parse(testConfigOriginal)
-      newConfig.caching = {
-        directory: {
-          enabled: false
-        },
-        redis: {
-          enabled: true
-        }
-      }
-
-      console.log(testConfigPath)
-      console.log(newConfig)
-
-      fs.writeFileSync(testConfigPath, JSON.stringify(newConfig, null, 2))
+      help.clearCache()
+      nock.cleanAll()
 
       // fake token post
       var scope = nock('http://127.0.0.1:3000')
         .post('/token')
-        .times(3)
+        .times(10)
         .reply(200, {
           accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
         })
 
-      cache.reset()
-      delete require.cache[configPath]
-      config.loadFile(configPath)
+      // fake api data request
+      var dsEndpoint = 'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+      var dsPath = url.parse(dsEndpoint).path
+      carscope = nock('http://127.0.0.1:3000')
+        .get(dsPath)
+        .times(2)
+        .reply(200, fordResult)
 
-      var redisClient = fakeredis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3})
-      sinon.stub(redis, 'createClient', function () { return redisClient })
+      dsEndpoint = 'http://127.0.0.1:3000/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}'
+      dsPath = url.parse(dsEndpoint).path
+      catscope = nock('http://127.0.0.1:3000')
+        .get(dsPath)
+        .times(2)
+        .reply(200, categoriesResult1)
 
-      var spy = sinon.spy(redisClient, 'exists')
+      help.startServer(pages, function (server) {
 
-      // get cached version of the page
-      var client = request(clientHost)
-      client
-        .get('/test')
-        //.expect('content-type', 'text/html')
-        // .expect(200)
-        .end(function (err, res) {
-          console.log(res)
+        cache(server).init()
+        server.loadApi({})
+
+        var client = request(clientHost)
+
+        client.get('/test').end(function (err, res) {
           if (err) return done(err)
-
-          // put that config back!
-          fs.writeFileSync(testConfigPath, JSON.stringify(testConfigOriginal, null, 2))
-
-          //console.log(spy)
-
-          spy.restore()
-          redis.createClient.restore()
-
           res.headers['x-cache'].should.exist
-          res.headers['x-cache'].should.eql('HIT')
+          res.headers['x-cache'].should.eql('MISS')
 
+          client.get('/extra_test').end(function (err, res) {
+            if (err) return done(err)
+            res.headers['x-cache'].should.exist
+            res.headers['x-cache'].should.eql('MISS')
 
-          done()
+            client.get('/page2').end(function (err, res) {
+              if (err) return done(err)
+
+              res.headers['x-cache'].should.exist
+              res.headers['x-cache'].should.eql('MISS')
+              done()
+            })
+          })
         })
-
+      })
     })
-  })
-
-  describe('Invalidation API', function (done) {
 
     it('should return 401 if clientId and secret are not passed', function (done) {
       config.set('api.enabled', true)
@@ -325,7 +227,7 @@ describe('Cache', function (done) {
       // fake token post
       var scope = nock('http://127.0.0.1:3000')
         .post('/token')
-        .times(3)
+        .times(5)
         .reply(200, {
           accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
         })
@@ -334,7 +236,6 @@ describe('Cache', function (done) {
       var client = request(clientHost)
       client
         .get('/test')
-        .expect('content-type', 'text/html')
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err)
@@ -346,18 +247,14 @@ describe('Cache', function (done) {
           client
             .post('/api/flush')
             .send(_.extend({path: '/test'}, credentials))
-            .expect(200)
             .end(function (err, res) {
+
               if (err) return done(err)
               res.body.result.should.equal('success')
 
               // get page again, should be uncached
               var client = request(clientHost)
-              client
-                .get('/test')
-                .expect('content-type', 'text/html')
-                .expect(200)
-                .end(function (err, res) {
+              client.get('/test').end(function (err, res) {
                   if (err) return done(err)
 
                   res.headers['x-cache'].should.exist
@@ -365,11 +262,7 @@ describe('Cache', function (done) {
 
                   // get second route again, should still be cached
                   var client = request(clientHost)
-                  client
-                    .get('/extra_test')
-                    .expect('content-type', 'text/html')
-                    .expect(200)
-                    .end(function (err, res) {
+                  client.get('/extra_test').end(function (err, res) {
                       if (err) return done(err)
 
                       res.headers['x-cache'].should.exist
@@ -387,72 +280,55 @@ describe('Cache', function (done) {
       // fake token post
       var scope = nock('http://127.0.0.1:3000')
         .post('/token')
-        .times(4)
+        .times(5)
         .reply(200, {
           accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
         })
 
       // get cached version of the page
       var client = request(clientHost)
-      client
-        .get('/test')
-        .expect('content-type', 'text/html')
-        .expect(200)
-        .end(function (err, res) {
-          if (err) return done(err)
+      client.get('/test').end(function (err, res) {
+        if (err) return done(err)
 
-          res.headers['x-cache'].should.exist
-          res.headers['x-cache'].should.eql('HIT')
+        res.headers['x-cache'].should.exist
+        res.headers['x-cache'].should.eql('HIT')
 
-          // clear cache for this path
-          client
-            .post('/api/flush')
-            .send(_.extend({path: '*'}, credentials))
-            .expect(200)
-            .end(function (err, res) {
+        // clear cache for this path
+        client.post('/api/flush')
+          .send(_.extend({path: '*'}, credentials))
+          .expect(200)
+          .end(function (err, res) {
+            if (err) return done(err)
+            res.body.result.should.equal('success')
+
+            // get page again, should be uncached
+            client.get('/test').end(function (err, res) {
               if (err) return done(err)
-              res.body.result.should.equal('success')
 
-              // get page again, should be uncached
-              var client = request(clientHost)
-              client
-                .get('/test')
-                .expect('content-type', 'text/html')
-                .expect(200)
-                .end(function (err, res) {
-                  if (err) return done(err)
+              res.headers['x-cache'].should.exist
+              res.headers['x-cache'].should.eql('MISS')
 
-                  res.headers['x-cache'].should.exist
-                  res.headers['x-cache'].should.eql('MISS')
+              // get second route again, should still be cached
+              client.get('/extra_test').end(function (err, res) {
+                if (err) return done(err)
 
-                  // get second route again, should still be cached
-                  var client = request(clientHost)
-                  client
-                    .get('/extra_test')
-                    .expect('content-type', 'text/html')
-                    .expect(200)
-                    .end(function (err, res) {
-                      if (err) return done(err)
+                res.headers['x-cache'].should.exist
+                res.headers['x-cache'].should.eql('MISS')
 
-                      res.headers['x-cache'].should.exist
-                      res.headers['x-cache'].should.eql('MISS')
-
-                      done()
-                    })
-                })
+                done()
+              })
             })
         })
+      })
     })
 
-    it('should flush associated datasource files when flushing by path', function (done) {
+    it.skip('should flush associated datasource files when flushing by path', function (done) {
       config.set('api.enabled', true)
-
-      nock.cleanAll()
 
       // fake token post
       var scope = nock('http://127.0.0.1:3000')
         .post('/token')
-        .times(4)
+        .times(5)
         .reply(200, {
           accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
         })
@@ -474,82 +350,66 @@ describe('Cache', function (done) {
 
       // get cached version of the page
       var client = request(clientHost)
-      client
-        .get('/test')
-        .expect('content-type', 'text/html')
-        .expect(200)
-        .end(function (err, res) {
+      client.get('/test').end(function (err, res) {
+        if (err) return done(err)
+
+        res.headers['x-cache'].should.exist
+        res.headers['x-cache'].should.eql('HIT')
+
+        res.text.should.eql('<ul><li>Ford</li></ul>')
+
+        // get cached version of page2
+        client.get('/page2').end(function (err, res) {
           if (err) return done(err)
 
           res.headers['x-cache'].should.exist
           res.headers['x-cache'].should.eql('HIT')
+          res.text.should.eql('<h3>Crime</h3>')
 
-          res.text.should.eql('<ul><li>Ford</li></ul>')
-
-          // get cached version of page2
+          // clear cache for page1
           client
-            .get('/page2')
-            .expect('content-type', 'text/html')
+            .post('/api/flush')
+            .send(_.extend({path: '/test'}, credentials))
             .expect(200)
             .end(function (err, res) {
               if (err) return done(err)
+              res.body.result.should.equal('success')
 
-              res.headers['x-cache'].should.exist
-              res.headers['x-cache'].should.eql('HIT')
-              res.text.should.eql('<h3>Crime</h3>')
+              // get first page again, should be uncached and with different data
+              // var client = request(clientHost)
+              client.get('/test').end(function (err, res) {
+                if (err) return done(err)
 
-              // clear cache for page1
-              client
-                .post('/api/flush')
-                .send(_.extend({path: '/test'}, credentials))
-                .expect(200)
-                .end(function (err, res) {
-                  if (err) return done(err)
-                  res.body.result.should.equal('success')
+                res.headers['x-cache'].should.exist
+                res.headers['x-cache'].should.eql('MISS')
+                res.text.should.eql('<ul><li>Toyota</li></ul>')
 
-                  // get first page again, should be uncached and with different data
+                setTimeout(function () {
+                  // remove html files so the ds files have to be used to generate
+                  // new ones
+                  var files = fs.readdirSync(config.get('caching.directory.path'))
+                  files.filter(function (file) {
+                    return file.substr(-5) === '.html'
+                  }).forEach(function (file) {
+                    fs.unlinkSync(path.join(config.get('caching.directory.path'), file))
+                  })
+
+                  // get second page again, should return same data
                   // var client = request(clientHost)
-                  client
-                    .get('/test')
-                    .expect('content-type', 'text/html')
-                    .expect(200)
-                    .end(function (err, res) {
-                      if (err) return done(err)
+                  client.get('/page2').end(function (err, res) {
+                    if (err) return done(err)
 
-                      res.headers['x-cache'].should.exist
-                      res.headers['x-cache'].should.eql('MISS')
-                      res.text.should.eql('<ul><li>Toyota</li></ul>')
+                    res.headers['x-cache'].should.exist
+                    res.headers['x-cache'].should.eql('MISS')
 
-                      setTimeout(function () {
-                        // remove html files so the ds files have to be used to generate
-                        // new ones
-                        var files = fs.readdirSync(config.get('caching.directory.path'))
-                        files.filter(function (file) {
-                          return file.substr(-5) === '.html'
-                        }).forEach(function (file) {
-                          fs.unlinkSync(path.join(config.get('caching.directory.path'), file))
-                        })
+                    res.text.should.eql('<h3>Crime</h3>')
 
-                        // get second page again, should return same data
-                        // var client = request(clientHost)
-                        client
-                          .get('/page2')
-                          .expect('content-type', 'text/html')
-                          .expect(200)
-                          .end(function (err, res) {
-                            if (err) return done(err)
-
-                            res.headers['x-cache'].should.exist
-                            res.headers['x-cache'].should.eql('MISS')
-
-                            res.text.should.eql('<h3>Crime</h3>')
-
-                            done()
-                          })
-                      }, 500)
-                    })
-                })
+                    done()
+                  })
+                }, 1500)
+              })
             })
+          })
         })
     })
 
@@ -617,4 +477,143 @@ describe('Cache', function (done) {
         })
     })
   })
+
+  describe('cacheResponse', function (done) {
+    it('should write data to a file', function (done) {
+      var testConfigPath = config.configPath()
+      var testConfigOriginal = fs.readFileSync(testConfigPath)
+
+      var newConfig = JSON.parse(testConfigOriginal)
+      newConfig.caching = {
+        directory: {
+          enabled: true,
+          path: './cache/web'
+        },
+        redis: {
+          enabled: false
+        }
+      }
+
+      fs.writeFileSync(testConfigPath, JSON.stringify(newConfig, null, 2))
+
+      // fake token post
+      var scope = nock('http://127.0.0.1:3000')
+        .post('/token')
+        .times(1)
+        .reply(200, {
+          accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
+      })
+
+      // fake api data request
+      var dsEndpoint = 'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+      var dsPath = url.parse(dsEndpoint).path
+      carscope = nock('http://127.0.0.1:3000')
+        .get(dsPath)
+        .times(2)
+        .reply(200, fordResult)
+
+
+      // delete require.cache[__dirname + '/../../config.js']
+      config.loadFile(testConfigPath)
+
+      help.startServer(pages, function (server) {
+
+        cache(server).init()
+        server.loadApi({})
+
+        var spy = sinon.spy(fs, 'createWriteStream')
+
+        setTimeout(function() {
+          var client = request(clientHost)
+          client.get('/test').end(function (err, res) {
+            if (err) return done(err)
+
+            var expectedFilename = 'cache/web/' + crypto.createHash('sha1').update('/test').digest('hex') + '.html'
+            //console.log(spy)
+            spy.lastCall.args[0].should.eql(expectedFilename)
+
+            fs.createWriteStream.restore();
+            spy.restore()
+
+            // put that config back!
+            fs.writeFileSync(testConfigPath, testConfigOriginal.toString())
+
+            done()
+          })
+        }, 1000)
+      })
+    })
+
+    it('should write to a redis client if configured', function (done) {
+      config.set('api.enabled', true)
+
+      var testConfigPath = config.configPath()
+      var testConfigOriginal = fs.readFileSync(testConfigPath)
+
+      var newConfig = JSON.parse(testConfigOriginal)
+      newConfig.caching = {
+        directory: {
+          enabled: false
+        },
+        redis: {
+          enabled: true
+        }
+      }
+
+      fs.writeFileSync(testConfigPath, JSON.stringify(newConfig, null, 2))
+
+      // fake token post
+      var scope = nock('http://127.0.0.1:3000')
+        .post('/token')
+        .times(3)
+        .reply(200, {
+          accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
+      })
+
+      // fake api data request
+      var dsEndpoint = 'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+      var dsPath = url.parse(dsEndpoint).path
+      carscope = nock('http://127.0.0.1:3000')
+        .get(dsPath)
+        .times(2)
+        .reply(200, fordResult)
+
+
+      cache.reset()
+      delete require.cache[__dirname + '/../../config.js']
+      config.loadFile(testConfigPath)
+
+      var redisClient = fakeredis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3})
+      sinon.stub(redis, 'createClient', function () { return redisClient })
+
+      help.startServer(pages, function (server) {
+
+        cache(server).init()
+
+        var spy = sinon.spy(redisClient, 'append')
+
+        var client = request(clientHost)
+        client.get('/test').end(function (err, res) {
+          if (err) return done(err)
+
+          // put that config back!
+          fs.writeFileSync(testConfigPath, testConfigOriginal.toString())
+
+          spy.called.should.eql(true)
+
+          var args = spy.firstCall.args;
+
+          spy.restore();
+          redis.createClient.restore();
+
+          (args[1] instanceof Buffer).should.eql(true)
+
+          args[1].toString().should.eql(fordResult)
+
+          done()
+        })
+      })
+    })
+  })
+
 })

@@ -228,40 +228,42 @@ module.exports.parseQuery = function (queryStr) {
 };
 
 module.exports.clearCache = function (req, callback) {
-  var pathname = req.body.path;
-  var modelDir = crypto.createHash('sha1').update(pathname).digest('hex');
-  var cachePath = path.join(config.get('caching.directory.path'), modelDir + '.' + config.get('caching.directory.extension'));
-  var datasourceCachePaths = [];
-  var files = fs.readdirSync(config.get('caching.directory.path'));
+  var pathname = req.body.path
+  var modelDir = crypto.createHash('sha1').update(pathname).digest('hex')
+  var cachePath = path.join(config.get('caching.directory.path'), modelDir + '.' + config.get('caching.directory.extension'))
+  var datasourceCachePaths = []
+  var files = fs.readdirSync(config.get('caching.directory.path'))
 
+  // get DS files for deleting
   if (pathname === '*') {
-    modelDir = '';
-    cachePath = path.join(config.get('caching.directory.path'), modelDir);
+    modelDir = ''
+    cachePath = path.join(config.get('caching.directory.path'), modelDir)
 
     files.filter(function(file) {
-      return file.substr(-5) === '.json';
+      return file.substr(-5) === '.json'
     }).forEach(function(file) {
-      datasourceCachePaths.push(path.join(config.get('caching.directory.path'), file));
-    });
+      datasourceCachePaths.push(path.join(config.get('caching.directory.path'), file))
+    })
   }
   else {
     var endpointRequest = {
       url: req.headers['host'] + pathname
     }
 
-    var endpoint = cache().getEndpointMatchingRequest(endpointRequest);
+    var endpoint = cache().getEndpointMatchingRequest(endpointRequest)
 
     _.each(endpoint.page.datasources, function(datasource) {
-      var cachePrefix = crypto.createHash('sha1').update(datasource).digest('hex');
-      datasourceCachePaths = _.extend(datasourceCachePaths, _.filter(files, function(file) { return file.indexOf(cachePrefix) > -1; }));
-      datasourceCachePaths = _.map(datasourceCachePaths, function(file) { return path.join(config.get('caching.directory.path'), file); });
+      var cachePrefix = crypto.createHash('sha1').update(datasource).digest('hex')
+      datasourceCachePaths = _.extend(datasourceCachePaths, _.filter(files, function(file) { return file.indexOf(cachePrefix) > -1; }))
+      datasourceCachePaths = _.map(datasourceCachePaths, function(file) { return path.join(config.get('caching.directory.path'), file) })
     })
   }
 
   var walkSync = function(dir, filelist) {
-    var fs = fs || require('fs'),
-    files = fs.readdirSync(dir);
-    filelist = filelist || [];
+    var files = fs.readdirSync(dir)
+
+    filelist = filelist || []
+
     files.forEach(function(file) {
       if (fs.statSync(dir + file).isDirectory()) {
         filelist = walkSync(dir + file + '/', filelist);
@@ -271,59 +273,67 @@ module.exports.clearCache = function (req, callback) {
       }
     });
     return filelist;
-  };
+  }
+
   // delete using Redis client
   if (cache.client()) {
     setTimeout(function() {
       cache.delete(modelDir, function(err) {
-        return callback(null);
-      });
-    }, 200);
+        return callback(null)
+      })
+    }, 200)
   }
   else {
-    var i = 0;
-    var exists = fs.existsSync(cachePath);
+    // delete files
+    try {
+      var stats = fs.statSync(cachePath)
 
-    if (!exists) {
-      return callback(null);
-    }
-    else {
-      if(fs.statSync(cachePath).isDirectory()) {
+      if (stats.isDirectory()) {
+        var files = fs.readdirSync(cachePath)
 
-        var files = fs.readdirSync(cachePath);
-        if(pathname == '*') {
-          files = walkSync(cachePath + '/');
+        if (pathname == '*') {
+          files = walkSync(cachePath + '/')
         }
 
+        var i = 0
+
         files.forEach(function (filename) {
-          var file = path.join(cachePath, filename);
-          if(pathname == '*') file = filename;
+          var file = path.join(cachePath, filename)
+          if (pathname == '*') file = filename
 
-          fs.unlinkSync(file);
+          fs.unlinkSync(file)
 
-          i++;
+          i++
 
           // finished, all files processed
           if (i == files.length) {
-            return callback(null);
+            return callback(null)
           }
-        });
+        })
       } else {
-        fs.unlinkSync(cachePath);
+        // file, not directory
+        fs.unlinkSync(cachePath)
 
+        if (datasourceCachePaths.length === 0) {
+          return callback(null)
+        }
+
+        var i = 0
         datasourceCachePaths.forEach(function(filename) {
-          fs.unlinkSync(filename);
-          i++;
+          fs.unlinkSync(filename)
+          i++
 
           // finished, all files processed
           if (i == datasourceCachePaths.length) {
-            return callback(null);
+            return callback(null)
           }
-        });
+        })
       }
+    } catch (err) {
+      return callback(null)
     }
   }
-};
+}
 
 /**
  * Creates a URL/filename friendly version (slug) of any object that implements `toString()`

@@ -97,7 +97,7 @@ module.exports.startServer = function(pages, done) {
         }, false);
       })
 
-      done();
+      done(Server);
     }, 200);
   });
 }
