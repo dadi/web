@@ -1,8 +1,10 @@
-var http = require('http')
-var url = require('url')
-var pathToRegexp = require('path-to-regexp')
-var raven = require('raven')
 var _ = require('underscore')
+var fs = require('fs')
+var url = require('url')
+var http = require('http')
+var https = require('https')
+var raven = require('raven')
+var pathToRegexp = require('path-to-regexp')
 
 var log = require(__dirname + '/../log')
 var config = require(__dirname + '/../../../config')
@@ -26,6 +28,42 @@ var Api = function () {
 
     // permanently bind context to listener
     this.listener = this.listener.bind(this)
+
+    this.protocol = config.get('server.protocol') || 'http'
+
+    if (this.protocol === 'http') {
+        this.server = http.createServer(this.listener)
+    } else if (this.protocol === 'https') {
+        var readFileSyncSafe = (path) => {
+            try { return fs.readFileSync(path) }
+            catch (ex) {}
+            return null
+        }
+
+        var passphrase = config.get('server.sslPassphrase')
+        var caPath = config.get('server.sslIntermediateCertificatePath')
+        var caPaths = config.get('server.sslIntermediateCertificatePaths')
+        var serverOptions = {
+            key: readFileSyncSafe(config.get('server.sslPrivateKeyPath')),
+            cert: readFileSyncSafe(config.get('server.sslCertificatePath'))
+        }
+
+        if (passphrase && passphrase.length > 4) {
+            serverOptions.passphrase = passphrase
+        }
+
+        if (caPaths && caPaths.length > 0) {
+            serverOptions.ca = []
+            caPaths.forEach((path) => {
+                var data = readFileSyncSafe(path)
+                data && serverOptions.ca.push(data)
+            })
+        } else if (caPath && caPath.length > 0) {
+            serverOptions.ca = readFileSyncSafe(caPath)
+        }
+
+        this.server = https.createServer(serverOptions, this.listener)
+    }
 }
 
 /**
@@ -97,7 +135,7 @@ Api.prototype.unuse = function (path) {
  *  @api public
  */
 Api.prototype.listen = function (port, host, backlog, done) {
-    return http.createServer(this.listener).listen(port, host, backlog, done)
+    return this.server.listen(port, host, backlog, done)
 }
 
 /**

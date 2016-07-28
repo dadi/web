@@ -32,6 +32,42 @@ var conf = convict({
       doc: "The number of seconds to wait before closing an idle socket",
       format: Number,
       default: 120
+    },
+    protocol: {
+      doc: "The protocol the web application will use",
+      format: String,
+      default: "http",
+      env: "PROTOCOL"
+    },
+    sslPassphrase: {
+      doc: "The passphrase of the SSL private key",
+      format: String,
+      default: "",
+      env: "SSL_PRIVATE_KEY_PASSPHRASE"
+    },
+    sslPrivateKeyPath: {
+      doc: "The filename of the SSL private key",
+      format: String,
+      default: "",
+      env: "SSL_PRIVATE_KEY_PATH"
+    },
+    sslCertificatePath: {
+      doc: "The filename of the SSL certificate",
+      format: String,
+      default: "",
+      env: "SSL_CERTIFICATE_PATH"
+    },
+    sslIntermediateCertificatePath: {
+      doc: "The filename of an SSL intermediate certificate, if any",
+      format: String,
+      default: "",
+      env: "SSL_INTERMEDIATE_CERTIFICATE_PATH"
+    },
+    sslIntermediateCertificatePaths: {
+      doc: "The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)",
+      format: Array,
+      default: [],
+      env: "SSL_INTERMEDIATE_CERTIFICATE_PATHS"
     }
   },
 	api: {
