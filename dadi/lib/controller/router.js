@@ -122,6 +122,7 @@ Router.prototype.loadRewrites = function(options, done) {
 
     });
   } else if (self.rewritesFile) {
+    var rules = [];
     var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
     stream.pipe(es.split("\n"))
