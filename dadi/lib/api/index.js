@@ -1,32 +1,32 @@
-var http = require('http');
-var url = require('url');
-var pathToRegexp = require('path-to-regexp');
-var raven = require('raven');
-var _ = require('underscore');
+var http = require('http')
+var url = require('url')
+var pathToRegexp = require('path-to-regexp')
+var raven = require('raven')
+var _ = require('underscore')
 
-var log = require(__dirname + '/../log');
-var config = require(__dirname + '/../../../config');
+var log = require(__dirname + '/../log')
+var config = require(__dirname + '/../../../config')
 
 /**
  * Represents the main server.
  * @constructor
  */
 var Api = function () {
-    this.paths = [];
-    this.all = [];
-    this.errors = [];
+    this.paths = []
+    this.all = []
+    this.errors = []
 
     // Sentry error handler
     if (config.get('logging.sentry.dsn') !== "") {
-      this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')));
+      this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')))
     }
 
     // Fallthrough error handler
-    this.errors.push(onError(this));
+    this.errors.push(onError(this))
 
     // permanently bind context to listener
-    this.listener = this.listener.bind(this);
-};
+    this.listener = this.listener.bind(this)
+}
 
 /**
  *  Connects a handler to a specific path
@@ -38,23 +38,23 @@ var Api = function () {
 Api.prototype.use = function (path, handler) {
 
     if (typeof path === 'function') {
-        if (path.length === 4) return this.errors.push(path);
-        return this.all.push(path);
+        if (path.length === 4) return this.errors.push(path)
+        return this.all.push(path)
     }
 
-    var regex = pathToRegexp(path);
+    var regex = pathToRegexp(path)
 
     this.paths.push({
         path: path,
         order: routePriority(path, regex.keys),
         handler: handler,
         regex: regex
-    });
+    })
 
-    this.paths.sort(function (a,b) {
-        return b.order - a.order;
-    });
-};
+    this.paths.sort((a,b) => {
+        return b.order - a.order
+    })
+}
 
 /**
  *  Removes a handler or removes the handler attached to a specific path
@@ -63,29 +63,29 @@ Api.prototype.use = function (path, handler) {
  *  @api public
  */
 Api.prototype.unuse = function (path) {
-    var indx = 0;
+    var indx = 0
     if (typeof path === 'function') {
         if (path.length === 4) {
-            indx = this.errors.indexOf(path);
-            return !!~indx && this.errors.splice(indx, 1);
+            indx = this.errors.indexOf(path)
+            return !!~indx && this.errors.splice(indx, 1)
         }
 
-        var functionStr = path.toString();
+        var functionStr = path.toString()
         _.each(this.all, function (func) {
             if (func.toString() === functionStr) {
-                return this.all.splice(indx, 1);
+                return this.all.splice(indx, 1)
             }
             else {
-                indx++;
+                indx++
             }
-        }, this);
+        }, this)
 
-        // indx = this.all.indexOf(path);
-        // return !!~indx && this.all.splice(indx, 1);
+        // indx = this.all.indexOf(path)
+        // return !!~indx && this.all.splice(indx, 1)
     }
-    var existing = _.findWhere(this.paths, { path: path });
-    this.paths = _.without(this.paths, existing);
-};
+    var existing = _.findWhere(this.paths, { path: path })
+    this.paths = _.without(this.paths, existing)
+}
 
 /**
  *  convenience method that creates http server and attaches listener
@@ -97,8 +97,8 @@ Api.prototype.unuse = function (path) {
  *  @api public
  */
 Api.prototype.listen = function (port, host, backlog, done) {
-    return http.createServer(this.listener).listen(port, host, backlog, done);
-};
+    return http.createServer(this.listener).listen(port, host, backlog, done)
+}
 
 /**
  *  listener function to be passed to node's `createServer`
@@ -110,50 +110,50 @@ Api.prototype.listen = function (port, host, backlog, done) {
 Api.prototype.listener = function (req, res) {
 
     // clone the middleware stack
-    var stack = this.all.slice(0);
-    var path = url.parse(req.url).pathname;
+    var stack = this.all.slice(0)
+    var path = url.parse(req.url).pathname
 
-    req.paths = [];
+    req.paths = []
 
     // get matching routes, and add req.params
-    var matches = this._match(path, req);
+    var matches = this._match(path, req)
 
-    var originalReqParams = req.params;
+    var originalReqParams = req.params
 
     var doStack = function (i) {
         return function (err) {
 
-            if (err) return errStack(0)(err);
+            if (err) return errStack(0)(err)
 
             // add the original params back, in case a middleware
             // has modified the current req.params
-            _.extend(req.params, originalReqParams);
+            _.extend(req.params, originalReqParams)
 
             try {
-              stack[i](req, res, doStack(++i));
+              stack[i](req, res, doStack(++i))
             }
             catch (e) {
-              return errStack(0)(e);
+              return errStack(0)(e)
             }
-        };
-    };
+        }
+    }
 
-    var self = this;
+    var self = this
     var errStack = function (i) {
         return function (err) {
-            self.errors[i](err, req, res, errStack(++i));
-        };
-    };
+            self.errors[i](err, req, res, errStack(++i))
+        }
+    }
 
     // add path specific handlers
-    stack = stack.concat(matches);
+    stack = stack.concat(matches)
 
     // add 404 handler
-    stack.push(notFound(this, req, res));
+    stack.push(notFound(this, req, res))
 
     // start going through the middleware/routes
-    doStack(0)();
-};
+    doStack(0)()
+}
 
 /**
  *  Check if any of the registered routes match the current url, if so populate `req.params`
@@ -163,39 +163,39 @@ Api.prototype.listener = function (req, res) {
  *  @api private
  */
 Api.prototype._match = function (path, req) {
-    var paths = this.paths;
-    var matches = [];
-    var handlers = [];
+    var paths = this.paths
+    var matches = []
+    var handlers = []
 
     // always add params object to avoid need for checking later
-    req.params = {};
+    req.params = {}
 
     for (i = 0; i < paths.length; i++) {
-        var match = paths[i].regex.exec(path);
+        var match = paths[i].regex.exec(path)
 
-        if (!match) { continue; }
+        if (!match) { continue }
 
-        req.paths.push(paths[i].path);
+        req.paths.push(paths[i].path)
 
-        var keys = paths[i].regex.keys;
-        handlers.push(paths[i].handler);
+        var keys = paths[i].regex.keys
+        handlers.push(paths[i].handler)
 
         match.forEach(function (k, i) {
-            var keyOpts = keys[i] || {};
-            if (match[i + 1] && keyOpts.name && !req.params[keyOpts.name]) req.params[keyOpts.name] = match[i + 1];
-        });
+            var keyOpts = keys[i] || {}
+            if (match[i + 1] && keyOpts.name && !req.params[keyOpts.name]) req.params[keyOpts.name] = match[i + 1]
+        })
 
-        //break;
+        //break
     }
 
-    return handlers;
-};
+    return handlers
+}
 
 module.exports = function () {
-    return new Api();
-};
+    return new Api()
+}
 
-module.exports.Api = Api;
+module.exports.Api = Api
 
 function onError(api) {
   return function (err, req, res, next) {
@@ -239,45 +239,45 @@ function onError(api) {
 function notFound(api, req, res) {
     return function () {
 
-        res.statusCode = 404;
+        res.statusCode = 404
 
         // look for a 404 page that has been loaded
         // along with the rest of the API, and call its
         // handler if it exists
 
-        var path = _.findWhere(api.paths, { path: '/404' });
+        var path = _.findWhere(api.paths, { path: '/404' })
         if (path) {
-            path.handler(req, res);
+            path.handler(req, res)
         }
         // otherwise, respond with default message
         else {
-            res.end("HTTP 404 Not Found");
+            res.end("HTTP 404 Not Found")
         }
-    };
+    }
 }
 
 function routePriority(path, keys) {
 
-    var tokens = pathToRegexp.parse(path);
+    var tokens = pathToRegexp.parse(path)
 
-    var staticRouteLength = 0;
+    var staticRouteLength = 0
     if (typeof tokens[0] === 'string') {
-        staticRouteLength = _.compact(tokens[0].split('/')).length;
+        staticRouteLength = _.compact(tokens[0].split('/')).length
     }
 
     var requiredParamLength = _.filter(keys, function (key) {
-        return !key.optional;
-    }).length;
+        return !key.optional
+    }).length
 
     var optionalParamLength = _.filter(keys, function (key) {
-        return key.optional;
-    }).length;
+        return key.optional
+    }).length
 
-    var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength);
+    var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength)
 
     // make internal routes less important...
-    if (path.indexOf('/config') > 0) order = -100;
-    if (path.indexOf('/api/') > 0) order = -100;
+    if (path.indexOf('/config') > 0) order = -100
+    if (path.indexOf('/api/') > 0) order = -100
 
-    return order;
+    return order
 }
