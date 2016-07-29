@@ -13,8 +13,8 @@ var url = require('url')
 var _ = require('underscore')
 
 var config = require(__dirname + '/../../../config.js')
-var log = require(__dirname + '/../log')
 var help = require(__dirname + '/../help')
+var log = require(__dirname + '/../log')
 
 /**
  * Creates a new Cache instance for the server
@@ -32,8 +32,8 @@ var Cache = function (server) {
 
   var self = this
 
-  this.createCacheDirectory = function (dir) {
-    mkdirp(dir, {}, function (err, made) {
+  this.createCacheDirectory = function () {
+    mkdirp(self.dir, {}, function (err, made) {
       if (err) log.error({module: 'cache'}, err)
       if (made) log.info({module: 'cache'}, 'Created cache directory ' + made)
     })
@@ -64,14 +64,14 @@ var Cache = function (server) {
 
     self.redisClient.on('reconnecting', function (attempt) { // every attempt
       if (config.get('caching.redis.enabled')) {
-        log.info({module: 'cache'}, 'REDIS reconnecting')
+        log.info({module: 'cache'}, 'REDIS reconnecting, attempt #' + attempt.attempt)
       }
     })
   }
 
   // create cache directory or initialise Redis
   if (config.get('caching.directory.enabled')) {
-    self.createCacheDirectory(self.dir)
+    self.createCacheDirectory()
   } else if (config.get('caching.redis.enabled')) {
     self.setupRedis()
   }
@@ -82,8 +82,8 @@ Cache.prototype.handleRedisFailure = function () {
   var redisRetryTime = 1000 * 60 * 5
 
   if (!config.get('caching.directory.enabled') && config.get('caching.redis.enabled')) {
-    log.warn({module: 'cache'}, 'Redis has failed')
-    log.info({module: 'cache'}, 'Falling back to local caching')
+    log.warn({module: 'cache'}, 'REDIS connection failed')
+    log.info({module: 'cache'}, 'Falling back to filesystem caching at ' + config.get('caching.directory.path'))
 
     // disable redis
     config.set('caching.redis.enabled', false)
@@ -93,12 +93,12 @@ Cache.prototype.handleRedisFailure = function () {
     this.createCacheDirectory()
     config.set('caching.directory.enabled', true)
   } else {
-    log.warn({module: 'cache'}, 'Unable to re-establish Redis connection')
+    log.warn({module: 'cache'}, 'REDIS unable to re-establish connection')
   }
 
   // create an event to try redis again
   setTimeout(function () {
-    log.info({module: 'cache'}, 'Attempting to establish Redis connection again')
+    log.info({module: 'cache'}, 'REDIS attempting reconnection')
     self.setupRedis()
   }, redisRetryTime)
 }
