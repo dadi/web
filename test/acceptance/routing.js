@@ -298,7 +298,7 @@ describe('Routing', function(done) {
     })
   })
 
-  describe('protocol redirect', function() {
+  describe.skip('protocol redirect', function() {
     it('should redirect to http when useSSL is false and X-Forwarded-Proto = https', function(done) {
       config.set('security.useSSL', false)
       config.set('security.trustProxy', true)
