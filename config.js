@@ -400,7 +400,7 @@ var conf = convict({
   },
   security: {
     useSSL: {
-      doc: "WIP",
+      doc: "Deprecated. Set server.protocol to https to use SSL.",
       format: Boolean,
       default: false
     },
