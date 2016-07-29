@@ -10,6 +10,7 @@ var nock = require('nock')
 
 var Server = require(__dirname + '/../../dadi/lib')
 var api = require(__dirname + '/../../dadi/lib/api')
+var cache = require(__dirname + '/../../dadi/lib/cache')
 var Controller = require(__dirname + '/../../dadi/lib/controller')
 var datasource = require(__dirname + '/../../dadi/lib/datasource')
 var Page = require(__dirname + '/../../dadi/lib/page')
@@ -33,6 +34,7 @@ describe('Routing', function(done) {
 
   beforeEach(function(done) {
     help.clearCache()
+    cache.reset()
 
     // intercept the api test at server startup
     sinon.stub(libHelp, "isApiAvailable").yields(null, true)
@@ -80,7 +82,7 @@ describe('Routing', function(done) {
     it('should add req.protocol = http when useSSL is false', function(done) {
       config.set('security.useSSL', false)
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .end(function (err, res) {
           if (err) return done(err)
 
@@ -97,7 +99,7 @@ describe('Routing', function(done) {
       config.set('security.useSSL', true)
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .end(function (err, res) {
           if (err) return done(err)
 
@@ -115,7 +117,7 @@ describe('Routing', function(done) {
       config.set('security.trustProxy', true)
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-Proto', 'https')
         .end(function (err, res) {
           if (err) return done(err)
@@ -132,7 +134,7 @@ describe('Routing', function(done) {
   describe('req.secure', function() {
     it('should add req.secure = false when useSSL is false', function(done) {
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .end(function (err, res) {
           if (err) return done(err)
 
@@ -148,7 +150,7 @@ describe('Routing', function(done) {
       config.set('security.useSSL', true)
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .end(function (err, res) {
           if (err) return done(err)
 
@@ -169,7 +171,7 @@ describe('Routing', function(done) {
       var ip = '54.53.78.111'
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-For', ip)
         .end(function (err, res) {
           if (err) return done(err)
@@ -188,7 +190,7 @@ describe('Routing', function(done) {
       var ip = '54.53.78.111'
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-For', ip)
         .end(function (err, res) {
           if (err) return done(err)
@@ -207,7 +209,7 @@ describe('Routing', function(done) {
       var ips = ['54.53.78.111', '55.50.13.100']
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-For', ips)
         .end(function (err, res) {
           if (err) return done(err)
@@ -227,7 +229,7 @@ describe('Routing', function(done) {
       config.set('security.trustProxy', ['127.0.0.1','36.227.220.163'])
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-For', ips)
         .end(function (err, res) {
           if (err) return done(err)
@@ -248,7 +250,7 @@ describe('Routing', function(done) {
       var ips = ['54.53.78.111', '55.50.13.100']
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-For', ips)
         .end(function (err, res) {
           if (err) return done(err)
@@ -267,7 +269,7 @@ describe('Routing', function(done) {
       var ips = ['54.53.78.111', '55.50.13.100']
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-For', ips)
         .end(function (err, res) {
           if (err) return done(err)
@@ -287,7 +289,7 @@ describe('Routing', function(done) {
       config.set('security.trustProxy', true)
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-Proto', 'https')
         .expect(301)
         .end(function (err, res) {
@@ -302,7 +304,7 @@ describe('Routing', function(done) {
       config.set('security.trustProxy', true)
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-Proto', 'http')
         .expect(301)
         .end(function (err, res) {
@@ -317,7 +319,7 @@ describe('Routing', function(done) {
       config.set('security.trustProxy', false)
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        client.get('/test?cache=false')
         .set('X-Forwarded-Proto', 'http')
         .expect(200)
         .end(function (err, res) {

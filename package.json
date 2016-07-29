@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@dadi/api-wrapper": "^1.1.0",
+    "@dadi/logger": "^1.0.1",
     "@dadi/passport": "^1.0.x",
     "@dadi/status": "git+https://git@github.com/dadi/status.git",
     "async": "^1.4.2",
@@ -45,7 +46,7 @@
     "q": "^1.4.1",
     "qs": "^5.2.0",
     "raven": "^0.9.0",
-    "redis": "^2.2.5",
+    "redis": "2.6.x",
     "redis-rstream": "^0.1.2",
     "redis-wstream": "^0.2.5",
     "send": "^0.13.0",
@@ -61,6 +62,7 @@
   "devDependencies": {
     "coveralls": "^2.11.4",
     "env-test": "^1.0.0",
+    "fakeredis": "1.0.2",
     "istanbul": "^0.3.22",
     "istanbul-cobertura-badger": "^1.1.0",
     "kinesalite": "^1.9.0",
