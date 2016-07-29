@@ -65,6 +65,7 @@ describe('Routing', function(done) {
     config.set('security.trustProxy', false)
 
     config.set('server.protocol', 'http')
+    config.set('server.sslPassphrase', '')
     config.set('server.sslPrivateKeyPath', '')
     config.set('server.sslCertificatePath', '')
   })
@@ -339,6 +340,74 @@ describe('Routing', function(done) {
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err)
+          done()
+        })
+      })
+    })
+  })
+
+  describe('https with unprotected ssl key', function() {
+    it('should return 200 ok when using unprotected ssl key without a passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/unprotected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/unprotected/cert.pem')
+
+      help.startServer(help.setUpPages(), function() {
+        secureClient.get('/test')
+        .end(function (err, res) {
+          if (err) return done(err)
+
+          method.calledOnce.should.eql(true)
+          res.statusCode.should.eql(200)
+          done()
+        })
+      })
+    })
+  })
+
+  describe('https with protected ssl key', function() {
+    it('should throw a bad password read exception when using protected ssl key without a passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/protected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/protected/cert.pem')
+
+      try {
+        help.startServer(help.setUpPages(), () => {})
+      } catch (ex) {
+        ex.message.should.eql('error:0906A068:PEM routines:PEM_do_header:bad password read')
+      }
+
+      done()
+    })
+
+    it('should throw a bad password read exception when using protected ssl key with the wrong passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/protected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/protected/cert.pem')
+      config.set('server.sslPassphrase', 'incorrectamundo')
+
+      try {
+        help.startServer(help.setUpPages(), () => {})
+      } catch (ex) {
+        ex.message.should.eql('error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt')
+      }
+
+      done()
+    })
+
+    it('should return 200 ok when using protected ssl key with a passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/protected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/protected/cert.pem')
+      config.set('server.sslPassphrase', 'changeme')
+
+      help.startServer(help.setUpPages(), function() {
+        secureClient.get('/test')
+        .end(function (err, res) {
+          if (err) return done(err)
+
+          method.calledOnce.should.eql(true)
+          res.statusCode.should.eql(200)
           done()
         })
       })
