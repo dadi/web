@@ -60,10 +60,10 @@ var Api = function () {
             serverOptions.ca = readFileSyncSafe(caPath)
         }
 
-        this.server = https.createServer(serverOptions, this.listener)
+        this.serverInstance = https.createServer(serverOptions, this.listener)
     } else {
         // default to http
-        this.server = http.createServer(this.listener)
+        this.serverInstance = http.createServer(this.listener)
     }
 }
 
@@ -136,7 +136,7 @@ Api.prototype.unuse = function (path) {
  *  @api public
  */
 Api.prototype.listen = function (port, host, backlog, done) {
-    return this.server.listen(port, host, backlog, done)
+    return this.serverInstance.listen(port, host, backlog, done)
 }
 
 /**
