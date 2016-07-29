@@ -31,9 +31,7 @@ var Api = function () {
 
     this.protocol = config.get('server.protocol') || 'http'
 
-    if (this.protocol === 'http') {
-        this.server = http.createServer(this.listener)
-    } else if (this.protocol === 'https') {
+    if (this.protocol === 'https') {
         var readFileSyncSafe = (path) => {
             try { return fs.readFileSync(path) }
             catch (ex) {}
@@ -61,8 +59,11 @@ var Api = function () {
         } else if (caPath && caPath.length > 0) {
             serverOptions.ca = readFileSyncSafe(caPath)
         }
-
+        
         this.server = https.createServer(serverOptions, this.listener)
+    } else {
+        // default to http
+        this.server = http.createServer(this.listener)
     }
 }
 
