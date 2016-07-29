@@ -4,7 +4,7 @@ var pathToRegexp = require('path-to-regexp');
 var raven = require('raven');
 var _ = require('underscore');
 
-var log = require(__dirname + '/../log');
+var log = require('@dadi/logger');
 var config = require(__dirname + '/../../../config');
 
 /**

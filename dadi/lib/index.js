@@ -53,12 +53,13 @@ var apiMiddleware = require(__dirname + '/api/middleware');
 var auth = require(__dirname + '/auth');
 var cache = require(__dirname + '/cache');
 var monitor = require(__dirname + '/monitor');
-var log = require(__dirname + '/log');
 var help = require(__dirname + '/help');
 var dustHelpersExtension = require(__dirname + '/dust/helpers.js');
 var datasource = require(__dirname + '/datasource');
 
 var config = require(path.resolve(__dirname + '/../../config.js'));
+var log = require('@dadi/logger');
+log.init(config.get('logging'));
 
 /**
  * Creates a new Server instance.
