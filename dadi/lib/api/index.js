@@ -46,7 +46,7 @@ var Api = function () {
             cert: readFileSyncSafe(config.get('server.sslCertificatePath'))
         }
 
-        if (passphrase && passphrase.length > 4) {
+        if (passphrase && passphrase.length >= 4) {
             serverOptions.passphrase = passphrase
         }
 
@@ -59,7 +59,7 @@ var Api = function () {
         } else if (caPath && caPath.length > 0) {
             serverOptions.ca = readFileSyncSafe(caPath)
         }
-        
+
         this.server = https.createServer(serverOptions, this.listener)
     } else {
         // default to http
