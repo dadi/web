@@ -31,6 +31,12 @@ var method
 
 describe('Routing', function(done) {
 
+  before(function(done) {
+    // avoid [Error: self signed certificate] code: 'DEPTH_ZERO_SELF_SIGNED_CERT'
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+    done()
+  })
+
   beforeEach(function(done) {
     help.clearCache()
 
@@ -57,6 +63,11 @@ describe('Routing', function(done) {
 
     config.set('security.useSSL', false)
     config.set('security.trustProxy', false)
+
+    config.set('server.protocol', 'http')
+    config.set('server.sslPassphrase', '')
+    config.set('server.sslPrivateKeyPath', '')
+    config.set('server.sslCertificatePath', '')
   })
 
   /**
@@ -77,8 +88,8 @@ describe('Routing', function(done) {
   })
 
   describe('req.protocol', function() {
-    it('should add req.protocol = http when useSSL is false', function(done) {
-      config.set('security.useSSL', false)
+    it('should add req.protocol = http when server.protocol is http', function(done) {
+      config.set('server.protocol', 'http')
       help.startServer(help.setUpPages(), function() {
         client.get('/test')
         .end(function (err, res) {
@@ -93,11 +104,13 @@ describe('Routing', function(done) {
       })
     })
 
-    it('should add req.protocol = https when useSSL is true', function(done) {
-      config.set('security.useSSL', true)
+    it('should add req.protocol = https when server.protocol is https', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/unprotected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/unprotected/cert.pem')
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        secureClient.get('/test')
         .end(function (err, res) {
           if (err) return done(err)
 
@@ -111,11 +124,14 @@ describe('Routing', function(done) {
     })
 
     it('should use X-Forwarded-Proto header when trustProxy is true', function(done) {
-      config.set('security.useSSL', true)
+      //config.set('security.useSSL', true)
       config.set('security.trustProxy', true)
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/unprotected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/unprotected/cert.pem')
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        secureClient.get('/test')
         .set('X-Forwarded-Proto', 'https')
         .end(function (err, res) {
           if (err) return done(err)
@@ -130,7 +146,7 @@ describe('Routing', function(done) {
   })
 
   describe('req.secure', function() {
-    it('should add req.secure = false when useSSL is false', function(done) {
+    it('should add req.secure = false when server.protocol is http', function(done) {
       help.startServer(help.setUpPages(), function() {
         client.get('/test')
         .end(function (err, res) {
@@ -144,11 +160,13 @@ describe('Routing', function(done) {
       })
     })
 
-    it('should add req.secure = true when useSSL is true', function(done) {
-      config.set('security.useSSL', true)
+    it('should add req.secure = true when server.protocol is https', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/unprotected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/unprotected/cert.pem')
 
       help.startServer(help.setUpPages(), function() {
-        client.get('/test')
+        secureClient.get('/test')
         .end(function (err, res) {
           if (err) return done(err)
 
@@ -281,7 +299,7 @@ describe('Routing', function(done) {
     })
   })
 
-  describe('protocol redirect', function() {
+  describe.skip('protocol redirect', function() {
     it('should redirect to http when useSSL is false and X-Forwarded-Proto = https', function(done) {
       config.set('security.useSSL', false)
       config.set('security.trustProxy', true)
@@ -322,6 +340,74 @@ describe('Routing', function(done) {
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err)
+          done()
+        })
+      })
+    })
+  })
+
+  describe('https with unprotected ssl key', function() {
+    it('should return 200 ok when using unprotected ssl key without a passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/unprotected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/unprotected/cert.pem')
+
+      help.startServer(help.setUpPages(), function() {
+        secureClient.get('/test')
+        .end(function (err, res) {
+          if (err) return done(err)
+
+          method.calledOnce.should.eql(true)
+          res.statusCode.should.eql(200)
+          done()
+        })
+      })
+    })
+  })
+
+  describe('https with protected ssl key', function() {
+    it('should throw a bad password read exception when using protected ssl key without a passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/protected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/protected/cert.pem')
+
+      try {
+        help.startServer(help.setUpPages(), () => {})
+      } catch (ex) {
+        ex.message.should.eql('error:0906A068:PEM routines:PEM_do_header:bad password read')
+      }
+
+      done()
+    })
+
+    it('should throw a bad password read exception when using protected ssl key with the wrong passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/protected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/protected/cert.pem')
+      config.set('server.sslPassphrase', 'incorrectamundo')
+
+      try {
+        help.startServer(help.setUpPages(), () => {})
+      } catch (ex) {
+        ex.message.should.eql('error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt')
+      }
+
+      done()
+    })
+
+    it('should return 200 ok when using protected ssl key with a passphrase', function(done) {
+      config.set('server.protocol', 'https')
+      config.set('server.sslPrivateKeyPath', 'test/ssl/protected/key.pem')
+      config.set('server.sslCertificatePath', 'test/ssl/protected/cert.pem')
+      config.set('server.sslPassphrase', 'changeme')
+
+      help.startServer(help.setUpPages(), function() {
+        secureClient.get('/test')
+        .end(function (err, res) {
+          if (err) return done(err)
+
+          method.calledOnce.should.eql(true)
+          res.statusCode.should.eql(200)
           done()
         })
       })
