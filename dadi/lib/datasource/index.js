@@ -193,7 +193,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // add some params from the query string or request params
   if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters) {
     var requestParamsPage = this.requestParams.find((obj) => {
-      return (obj.filter === 'page') && obj.param
+      return (obj.queryParam === 'page') && obj.param
     })
 
     // handle pagination param
