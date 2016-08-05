@@ -13,7 +13,7 @@ var crypto = require('crypto');
 var zlib = require('zlib');
 
 var auth = require(__dirname + '/auth');
-var log = require(__dirname + '/log');
+var log = require('@dadi/logger');
 var config = require(__dirname + '/../../config.js');
 var cache = require(__dirname + '/cache');
 var DatasourceCache = require(__dirname + '/cache/datasource');

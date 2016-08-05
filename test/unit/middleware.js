@@ -1,7 +1,6 @@
 var path = require('path');
 var should = require('should');
 var sinon = require('sinon');
-var log = require(__dirname + '/../../dadi/lib/log');
 var middleware = require(__dirname + '/../../dadi/lib/middleware');
 var help = require(__dirname + '/../help');
 

@@ -13,7 +13,7 @@ var _ = require('underscore');
 
 var config = require(__dirname + '/../../../config');
 var help = require(__dirname + '/../help');
-var log = require(__dirname + '/../log');
+var log = require('@dadi/logger');
 var rewrite = require(__dirname + '/rewrite');
 
 var Datasource = require(__dirname + '/../datasource');
