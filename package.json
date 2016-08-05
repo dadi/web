@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@dadi/api-wrapper": "^1.1.0",
-    "@dadi/logger": "^1.x.x",
+    "@dadi/logger": "latest",
     "@dadi/passport": "^1.0.x",
     "@dadi/status": "git+https://git@github.com/dadi/status.git",
     "async": "^1.4.2",
