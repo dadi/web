@@ -46,7 +46,8 @@ middleware.setUpRequest = function () {
   return function (req, res, next) {
     Object.defineProperty(req, 'protocol', {
       get: function() {
-        var protocol = config.get('security.useSSL') ? 'https' : 'http'
+        var protocol = config.get('server.protocol') || 'http'
+
         //var protocol = req.connection.encrypted ? 'https' : 'http'
         var trust = compileTrust(config.get('security.trustProxy'))
 
@@ -116,7 +117,8 @@ middleware.setUpRequest = function () {
 
 middleware.transportSecurity = function () {
 
-  var scheme = config.get('security.useSSL') ? HTTPS : HTTP
+  var protocol = config.get('server.protocol')
+  var scheme = protocol === 'https' ? HTTPS : HTTP
 
   function securityEnabled () {
     return scheme === HTTPS

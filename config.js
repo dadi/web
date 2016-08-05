@@ -32,6 +32,42 @@ var conf = convict({
       doc: "The number of seconds to wait before closing an idle socket",
       format: Number,
       default: 120
+    },
+    protocol: {
+      doc: "The protocol the web application will use",
+      format: String,
+      default: "http",
+      env: "PROTOCOL"
+    },
+    sslPassphrase: {
+      doc: "The passphrase of the SSL private key",
+      format: String,
+      default: "",
+      env: "SSL_PRIVATE_KEY_PASSPHRASE"
+    },
+    sslPrivateKeyPath: {
+      doc: "The filename of the SSL private key",
+      format: String,
+      default: "",
+      env: "SSL_PRIVATE_KEY_PATH"
+    },
+    sslCertificatePath: {
+      doc: "The filename of the SSL certificate",
+      format: String,
+      default: "",
+      env: "SSL_CERTIFICATE_PATH"
+    },
+    sslIntermediateCertificatePath: {
+      doc: "The filename of an SSL intermediate certificate, if any",
+      format: String,
+      default: "",
+      env: "SSL_INTERMEDIATE_CERTIFICATE_PATH"
+    },
+    sslIntermediateCertificatePaths: {
+      doc: "The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)",
+      format: Array,
+      default: [],
+      env: "SSL_INTERMEDIATE_CERTIFICATE_PATHS"
     }
   },
 	api: {
@@ -70,29 +106,34 @@ var conf = convict({
     clientId: {
       doc: "",
       format: String,
-      default: "testClient"
+      default: "testClient",
+      env: "AUTH_TOKEN_ID"
     },
     secret: {
       doc: "",
       format: String,
-      default: "superSecret"
+      default: "superSecret",
+      env: "AUTH_TOKEN_SECRET"
     }
   },
   aws: {
     accessKeyId: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_ACCESS_KEY"
     },
     secretAccessKey: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_SECRET_KEY"
     },
     region: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_REGION"
     }
   },
   twitter: {
@@ -153,17 +194,20 @@ var conf = convict({
       host: {
         doc: "The Redis server host",
         format: String,
-        default: "127.0.0.1"
+        default: "127.0.0.1",
+        env: "REDIS_HOST"
       },
       port: {
         doc: "The port for the Redis server",
         format: 'port',
-        default: 6379
+        default: 6379,
+        env: "REDIS_PORT"
       },
       password: {
         doc: "",
         format: String,
-        default: ""
+        default: "",
+        env: "REDIS_PASSWORD"
       }
     }
   },
@@ -307,7 +351,8 @@ var conf = convict({
     secret: {
       doc: "This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.",
       format: String,
-      default: "dadiwebsecretsquirrel"
+      default: "dadiwebsecretsquirrel",
+      env: "SESSION_SECRET"
     },
     resave: {
       doc: "Forces the session to be saved back to the session store, even if the session was never modified during the request.",
@@ -381,7 +426,7 @@ var conf = convict({
   },
   security: {
     useSSL: {
-      doc: "WIP",
+      doc: "Deprecated. Set server.protocol to https to use SSL.",
       format: Boolean,
       default: false
     },
@@ -438,7 +483,8 @@ var conf = convict({
   secret: {
     doc: "A value that must be passed to requests for the /config route, which allows viewing the application config in the browser",
     format: String,
-    default: "1dc10073-ca36-4373-a646-0d1092caf4a5"
+    default: "1dc10073-ca36-4373-a646-0d1092caf4a5",
+    env: "CONFIG_SECRET"
   },
 });
 

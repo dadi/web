@@ -87,7 +87,8 @@ Router.prototype.loadRewrites = function(options, done) {
         ds.provider.load(null, function(err, response) {
           if (err) {
             console.log('Error loading data in Router Rewrite module');
-            return next(err);
+            console.log(err)
+            return cb(null)
           }
 
           if (response) {
@@ -120,6 +121,7 @@ Router.prototype.loadRewrites = function(options, done) {
 
     });
   } else if (self.rewritesFile) {
+    var rules = [];
     var stream = fs.createReadStream(self.rewritesFile, {encoding: 'utf8'});
 
     stream.pipe(es.split("\n"))

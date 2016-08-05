@@ -1,6 +1,6 @@
 # DADI Web
 
-[![npm version](https://badge.fury.io/js/%40dadi%2Fweb.svg)](https://badge.fury.io/js/%40dadi%2Fweb)&nbsp;![Coverage](https://img.shields.io/badge/Coverage-60%-yellow.svg?style=flat-square)
+[![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)&nbsp;[![coverage](https://img.shields.io/badge/coverage-61%25-yellow.svg?style=flat-square)](https://github.com/dadi/web)&nbsp;[![build](http://ci.dadi.technology/dadi/web/badge?branch=master&service=shield)](http://ci.dadi.technology/dadi/web)
 
 ## Overview
 
@@ -32,7 +32,7 @@ npm start
 
 ## Documentation
 
-Documentation is maintained under the `docs` branch and can be found on the [dadi.tech](https://dadi.tech) site.
+Documentation is maintained under the `docs` branch.
 
 ## Licence
 
@@ -68,3 +68,4 @@ A copy can be found in the file AGPL.md distributed with
 these files.
 
 This copyright notice MUST APPEAR in all copies of the product!
+
