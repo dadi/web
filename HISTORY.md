@@ -1,4 +1,84 @@
-Version 1.3.0 / 2016-03-22
+# Version 1.6.0 / 2016-06-08
+
+This version update adds the ability to use a datasource as the main source of the htaccess style rewrites
+
+Add the following block to configuration, specifying an existing datasource name:
+```
+rewrites: {
+   datasource: "rewrites"
+   path: ""
+ }
+```
+
+# Version 1.5.0 / 2016-06-08
+
+## Cluster support
+This version adds support for running in cluster mode to take advantage of multiple core CPUs.
+
+The default configuration _does not_ use cluster mode. To enable, add the following to configuration:
+
+```js
+"cluster": true
+```
+
+Web will report it is running in cluster mode at startup.
+
+* fix #63: don't use main config options for ds extension
+
+    if no cache config options are provided for a datasource the main
+    config settings are used. for a datasource, we need to use .json
+    by default, rather than the main config setting
+
+* add 503 server too busy response
+
+# Version 1.4.0 / 2016-05-05
+
+* allow port configuration to be set from environment variable PORT
+* fix: bug where an ID parameter from the request URL was added to all subsequent datasource filters
+* fix: bug where caching was performed routing, therefore sometimes ignoring routes
+* fix: allow datasource configuration to override protocol:
+  * Previous versions assumed if the API settings used HTTPS then the datasource calls should too. Fix to allow
+   a datasource to specify it's protocol and have that override the API setting.
+* add support for HTTPS
+* add page template metadata to returned JSON:
+  ```
+  "page": {
+    "name": "movies_news",
+    "description": "movies news",
+    "language": "en"
+  }
+  ```
+
+* fix #48: test current URL against returned redirect results:
+  * when using a datasource for redirects, ensure that any results
+  returned are matched against the URL before redirecting the request
+
+* add config option to force a domain redirect
+
+    this allows a setting in config as below which will force redirecting
+    to the specified domain, e.g. useful to redirect a root domain to www.
+
+    ```
+    "rewrites": {
+      "forceDomain": "www.example.com"
+    }
+    ```
+
+* fix: allow any format for config setting sessions.cookie.maxAge
+
+    the default for express-session is to use `cookie.maxAge = null`
+    which means no "expires" parameter is set so the cookie becomes
+    a browser-session cookie.
+
+    When the user closes the browser the cookie (and session) will be removed.
+
+* allow Redis use for session store configuration
+* add token wallet path to `paths` configuration blocks
+* integration @dadi/passport for token generation/validation
+* add protocol option to `api` and `auth` configuration blocks
+
+
+# Version 1.3.0 / 2016-03-22
 
 ## Status endpoint
 
@@ -29,17 +109,17 @@ schema to override default of String. Thanks @mingard!
 ]
 ```
 
-Version 1.2.0 / 2016-03-18
+# Version 1.2.0 / 2016-03-18
 
-Add: additional routing/rewriting config properties
-Add: #37 Global events loader
-Fix: #38 replace datasource loader in router
-Fix: #36 load events in the order they were specified
-Fix: #32 load template from filesystem if Dust cache is_disabled
-Fix: #31 define the zlib variable
-Fix: #29 refresh endpoint filter on subsequent page loads
+* Add: additional routing/rewriting config properties
+* Add #37: Global events loader
+* Fix #38: replace datasource loader in router
+* Fix #36: load events in the order they were specified
+* Fix #32: load template from filesystem if Dust cache is_disabled
+* Fix #31: define the zlib variable
+* Fix #29: refresh endpoint filter on subsequent page loads
 
-Version 1.1.0 / 2016-03-11
+# Version 1.1.0 / 2016-03-11
 
 ### Cache Invalidation
 Version 1.1.0 introduces a cache invalidation endpoint which allows an authorised user to flush the cache
@@ -112,8 +192,7 @@ module.exports.Event = Event;
 ```
 
 
-0.5.0 / 2016-01-08
-===================
+# Version 0.5.0 / 2016-01-08
 
 * Cache:
  - Ensure a more unique datasource cache key by including the datasource name as well as the endpoint
@@ -136,8 +215,8 @@ module.exports.Event = Event;
  - Added new `replace` helper, usage: {@replace str="hello.world" search="." replace="-" /}
 
 
-0.1.7 / 2015-12-06
-===================
+# Version 0.1.7 / 2015-12-06
+
 * Config:
   - Add config option for socket timeout, defaults to 30 seconds
 
@@ -145,8 +224,8 @@ module.exports.Event = Event;
 
 
 
-0.1.7 / 2015-11-26
-===================
+# Version 0.1.7 / 2015-11-26
+
 
 * Server:
   - Error if the configured API can't be reached
@@ -158,8 +237,7 @@ module.exports.Event = Event;
 * Config:
   - Provide configuration for logging to a Sentry server
 
-0.1.6 / 2015-11-12
-===================
+# Version 0.1.6 / 2015-11-12
 
   * Cache:
     - Don't cache requests that use ?json=true in the querystring
