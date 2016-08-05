@@ -162,6 +162,14 @@ var conf = convict({
       env: "TWITTER_ACCESS_TOKEN_SECRET"
     }
   },
+  wordpress: {
+    bearerToken: {
+      doc: "A pregenerated oauth access bearer token",
+      format: String,
+      default: "",
+      env: "WORDPRESS_BEARER_TOKEN"
+    }
+  },
   caching: {
     ttl: {
       doc: "The time, in seconds, after which cached data is considered stale",
