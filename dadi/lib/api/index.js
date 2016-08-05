@@ -6,8 +6,8 @@ var https = require('https')
 var raven = require('raven')
 var pathToRegexp = require('path-to-regexp')
 
-var log = require('@dadi/logger');
-var config = require(__dirname + '/../../../config');
+var log = require('@dadi/logger')
+var config = require(__dirname + '/../../../config')
 
 /**
  * Represents the main server.
