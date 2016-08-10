@@ -95,7 +95,21 @@ Controller.prototype.requiredDataPresent = function (data) {
 
 Controller.prototype.buildInitialViewData = function(req) {
 
-  var data = {};
+  var data = {}
+
+  // data helpers
+  data.has = function (node) {
+    return this[node] !== undefined
+  }
+
+  data.get = function (node) {
+    return this[node]
+  }
+
+  data.hasResults = function (node) {
+    return this.has(node) && this[node].results !== undefined && !_.isEmpty(this[node].results)
+  }
+
   var urlData = url.parse(req.url, true);
 
   data.query = urlData.query;

@@ -301,6 +301,46 @@ describe('Controller', function (done) {
     })
   })
 
+  describe('Data Helpers', function () {
+    it('should add helper methods to the data object that is returned to the view', function(done) {
+      config.set('api.enabled', false);
+      config.set('allowJsonView', true);
+
+      var page = getPage();
+      startServer(page);
+
+      // provide API response
+      var apiResults = { results: [{_id: 1, title: 'books'}] }
+      sinon.stub(help.DataHelper.prototype, 'load').yields(null, apiResults);
+
+      // provide event response
+      var results = { results: [{_id: 1, title: 'books'}] }
+      var method = sinon.spy(Controller.Controller.prototype, 'buildInitialViewData');
+
+      var client = request(connectionString);
+
+      client
+      .get(page.route.paths[0] + '?json=true')
+      //.expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
+        method.called.should.eql(true);
+
+        // get the data object that will be used throughout the request
+        var data = method.returnValues[0]
+
+        method.restore()
+        help.DataHelper.prototype.load.restore();
+
+        data.has.should.be.Function
+        data.hasResults.should.be.Function
+        data.get.should.be.Function
+
+        cleanup(done);
+      });
+    })
+  })
+
   describe('Global Events', function(done) {
     it('should load globalEvents in the controller instance', function(done) {
       config.set('api.enabled', false);
@@ -398,5 +438,4 @@ describe('Controller', function (done) {
       })
     })
   })
-
 })

@@ -65,7 +65,7 @@ describe('Routing', function(done) {
       var page = Page('test', help.getPageSchema())
 
       page.datasources = []
-      page.events = []
+      page.events = ['test_event']
       page.template = 'test_params.dust'
       page.route = {
         paths: [
