@@ -13,7 +13,7 @@ var s = require('underscore.string');
 
 var cache = require(__dirname + '/index.js');
 var config = require(__dirname + '/../../../config.js');
-var log = require(__dirname + '/../log');
+var log = require('@dadi/logger');
 
 var cacheEncoding = 'utf8';
 var options = {};

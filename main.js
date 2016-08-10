@@ -4,7 +4,8 @@ var config = require('./config')
 var fs = require('fs')
 var path = require('path')
 
-var log = require(__dirname + '/dadi/lib/log.js')
+var log = require('@dadi/logger')
+log.init(config.get('logging'))
 
 require('console-stamp')(console, 'yyyy-mm-dd HH:MM:ss.l')
 
@@ -98,6 +99,5 @@ function restartWorkers() {
 }
 
 // export the modules
-module.exports.Config = require('./config');
-module.exports.Event  = require(__dirname + '/dadi/lib/event');
-module.exports.Log    = require(__dirname + '/dadi/lib/log.js');
+module.exports.Config = require('./config')
+module.exports.Event  = require(__dirname + '/dadi/lib/event')

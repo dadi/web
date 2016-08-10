@@ -3,7 +3,6 @@ var sinon = require('sinon')
 var page = require(__dirname + '/../../dadi/lib/page')
 var datasource = require(__dirname + '/../../dadi/lib/datasource')
 var help = require(__dirname + '/../help')
-var log = require(__dirname + '/../../dadi/lib/log')
 var config = require(__dirname + '/../../config.js')
 
 describe('Datasource', function (done) {

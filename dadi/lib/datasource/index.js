@@ -7,7 +7,7 @@ var _ = require('underscore');
 
 var Event = require(__dirname + '/../event');
 var config = require(__dirname + '/../../../config.js');
-var log = require(__dirname + '/../log');
+var log = require('@dadi/logger');
 var providers = require(__dirname + '/../providers')
 
 /**

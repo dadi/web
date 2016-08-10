@@ -3,7 +3,7 @@ var path = require('path')
 var proxyaddr = require('proxy-addr')
 var url = require('url')
 var config = require(path.resolve(__dirname + '/../../../config.js'))
-var log = require(__dirname + '/../log')
+var log = require('@dadi/logger');
 
 var HTTP = 'http:'
 var HTTPS = 'https:'
