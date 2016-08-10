@@ -241,12 +241,6 @@ Api.prototype._match = function (path, req) {
   return handlers
 }
 
-module.exports = function () {
-  return new Api()
-}
-
-module.exports.Api = Api
-
 function onError (api) {
   return function (err, req, res, next) {
     if (res.finished) return
@@ -327,3 +321,9 @@ function routePriority (path, keys) {
 
   return order
 }
+
+module.exports = function () {
+  return new Api()
+}
+
+module.exports.Api = Api
