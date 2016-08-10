@@ -333,7 +333,10 @@ function routePriority (path, keys) {
     return key.optional
   }).length
 
-  var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength)
+  // if there is a "page" parameter in the route, give it a slightly higher priority
+  var paginationParam = _.find(keys, (key) => { return key.name && key.name === 'page' })
+
+  var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength) + (typeof paginationParam === 'undefined' ? 0 : 1)
 
   // make internal routes less important...
   if (path.indexOf('/config') > 0) order = -100
