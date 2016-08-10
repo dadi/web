@@ -117,6 +117,7 @@ Api.prototype.use = function (path, handler) {
  */
 Api.prototype.unuse = function (path) {
   var indx = 0
+
   if (typeof path === 'function') {
     if (path.length === 4) {
       indx = this.errors.indexOf(path)
@@ -135,6 +136,7 @@ Api.prototype.unuse = function (path) {
   // indx = this.all.indexOf(path)
   // return !!~indx && this.all.splice(indx, 1)
   }
+
   var existing = _.findWhere(this.paths, { path: path })
   this.paths = _.without(this.paths, existing)
 }
@@ -160,15 +162,13 @@ Api.prototype.listen = function (port, host, backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
-
   // clone the middleware stack
   var stack = this.all.slice(0)
-  var path = url.parse(req.url).pathname
 
   req.paths = []
 
   // get matching routes, and add req.params
-  var matches = this._match(path, req)
+  var matches = this._match(req)
 
   var originalReqParams = req.params
 
@@ -207,12 +207,12 @@ Api.prototype.listener = function (req, res) {
 
 /**
  *  Check if any of the registered routes match the current url, if so populate `req.params`
- *  @param {String} path
- *  @param {http.IncomingMessage} req
- *  @return Array
+ *  @param {http.IncomingMessage} req - the current request
+ *  @return {Array} handlers - the handlers that best matched the current URL
  *  @api private
  */
-Api.prototype._match = function (path, req) {
+Api.prototype._match = function (req) {
+  var path = url.parse(req.url).pathname
   var paths = this.paths
   var matches = []
   var handlers = []
@@ -220,22 +220,42 @@ Api.prototype._match = function (path, req) {
   // always add params object to avoid need for checking later
   req.params = {}
 
-  for (i = 0; i < paths.length; i++) {
-    var match = paths[i].regex.exec(path)
+  for (var idx = 0; idx < paths.length; idx++) {
+    // test the supplied url against each loaded route.
+    // for example: does "/test/2" match "/test/:page"?
+    var match = paths[idx].regex.exec(path)
 
+    // move to the next route if no match
     if (!match) { continue }
 
-    req.paths.push(paths[i].path)
+    req.paths.push(paths[idx].path)
 
-    var keys = paths[i].regex.keys
-    handlers.push(paths[i].handler)
+    // get all the dynamic keys from the route
+    // i.e. anything that starts with ":" -> "/news/:title"
+    var keys = paths[idx].regex.keys
 
-    match.forEach(function (k, i) {
-      var keyOpts = keys[i] || {}
-      if (match[i + 1] && keyOpts.name && !req.params[keyOpts.name]) req.params[keyOpts.name] = match[i + 1]
+    // add this route's controller
+    handlers.push(paths[idx].handler)
+
+    // [ '/test/1/2', '1', '2', index: 0, input: '/test/1/2' ]
+    match.forEach((property, index) => {
+      // get the dynamic route key that is
+      // at the same index as we are in the loop
+      var keyOpts = keys[index] || {}
+
+      // the value for the key is found one slot ahead
+      // of the current index, because the first property
+      // was the full matched string e.g. /test/2 and the values
+      // for the keys appear next
+
+      // here we only add the key to the params if it hasn't been already
+      if (match[index + 1] && keyOpts.name && !req.params[keyOpts.name]) {
+        req.params[keyOpts.name] = match[index + 1]
+      }
     })
 
-  // break
+    // we've found the best match, let's stop here
+    break
   }
 
   return handlers
@@ -285,8 +305,8 @@ function notFound (api, req, res) {
     // look for a 404 page that has been loaded
     // along with the rest of the API, and call its
     // handler if it exists
-
     var path = _.findWhere(api.paths, { path: '/404' })
+
     if (path) {
       path.handler(req, res)
     }
