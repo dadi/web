@@ -21,7 +21,7 @@ var Api = function () {
     // Sentry error handler
   if (config.get('logging.sentry.dsn') !== '') {
     this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')))
-    }
+  }
 
     // Fallthrough error handler
   this.errors.push(onError(this))
@@ -90,18 +90,18 @@ var Api = function () {
  *  @api public
  */
 Api.prototype.use = function (path, handler) {
-    if (typeof path === 'function') {
+  if (typeof path === 'function') {
     if (path.length === 4) return this.errors.push(path)
     return this.all.push(path)
-    }
+  }
 
   var regex = pathToRegexp(path)
 
-    this.paths.push({
-        path: path,
-        order: routePriority(path, regex.keys),
-        handler: handler,
-        regex: regex
+  this.paths.push({
+    path: path,
+    order: routePriority(path, regex.keys),
+    handler: handler,
+    regex: regex
   })
 
   this.paths.sort((a, b) => {
@@ -161,47 +161,48 @@ Api.prototype.listen = function (port, host, backlog, done) {
  */
 Api.prototype.listener = function (req, res) {
 
-    // clone the middleware stack
+  // clone the middleware stack
   var stack = this.all.slice(0)
   var path = url.parse(req.url).pathname
 
   req.paths = []
 
-    // get matching routes, and add req.params
+  // get matching routes, and add req.params
   var matches = this._match(path, req)
 
   var originalReqParams = req.params
 
-    var doStack = function (i) {
-        return function (err) {
+  var doStack = function (i) {
+    return function (err) {
       if (err) return errStack(0)(err)
 
-            // add the original params back, in case a middleware
-            // has modified the current req.params
+      // add the original params back, in case a middleware
+      // has modified the current req.params
       _.extend(req.params, originalReqParams)
 
-            try {
+      try {
         stack[i](req, res, doStack(++i))
       } catch (e) {
         return errStack(0)(e)
       }
-            }
-            }
+    }
+  }
 
   var self = this
-    var errStack = function (i) {
-        return function (err) {
+
+  var errStack = function (i) {
+    return function (err) {
       self.errors[i](err, req, res, errStack(++i))
     }
   }
 
-    // add path specific handlers
+  // add path specific handlers
   stack = stack.concat(matches)
 
-    // add 404 handler
+  // add 404 handler
   stack.push(notFound(this, req, res))
 
-    // start going through the middleware/routes
+  // start going through the middleware/routes
   doStack(0)()
 }
 
