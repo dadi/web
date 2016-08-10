@@ -55,7 +55,7 @@ var datasource = require(__dirname + '/datasource')
 
 var config = require(path.resolve(__dirname + '/../../config.js'))
 var log = require('@dadi/logger')
-log.init(config.get('logging'))
+log.init(config.get('logging'), {}, process.env.NODE_ENV)
 
 /**
  * Creates a new Server instance.
