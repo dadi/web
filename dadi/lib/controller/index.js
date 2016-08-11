@@ -404,13 +404,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     }
 
     // add page # to datasource options
-    chainedDatasource.schema.datasource.page = data.query.page || 1;
-
-    if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
-      param = parseInt(param);
-    }
-    else {
-      param = encodeURIComponent(param);
+    if (self.page.passFilters && chainedDatasource.schema.datasource.paginate) {
+      chainedDatasource.schema.datasource.page = data.query.page || req.params.page || 1;
     }
 
     // if there is a field to filter on, add the new parameter value to the filters
