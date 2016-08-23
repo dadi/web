@@ -334,7 +334,6 @@ describe('Controller', function (done) {
 
         data.has.should.be.Function
         data.hasResults.should.be.Function
-        data.get.should.be.Function
 
         cleanup(done);
       });

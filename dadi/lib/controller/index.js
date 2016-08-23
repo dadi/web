@@ -102,10 +102,6 @@ Controller.prototype.buildInitialViewData = function(req) {
     return this[node] !== undefined
   }
 
-  data.get = function (node) {
-    return this[node]
-  }
-
   data.hasResults = function (node) {
     return this.has(node) && this[node].results !== undefined && !_.isEmpty(this[node].results)
   }
