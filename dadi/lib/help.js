@@ -359,14 +359,14 @@ module.exports.getToken = function () {
 // creates a new function in the underscore.js namespace
 // allowing us to pluck multiple properties - used to return only the
 // fields we require from an array of objects
-_.mixin({selectFields: function() {
-        var args = _.rest(arguments, 1)[0];
-        return _.map(arguments[0], function(item) {
-            var obj = {};
-            _.each(args.split(','), function(arg) {
-                obj[arg] = item[arg];
-            });
-            return obj;
-        });
-    }
-});
+_.mixin({selectFields: function () {
+    var args = _.rest(arguments, 1)[0]
+    return _.map(arguments[0], function (item) {
+      var obj = {}
+      _.each(args.split(','), function (arg) {
+        obj[arg] = item[arg]
+      })
+      return obj
+    })
+  }
+})
