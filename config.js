@@ -440,6 +440,13 @@ var conf = convict({
     default: "1dc10073-ca36-4373-a646-0d1092caf4a5",
     env: "CONFIG_SECRET"
   },
+  data: {
+    preload: {
+      doc: "",
+      format: Array,
+      default: []
+    }
+  }
 });
 
 // Load environment dependent configuration
@@ -465,3 +472,7 @@ conf.updateConfigDataForDomain = function(domain) {
 conf.validate({strict: false});
 
 module.exports = conf;
+module.exports.configPath = function() {
+  var env = conf.get('env') || process.env['NODE_ENV']
+  return './config/config.' + env + '.json';
+}
