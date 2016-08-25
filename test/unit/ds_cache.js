@@ -13,7 +13,7 @@ var datasourceCache = require(__dirname + '/../../dadi/lib/cache/datasource');
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config.js');
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var cache = require(__dirname + '/../../dadi/lib/cache');
 
 describe('Datasource Cache', function (done) {

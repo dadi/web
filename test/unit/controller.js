@@ -8,7 +8,8 @@ var Server = require(__dirname + '/../../dadi/lib');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var Controller = require(__dirname + '/../../dadi/lib/controller');
 var testHelper = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config');
+var path = require('path')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var help = require(__dirname + '/../../dadi/lib/help');
 
 var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port');
@@ -30,7 +31,7 @@ function startServer(page) {
 
     Server.addComponent({
         key: page.key,
-        route: page.route,
+        routes: page.routes,
         component: controller
     }, false);
   });
@@ -59,13 +60,13 @@ describe('Controller', function (done) {
     var page = Page(name, schema);
 
     page.template = 'test.dust';
-    page.route.paths[0] = '/test';
+    page.routes[0].path = '/test';
     page.settings.cache = false;
 
     page.datasources = ['categories'];
     page.events = [];
     page.requiredDatasources = ['categories'];
-    delete page.route.constraint;
+    
 
     startServer(page);
 
@@ -77,7 +78,7 @@ describe('Controller', function (done) {
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
+    .get(page.routes[0].path)
     .expect(404)
     .end(function (err, res) {
       if (err) return done(err);
@@ -96,13 +97,13 @@ describe('Controller', function (done) {
     var page = Page(name, schema);
 
     page.template = 'test.dust';
-    page.route.paths[0] = '/test';
+    page.routes[0].path = '/test';
     page.settings.cache = false;
 
     page.datasources = ['categories'];
     page.events = [];
     page.requiredDatasources = ['categories'];
-    delete page.route.constraint;
+
 
     startServer(page);
 
@@ -114,7 +115,7 @@ describe('Controller', function (done) {
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
+    .get(page.routes[0].path)
     .expect(200)
     .end(function (err, res) {
       if (err) return done(err);
@@ -131,13 +132,13 @@ describe('Controller', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'test.dust';
-    page.route.paths[0] = '/test';
+    page.routes[0].path = '/test';
     page.settings.cache = false;
 
     page.datasources = [];
     page.events = ['test_event'];
     page.preloadEvents = ['test_preload_event'];
-    delete page.route.constraint;
+
 
     return page;
   }
@@ -150,12 +151,12 @@ describe('Controller', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'test.dust';
-    page.route.paths[0] = '/test';
+    page.routes[0].path = '/test';
     page.settings.cache = false;
 
     page.datasources = [];
     page.events = [];
-    delete page.route.constraint;
+
 
     return page;
   }
@@ -190,7 +191,7 @@ describe('Controller', function (done) {
       var client = request(connectionString);
 
       client
-      .get(page.route.paths[0] + '?json=true')
+      .get(page.routes[0].path + '?json=true')
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
@@ -237,7 +238,7 @@ describe('Controller', function (done) {
       var client = request(connectionString);
 
       client
-      .get(page.route.paths[0] + '?json=true')
+      .get(page.routes[0].path + '?json=true')
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
@@ -285,7 +286,7 @@ describe('Controller', function (done) {
       var client = request(connectionString);
 
       client
-      .get(page.route.paths[0] + '?json=true')
+      .get(page.routes[0].path + '?json=true')
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
@@ -320,7 +321,7 @@ describe('Controller', function (done) {
       var client = request(connectionString);
 
       client
-      .get(page.route.paths[0] + '?json=true')
+      .get(page.routes[0].path + '?json=true')
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
@@ -371,7 +372,7 @@ describe('Controller', function (done) {
       var client = request(connectionString);
 
       client
-      .get(page.route.paths[0] + '?json=true')
+      .get(page.routes[0].path + '?json=true')
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
@@ -396,7 +397,7 @@ describe('Controller', function (done) {
       schema.events = []
       var page = Page(name, schema);
       page.template = 'test.dust';
-      page.route.paths[0] = '/test';
+      page.routes[0].path = '/test';
       page.settings.cache = false;
       startServer(page);
 
@@ -411,7 +412,7 @@ describe('Controller', function (done) {
       var client = request(connectionString);
 
       client
-      .get(page.route.paths[0] + '?json=true')
+      .get(page.routes[0].path + '?json=true')
       .expect(200)
       .end(function (err, res) {
         if (err) return done(err);

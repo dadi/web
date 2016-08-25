@@ -1,16 +1,21 @@
-var fs = require('fs');
+var _ = require('underscore');
 var dust = require('dustjs-linkedin');
 var dustHelpers = require('dustjs-helpers');
+var fs = require('fs');
+var path = require('path');
+var pathToRegexp = require('path-to-regexp');
+var should = require('should');
 var sinon = require('sinon');
+
 var api = require(__dirname + '/../../dadi/lib/api');
 var Server = require(__dirname + '/../../dadi/lib');
-var should = require('should');
-var pathToRegexp = require('path-to-regexp');
-var _ = require('underscore');
 var page = require(__dirname + '/../../dadi/lib/page');
 var view = require(__dirname + '/../../dadi/lib/view');
 var help = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config.js');
+
+var config
+var testConfigString
+var configKey = path.resolve(path.join(__dirname, '/../../config'))
 
 function cleanupPath(path, done) {
   try {
@@ -24,6 +29,21 @@ function cleanupPath(path, done) {
 }
 
 describe('View', function (done) {
+  beforeEach(function(done) {
+    delete require.cache[configKey]
+    config = require(configKey)
+
+    testConfigString = fs.readFileSync(config.configPath()).toString()
+
+    config.loadFile(config.configPath())
+    done()
+  })
+
+  afterEach(function(done) {
+    fs.writeFileSync(config.configPath(), testConfigString)
+    done()
+  })
+
   it('should export constructor', function (done) {
     view.View.should.be.Function;
     done();
@@ -151,9 +171,14 @@ describe('View', function (done) {
   });
 
   it('should throw an error if the configured helper path cannot be found', function (done) {
-
     // set a helper path in config
-    config.set('paths.helpers', 'test/app/utils/not/here/helpers');
+    var newTestConfig = JSON.parse(testConfigString)
+    newTestConfig.paths.helpers = 'test/app/utils/not/here/helpers'
+    fs.writeFileSync(config.configPath(), JSON.stringify(newTestConfig, null, 2))
+
+    delete require.cache[configKey]
+    config = require(configKey)
+    config.loadFile(config.configPath())
 
     var name = 'test';
     var schema = help.getPageSchema();
@@ -176,13 +201,19 @@ describe('View', function (done) {
 
     should.throws(function() { view(req.url, p, false); }, Error);
 
-    // reset helper path in config
-    config.set('paths.helpers', 'test/app/utils/helpers');
-
     done();
   });
 
   it('should still render if custom dust helper cannot be found when calling `render()`', function (done) {
+    // resset helper path in config
+    var newTestConfig = JSON.parse(testConfigString)
+    newTestConfig.paths.helpers = 'test/app/utils/helpers'
+    fs.writeFileSync(config.configPath(), JSON.stringify(newTestConfig, null, 2))
+
+    delete require.cache[configKey]
+    config = require(configKey)
+    config.loadFile(config.configPath())
+
     var name = 'test';
     var schema = help.getPageSchema();
     schema.template = 'test.dust';

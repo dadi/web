@@ -3,7 +3,8 @@ var sinon = require('sinon');
 var page = require(__dirname + '/../../dadi/lib/page');
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var help = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config.js');
+var path = require('path')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 describe('Datasource', function (done) {
   it('should export constructor', function (done) {
