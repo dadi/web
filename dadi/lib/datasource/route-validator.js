@@ -26,8 +26,6 @@ RouteValidator.prototype.get = function (req) {
       dataHelper.load((err, result, dsResponse) => {
         if (err) return reject(err)
 
-        console.log(result)
-
         if (result) {
           var results = (typeof result === 'object' ? result : JSON.parse(result))
           if (results.results && results.results.length > 0) {

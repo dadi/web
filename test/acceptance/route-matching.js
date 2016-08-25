@@ -67,19 +67,17 @@ describe('Routing', function(done) {
       page.datasources = []
       page.events = ['test_event']
       page.template = 'test_params.dust'
-      page.route = {
-        paths: [
-          '/test/:content',
-          '/test/:title',
-          '/test/:page(\\d+)'
-        ]
-      }
+      page.routes = [
+        { path: '/test/:content' },
+        { path: '/test/:title' },
+        { path: '/test/:page(\\d+)' }
+      ]
 
       var pages = []
       pages.push(page)
 
       help.startServer(pages, function() {
-        client.get('/test/2?cache=false')
+        client.get('/test/2')
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err)

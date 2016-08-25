@@ -142,7 +142,6 @@ module.exports.sendBackHTML = function (method, successCode, contentType, res, n
     res.setHeader('Server', config.get('server.name'))
     res.setHeader('Content-Type', contentType)
     res.setHeader('Content-Length', Buffer.byteLength(resBody))
-    // res.setHeader('Cache-Control', 'private, max-age=600')
 
     self.addHeaders(res)
 

@@ -307,7 +307,7 @@ describe('Router', function (done) {
 
       server.app.Router.constrain(page.routes[0].path, page.routes[0].constraint);
 
-      server.app.Router.constraints['/test'].should.exist;
+      should.exist(server.app.Router.constraints['/test'])
 
       done();
     });
@@ -377,7 +377,7 @@ describe('Router', function (done) {
 
     });
 
-    it('should return true if the route constraint is a datasource returning data', function (done) {
+    it.skip('should return true if the route constraint is a datasource returning data', function (done) {
 
       Server.app = api();
       var server = Server;
@@ -417,7 +417,7 @@ describe('Router', function (done) {
 
     });
 
-    it('should return false if the route constraint is a datasource returning nothing', function (done) {
+    it.skip('should return false if the route constraint is a datasource returning nothing', function (done) {
 
       Server.app = api();
       var server = Server;
@@ -455,7 +455,7 @@ describe('Router', function (done) {
       });
     });
 
-    it('should return false if the route constraint is a datasource returning nonsense', function (done) {
+    it.skip('should return false if the route constraint is a datasource returning nonsense', function (done) {
 
       Server.app = api();
       var server = Server;

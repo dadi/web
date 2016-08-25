@@ -66,7 +66,7 @@ describe('Controller', function (done) {
     page.datasources = ['categories'];
     page.events = [];
     page.requiredDatasources = ['categories'];
-    
+
 
     startServer(page);
 
@@ -192,14 +192,14 @@ describe('Controller', function (done) {
 
       client
       .get(page.routes[0].path + '?json=true')
-      //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
 
-        method.called.should.eql(true);
-        method.secondCall.args[0][0].should.eql(controller.events[0])
         method.restore()
         help.DataHelper.prototype.load.restore();
+
+        method.called.should.eql(true);
+        method.secondCall.args[0][0].should.eql(controller.events[0])
 
         res.body['b'].should.eql('I came from B');
         res.body['a'].should.eql('Results for B found: true');
@@ -242,10 +242,12 @@ describe('Controller', function (done) {
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
-        method.called.should.eql(true);
-        method.firstCall.args[0].should.eql(controller.preloadEvents);
+
         method.restore()
         help.DataHelper.prototype.load.restore();
+
+        method.called.should.eql(true);
+        method.firstCall.args[0].should.eql(controller.preloadEvents);
 
         res.body['preload'].should.eql(true);
         res.body['run'].should.eql(true);
@@ -290,10 +292,12 @@ describe('Controller', function (done) {
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
-        method.called.should.eql(true);
-        method.firstCall.args[0].should.eql(controller.preloadEvents);
+
         method.restore()
         help.DataHelper.prototype.load.restore();
+
+        method.called.should.eql(true);
+        method.firstCall.args[0].should.eql(controller.preloadEvents);
 
         res.body['global_event'].should.eql('FIRED');
 
@@ -325,13 +329,15 @@ describe('Controller', function (done) {
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
+
+        method.restore()
+        help.DataHelper.prototype.load.restore();
+
+
         method.called.should.eql(true);
 
         // get the data object that will be used throughout the request
         var data = method.returnValues[0]
-
-        method.restore()
-        help.DataHelper.prototype.load.restore();
 
         data.has.should.be.Function
         data.hasResults.should.be.Function
@@ -376,10 +382,12 @@ describe('Controller', function (done) {
       //.expect(200)
       .end(function (err, res) {
         if (err) return done(err);
-        method.called.should.eql(true);
-        method.firstCall.args[0].should.eql(controller.preloadEvents);
+
         method.restore()
         help.DataHelper.prototype.load.restore();
+
+        method.called.should.eql(true);
+        method.firstCall.args[0].should.eql(controller.preloadEvents);
 
         res.body['global_event'].should.eql('FIRED');
 
