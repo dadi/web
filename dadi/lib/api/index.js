@@ -18,15 +18,15 @@ var Api = function () {
   this.all = []
   this.errors = []
 
-    // Sentry error handler
+  // Sentry error handler
   if (config.get('logging.sentry.dsn') !== '') {
     this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')))
   }
 
-    // Fallthrough error handler
+  // Fallthrough error handler
   this.errors.push(onError(this))
 
-    // permanently bind context to listener
+  // permanently bind context to listener
   this.listener = this.listener.bind(this)
 
   this.protocol = config.get('server.protocol') || 'http'
@@ -68,10 +68,10 @@ var Api = function () {
       switch (ex.message) {
         case 'error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt':
           throw new Error(exPrefix + 'incorrect ssl passphrase')
-          break;
+          break
         case 'error:0906A068:PEM routines:PEM_do_header:bad password read':
           throw new Error(exPrefix + 'required ssl passphrase not provided')
-          break;
+          break
         default:
           throw new Error(exPrefix + ex.message)
       }
@@ -104,6 +104,8 @@ Api.prototype.use = function (path, handler) {
     regex: regex
   })
 
+  log.warn({module: 'api'}, 'Loaded ' + path)
+
   this.paths.sort((a, b) => {
     return b.order - a.order
   })
@@ -117,27 +119,29 @@ Api.prototype.use = function (path, handler) {
  */
 Api.prototype.unuse = function (path) {
   var indx = 0
-    if (typeof path === 'function') {
-        if (path.length === 4) {
+
+  if (typeof path === 'function') {
+    if (path.length === 4) {
       indx = this.errors.indexOf(path)
       return !!~indx && this.errors.splice(indx, 1)
-        }
+    }
 
     var functionStr = path.toString()
-        _.each(this.all, function (func) {
-            if (func.toString() === functionStr) {
+    _.each(this.all, function (func) {
+      if (func.toString() === functionStr) {
         return this.all.splice(indx, 1)
       } else {
         indx++
-            }
+      }
     }, this)
 
   // indx = this.all.indexOf(path)
   // return !!~indx && this.all.splice(indx, 1)
-            }
+  }
+
   var existing = _.findWhere(this.paths, { path: path })
   this.paths = _.without(this.paths, existing)
-    }
+}
 
 /**
  *  convenience method that creates http server and attaches listener
@@ -160,15 +164,14 @@ Api.prototype.listen = function (port, host, backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
-
   // clone the middleware stack
   var stack = this.all.slice(0)
-  var path = url.parse(req.url).pathname
 
+  req.params = {}
   req.paths = []
 
   // get matching routes, and add req.params
-  var matches = this._match(path, req)
+  var matches = this._match(req)
 
   var originalReqParams = req.params
 
@@ -208,45 +211,36 @@ Api.prototype.listener = function (req, res) {
 
 /**
  *  Check if any of the registered routes match the current url, if so populate `req.params`
- *  @param {String} path
- *  @param {http.IncomingMessage} req
- *  @return Array
+ *  @param {http.IncomingMessage} req - the current request
+ *  @return {Array} handlers - the handlers that best matched the current URL
  *  @api private
  */
-Api.prototype._match = function (path, req) {
+Api.prototype._match = function (req) {
+  var path = url.parse(req.url).pathname
   var paths = this.paths
   var matches = []
   var handlers = []
 
-    // always add params object to avoid need for checking later
-  req.params = {}
+  for (var idx = 0; idx < paths.length; idx++) {
+    // test the supplied url against each loaded route.
+    // for example: does "/test/2" match "/test/:page"?
+    var match = paths[idx].regex.exec(path)
 
-    for (i = 0; i < paths.length; i++) {
-    var match = paths[i].regex.exec(path)
-
+    // move to the next route if no match
     if (!match) { continue }
 
-    req.paths.push(paths[i].path)
+    req.paths.push(paths[idx].path)
 
-    var keys = paths[i].regex.keys
-    handlers.push(paths[i].handler)
+    // get all the dynamic keys from the route
+    // i.e. anything that starts with ":" -> "/news/:title"
+    var keys = paths[idx].regex.keys
 
-        match.forEach(function (k, i) {
-      var keyOpts = keys[i] || {}
-      if (match[i + 1] && keyOpts.name && !req.params[keyOpts.name]) req.params[keyOpts.name] = match[i + 1]
-    })
-
-  // break
-    }
+    // add this route's controller
+    handlers.push(paths[idx].handler)
+  }
 
   return handlers
 }
-
-module.exports = function () {
-  return new Api()
-}
-
-module.exports.Api = Api
 
 function onError (api) {
   return function (err, req, res, next) {
@@ -286,45 +280,54 @@ function onError (api) {
 
 // return a 404
 function notFound (api, req, res) {
-    return function () {
+  return function () {
     res.statusCode = 404
 
-        // look for a 404 page that has been loaded
-        // along with the rest of the API, and call its
-        // handler if it exists
-
+    // look for a 404 page that has been loaded
+    // along with the rest of the API, and call its
+    // handler if it exists
     var path = _.findWhere(api.paths, { path: '/404' })
-        if (path) {
+
+    if (path) {
       path.handler(req, res)
-        }
-        // otherwise, respond with default message
-        else {
+    }
+    // otherwise, respond with default message
+    else {
       res.end('HTTP 404 Not Found')
     }
-        }
+  }
 }
 
 function routePriority (path, keys) {
   var tokens = pathToRegexp.parse(path)
 
   var staticRouteLength = 0
-    if (typeof tokens[0] === 'string') {
+  if (typeof tokens[0] === 'string') {
     staticRouteLength = _.compact(tokens[0].split('/')).length
-    }
+  }
 
-    var requiredParamLength = _.filter(keys, function (key) {
+  var requiredParamLength = _.filter(keys, function (key) {
     return !key.optional
   }).length
 
-    var optionalParamLength = _.filter(keys, function (key) {
+  var optionalParamLength = _.filter(keys, function (key) {
     return key.optional
   }).length
 
-  var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength)
+  // if there is a "page" parameter in the route, give it a slightly higher priority
+  var paginationParam = _.find(keys, (key) => { return key.name && key.name === 'page' })
 
-    // make internal routes less important...
+  var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength) + (typeof paginationParam === 'undefined' ? 0 : 1)
+
+  // make internal routes less important...
   if (path.indexOf('/config') > 0) order = -100
   if (path.indexOf('/api/') > 0) order = -100
 
   return order
 }
+
+module.exports = function () {
+  return new Api()
+}
+
+module.exports.Api = Api

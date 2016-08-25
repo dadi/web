@@ -31,11 +31,11 @@ function startServer (page) {
     controller = Controller(page, options)
 
     Server.addComponent({
-      key: page.key,
-      route: page.route,
-      component: controller
-    }, false)
-  })
+        key: page.key,
+        routes: page.routes,
+        component: controller
+    }, false);
+  });
 }
 
 function cleanup (done) {
@@ -58,14 +58,14 @@ describe('Controller', function (done) {
     var schema = testHelper.getPageSchema()
     var page = Page(name, schema)
 
-    page.template = 'test.dust'
-    page.route.paths[0] = '/test'
-    page.settings.cache = false
+    page.template = 'test.dust';
+    page.routes[0].path = '/test';
+    page.settings.cache = false;
 
-    page.datasources = ['categories']
-    page.events = []
-    page.requiredDatasources = ['categories']
-    delete page.route.constraint
+    page.datasources = ['categories'];
+    page.events = [];
+    page.requiredDatasources = ['categories'];
+
 
     startServer(page)
 
@@ -77,7 +77,7 @@ describe('Controller', function (done) {
     var client = request(connectionString)
 
     client
-      .get(page.route.paths[0])
+      .get(page.routes[0].path)
       .expect(404)
       .end(function (err, res) {
         if (err) return done(err)
@@ -94,14 +94,14 @@ describe('Controller', function (done) {
     var schema = testHelper.getPageSchema()
     var page = Page(name, schema)
 
-    page.template = 'test.dust'
-    page.route.paths[0] = '/test'
-    page.settings.cache = false
+    page.template = 'test.dust';
+    page.routes[0].path = '/test';
+    page.settings.cache = false;
 
-    page.datasources = ['categories']
-    page.events = []
-    page.requiredDatasources = ['categories']
-    delete page.route.constraint
+    page.datasources = ['categories'];
+    page.events = [];
+    page.requiredDatasources = ['categories'];
+
 
     startServer(page)
 
@@ -113,7 +113,7 @@ describe('Controller', function (done) {
     var client = request(connectionString)
 
     client
-      .get(page.route.paths[0])
+      .get(page.routes[0].path)
       .expect(200)
       .end(function (err, res) {
         if (err) return done(err)
@@ -128,15 +128,15 @@ describe('Controller', function (done) {
     var schema = testHelper.getPageSchema()
     var page = Page(name, schema)
 
-    page.contentType = 'application/json'
-    page.template = 'test.dust'
-    page.route.paths[0] = '/test'
-    page.settings.cache = false
+    page.contentType = 'application/json';
+    page.template = 'test.dust';
+    page.routes[0].path = '/test';
+    page.settings.cache = false;
 
-    page.datasources = []
-    page.events = ['test_event']
-    page.preloadEvents = ['test_preload_event']
-    delete page.route.constraint
+    page.datasources = [];
+    page.events = ['test_event'];
+    page.preloadEvents = ['test_preload_event'];
+
 
     return page
   }
@@ -147,14 +147,14 @@ describe('Controller', function (done) {
     var schema = testHelper.getPageSchema()
     var page = Page(name, schema)
 
-    page.contentType = 'application/json'
-    page.template = 'test.dust'
-    page.route.paths[0] = '/test'
-    page.settings.cache = false
+    page.contentType = 'application/json';
+    page.template = 'test.dust';
+    page.routes[0].path = '/test';
+    page.settings.cache = false;
 
-    page.datasources = []
-    page.events = []
-    delete page.route.constraint
+    page.datasources = [];
+    page.events = [];
+
 
     return page
   }
@@ -185,7 +185,7 @@ describe('Controller', function (done) {
       var client = request(connectionString)
 
       client
-        .get(page.route.paths[0] + '?json=true')
+        .get(page.routes[0].path + '?json=true')
         // .expect(200)
         .end(function (err, res) {
           if (err) return done(err)
@@ -229,7 +229,7 @@ describe('Controller', function (done) {
       var client = request(connectionString)
 
       client
-        .get(page.route.paths[0] + '?json=true')
+        .get(page.routes[0].path + '?json=true')
         // .expect(200)
         .end(function (err, res) {
           if (err) return done(err)
@@ -272,7 +272,7 @@ describe('Controller', function (done) {
       var client = request(connectionString)
 
       client
-        .get(page.route.paths[0] + '?json=true')
+        .get(page.routes[0].path + '?json=true')
         // .expect(200)
         .end(function (err, res) {
           if (err) return done(err)
@@ -295,7 +295,7 @@ describe('Controller', function (done) {
       schema.events = []
       var page = Page(name, schema)
       page.template = 'test.dust'
-      page.route.paths[0] = '/test'
+      page.routes[0].path = '/test'
       page.settings.cache = false
       startServer(page)
 
@@ -329,10 +329,10 @@ describe('Controller', function (done) {
       var client = request(connectionString)
 
       client
-        .get(page.route.paths[0] + '?json=true')
-        .expect(200)
-        .end(function (err, res) {
-          if (err) return done(err)
+      .get(page.routes[0].path + '?json=true')
+      .expect(200)
+      .end(function (err, res) {
+        if (err) return done(err);
 
           cleanup(function () {
             //providerStub.restore()

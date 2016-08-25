@@ -100,4 +100,5 @@ function restartWorkers() {
 
 // export the modules
 module.exports.Config = require('./config')
-module.exports.Event  = require(__dirname + '/dadi/lib/event')
+module.exports.Event  = require(path.join(__dirname, '/dadi/lib/event'))
+module.exports.Preload  = require(path.join(__dirname, '/dadi/lib/datasource/preload'))

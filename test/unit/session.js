@@ -1,4 +1,3 @@
-
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
 
 var sinon = require('sinon');
@@ -20,7 +19,8 @@ var Server = require(__dirname + '/../../dadi/lib');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var Controller = require(__dirname + '/../../dadi/lib/controller');
 var help = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config');
+var path = require('path')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 
@@ -39,7 +39,7 @@ function startServer(page) {
 
     Server.addComponent({
         key: page.key,
-        route: page.route,
+        routes: page.routes,
         component: controller
     }, false);
   });
@@ -71,23 +71,22 @@ describe('Session', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'session.dust';
-    page.route.paths[0] = '/session';
+    page.routes[0].path = '/session';
     page.datasources = [];
     page.events = ['session'];
-    delete page.route.constraint;
 
     startServer(page);
 
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
+    .get(page.routes[0].path)
     .expect(200)
     .expect('content-type', page.contentType)
     .expect(help.shouldSetCookie('dadiweb.sid'))
     .end(function (err, res) {
-        if (err) return done(err);
-        cleanup(done);
+      if (err) return done(err);
+      cleanup(done);
     });
   })
 
@@ -104,17 +103,16 @@ describe('Session', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'session.dust';
-    page.route.paths[0] = '/session';
+    page.routes[0].path = '/session';
     page.datasources = [];
     page.events = ['session'];
-    delete page.route.constraint;
 
     startServer(page);
 
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
+    .get(page.routes[0].path)
     .expect(200)
     .expect('content-type', page.contentType)
     .end(function (err, res) {
@@ -140,17 +138,16 @@ describe('Session', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'session.dust';
-    page.route.paths[0] = '/session';
+    page.routes[0].path = '/session';
     page.datasources = [];
     page.events = ['session'];
-    delete page.route.constraint;
 
     startServer(page);
 
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
+    .get(page.routes[0].path)
     .expect(200)
     .expect('content-type', page.contentType)
     .expect(help.shouldNotHaveHeader('Set-Cookie'))
@@ -208,12 +205,13 @@ describe('Session', function (done) {
 
       page.contentType = 'application/json';
       page.template = 'session.dust';
-      page.route.paths[0] = '/session';
+      page.routes[0].path = '/session';
       page.datasources = [];
       page.events = ['session'];
-      delete page.route.constraint;
 
       should.throws(function() { startServer(page); }, Error);
+
+      config.set('env', 'test');
 
       cleanup(done);
     })

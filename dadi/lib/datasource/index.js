@@ -151,7 +151,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // add the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
   // NB don't replace a property that already exists
-  _.each(this.requestParams, function(obj) {
+  _.each(this.requestParams, (obj) => {
     if (obj.field && req.params.hasOwnProperty(obj.param)) {
       if (obj.type == "Number") {
         this.schema.datasource.filter[obj.field] = Number(req.params[obj.param]);
@@ -165,7 +165,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
         delete this.schema.datasource.filter[obj.field];
       }
     }
-  }, this);
+  });
 
   if (this.schema.datasource.filterEventResult) {
     this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult);

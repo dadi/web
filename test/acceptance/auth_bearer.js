@@ -5,6 +5,7 @@ var request = require('supertest');
 //var fakeweb = require(__dirname + '/../fakeweb');
 //var http = require('http');
 var nock =  require('nock');
+var path =  require('path');
 var url =  require('url');
 var _ = require('underscore');
 
@@ -15,7 +16,7 @@ var api = require(__dirname + '/../../dadi/lib/api');
 var Server = require(__dirname + '/../../dadi/lib');
 var help = require(__dirname + '/../help');
 var libHelp = require(__dirname + '/../../dadi/lib/help');
-var config = require(__dirname + '/../../config.js');
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port');
@@ -59,7 +60,7 @@ describe('Auth', function (done) {
       page1.datasources = [];
       page1.events = [];
       page1.template = 'test.dust';
-      page1.route.paths[0] = '/test';
+      page1.routes[0].path = '/test';
       delete page1.route.constraint;
 
       var pages = [];

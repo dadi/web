@@ -1,35 +1,35 @@
 /**
  * @module Page
  */
-var pathToRegexp = require('path-to-regexp');
-var config = require(__dirname + '/../../../config');
+var _ = require('underscore')
+var pathToRegexp = require('path-to-regexp')
+var config = require(__dirname + '/../../../config')
 
-var _pages = {};
+var _pages = {}
 
 var Page = function (name, schema) {
+  schema.settings = schema.settings || {}
 
-  schema.settings = schema.settings || {};
-
-  this.name = name; //schema.page.name || name;
-  this.key = schema.page.key || name;
-  this.template = schema.template || name + '.dust';
-  this.contentType = schema.contentType || 'text/html';
-  this.datasources = schema.datasources || [];
-  this.events = schema.events || [];
-  this.preloadEvents = schema.preloadEvents || [];
+  this.name = name; // schema.page.name || name
+  this.key = schema.page.key || name
+  this.template = schema.template || name + '.dust'
+  this.contentType = schema.contentType || 'text/html'
+  this.datasources = schema.datasources || []
+  this.events = schema.events || []
+  this.preloadEvents = schema.preloadEvents || []
   this.requiredDatasources = schema.requiredDatasources || []
 
-  this.settings = schema.settings;
-  this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false;
-  this.keepWhitespace = getWhitespaceSetting(this.settings);
-  this.passFilters =  this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false;
+  this.settings = schema.settings
+  this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false
+  this.keepWhitespace = getWhitespaceSetting(this.settings)
+  this.passFilters = this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false
 
-  checkCacheSetting(schema, this.name);
-  checkRouteSetting(schema, this.name);
+  checkCacheSetting(schema, this.name)
+  checkRouteSetting(schema, this.name)
 
-  this.route = this.constructRoute(schema);
+  this.routes = this.constructRoutes(schema)
 
-  _pages[name] = this;
+  _pages[name] = this
 }
 
 /**
@@ -39,25 +39,28 @@ var Page = function (name, schema) {
  * @return {Object}
  * @api public
  */
-Page.prototype.constructRoute = function (schema) {
-  var route = { "paths": ['/' + this.name] };
+Page.prototype.constructRoutes = function (schema) {
+  var routes = schema.routes || [{ 'path': '/' + this.name }]
 
   if (schema.route) {
     if (schema.route.path && typeof schema.route.path === 'string') {
-      route = { "paths": [schema.route.path] };
-      if (schema.route.constraint) route.constraint = schema.route.constraint;
+      routes = [{ 'path': schema.route.path }]
+      if (schema.route.constraint) routes[0].constraint = schema.route.constraint
     }
     else if (schema.route.paths && typeof schema.route.paths === 'string') {
-      route = { "paths": [schema.route.paths] };
-      if (schema.route.constraint) route.constraint = schema.route.constraint;
+      routes = [{ 'path': schema.route.paths }]
+      if (schema.route.constraint) routes[0].constraint = schema.route.constraint
+    } else {
+      routes = schema.route
     }
-    else {
-      route = schema.route;
-    }
-    schema.route = route;
   }
 
-  return route;
+  // add default params to each route
+  _.each(routes, (route) => {
+    route.params = route.params || []
+  })
+
+  return routes
 }
 
 /**
@@ -68,37 +71,35 @@ Page.prototype.constructRoute = function (schema) {
  * @api public
  */
 Page.prototype.toPath = function (params) {
+  var error, url
 
-  var error, url;
-
-  this.route.paths.forEach(function (path) {
+  this.routes.forEach(function (route) {
     try {
-      url = pathToRegexp.compile(path)(params);
-      error = null;
+      url = pathToRegexp.compile(route.path)(params)
+      error = null
+    } catch (err) {
+      error = err
     }
-    catch (err) {
-      error = err;
-    }
-  });
+  })
 
-  if (!url && error) throw error;
+  if (!url && error) throw error
 
-  return url;
+  return url
 }
 
-function getWhitespaceSetting(settings) {
-  var dustConfig = config.get('dust');
-  var whitespace = true;
+function getWhitespaceSetting (settings) {
+  var dustConfig = config.get('dust')
+  var whitespace = true
 
   if (dustConfig && dustConfig.hasOwnProperty('whitespace')) {
-    whitespace = dustConfig.whitespace;
+    whitespace = dustConfig.whitespace
   }
 
   if (settings.hasOwnProperty('keepWhitespace')) {
-    whitespace = settings.keepWhitespace;
+    whitespace = settings.keepWhitespace
   }
 
-  return whitespace;
+  return whitespace
 }
 
 /**
@@ -107,14 +108,15 @@ function getWhitespaceSetting(settings) {
  * @param {String} name - the page name
  * @api private
  */
-function checkRouteSetting(schema, name) {
-  if (schema.route && typeof schema.route != 'object') {
-    var newSchema = schema;
-    newSchema.route = { "paths": [schema.route] };
-    var message = "\nThe `route` property for pages has been extended to provide better routing functionality.\n";
-    message += "Please modify the route property for page '" + name + "'. The schema should change to the below:\n\n";
-    message += JSON.stringify(newSchema, null, 4) + "\n\n";
-    throw new Error(message);
+function checkRouteSetting (schema, name) {
+  if (!schema.routes && schema.route && typeof schema.route != 'object') {
+    var newSchema = schema
+    newSchema.routes = [{ 'path': schema.route }]
+    delete newSchema.route
+    var message = '\nThe `route` property for pages has been extended to provide better routing functionality.\n'
+    message += "Please modify the route property for page '" + name + "'. The schema should change to the below:\n\n"
+    message += JSON.stringify(newSchema, null, 2) + '\n\n'
+    throw new Error(message)
   }
 }
 
@@ -124,23 +126,23 @@ function checkRouteSetting(schema, name) {
  * @param {String} name - the page name
  * @api private
  */
-function checkCacheSetting(schema, name) {
+function checkCacheSetting (schema, name) {
   if (schema.page.cache) {
-    schema.settings.cache = schema.page.cache;
-    delete schema.page.cache;
+    schema.settings.cache = schema.page.cache
+    delete schema.page.cache
 
-    var message = "\nThe `cache` property should be nested under `settings`.\n";
-    message += "Please modify the descriptor file for page '" + name + "'. The schema should change to the below:\n\n";
-    message += JSON.stringify(schema, null, 4) + "\n\n";
+    var message = '\nThe `cache` property should be nested under `settings`.\n'
+    message += "Please modify the descriptor file for page '" + name + "'. The schema should change to the below:\n\n"
+    message += JSON.stringify(schema, null, 2) + '\n\n'
 
-    throw new Error(message);
+    throw new Error(message)
   }
 }
 
 // exports
 module.exports = function (name, schema) {
-  if (name && schema) return new Page(name, schema);
-  return _pages[name];
-};
+  if (name && schema) return new Page(name, schema)
+  return _pages[name]
+}
 
-module.exports.Page = Page;
+module.exports.Page = Page

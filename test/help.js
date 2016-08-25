@@ -6,7 +6,7 @@ var fakeweb = require(__dirname + '/fakeweb');
 var http = require('http');
 var _ = require('underscore');
 
-var config = require(__dirname + '/../config.js');
+var config = require(path.resolve(path.join(__dirname, '/../config')))
 var api = require(__dirname + '/../dadi/lib/api');
 var Server = require(__dirname + '/../dadi/lib');
 var Controller = require(__dirname + '/../dadi/lib/controller');
@@ -37,9 +37,9 @@ module.exports.setUpPages = function () {
   var page1 = Page('page1', this.getPageSchema())
   page1.datasources = []
   page1.template = 'test.dust'
-  page1.route.paths[0] = '/test'
+  page1.routes[0].path = '/test'
   page1.events = []
-  delete page1.route.constraint
+  //delete page1.route.constraint
 
   var pages = []
   pages.push(page1)
@@ -76,7 +76,7 @@ module.exports.startServer = function(pages, done) {
     var ds = Datasource(page, dsName, options, function() {} );
 
     page.template = 'test.dust';
-    page.route.paths[0] = '/test';
+    page.routes[0].path = '/test';
     page.events = [];
     delete page.route.constraint;
 
@@ -92,7 +92,7 @@ module.exports.startServer = function(pages, done) {
 
         Server.addComponent({
             key: page.key,
-            route: page.route,
+            routes: page.routes,
             component: controller
         }, false);
       })
@@ -122,9 +122,11 @@ module.exports.getPageSchema = function () {
 	    "settings": {
 	      "cache": true
 	    },
-	    "route": {
-	    	"path": "/car-reviews/:make/:model",
-	    },
+	    "routes": [
+        {
+	    	  "path": "/car-reviews/:make/:model"
+	      }
+      ],
 	    "contentType": "text/html",
 	    "template": "car-reviews.dust",
 	    "datasources": [

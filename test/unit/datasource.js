@@ -3,10 +3,10 @@ var sinon = require('sinon')
 var page = require(__dirname + '/../../dadi/lib/page')
 var datasource = require(__dirname + '/../../dadi/lib/datasource')
 var help = require(__dirname + '/../help')
-var config = require(__dirname + '/../../config.js')
+var path = require('path')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 describe('Datasource', function (done) {
-
   it('should export constructor', function (done) {
     datasource.Datasource.should.be.Function
     done()
@@ -38,7 +38,6 @@ describe('Datasource', function (done) {
   // self.authStrategy = self.setAuthStrategy()
 
   it('should attach the datasource `schema` to datasource', function (done) {
-
     delete require.cache[__dirname + '/../../dadi/lib/datasource']
     datasource = require(__dirname + '/../../dadi/lib/datasource')
 
@@ -55,7 +54,6 @@ describe('Datasource', function (done) {
   })
 
   it('should attach `source` to datasource', function (done) {
-
     delete require.cache[__dirname + '/../../dadi/lib/datasource']
     datasource = require(__dirname + '/../../dadi/lib/datasource')
 
@@ -72,7 +70,6 @@ describe('Datasource', function (done) {
   })
 
   it('should attach default `requestParams` to datasource if not specified', function (done) {
-
     delete require.cache[__dirname + '/../../dadi/lib/datasource']
     datasource = require(__dirname + '/../../dadi/lib/datasource')
 
@@ -505,13 +502,13 @@ describe('Datasource', function (done) {
     })
 
     it('should use page from requestParams when constructing the endpoint', function (done) {
-      var name = 'car-makes';
-      var schema = help.getPageSchema();
-      var p = page(name, schema);
-      var dsName = 'car-makes';
-      var options = help.getPathOptions();
-      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName);
-      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+      var name = 'car-makes'
+      var schema = help.getPageSchema()
+      var p = page(name, schema)
+      var dsName = 'car-makes'
+      var options = help.getPathOptions()
+      var dsSchema = help.getSchemaFromFile(options.datasourcePath, dsName)
+      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
 
       // add type
       dsSchema.datasource.requestParams[0].type = 'Number'
@@ -519,19 +516,19 @@ describe('Datasource', function (done) {
       // add page
       dsSchema.datasource.requestParams.push({ param: 'page', queryParam: 'page' })
 
-      var params = { "make": "1337", "page": 3 };
-      var req = { params: params, url: '/1.0/cars/makes/3' };
+      var params = { 'make': '1337', 'page': 3 }
+      var req = { params: params, url: '/1.0/cars/makes/3' }
 
-      var ds = datasource(p, dsName, options, function() {});
+      var ds = datasource(p, dsName, options, function () {})
 
-      datasource.Datasource.prototype.loadDatasource.restore();
+      datasource.Datasource.prototype.loadDatasource.restore()
 
-      ds.processRequest(dsName, req);
+      ds.processRequest(dsName, req)
 
-      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":1337}&fields={"name":1,"_id":0}&sort={"name":1}');
+      ds.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":1337}&fields={"name":1,"_id":0}&sort={"name":1}')
 
-      done();
-    });
+      done()
+    })
 
     it('should pass cache param to the endpoint', function (done) {
       var name = 'test'

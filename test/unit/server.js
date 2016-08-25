@@ -31,7 +31,7 @@ describe('Server', function (done) {
 
     Server.addComponent({
         key: page.key,
-        route: page.route,
+        routes: page.routes,
         component: { page: page }
     }, false);
 
@@ -50,7 +50,7 @@ describe('Server', function (done) {
 
     Server.addComponent({
         key: page.key,
-        route: page.route,
+        routes: page.routes,
         component: { page: page }
     }, false);
 

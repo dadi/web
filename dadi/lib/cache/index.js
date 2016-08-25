@@ -100,13 +100,13 @@ Cache.prototype.getEndpointMatchingRequest = function(req) {
 
   // check if there is a match in the loaded routes for the current request URL
   var endpoint = _.find(endpoints, function (endpoint) {
-    return _.contains(endpoint.page.route.paths, requestUrl);
+    return _.contains(_.pluck(endpoint.page.routes, 'path'), requestUrl);
   });
 
   // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
   if (!endpoint) {
     endpoint = _.find(endpoints, function (endpoint) {
-      return !_.isEmpty(_.intersection(endpoint.page.route.paths, req.paths));
+      return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths));
     });
   }
 
