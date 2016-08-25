@@ -104,6 +104,8 @@ Api.prototype.use = function (path, handler) {
     regex: regex
   })
 
+  log.warn({module: 'api'}, 'Loaded ' + path)
+
   this.paths.sort((a, b) => {
     return b.order - a.order
   })
@@ -165,6 +167,7 @@ Api.prototype.listener = function (req, res) {
   // clone the middleware stack
   var stack = this.all.slice(0)
 
+  req.params = {}
   req.paths = []
 
   // get matching routes, and add req.params
@@ -217,9 +220,6 @@ Api.prototype._match = function (req) {
   var matches = []
   var handlers = []
 
-  // always add params object to avoid need for checking later
-  req.params = {}
-
   for (var idx = 0; idx < paths.length; idx++) {
     // test the supplied url against each loaded route.
     // for example: does "/test/2" match "/test/:page"?
@@ -236,26 +236,6 @@ Api.prototype._match = function (req) {
 
     // add this route's controller
     handlers.push(paths[idx].handler)
-
-    // [ '/test/1/2', '1', '2', index: 0, input: '/test/1/2' ]
-    match.forEach((property, index) => {
-      // get the dynamic route key that is
-      // at the same index as we are in the loop
-      var keyOpts = keys[index] || {}
-
-      // the value for the key is found one slot ahead
-      // of the current index, because the first property
-      // was the full matched string e.g. /test/2 and the values
-      // for the keys appear next
-
-      // here we only add the key to the params if it hasn't been already
-      if (match[index + 1] && keyOpts.name && !req.params[keyOpts.name]) {
-        req.params[keyOpts.name] = match[index + 1]
-      }
-    })
-
-    // we've found the best match, let's stop here
-    break
   }
 
   return handlers
