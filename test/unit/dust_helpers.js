@@ -241,7 +241,7 @@ describe('Dust Helpers', function (done) {
 
       Server.addComponent({
           key: p.key,
-          route: p.route,
+          routes: p.routes,
           component: { page: p }
       }, false);
 
@@ -267,7 +267,7 @@ describe('Dust Helpers', function (done) {
 
       Server.addComponent({
           key: p.key,
-          route: p.route,
+          routes: p.routes,
           component: { page: p }
       }, false);
 
@@ -287,7 +287,7 @@ describe('Dust Helpers', function (done) {
 
       Server.addComponent({
           key: p.key,
-          route: p.route,
+          routes: p.routes,
           component: { page: p }
       }, false);
 

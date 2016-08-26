@@ -13,7 +13,7 @@ var datasourceCache = require(__dirname + '/../../dadi/lib/cache/datasource');
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config.js');
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var cache = require(__dirname + '/../../dadi/lib/cache');
 
 describe('Datasource Cache', function (done) {
@@ -181,7 +181,7 @@ describe('Datasource Cache', function (done) {
 
       ds.schema.datasource.caching.enabled = true;
 
-      ds.endpoint += '&cache=false';
+      ds.provider.endpoint += '&cache=false';
 
       var c = cache(server.object);
 
@@ -218,7 +218,7 @@ describe('Datasource Cache', function (done) {
       var c = cache(server.object);
 
       // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.endpoint).digest('hex');
+      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
       cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension);
       var expected = 'ds content from filesystem';
 
@@ -246,7 +246,7 @@ describe('Datasource Cache', function (done) {
       var c = cache(server.object);
 
       // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.endpoint).digest('hex');
+      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
       cachepath = path.join(ds.schema.datasource.caching.directory, filename + '_XX.' + ds.schema.datasource.caching.extension);
       var expected = 'ds content from filesystem';
 
@@ -347,7 +347,7 @@ describe('Datasource Cache', function (done) {
       var c = cache(server.object);
 
       // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.endpoint).digest('hex');
+      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
       cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension);
       var expected = 'ds content from filesystem';
 
@@ -382,7 +382,7 @@ describe('Datasource Cache', function (done) {
       var c = cache(server.object);
 
       // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.endpoint).digest('hex');
+      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
       cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension);
 
       var data = 'ds content from filesystem';

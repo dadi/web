@@ -1,6 +1,6 @@
-
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1]);
 
+var fs = require('fs');
 var sinon = require('sinon');
 var should = require('should');
 var request = require('supertest');
@@ -19,10 +19,16 @@ var api = require(__dirname + '/../../dadi/lib/api');
 var Server = require(__dirname + '/../../dadi/lib');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var Controller = require(__dirname + '/../../dadi/lib/controller');
+var Preload = require(__dirname + '/../../dadi/lib/datasource/preload');
 var help = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config');
+var path = require('path')
+var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
 
-var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port');
+var config
+var testConfigString
+var configKey = path.resolve(path.join(__dirname, '/../../config'))
+
+var connectionString
 
 function startServer(page) {
 
@@ -39,7 +45,7 @@ function startServer(page) {
 
     Server.addComponent({
         key: page.key,
-        route: page.route,
+        routes: page.routes,
         component: controller
     }, false);
   });
@@ -52,17 +58,49 @@ function cleanup(done) {
 }
 
 describe('Session', function (done) {
+  before(function(done) {
+    Preload().reset()
+    // reset config
+    delete require.cache[configKey]
+    config = require(configKey)
+    testConfigString = fs.readFileSync(config.configPath()).toString()
+    done()
+  })
+
+  beforeEach(function(done) {
+    // reset config
+    delete require.cache[configKey]
+    config = require(configKey)
+
+    config.loadFile(path.resolve(config.configPath()))
+
+    connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port');
+
+    done();
+  });
 
   afterEach(function(done) {
-    config.set('sessions.store', '');
+    fs.writeFileSync(config.configPath(), testConfigString)
+    delete require.cache[configKey]
+    config = require(configKey)
+    config.loadFile(config.configPath())
+
     done();
   });
 
   it('should set a session cookie', function(done) {
+    var newTestConfig = JSON.parse(testConfigString)
+    newTestConfig.api.enabled = false
+    newTestConfig.sessions = {
+      enabled: true,
+      name: 'dadiweb.sid'
+    }
 
-    config.set('api.enabled', false);
-    config.set('sessions.enabled', true);
-    config.set('sessions.name', 'dadiweb.sid');
+    fs.writeFileSync(config.configPath(), JSON.stringify(newTestConfig, null, 2))
+
+    delete require.cache[configKey]
+    config = require(configKey)
+    config.loadFile(config.configPath())
 
     // create a page
     var name = 'test';
@@ -71,31 +109,45 @@ describe('Session', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'session.dust';
-    page.route.paths[0] = '/session';
+    page.routes[0].path = '/session';
     page.datasources = [];
     page.events = ['session'];
-    delete page.route.constraint;
+
+    // provide API response
+    var results = { results: [{"make": "ford"}] }
+    var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+    providerStub.yields(null, results)
 
     startServer(page);
 
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
+    .get(page.routes[0].path)
     .expect(200)
     .expect('content-type', page.contentType)
     .expect(help.shouldSetCookie('dadiweb.sid'))
     .end(function (err, res) {
-        if (err) return done(err);
-        cleanup(done);
+      if (err) return done(err);
+
+      providerStub.restore()
+      cleanup(done);
     });
   })
 
   it('should have a session object attached to the request', function(done) {
+    var newTestConfig = JSON.parse(testConfigString)
+    newTestConfig.api.enabled = false
+    newTestConfig.sessions = {
+      enabled: true,
+      name: 'dadiweb.sid'
+    }
 
-    config.set('api.enabled', false);
-    config.set('sessions.enabled', true);
-    config.set('sessions.name', 'dadiweb.sid');
+    fs.writeFileSync(config.configPath(), JSON.stringify(newTestConfig, null, 2))
+
+    delete require.cache[configKey]
+    config = require(configKey)
+    config.loadFile(config.configPath())
 
     // create a page
     var name = 'test';
@@ -104,17 +156,16 @@ describe('Session', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'session.dust';
-    page.route.paths[0] = '/session';
+    page.routes[0].path = '/session';
     page.datasources = [];
     page.events = ['session'];
-    delete page.route.constraint;
 
     startServer(page);
 
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
+    .get(page.routes[0].path)
     .expect(200)
     .expect('content-type', page.contentType)
     .end(function (err, res) {
@@ -128,10 +179,19 @@ describe('Session', function (done) {
   })
 
   it('should not set a session cookie if sessions are disabled', function(done) {
+    var newTestConfig = JSON.parse(testConfigString)
+    delete newTestConfig.data
+    newTestConfig.api.enabled = false
+    newTestConfig.sessions = {
+      enabled: false,
+      name: 'dadiweb.sid'
+    }
 
-    config.set('api.enabled', false);
-    config.set('sessions.enabled', false);
-    config.set('sessions.name', 'dadiweb.sid');
+    fs.writeFileSync(config.configPath(), JSON.stringify(newTestConfig, null, 2))
+
+    delete require.cache[configKey]
+    config = require(configKey)
+    config.loadFile(config.configPath())
 
     // create a page
     var name = 'test';
@@ -140,19 +200,16 @@ describe('Session', function (done) {
 
     page.contentType = 'application/json';
     page.template = 'session.dust';
-    page.route.paths[0] = '/session';
+    page.routes[0].path = '/session';
     page.datasources = [];
     page.events = ['session'];
-    delete page.route.constraint;
 
     startServer(page);
 
     var client = request(connectionString);
 
     client
-    .get(page.route.paths[0])
-    .expect(200)
-    .expect('content-type', page.contentType)
+    .get(page.routes[0].path)
     .expect(help.shouldNotHaveHeader('Set-Cookie'))
     .end(function (err, res) {
         if (err) return done(err);
@@ -163,10 +220,20 @@ describe('Session', function (done) {
 
   describe('Store', function(done) {
     it('should use an in-memory store if none is specified', function(done) {
-      config.set('sessions.enabled', true);
-      config.set('sessions.store', '');
+      var newTestConfig = JSON.parse(testConfigString)
+      newTestConfig.api.enabled = false
+      newTestConfig.sessions = {
+        enabled: true,
+        store: ''
+      }
 
-      (Server.getSessionStore(config.get('sessions')) === null).should.eql(true);
+      fs.writeFileSync(config.configPath(), JSON.stringify(newTestConfig, null, 2))
+
+      delete require.cache[configKey]
+      config = require(configKey)
+      config.loadFile(config.configPath())
+
+      ;(Server.getSessionStore(config.get('sessions')) === null).should.eql(true);
 
       done();
     });
@@ -208,12 +275,13 @@ describe('Session', function (done) {
 
       page.contentType = 'application/json';
       page.template = 'session.dust';
-      page.route.paths[0] = '/session';
+      page.routes[0].path = '/session';
       page.datasources = [];
       page.events = ['session'];
-      delete page.route.constraint;
 
       should.throws(function() { startServer(page); }, Error);
+
+      config.set('env', 'test');
 
       cleanup(done);
     })

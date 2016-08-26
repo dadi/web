@@ -15,7 +15,7 @@ var datasource = require(__dirname + '/../../dadi/lib/datasource')
 var Page = require(__dirname + '/../../dadi/lib/page')
 var help = require(__dirname + '/../help')
 var libHelp = require(__dirname + '/../../dadi/lib/help')
-var config = require(__dirname + '/../../config.js')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port')
 var secureClientHost = 'https://' + config.get('server.host') + ':' + config.get('server.port')

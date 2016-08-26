@@ -6,7 +6,8 @@ var pathToRegexp = require('path-to-regexp');
 var _ = require('underscore');
 var page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/../help');
-var config = require(__dirname + '/../../config.js');
+var path = require('path')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 describe('Page', function (done) {
   it('should export constructor', function (done) {
@@ -44,18 +45,18 @@ describe('Page', function (done) {
     done();
   });
 
-  it('should attach default `route` to page if not specified', function (done) {
+  it('should attach default `routes` to page if not specified', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    delete schema.route;
-    page(name, schema).route.paths.should.eql( ['/test'] );
+    delete schema.routes;
+    page(name, schema).routes[0].path.should.eql('/test');
     done();
   });
 
   it('should attach specified `route` to page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    page(name, schema).route.paths.should.eql( ['/car-reviews/:make/:model'] );
+    page(name, schema).routes[0].path.should.eql('/car-reviews/:make/:model');
     done();
   });
 
@@ -63,11 +64,13 @@ describe('Page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
 
-    delete schema.route.path;
-    schema.route.paths = '/car-reviews/:make/:model';
+    delete schema.routes
+    schema.route = {
+      path: '/car-reviews/:make/:model'
+    }
 
     var p = page(name, schema);
-    p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
+    p.routes[0].path.should.eql('/car-reviews/:make/:model');
     done();
   });
 
@@ -75,29 +78,34 @@ describe('Page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
 
-    delete schema.route.path;
-    schema.route.paths = ['/car-reviews/:make/:model'];
+    schema.routes = [{
+      path: '/car-reviews/:make/:model'
+    }]
 
-    var p = page(name, schema);
-    p.route.paths.should.eql(schema.route.paths);
+    var p = page(name, schema)
+    p.routes.should.eql(schema.routes)
     done();
   });
 
   it('should attach specified `route constraint` to page', function (done) {
-    var name = 'test';
-    var schema = help.getPageSchema();
-    schema.route.constraint = 'getCategories';
-    page(name, schema).route.constraint.should.eql('getCategories');
+    var name = 'test'
+    var schema = help.getPageSchema()
+    schema.route = {
+      path: '/test',
+      constraint: 'getCategories'
+    }
+    page(name, schema).routes[0].constraint.should.eql('getCategories')
     done();
   });
 
   it('should attach specified `route constraint` to page when the `paths` is a string', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
-    delete schema.route.path;
+    delete schema.routes
+    schema.route = {}
     schema.route.paths = '/car-reviews/:make/:model';
     schema.route.constraint = 'getCategories';
-    page(name, schema).route.constraint.should.eql('getCategories');
+    page(name, schema).routes[0].constraint.should.eql('getCategories');
     done();
   });
 
@@ -105,7 +113,7 @@ describe('Page', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
     var p = page(name, schema);
-    p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
+    p.routes[0].path.should.eql('/car-reviews/:make/:model')
 
     p.toPath.should.be.a.Function;
 
@@ -120,8 +128,8 @@ describe('Page', function (done) {
     var schema = help.getPageSchema();
     var p = page(name, schema);
 
-    p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:model/review/:subpage');
+    p.routes[0].path.should.eql('/car-reviews/:make/:model')
+    p.routes.push({path:'/car-reviews/:make/:model/review/:subpage'})
 
     var url = p.toPath({ make: 'bmw', model: '2-series'});
     url.should.eql('/car-reviews/bmw/2-series');
@@ -134,8 +142,8 @@ describe('Page', function (done) {
     var schema = help.getPageSchema();
     var p = page(name, schema);
 
-    p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:model/review/:subpage');
+    p.routes[0].path.should.eql('/car-reviews/:make/:model')
+    p.routes.push({path:'/car-reviews/:make/:model/review/:subpage'})
 
     var url = p.toPath({ make: 'bmw', model: '2-series', subpage: 'on-the-road'});
     url.should.eql('/car-reviews/bmw/2-series/review/on-the-road');
@@ -148,8 +156,8 @@ describe('Page', function (done) {
     var schema = help.getPageSchema();
     var p = page(name, schema);
 
-    p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:model/review/:subpage');
+    p.routes[0].path.should.eql('/car-reviews/:make/:model')
+    p.routes.push({path:'/car-reviews/:make/:model/review/:subpage'})
 
     should.throws(function() { p.toPath({ make: 'bmw', yyy: '2-series', xxx: 'on-the-road'}); }, Error);
 
@@ -161,8 +169,8 @@ describe('Page', function (done) {
     var schema = help.getPageSchema();
     var p = page(name, schema);
 
-    p.route.paths.should.eql( ['/car-reviews/:make/:model'] );
-    p.route.paths.push('/car-reviews/:make/:year');
+    p.routes[0].path.should.eql('/car-reviews/:make/:model')
+    p.routes.push({path:'/car-reviews/:make/:year'})
 
     var url = p.toPath({ make: 'bmw', year: '2005'});
     url.should.eql('/car-reviews/bmw/2005');
@@ -372,6 +380,7 @@ describe('Page', function (done) {
   it('should throw error if specified `route` is not an object', function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
+    delete schema.routes
     schema.route = "/test";
 
     should.throws(function() { page(name, schema); }, Error);
@@ -397,42 +406,38 @@ describe('Page', function (done) {
     var p = page(name, schema);
 
     var paths = [];
-    paths.push('/buy');
-    paths.push('/buy/how-we-do-it');
-    paths.push('/buy/testimonials');
-    paths.push('/buy/saved-offers');
-    paths.push('/buy/choose-by-category/:category?');
-    paths.push('/buy/choose-by-make/:make?');
-    paths.push('/buy/choose-by-price/:price?');
-    paths.push('/buy/choose-model');
-    paths.push('/buy/:make/:model/:body');
-    paths.push('/buy/configure/:make?/:model?');
-    paths.push('/buy/offers/:make/:model/:capId/:postcode?');
-    paths.push('/buy/offers/:make/:model/:capId/:offer-id/accept/');
-    paths.push('/buy/offers/:make/:model/:capId/:offer-id/details/');
-    paths.push('/buy/offers/:make/:model/:capId/:offer-id/options/');
-    paths.push('/contact-us');
-    paths.push('/map');
+    paths.push({path:'/buy'})
+    paths.push({path:'/buy/how-we-do-it'})
+    paths.push({path:'/buy/testimonials'})
+    paths.push({path:'/buy/saved-offers'})
+    paths.push({path:'/buy/choose-by-category/:category?'})
+    paths.push({path:'/buy/choose-by-make/:make?'})
+    paths.push({path:'/buy/choose-by-price/:price?'})
+    paths.push({path:'/buy/choose-model'})
+    paths.push({path:'/buy/:make/:model/:body'})
+    paths.push({path:'/buy/configure/:make?/:model?'})
+    paths.push({path:'/buy/offers/:make/:model/:capId/:postcode?'})
+    paths.push({path:'/buy/offers/:make/:model/:capId/:offer-id/accept/'})
+    paths.push({path:'/buy/offers/:make/:model/:capId/:offer-id/details/'})
+    paths.push({path:'/buy/offers/:make/:model/:capId/:offer-id/options/'})
+    paths.push({path:'/contact-us'})
+    paths.push({path:'/map'})
 
     paths.forEach(function (path) {
-      p.route.paths = [path];
+      p.routes = [path]
 
-      var tokens = pathToRegexp.parse(path);
-      var parts = {};
+      var tokens = pathToRegexp.parse(path.path)
+      var parts = {}
 
-      //console.log(tokens);
+      //console.log(tokens)
       tokens.forEach(function (token) {
-
         if (typeof token === 'object') {
-          parts[token.name] = 'whatever';
+          parts[token.name] = 'whatever'
         }
-      });
-
-      //console.log(path)
+      })
 
       var url = p.toPath(parts);
-      var expected = pathToRegexp.compile(path)(parts);
-
+      var expected = pathToRegexp.compile(path.path)(parts);
       //console.log(url)
 
       url.should.eql(expected);
@@ -463,7 +468,7 @@ describe('Page', function (done) {
     done();
   });
 
-  it('should handle missing page config `keepWhitespace` and global config `dust.whitespace`', function (done) {
+  it.skip('should handle missing page config `keepWhitespace` and global config `dust.whitespace`', sinon.test(function (done) {
     var name = 'test';
     var schema = help.getPageSchema();
     if (schema.settings.hasOwnProperty('keepWhitespace')) delete schema.settings.keepWhitespace;
@@ -474,9 +479,7 @@ describe('Page', function (done) {
     var p = page(name, schema);
     p.keepWhitespace.should.eql(true);
 
-    configStub.restore();
-
     done();
-  });
+  }))
 
 });

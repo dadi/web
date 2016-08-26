@@ -11,7 +11,7 @@ var conf = convict({
       default: "DADI Web (Repo Default)"
     }
   },
-	server: {
+  server: {
     host: {
       doc: "The IP address the web application will run on",
       format: '*',
@@ -70,7 +70,7 @@ var conf = convict({
       env: "SSL_INTERMEDIATE_CERTIFICATE_PATHS"
     }
   },
-	api: {
+  api: {
     host: {
       doc: "The IP address the DADI API application runs on",
       format: '*',
@@ -93,7 +93,7 @@ var conf = convict({
     }
   },
   auth: {
-  	tokenUrl: {
+    tokenUrl: {
       doc: "",
       format: String,
       default: "/token"
@@ -134,6 +134,40 @@ var conf = convict({
       format: String,
       default: "",
       env: "AWS_REGION"
+    }
+  },
+  twitter: {
+    consumerKey: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_CONSUMER_KEY"
+    },
+    consumerSecret: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_CONSUMER_SECRET"
+    },
+    accessTokenKey: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_ACCESS_TOKEN_KEY"
+    },
+    accessTokenSecret: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_ACCESS_TOKEN_SECRET"
+    }
+  },
+  wordpress: {
+    bearerToken: {
+      doc: "A pregenerated oauth access bearer token",
+      format: String,
+      default: "",
+      env: "WORDPRESS_BEARER_TOKEN"
     }
   },
   caching: {
@@ -186,7 +220,7 @@ var conf = convict({
     }
   },
   dust: {
-  	cache: {
+    cache: {
       doc: "If true, compiled templates are saved to the Dust cache. Recommended setting: true",
       format: Boolean,
       default: true
@@ -224,7 +258,7 @@ var conf = convict({
     }
   },
   logging: {
-  	enabled: {
+    enabled: {
       doc: "If true, logging is enabled using the following settings.",
       format: Boolean,
       default: true
@@ -440,6 +474,13 @@ var conf = convict({
     default: "1dc10073-ca36-4373-a646-0d1092caf4a5",
     env: "CONFIG_SECRET"
   },
+  data: {
+    preload: {
+      doc: "",
+      format: Array,
+      default: []
+    }
+  }
 });
 
 // Load environment dependent configuration
@@ -465,3 +506,7 @@ conf.updateConfigDataForDomain = function(domain) {
 conf.validate({strict: false});
 
 module.exports = conf;
+module.exports.configPath = function() {
+  var env = conf.get('env') || process.env['NODE_ENV']
+  return './config/config.' + env + '.json';
+}

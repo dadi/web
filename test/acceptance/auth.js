@@ -12,7 +12,8 @@ var api = require(__dirname + '/../../dadi/lib/api');
 var Server = require(__dirname + '/../../dadi/lib');
 var help = require(__dirname + '/../help');
 var libHelp = require(__dirname + '/../../dadi/lib/help');
-var config = require(__dirname + '/../../config.js');
+var path = require('path')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port');
@@ -41,7 +42,7 @@ function startServer(done) {
   var page = Page(name, schema);
 
   page.template = 'test.dust';
-  page.route.paths[0] = '/test';
+  page.routes[0].path = '/test';
   page.settings.cache = false;
   page.datasources = [];
   page.events = [];
@@ -56,7 +57,7 @@ function startServer(done) {
 
       Server.addComponent({
           key: page.key,
-          route: page.route,
+          routes: page.routes,
           component: controller
       }, false);
 
@@ -120,7 +121,7 @@ describe.skip('Auth', function (done) {
     page1.datasources = [];
     page1.events = [];
     page1.template = 'test.dust';
-    page1.route.paths[0] = '/test';
+    page1.routes[0].path = '/test';
     delete page1.route.constraint;
 
     var pages = [];
@@ -154,7 +155,7 @@ describe.skip('Auth', function (done) {
     page1.datasources = [];
     page1.events = [];
     page1.template = 'test.dust';
-    page1.route.paths[0] = '/test';
+    page1.routes[0].path = '/test';
     delete page1.route.constraint;
 
     var pages = [];
@@ -195,7 +196,7 @@ describe.skip('Auth', function (done) {
       page1.datasources = [];
       page1.events = [];
       page1.template = 'test.dust';
-      page1.route.paths[0] = '/test';
+      page1.routes[0].path = '/test';
       delete page1.route.constraint;
 
       var pages = [];

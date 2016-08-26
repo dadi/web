@@ -39,23 +39,24 @@ try {
   }
 }
 
-var controller = require(__dirname + '/controller')
-var forceDomain = require(__dirname + '/controller/forceDomain')
-var router = require(__dirname + '/controller/router')
-var Page = require(__dirname + '/page')
-var middleware = require(__dirname + '/middleware')
 var api = require(__dirname + '/api')
 var apiMiddleware = require(__dirname + '/api/middleware')
 var auth = require(__dirname + '/auth')
 var cache = require(__dirname + '/cache')
-var monitor = require(__dirname + '/monitor')
-var help = require(__dirname + '/help')
-var dustHelpersExtension = require(__dirname + '/dust/helpers.js')
+var Controller = require(__dirname + '/controller')
 var datasource = require(__dirname + '/datasource')
+var dustHelpersExtension = require(__dirname + '/dust/helpers.js')
+var forceDomain = require(__dirname + '/controller/forceDomain')
+var help = require(__dirname + '/help')
+var middleware = require(__dirname + '/middleware')
+var monitor = require(__dirname + '/monitor')
+var Page = require(__dirname + '/page')
+var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
+var router = require(__dirname + '/controller/router')
 
 var config = require(path.resolve(__dirname + '/../../config.js'))
 var log = require('@dadi/logger')
-log.init(config.get('logging'))
+log.init(config.get('logging'), {}, process.env.NODE_ENV)
 
 /**
  * Creates a new Server instance.
@@ -202,6 +203,9 @@ Server.prototype.start = function (done) {
   // load app specific routes
   this.loadApi(options)
 
+  // preload data
+  Preload().init(options)
+
   var virtualDirs = config.get('virtualDirectories')
   _.each(virtualDirs, function (dir) {
     app.use(serveStatic(__dirname + '/../../' + dir.path , { 'index': dir.index, 'redirect': dir.forceTrailingSlash }))
@@ -252,7 +256,7 @@ Server.prototype.exitHandler = function (options, err) {
 }
 
 function setCustomCacheControl (res, path) {
-  _.each(config.get('headers.cacheControl'), function (value, key) {
+  _.each(config.get('headers.cacheControl'), (value, key) => {
     if (serveStatic.mime.lookup(path) === key && value !== '') {
       res.setHeader('Cache-Control', value)
     }
@@ -261,7 +265,6 @@ function setCustomCacheControl (res, path) {
 
 // this is mostly needed for tests
 Server.prototype.stop = function (done) {
-  var self = this
   this.readyState = 3
 
   Object.keys(this.monitors).forEach(this.removeMonitor.bind(this))
@@ -270,14 +273,13 @@ Server.prototype.stop = function (done) {
 
   this.server.destroy()
 
-  this.server.close(function (err) {
-    self.readyState = 0
+  this.server.close((err) => {
+    this.readyState = 0
     return done && done(err)
   })
 }
 
 Server.prototype.loadPaths = function (paths) {
-  var self = this
   var options = {}
 
   options.datasourcePath = path.resolve(paths.datasources || __dirname + '/../../app/datasources')
@@ -295,11 +297,11 @@ Server.prototype.loadPaths = function (paths) {
   if (paths.media) options.mediaPath = path.resolve(paths.media)
   if (paths.public) options.publicPath = path.resolve(paths.public)
 
-  _.each(options, function (path, key) {
-    fs.stat(path, function (err, stats) {
+  _.each(options, (path, key) => {
+    fs.stat(path, (err, stats) => {
       if (err) {
         if (err.code === 'ENOENT') {
-          self.ensureDirectories(options, function () {
+          this.ensureDirectories(options, () => {
             //
           })
         }
@@ -311,11 +313,9 @@ Server.prototype.loadPaths = function (paths) {
 }
 
 Server.prototype.loadApi = function (options) {
-  var self = this
-
-  this.app.use('/api/flush', function (req, res, next) {
+  this.app.use('/api/flush', (req, res, next) => {
     if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
-      return help.clearCache(req, function (err) {
+      return help.clearCache(req, (err) => {
         help.sendBackJSON(200, res, next)(err, {
           result: 'success',
           message: 'Succeed to clear'
@@ -326,7 +326,7 @@ Server.prototype.loadApi = function (options) {
     }
   })
 
-  this.app.use('/api/status', function (req, res, next) {
+  this.app.use('/api/status', (req, res, next) => {
     if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
       var params = {
         site: site,
@@ -338,7 +338,7 @@ Server.prototype.loadApi = function (options) {
         }
       }
 
-      dadiStatus(params, function (err, data) {
+      dadiStatus(params, (err, data) => {
         if (err) return next(err)
         var resBody = JSON.stringify(data, null, 2)
 
@@ -350,38 +350,38 @@ Server.prototype.loadApi = function (options) {
     }
   })
 
-  self.ensureDirectories(options, function (text) {
+  this.ensureDirectories(options, (text) => {
 
     // load routes
-    self.updatePages(options.pagePath, options, false)
+    this.updatePages(options.pagePath, options, false)
 
     // Load middleware
-    self.initMiddleware(options.middlewarePath, options)
+    this.initMiddleware(options.middlewarePath, options)
 
     // compile all dust templates
-    self.dustCompile(options)
+    this.dustCompile(options)
 
-    self.addMonitor(options.datasourcePath, function (dsFile) {
-      self.updatePages(options.pagePath, options, true)
+    this.addMonitor(options.datasourcePath, (dsFile) => {
+      this.updatePages(options.pagePath, options, true)
     })
 
-    self.addMonitor(options.eventPath, function (eventFile) {
-      self.updatePages(options.pagePath, options, true)
+    this.addMonitor(options.eventPath, (eventFile) => {
+      this.updatePages(options.pagePath, options, true)
     })
 
-    self.addMonitor(options.pagePath, function (pageFile) {
-      self.updatePages(options.pagePath, options, true)
-      self.dustCompile(options)
+    this.addMonitor(options.pagePath, (pageFile) => {
+      this.updatePages(options.pagePath, options, true)
+      this.dustCompile(options)
     })
 
-    self.addMonitor(options.partialPath, function (partialFile) {
-      self.dustCompile(options)
+    this.addMonitor(options.partialPath, (partialFile) => {
+      this.dustCompile(options)
     })
 
-    self.addMonitor(options.routesPath, function (file) {
-      if (self.app.Router) {
-        self.app.Router.loadRewrites(options, function () {
-          self.app.Router.loadRewriteModule()
+    this.addMonitor(options.routesPath, (file) => {
+      if (this.app.Router) {
+        this.app.Router.loadRewrites(options, () => {
+          this.app.Router.loadRewriteModule()
         })
       }
     })
@@ -392,20 +392,19 @@ Server.prototype.loadApi = function (options) {
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
   var middlewares = this.loadMiddleware(directoryPath, options)
-  _.each(middlewares, function (middleware) {
+  _.each(middlewares, (middleware) => {
     middleware.init(this.app)
-  }, this)
+  })
 }
 
 Server.prototype.loadMiddleware = function (directoryPath, options) {
   if (!fs.existsSync(directoryPath)) return
 
-  var self = this
   var files = fs.readdirSync(directoryPath)
 
   var middlewares = []
 
-  files.forEach(function (file) {
+  files.forEach((file) => {
     if (path.extname(file) !== '.js') return
 
     var filepath = path.join(directoryPath, file)
@@ -420,10 +419,9 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
 Server.prototype.updatePages = function (directoryPath, options, reload) {
   if (!fs.existsSync(directoryPath)) return
 
-  var self = this
   var pages = fs.readdirSync(directoryPath)
 
-  pages.forEach(function (page) {
+  pages.forEach((page) => {
     if (path.extname(page) !== '.json') return
 
     // get the full path to the page file
@@ -433,7 +431,7 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
     // to use as the page name
     var name = page.slice(0, page.indexOf('.'))
 
-    self.addRoute({
+    this.addRoute({
       name: name,
       filepath: pageFilepath
     }, options, reload)
@@ -457,84 +455,72 @@ Server.prototype.addRoute = function (obj, options, reload) {
   var page = Page(obj.name, schema)
 
   // create a handler for requests to this page
-  var control = controller(page, options, schema.page)
+  var controller = Controller(page, options, schema.page)
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods
   this.addComponent({
     key: page.key,
-    route: page.route,
-    component: control,
+    routes: page.routes,
+    component: controller,
     filepath: obj.filepath
   }, reload)
 }
 
 Server.prototype.addComponent = function (options, reload) {
-  if (!options.route) return
+  if (!options.routes) return
 
   if (reload) {
-    _.each(options.route.paths, function (path) {
-      this.removeComponent(path)
-    }, this)
+    _.each(options.routes, (route) => {
+      this.removeComponent(route.path)
+    })
   }
 
-  var self = this
-
-  _.each(options.route.paths, function (path) {
+  _.each(options.routes, (route) => {
 
     // only add a route once
-    if (this.components[path]) return
+    if (this.components[route.path]) return
 
-    this.components[path] = options.component
+    this.components[route.path] = options.component
 
-    if (path === '/index') {
-      log.debug({module: 'server'}, 'Loaded ' + path)
-
-      // configure "index" route
-      this.app.use('/', function (req, res, next) {
-        // map request method to controller method
-        var method = req.method && req.method.toLowerCase()
-
-        if (method && options.component[method]) {
-          return options.component[method](req, res, next)
+    // configure "index" route
+    if (route.path === '/index') {
+      this.app.use('/', (req, res, next) => {
+         if (options.component[req.method.toLowerCase()]) {
+          return options.component[req.method.toLowerCase()](req, res, next)
         }
-        next()
+
+        return next()
       })
     } else {
-      log.debug({module: 'server'}, 'Loaded ' + path)
+      // attach any route constraints
+      if (route.constraint) this.app.Router.constrain(route.path, route.constraint)
 
-      if (options.route.constraint) this.app.Router.constrain(path, options.route.constraint)
-
-      var self = this
-
-      this.app.use(path, function (req, res, next) {
-        self.app.Router.testConstraint(path, req, res, function (result) {
-
-          // test returned false, try the next matching route
-          if (!result) return next()
-
-          // map request method to controller method
-          var method = req.method && req.method.toLowerCase()
-
-          // if it's a HEAD request, fake it as a GET so that it
-          // continues. The help.sendbackHTML method will be passed
-          // the actual req.method to determine what we send back
-          if (method === 'head') method = 'get'
-
-          if (method && options.component[method]) {
-            return options.component[method](req, res, next)
-          }
-
-          // no matching HTTP method found, try the next matching route
+      this.app.use(route.path, (req, res, next) => {
+        if (options.component[req.method.toLowerCase()]) {
+          // a matching route found, validate it
+          return this.app.Router.validate(route, req, res).then(() => {
+            return options.component[req.method.toLowerCase()](req, res, next)
+          }).catch((err) => {
+            if (err) return next(err)
+            // try next route
+            if (next) {
+              return next()
+            } else {
+              return help.sendBackJSON(404, res, next)(null, require(options.filepath))
+            }
+          })
+        } else {
+          // no matching HTTP method found, try the next matching route or 404
           if (next) {
             return next()
           } else {
             return help.sendBackJSON(404, res, next)(null, require(options.filepath))
           }
-        })
+        }
       })
     }
-  }, this)
+  })
 }
 
 Server.prototype.removeComponent = function (route) {
@@ -570,13 +556,11 @@ Server.prototype.dustCompile = function (options) {
   var templatePath = options.pagePath
   var partialPath = options.partialPath
 
-  var self = this
-
   // reset the dust cache so
   // templates can be reloaded
   dust.cache = {}
 
-  _.each(self.components, function (component) {
+  _.each(this.components, (component) => {
     try {
       var filepath = path.join(templatePath, component.page.template)
       var template = fs.readFileSync(filepath, 'utf8')
@@ -716,13 +700,11 @@ Server.prototype.getSessionStore = function (sessionConfig) {
  *  @api public
  */
 Server.prototype.ensureDirectories = function (options, done) {
-  var self = this
-
   // create workspace directories if they don't exist
   // permissions default to 0777
   var idx = 0
-  _.each(options, function (dir) {
-    mkdirp(dir, {}, function (err, made) {
+  _.each(options, (dir) => {
+    mkdirp(dir, {}, (err, made) => {
       if (err) {
         log.error({module: 'server'}, err)
         console.log(err)
@@ -815,13 +797,6 @@ function onListening (e) {
 
     var env = config.get('env')
 
-    // var webMessage = "Started DADI Web '" + config.get('app.name') + "' (" + version + ", Node.JS v" + nodeVersion + ", " + env + " mode) on " + config.get('server.host') + ":" + config.get('server.port')
-    // var apiMessage = ""
-
-    // if (config.get('api.enabled') === true) {
-    //   apiMessage += "Attached to DADI API on " + config.get('api.host') + ":" + config.get('api.port')
-    // }
-
     var startText = '\n'
     startText += '  ----------------------------\n'
     startText += '  ' + config.get('app.name').green + '\n'
@@ -857,46 +832,46 @@ function onError (err) {
   }
 }
 
-function processSortParameter (obj) {
-  var sort = {}
-  if (typeof obj !== 'object' || obj === null) return sort
+// function processSortParameter (obj) {
+//   var sort = {}
+//   if (typeof obj !== 'object' || obj === null) return sort
+//
+//   _.each(obj, function (value, key) {
+//     if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
+//       sort[value.field] = (value.order === 'asc') ? 1 : -1
+//     }
+//   })
+//
+//   return sort
+// }
 
-  _.each(obj, function (value, key) {
-    if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
-      sort[value.field] = (value.order === 'asc') ? 1 : -1
-    }
-  })
-
-  return sort
-}
-
-function parseRoutes (endpoints, req_path) {
-  var params = {}
-  var route_path = ''
-  _.each(endpoints, function (endpoint) {
-    var paths = endpoint.page.route.paths
-    var req_path_items = req_path.split('/')
-    _.each(paths, function (path) {
-      path_items = path.split('/')
-      if (path_items.length == req_path_items.length) {
-        var alias = _.filter(path_items, function (item) {
-          return item == '' || item.slice(0, 1) != ':'
-        })
-
-        if (_.difference(alias, _.intersection(path_items, req_path_items)).length == 0) {
-          _.each(path_items, function (item, index) {
-            if (item != '' && item.slice(0, 1) == ':') {
-              params[item.slice(1)] = req_path_items[index]
-            }
-          })
-          route_path = path
-        }
-      }
-    })
-  })
-
-  return {
-    route_path: route_path,
-    params: params
-  }
-}
+// function parseRoutes (endpoints, req_path) {
+//   var params = {}
+//   var route_path = ''
+//   _.each(endpoints, function (endpoint) {
+//     var paths = endpoint.page.route.paths
+//     var req_path_items = req_path.split('/')
+//     _.each(paths, function (path) {
+//       path_items = path.split('/')
+//       if (path_items.length == req_path_items.length) {
+//         var alias = _.filter(path_items, function (item) {
+//           return item == '' || item.slice(0, 1) != ':'
+//         })
+//
+//         if (_.difference(alias, _.intersection(path_items, req_path_items)).length == 0) {
+//           _.each(path_items, function (item, index) {
+//             if (item != '' && item.slice(0, 1) == ':') {
+//               params[item.slice(1)] = req_path_items[index]
+//             }
+//           })
+//           route_path = path
+//         }
+//       }
+//     })
+//   })
+//
+//   return {
+//     route_path: route_path,
+//     params: params
+//   }
+// }
