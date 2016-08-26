@@ -38,7 +38,7 @@ function cleanupPath(path, done) {
   }
 }
 
-describe.skip('Application', function(done) {
+describe('Application', function(done) {
 
   beforeEach(function(done) {
     help.clearCache();
