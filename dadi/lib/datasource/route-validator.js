@@ -20,8 +20,8 @@ RouteValidator.prototype.get = function (req) {
         if (err) return reject(err)
       }
 
-      datasource.provider.processRequest(this.route.path, req)
-      
+      datasource.processRequest(this.route.path, req)
+
       datasource.provider.load(null, (err, result) => {
         if (err) return reject(err)
 

@@ -293,7 +293,7 @@ Controller.prototype.loadData = function (req, res, data, done) {
   _.each(self.datasources, function (ds, key) {
     if (ds.chained) {
       chainedDatasources[key] = ds
-    }else {
+    } else {
       primaryDatasources[key] = ds
     }
   })
@@ -418,7 +418,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     // cast the param value if needed
     if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
       param = parseInt(param)
-    }else {
+    } else {
       param = encodeURIComponent(param)
     }
 
@@ -427,13 +427,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
       chainedDatasource.schema.datasource.cache = false
     }
 
-    // add page # to datasource options
-    chainedDatasource.schema.datasource.page = data.query.page || 1
-
-    if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
-      param = parseInt(param)
-    }else {
-      param = encodeURIComponent(param)
+    if (self.page.passFilters && chainedDatasource.schema.datasource.paginate) {
+      chainedDatasource.schema.datasource.page = data.query.page || req.params.page || 1
     }
 
     // if there is a field to filter on, add the new parameter value to the filters
