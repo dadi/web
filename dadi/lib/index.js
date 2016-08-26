@@ -51,7 +51,7 @@ var help = require(__dirname + '/help')
 var middleware = require(__dirname + '/middleware')
 var monitor = require(__dirname + '/monitor')
 var Page = require(__dirname + '/page')
-var Preload = require(path.join(__dirname, 'datasource/preload'))
+var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
 var router = require(__dirname + '/controller/router')
 
 var config = require(path.resolve(__dirname + '/../../config.js'))
@@ -500,12 +500,10 @@ Server.prototype.addComponent = function (options, reload) {
         if (options.component[req.method.toLowerCase()]) {
           // a matching route found, validate it
           return this.app.Router.validate(route, req, res).then(() => {
-            console.log('Looks Good: %s', route.path)
             return options.component[req.method.toLowerCase()](req, res, next)
           }).catch((err) => {
             if (err) return next(err)
             // try next route
-            console.log('NEXT')
             if (next) {
               return next()
             } else {

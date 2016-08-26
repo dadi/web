@@ -13,6 +13,7 @@ var Controller = require(__dirname + '/../../dadi/lib/controller');
 var Router = require(__dirname + '/../../dadi/lib/controller/router')
 var libHelp = require(__dirname + '/../../dadi/lib/help');
 var testHelper = require(__dirname + '/../help');
+var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
 
 var config
 var testConfigString
@@ -144,6 +145,11 @@ describe('Router', function (done) {
         var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
         sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
+        // provide API response
+        var results = { results: [{"make": "ford"}] }
+        var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+        providerStub.yields(null, results)
+
         testHelper.startServer(pages, function() {
 
           var client = request(connectionString);
@@ -152,6 +158,7 @@ describe('Router', function (done) {
           .end(function (err, res) {
             if (err) return done(err);
 
+            providerStub.restore()
             datasource.Datasource.prototype.loadDatasource.restore();
 
             res.statusCode.should.eql(301)
@@ -172,6 +179,11 @@ describe('Router', function (done) {
         var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
         sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
+        // provide API response
+        var results = { results: [{"make": "ford"}] }
+        var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+        providerStub.yields(null, results)
+
         testHelper.startServer(pages, function() {
 
           var client = request(connectionString);
@@ -180,6 +192,7 @@ describe('Router', function (done) {
           .end(function (err, res) {
             if (err) return done(err);
 
+            providerStub.restore()
             datasource.Datasource.prototype.loadDatasource.restore();
 
             res.statusCode.should.eql(301)
@@ -201,6 +214,11 @@ describe('Router', function (done) {
         var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
         sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
+        // provide API response
+        var results = { results: [{"make": "ford"}] }
+        var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+        providerStub.yields(null, results)
+
         testHelper.startServer(pages, function() {
 
           var client = request(connectionString);
@@ -209,6 +227,7 @@ describe('Router', function (done) {
           .end(function (err, res) {
             if (err) return done(err);
 
+            providerStub.restore()
             datasource.Datasource.prototype.loadDatasource.restore();
 
             res.statusCode.should.eql(301)
@@ -231,6 +250,11 @@ describe('Router', function (done) {
         var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
         sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
+        // provide API response
+        var results = { results: [{"make": "ford"}] }
+        var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+        providerStub.yields(null, results)
+
         testHelper.startServer(pages, function() {
 
           var client = request(connectionString);
@@ -239,6 +263,7 @@ describe('Router', function (done) {
           .end(function (err, res) {
             if (err) return done(err);
 
+            providerStub.restore()
             datasource.Datasource.prototype.loadDatasource.restore();
 
             res.statusCode.should.eql(301)
@@ -261,14 +286,16 @@ describe('Router', function (done) {
       var page = getPage();
       var pages = [page]
       var options = testHelper.getPathOptions();
-      var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
+      var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'redirects');
       sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
 
-      testHelper.startServer(pages, function() {
+      // provide API response
+      var redirectResults = { results: [{"rule": "/test", "replacement": "/books", "redirectType":301}] }
 
-        // provide API response
-        var redirectResults = { results: [{"rule": "/test", "replacement": "/books", "redirectType":301}] }
-        sinon.stub(libHelp.DataHelper.prototype, 'load').yields(null, redirectResults);
+      var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+      providerStub.yields(null, redirectResults)
+
+      testHelper.startServer(pages, function() {
 
         var client = request(connectionString);
 
@@ -277,8 +304,8 @@ describe('Router', function (done) {
         .end(function (err, res) {
           if (err) return done(err);
 
-          libHelp.DataHelper.prototype.load.restore();
-          datasource.Datasource.prototype.loadDatasource.restore();
+          providerStub.restore()
+          datasource.Datasource.prototype.loadDatasource.restore()
 
           res.statusCode.should.eql(301)
           res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/books')

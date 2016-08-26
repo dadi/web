@@ -31,6 +31,10 @@ var Datasource = function (page, datasource, options, callback) {
     self.source = schema.datasource.source;
     self.schema.datasource.filter = self.schema.datasource.filter || {};
 
+    if (!self.source.type) {
+      self.source.type = 'remote'
+    }
+
     if (self.source.type === 'static') {
       callback(null, self);
     }

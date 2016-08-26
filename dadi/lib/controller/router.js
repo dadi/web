@@ -381,12 +381,7 @@ module.exports = function (server, options) {
           }
 
           if (result) {
-            var results
-            if (typeof result === 'object') {
-              results = result
-            }else {
-              results = JSON.parse(result)
-            }
+            var results = (typeof result === 'object') ? result : JSON.parse(result)
 
             if (results && results.results && results.results.length > 0 && results.results[0].rule === req.url) {
               var rule = results.results[0]
@@ -402,10 +397,10 @@ module.exports = function (server, options) {
               })
 
               res.end()
-            }else {
+            } else {
               return next()
             }
-          }else {
+          } else {
             return next()
           }
         })

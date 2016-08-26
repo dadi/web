@@ -20,10 +20,9 @@ RouteValidator.prototype.get = function (req) {
         if (err) return reject(err)
       }
 
-      datasource.processRequest(this.route.path, req)
-
-      var dataHelper = new help.DataHelper(datasource, null)
-      dataHelper.load((err, result, dsResponse) => {
+      datasource.provider.processRequest(this.route.path, req)
+      
+      datasource.provider.load(null, (err, result) => {
         if (err) return reject(err)
 
         if (result) {

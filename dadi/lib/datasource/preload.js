@@ -8,10 +8,11 @@ var log = require('@dadi/logger')
 
 var Preload = function() {
   this.data = {}
-  this.sources = config.get('data.preload')
 }
 
 Preload.prototype.init = function (options) {
+  this.sources = config.get('data.preload')
+
   _.each(this.sources, (source) => {
     new Datasource(null, source, options, (err, datasource) => {
       if (err) {
@@ -19,10 +20,7 @@ Preload.prototype.init = function (options) {
         return
       }
 
-      var dataHelper = new help.DataHelper(datasource, null)
-      dataHelper.load((err, result, dsResponse) => {
-        //if (err) return done(err)
-
+      datasource.provider.load(null, (err, result) => {
         if (result) {
           var results = (typeof result === 'object' ? result : JSON.parse(result))
           this.data[source] = results.results ? results.results : results
@@ -36,6 +34,15 @@ Preload.prototype.init = function (options) {
 
 Preload.prototype.get = function (key) {
   return this.data[key]
+}
+
+Preload.prototype.delete = function (key) {
+  delete this.data[key]
+}
+
+Preload.prototype.reset = function () {
+  this.data = {}
+  this.sources = []
 }
 
 var instance

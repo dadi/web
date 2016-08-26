@@ -2,7 +2,7 @@
 
 const _ = require('underscore')
 const Purest = require('purest')
-const log = require(__dirname + '/../log')
+const log = require('@dadi/logger')
 const config = require(__dirname + '/../../../config.js')
 const DatasourceCache = require(__dirname + '/../cache/datasource')
 
