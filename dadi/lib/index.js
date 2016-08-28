@@ -54,7 +54,7 @@ var Page = require(__dirname + '/page')
 var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
 var router = require(__dirname + '/controller/router')
 
-var config = require(path.resolve(__dirname + '/../../config.js'))
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var log = require('@dadi/logger')
 log.init(config.get('logging'), {}, process.env.NODE_ENV)
 
@@ -151,7 +151,7 @@ Server.prototype.start = function (done) {
       cookie: sessionConfig.cookie
     }
 
-    var store = this.getSessionStore(sessionConfig)
+    var store = this.getSessionStore(sessionConfig, config.get('env'))
 
     if (store) {
       sessionOptions.store = store
@@ -650,8 +650,7 @@ Server.prototype.dustCompile = function (options) {
   }
 }
 
-Server.prototype.getSessionStore = function (sessionConfig) {
-  var env = config.get('env')
+Server.prototype.getSessionStore = function (sessionConfig, env) {
   if (/development|test/.exec(env) === null) {
     if (sessionConfig.store === '') {
       var message = ''
@@ -671,9 +670,6 @@ Server.prototype.getSessionStore = function (sessionConfig) {
 
       throw new Error(message)
     }
-
-  // app.set('trust proxy', 1) // trust first proxy
-  // sess.cookie.secure = true // serve secure cookies
   }
 
   if (sessionConfig.store === '') {

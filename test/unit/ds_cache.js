@@ -1,426 +1,473 @@
-var fs = require('fs');
-var path = require('path');
-var url = require('url');
-var util = require('util');
-var crypto = require('crypto');
-var should = require('should');
-var sinon = require('sinon');
-var redis = require('redis');
+var fs = require('fs')
+var path = require('path')
+var url = require('url')
+var util = require('util')
+var crypto = require('crypto')
+var should = require('should')
+var sinon = require('sinon')
+var redis = require('redis')
 
-var api = require(__dirname + '/../../dadi/lib/api');
-var Server = require(__dirname + '/../../dadi/lib');
-var datasourceCache = require(__dirname + '/../../dadi/lib/cache/datasource');
-var datasource = require(__dirname + '/../../dadi/lib/datasource');
-var page = require(__dirname + '/../../dadi/lib/page');
-var help = require(__dirname + '/../help');
+var api = require(__dirname + '/../../dadi/lib/api')
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
-var cache = require(__dirname + '/../../dadi/lib/cache');
+var cache = require(__dirname + '/../../dadi/lib/cache')
+var datasourceCache = require(__dirname + '/../../dadi/lib/cache/datasource')
+var datasource = require(__dirname + '/../../dadi/lib/datasource')
+var page = require(__dirname + '/../../dadi/lib/page')
+var Server = require(__dirname + '/../../dadi/lib')
+var TestHelper = require(__dirname + '/../help')()
 
 describe('Datasource Cache', function (done) {
+  var server, ds, cachepath
 
-  var configStub, server, name, schema, p, dsName, options, ds, cachepath;
+  beforeEach(function (done) {
+    TestHelper.resetConfig().then(() => {
+      TestHelper.disableApiConfig().then(() => {
+        ds = datasource(page('test', TestHelper.getPageSchema()), 'car-makes', TestHelper.getPathOptions(), function () {})
 
-  beforeEach(function(done) {
-    name = 'test';
-    schema = help.getPageSchema();
-    p = page(name, schema);
-    dsName = 'car-makes';
-    options = help.getPathOptions();
-    ds = datasource(p, dsName, options, function() {});
+        server = sinon.mock(Server)
+        server.object.app = api()
+        cache.reset()
 
-    server = sinon.mock(Server);
-    server.object.app = api();
+        done()
+      })
+    })
+  })
 
-    done();
-  });
-
-  afterEach(function(done) {
-
+  afterEach(function (done) {
     try {
-      if (cachepath) fs.unlinkSync(cachepath);
-    }
-    catch (err) {
+      if (cachepath) fs.unlinkSync(cachepath)
+    } catch (err) {}
 
-    }
-
-    cache.reset();
-    done();
-  });
+    cache.reset()
+    done()
+  })
 
   describe('Module', function (done) {
-
     it('should be a function', function (done) {
-      datasourceCache.should.be.Function;
-      done();
-    });
+      datasourceCache.should.be.Function
+      done()
+    })
 
     it('should reference the main cache module', function (done) {
+      var c = cache(server.object)
+      var dsCache = new datasourceCache(ds)
+      dsCache.cache.should.eql(c)
 
-      var c = cache(server.object);
-      var dsCache = new datasourceCache(ds);
-      dsCache.cache.should.eql(c);
+      done()
+    })
 
-      done();
+    it("should cache if the app's config settings allow", function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      //console.log(dsCache);
-    });
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cache.enabled.should.eql(true)
+        done()
+      })
+    })
 
-    it('should cache if the app\'s config settings allow', function (done) {
+    it("should not cache if the app's config settings don't allow", function () {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: false
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
+      return TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cache.enabled.should.eql(false)
+      })
+    })
 
-      var c = cache(server.object);
+    it("should use main cache settings if the datasource doesn't provide any directory options", function () {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true,
+            path: '/Users',
+            extension: 'cache'
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      var dsCache = new datasourceCache(ds);
+      return TestHelper.updateConfig(cacheConfig).then(() => {
+        delete ds.schema.datasource.caching.directory
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cachepath.indexOf('/Users').should.be.above(-1)
+      })
+    })
 
-      dsCache.cache.enabled.should.eql(true);
+    it("should use .json for extension if the datasource doesn't provide any options", function () {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true,
+            path: '/Users',
+            extension: 'cache'
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      done();
-    });
+      return TestHelper.updateConfig(cacheConfig).then(() => {
+        delete ds.schema.datasource.caching.directory
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cachepath.indexOf('.json').should.be.above(-1)
+      })
+    })
 
-    it('should not cache if the app\'s config settings don\'t allow', function (done) {
+    it("should reference main module's redis client if configured", function () {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: false
+          },
+          redis: {
+            enabled: true
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', false);
-      config.set('caching.redis.enabled', false);
-
-      var c = cache(server.object);
-
-      var dsCache = new datasourceCache(ds);
-      dsCache.cache.enabled.should.eql(false);
-
-      done();
-    });
-
-    it('should use main cache settings if the datasource doesn\'t provide any directory options', function (done) {
-
-      config.set('caching.directory.enabled', true);
-      config.set('caching.directory.path', '/Users');
-      config.set('caching.directory.extension', 'cache');
-      config.set('caching.redis.enabled', false);
-
-      delete ds.schema.datasource.caching.directory;
-
-      var c = cache(server.object);
-
-      var dsCache = new datasourceCache(ds);
-
-      dsCache.cachepath.indexOf('/Users').should.be.above(-1);
-
-      done();
-    });
-
-    it('should use .json for extension if the datasource doesn\'t provide any options', function (done) {
-
-      config.set('caching.directory.enabled', true);
-      config.set('caching.directory.path', '/Users');
-      config.set('caching.directory.extension', 'cache');
-      config.set('caching.redis.enabled', false);
-
-      delete ds.schema.datasource.caching.directory;
-
-      var c = cache(server.object);
-
-      var dsCache = new datasourceCache(ds);
-
-      dsCache.cachepath.indexOf('.json').should.be.above(-1);
-
-      done();
-    });
-
-    it('should reference main module\'s redis client if configured', function (done) {
-
-      config.set('caching.directory.enabled', false);
-      config.set('caching.redis.enabled', true);
-
-      var c = cache(server.object);
-      var dsCache = new datasourceCache(ds);
-
-      dsCache.cache.redisClient.should.not.be.null;
-      dsCache.cache.redisClient.address.should.eql(config.get('caching.redis.host') + ":" + config.get('caching.redis.port'));
-
-      done();
-    });
+      return TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cache.redisClient.should.not.be.null
+        dsCache.cache.redisClient.address.should.eql(config.get('caching.redis.host') + ':' + config.get('caching.redis.port'))
+      })
+    })
 
     it('should use datasource name as first part of cache filename', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-
-      var c = cache(server.object);
-
-      var dsCache = new datasourceCache(ds);
-
-      var expectToFind = crypto.createHash('sha1').update(ds.schema.datasource.key).digest('hex');
-
-      dsCache.filename.indexOf(expectToFind).should.be.above(-1);
-
-      done();
-    });
-  });
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        var expectToFind = crypto.createHash('sha1').update(ds.schema.datasource.key).digest('hex')
+        dsCache.filename.indexOf(expectToFind).should.be.above(-1)
+        done()
+      })
+    })
+  })
 
   describe('cachingEnabled', function (done) {
+    it("should not cache if the datasources config settings don't allow", function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-    it('should not cache if the datasources config settings don\'t allow', function (done) {
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
-
-      ds.schema.datasource.caching.enabled = false;
-
-      var c = cache(server.object);
-
-      var dsCache = new datasourceCache(ds);
-      dsCache.cachingEnabled().should.eql(false);
-      done();
-    });
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = false
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cachingEnabled().should.eql(false)
+        done()
+      })
+    })
 
     it('should not cache if the datasource endpoint has ?cache=false', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
-
-      ds.schema.datasource.caching.enabled = true;
-
-      ds.provider.endpoint += '&cache=false';
-
-      var c = cache(server.object);
-
-      var dsCache = new datasourceCache(ds);
-      dsCache.cachingEnabled().should.eql(false);
-      done();
-    });
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
+        ds.provider.endpoint += '&cache=false'
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cachingEnabled().should.eql(false)
+        done()
+      })
+    })
 
     it('should cache if the datasources config settings allow', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
-
-      ds.schema.datasource.caching.enabled = true;
-
-      var c = cache(server.object);
-
-      var dsCache = new datasourceCache(ds);
-      dsCache.cachingEnabled().should.eql(true);
-      done();
-    });
-
-  });
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
+        var c = cache(server.object)
+        var dsCache = new datasourceCache(ds)
+        dsCache.cachingEnabled().should.eql(true)
+        done()
+      })
+    })
+  })
 
   describe('getFromCache', function (done) {
-
     it('should read data from a file', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
 
-      ds.schema.datasource.caching.enabled = true;
+        var c = cache(server.object)
 
-      var c = cache(server.object);
+        // create a file
+        var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + '_' + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex')
+        cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension)
+        var expected = 'ds content from filesystem'
 
-      // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
-      cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension);
-      var expected = 'ds content from filesystem';
+        fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function (err) {
+          if (err) console.log(err.toString())
 
-      fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function(err) {
-        if (err) console.log(err.toString());
+          var dsCache = new datasourceCache(ds)
 
-        var dsCache = new datasourceCache(ds);
-
-        dsCache.getFromCache(function(data){
-            data.should.eql(expected);
-            done();
-        });
-
-      });
-
-    });
+          dsCache.getFromCache(function (data) {
+            data.should.eql(expected)
+            done()
+          })
+        })
+      })
+    })
 
     it('should return false if cache file is not found', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
 
-      ds.schema.datasource.caching.enabled = true;
+        var c = cache(server.object)
 
-      var c = cache(server.object);
+        // create a file
+        var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + '_' + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex')
+        cachepath = path.join(ds.schema.datasource.caching.directory, filename + '_XX.' + ds.schema.datasource.caching.extension)
+        var expected = 'ds content from filesystem'
 
-      // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
-      cachepath = path.join(ds.schema.datasource.caching.directory, filename + '_XX.' + ds.schema.datasource.caching.extension);
-      var expected = 'ds content from filesystem';
+        fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function (err) {
+          if (err) console.log(err.toString())
 
-      fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function(err) {
-        if (err) console.log(err.toString());
+          var dsCache = new datasourceCache(ds)
 
-        var dsCache = new datasourceCache(ds);
-
-        dsCache.getFromCache(function(data){
-            data.should.eql(false);
-            done();
-        });
-
-      });
-
-    });
+          dsCache.getFromCache(function (data) {
+            data.should.eql(false)
+            done()
+          })
+        })
+      })
+    })
 
     it('should return false if cache key not in redis store', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: false
+          },
+          redis: {
+            enabled: true
+          }
+        }
+      }
 
-      ds.schema.datasource.caching.enabled = true;
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
 
-      var c = cache(server.object);
-      var data = 'ds content from filesystem';
+        var c = cache(server.object)
+        var data = 'ds content from filesystem'
 
-      var redisClient = redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
+        var redisClient = redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3})
 
-      redisClient.set = function set(key, chunk, done) {
-      };
+        redisClient.set = function set (key, chunk, done) {}
 
-      redisClient.append = function append(key, chunk, done) {
-        chunk.toString().should.eql(data);
-      };
+        redisClient.append = function append (key, chunk, done) {
+          chunk.toString().should.eql(data)
+        }
 
-      redisClient.exists = function(filename, cb) {
-        cb(null, 0);
-      };
+        redisClient.exists = function (filename, cb) {
+          cb(null, 0)
+        }
 
-      c.redisClient = redisClient;
+        c.redisClient = redisClient
 
-      var dsCache = new datasourceCache(ds);
+        var dsCache = new datasourceCache(ds)
 
-      dsCache.getFromCache(function(data){
-          data.should.eql(false);
-          done();
-      });
-    });
+        dsCache.getFromCache(function (data) {
+          data.should.eql(false)
+          done()
+        })
+      })
+    })
 
-    it('should return data from redis cache key');//, function (done) {
-
-      // WARNING, FLIMSY TEST
-
-    //   config.set('caching.directory.enabled', false);
-    //   config.set('caching.redis.enabled', true);
-    //
-    //   ds.schema.datasource.caching.enabled = true;
-    //
-    //   var redisClient = redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
-    //
-    //   redisClient.set = function set(key, chunk, done) {
-    //   };
-    //
-    //   redisClient.append = function append(key, chunk, done) {
-    //     chunk.toString().should.eql(data);
-    //   };
-    //
-    //   redisClient.exists = function(filename, cb) {
-    //     cb(null, 1);
-    //   };
-    //
-    //   var c = cache(server.object);
-    //   var data = 'ds content from filesystem';
-    //   var expected = 'ds content from filesystem';
-    //
-    //   c.redisClient = redisClient;
-    //
-    //   var dsCache = new datasourceCache(ds);
-    //
-    //   dsCache.cacheResponse(data, function() {
-    //     setTimeout(function() {
-    //       dsCache.getFromCache(function(data){
-    //         console.log(data);
-    //         data.should.eql(expected);
-    //         //done();
-    //       });
-    //     }, 500);
-    //   });
-    //
-    // });
+    it('should return data from redis cache key')
 
     it('should return false if cache file ttl has expired', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
+        ds.schema.datasource.caching.ttl = 1
 
-      ds.schema.datasource.caching.enabled = true;
-      ds.schema.datasource.caching.ttl = 1;
+        var c = cache(server.object)
 
-      var c = cache(server.object);
+        // create a file
+        var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + '_' + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex')
+        cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension)
+        var expected = 'ds content from filesystem'
 
-      // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
-      cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension);
-      var expected = 'ds content from filesystem';
+        fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function (err) {
+          if (err) console.log(err.toString())
 
-      fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function(err) {
-        if (err) console.log(err.toString());
+          setTimeout(function () {
+            var dsCache = new datasourceCache(ds)
 
-        setTimeout(function() {
-
-          var dsCache = new datasourceCache(ds);
-
-          dsCache.getFromCache(function(data){
-              data.should.eql(false);
-              done();
-          });
-
-        }, 1500);
-
-      });
-
-    });
-  });
+            dsCache.getFromCache(function (data) {
+              data.should.eql(false)
+              done()
+            })
+          }, 1500)
+        })
+      })
+    })
+  })
 
   describe('cacheResponse', function (done) {
-
     it('should write data to a file', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      config.set('caching.directory.enabled', true);
-      config.set('caching.redis.enabled', false);
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
+        var c = cache(server.object)
 
-      ds.schema.datasource.caching.enabled = true;
+        // create a file
+        var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + '_' + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex')
+        cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension)
 
-      var c = cache(server.object);
+        var data = 'ds content from filesystem'
+        var dsCache = new datasourceCache(ds)
 
-      // create a file
-      var filename = crypto.createHash('sha1').update(ds.name).digest('hex') + "_" + crypto.createHash('sha1').update(ds.provider.endpoint).digest('hex');
-      cachepath = path.join(ds.schema.datasource.caching.directory, filename + '.' + ds.schema.datasource.caching.extension);
+        dsCache.cacheResponse(data, function () {
+          fs.readFile(cachepath, function (err, content) {
+            content.toString().should.eql(data)
+            done()
+          })
+        })
+      })
+    })
 
-      var data = 'ds content from filesystem';
-      var dsCache = new datasourceCache(ds);
+    it('should write to a redis client if configured', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      dsCache.cacheResponse(data, function() {
-        fs.readFile(cachepath, function(err, content) {
-          content.toString().should.eql(data);
-          done();
-        });
-      });
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.enabled = true
 
-    });
+        var c = cache(server.object)
+        var data = 'ds content for redis'
 
-    it('should write to a redis client if configured', function(done) {
+        var redisClient = redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3})
 
-      ds.schema.datasource.caching.enabled = true;
+        redisClient.set = function set (key, chunk, done) {}
 
-      var c = cache(server.object);
-      var data = 'ds content from filesystem';
+        redisClient.append = function append (key, chunk, done) {
+          chunk.toString().should.eql(data)
+        }
 
-      var redisClient = redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3});
+        c.redisClient = redisClient
 
-      redisClient.set = function set(key, chunk, done) {
-      };
+        var dsCache = new datasourceCache(ds)
 
-      redisClient.append = function append(key, chunk, done) {
-        chunk.toString().should.eql(data);
-      };
-
-      c.redisClient = redisClient;
-
-      var dsCache = new datasourceCache(ds);
-
-      dsCache.cacheResponse(data, function() {
-          done();
-      });
-    });
-  });
-
-});
+        dsCache.cacheResponse(data, function () {
+          done()
+        })
+      })
+    })
+  })
+})

@@ -145,7 +145,6 @@ RemoteProvider.prototype.handleResponse = function handleResponse(res, done) {
   }
 }
 
-
 /**
  * keepAliveAgent - returns http|https module depending on config
  *
@@ -178,6 +177,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
     path: url.parse(this.endpoint).path,
     method: 'GET'
   }
+
   this.options.agent = this.keepAliveAgent(this.options.protocol)
   this.options.protocol = this.options.protocol + ':'
 
