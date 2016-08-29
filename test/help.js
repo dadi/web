@@ -160,9 +160,10 @@ TestHelper.prototype.startServer = function (pages) {
       pages = this.setUpPages()
     }
 
-    Server.start(function () {
-      setTimeout(function () {
-        pages.forEach(function (page) {
+    Server.start(() => {
+      var idx = 0
+      setTimeout(() => {
+        pages.forEach((page) => {
           var controller = Controller(page, options)
 
           Server.addComponent({
@@ -170,9 +171,11 @@ TestHelper.prototype.startServer = function (pages) {
             routes: page.routes,
             component: controller
           }, false)
-        })
 
-        return resolve('')
+          if (++idx === pages.length) {
+            return resolve('')
+          }
+        })
       }, 200)
     })
   })

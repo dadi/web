@@ -44,7 +44,6 @@ var Controller = function (page, options, meta) {
   })
 
   this.attachEvents(() => {
-
   })
 }
 
@@ -173,7 +172,6 @@ Controller.prototype.process = function process (req, res, next) {
   }
 
   self.loadData(req, res, data, function (err, data, dsResponse) {
-
     // return 404 if requiredDatasources contain no data
     if (!self.requiredDataPresent(data)) {
       return next()
@@ -329,9 +327,9 @@ Controller.prototype.loadData = function (req, res, data, done) {
 
         help.timer.start('datasource: ' + ds.name)
 
-        ds.provider.load(req.url, function(err, result, dsResponse) {
-          help.timer.stop('datasource: ' + ds.name);
-          if (err) return done(err);
+        ds.provider.load(req.url, function (err, result, dsResponse) {
+          help.timer.stop('datasource: ' + ds.name)
+          if (err) return done(err)
 
           if (dsResponse) {
             return done(null, result, dsResponse)
@@ -455,10 +453,9 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     }
 
     // needed?
-    //chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {});
-    chainedDatasource.provider.load(req.url, function(err, result) {
-
-      help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)');
+    // chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {})
+    chainedDatasource.provider.load(req.url, function (err, result) {
+      help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)')
 
       if (result) {
         try {

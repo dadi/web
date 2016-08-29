@@ -25,7 +25,6 @@ WordPressProvider.prototype.initialise = function initialise(datasource, schema)
   })
 }
 
-
 /**
  * buildEndpoint
  *

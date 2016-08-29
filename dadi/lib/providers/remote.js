@@ -47,7 +47,6 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint() {
   this.endpoint = this.processDatasourceParameters(this.schema, uri)
 }
 
-
 /**
  * getHeaders
  *
@@ -102,7 +101,6 @@ RemoteProvider.prototype.getHeaders = function getHeaders(done) {
     }
   }
 }
-
 
 /**
  * handleResponse
@@ -246,7 +244,6 @@ RemoteProvider.prototype.processDatasourceParameters = function processDatasourc
   return uri + query.slice(0, -1)
 }
 
-
 /**
  * processOutput
  *
@@ -287,7 +284,6 @@ RemoteProvider.prototype.processOutput = function processOutput(res, data, done)
   return done(null, data)
 }
 
-
 /**
  * processRequest - called on every request, rebuild buildEndpoint
  *
@@ -297,7 +293,6 @@ RemoteProvider.prototype.processOutput = function processOutput(res, data, done)
 RemoteProvider.prototype.processRequest = function processRequest(req) {
   this.buildEndpoint()
 }
-
 
 /**
  * processSortParameter
@@ -324,7 +319,6 @@ RemoteProvider.prototype.processSortParameter = function processSortParameter(ob
 
   return sort
 }
-
 
 /**
  * setAuthStrategy
