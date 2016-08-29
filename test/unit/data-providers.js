@@ -79,6 +79,158 @@ describe('Data Providers', function (done) {
   })
 
   describe('Static', function (done) {
+    it('should return the data as-is when it is an object', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
+      dsSchema.datasource.source.data = {
+        x: 100
+      }
+
+      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['static']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              datasource.Datasource.prototype.loadDatasource.restore()
+
+              should.exist(res.body.static)
+              res.body.static.should.eql({x:100})
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return the number of records specified by the count property', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
+
+      var dsConfig = {
+        count: 2,
+        sort: {},
+        search: {},
+        fields: []
+      }
+
+      dsSchema = {
+        datasource: _.extend(dsSchema.datasource, dsConfig)
+      }
+
+      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['static']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.static)
+              res.body.static.should.be.Array
+              res.body.static.length.should.eql(2)
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should only return the fields specified by the fields property', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
+
+      var dsConfig = {
+        count: 2,
+        sort: {},
+        search: {},
+        fields: ["title", "director"]
+      }
+
+      dsSchema = {
+        datasource: _.extend(dsSchema.datasource, dsConfig)
+      }
+
+      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['static']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.static)
+              res.body.static.should.be.Array
+              res.body.static.length.should.eql(2)
+
+              var result = res.body.static[0]
+              Object.keys(result).should.eql(["title", "director"])
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should only return the data matching the search property', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
+
+      var dsConfig = {
+        search: { "author": "Roger Ebert" }
+      }
+
+      dsSchema = {
+        datasource: _.extend(dsSchema.datasource, dsConfig)
+      }
+
+      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['static']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.static)
+              res.body.static.should.be.Array
+              res.body.static.length.should.eql(2)
+
+              res.body.static.forEach((result) => {
+                result.author.should.eql('Roger Ebert')
+              })
+
+              done()
+            })
+          })
+        })
+      })
+    })
   })
 
   describe('Twitter', function (done) {

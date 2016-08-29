@@ -33,14 +33,14 @@ StaticProvider.prototype.load = function load(requestUrl, done) {
       const sortDir = this.schema.datasource.sort.order
       const search = this.schema.datasource.search
       const count = this.schema.datasource.count
-      const fields = this.schema.datasource.fields
+      const fields = this.schema.datasource.fields || []
 
       if (search) data = _.where(data, search)
       if (sortField) data = _.sortBy(data, sortField)
       if (sortDir === 'desc') data = data.reverse()
 
       if (count) data = _.first(data, count)
-      if (fields) data = _.chain(data).selectFields(fields.join(',')).value()
+      if (fields && !_.isEmpty(fields)) data = _.chain(data).selectFields(fields.join(',')).value()
     }
 
     done(null, data)
