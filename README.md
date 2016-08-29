@@ -1,6 +1,6 @@
 # DADI Web
 
-[![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)&nbsp;[![coverage](https://img.shields.io/badge/coverage-57%25-red.svg?style=flat-square)](https://github.com/dadi/web)&nbsp;[![build](http://ci.dadi.technology/dadi/web/badge?branch=master&service=shield)](http://ci.dadi.technology/dadi/web)
+[![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)&nbsp;[![coverage](https://img.shields.io/badge/coverage-60%25-yellow.svg?style=flat-square)](https://github.com/dadi/web)&nbsp;[![build](http://ci.dadi.technology/dadi/web/badge?branch=master&service=shield)](http://ci.dadi.technology/dadi/web)
 
 ## Overview
 
