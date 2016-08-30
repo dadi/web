@@ -153,25 +153,7 @@ Router.prototype.constrain = function (route, constraint) {
   if (this.handlers[constraint]) {
     this.constraints[route] = this.handlers[constraint]
     log.info({module: 'router'}, "Added route constraint function '%s' for '%s'", constraint, route)
-  }
-  // else {
-  //
-  //   // try to build a datasource from the provided constraint
-  //   var datasource = new Datasource(route, constraint, this.options, function(err, ds) {
-  //     if (err) {
-  //       log.error({module: 'router'}, err)
-  //     }
-  //
-  //     c = ds
-  //     message = "Added route constraint datasource '%s' for '%s'"
-  //   })
-  // }
-
-  // if (c) {
-  //   this.constraints[route] = c
-  //   log.info({module: 'router'}, message, constraint, route)
-  // }
-  else {
+  } else {
     var error = "Route constraint '" + constraint + "' not found. Is it defined in '" + this.options.routesPath + "/constraints.js'?"
     var err = new Error(error)
     err.name = 'Router'
@@ -237,7 +219,6 @@ Router.prototype.validate = function (route, req, res) {
     })
 
     paramsPromise.then(() => {
-      console.log('> test constraint')
       this.testConstraint(route.path, req, res, (passed) => {
         if (passed) {
           return resolve('')
@@ -299,35 +280,6 @@ Router.prototype.testConstraint = function (route, req, res, callback) {
   } else {
     return callback(true)
   }
-
-
-      // datasource.processRequest(datasource.page.name, req)
-      // datasource.provider.load(req.url, function(err, result) {
-      //
-      //   help.timer.stop('router constraint: ' + datasource);
-      //
-      //   if (err) {
-      //     return callback(err);
-      //   }
-      //
-      //   if (result) {
-      //     try {
-      //       var results = JSON.parse(result);
-      //
-      //       if (results && results.results && results.results.length > 0) {
-      //         return callback(true);
-      //       }
-      //       else {
-      //         return callback(false);
-      //       }
-      //     }
-      //     catch (err) {
-      //       log.error({module: 'router'}, err);
-      //       return callback(false);
-      //     }
-      //   }
-      // });
-     //}
 }
 
 Router.prototype.loadRewriteModule = function () {
