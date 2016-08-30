@@ -239,6 +239,28 @@ var conf = convict({
       doc: "",
       format: Boolean,
       default: false
+    },
+    clientRender: {
+      enabled: {
+        doc: "If true, compiled templates are made available to the client-side",
+        format: Boolean,
+        default: false
+      },
+      format: {
+        doc: "Defines whether compiled templates are written to individual JS files ('separate') or combined into a single one ('combined')",
+        format: ["separate", "combined"],
+        default: "separate"
+      },
+      path: {
+        doc: "The location where compiled templates should be written to, relative to 'public'. This should be a folder when 'format' is 'separate' and a file when 'combined'",
+        format: String,
+        default: "templates"
+      },
+      whitelist: {
+        doc: "When defined, only templates with names matching an entry in whitelist will be made available to the client. Wildcards supported.",
+        format: Array,
+        default: []
+      }
     }
   },
   headers: {

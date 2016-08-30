@@ -50,8 +50,6 @@ Page.prototype.constructRoutes = function (schema) {
     else if (schema.route.paths && typeof schema.route.paths === 'string') {
       routes = [{ 'path': schema.route.paths }]
       if (schema.route.constraint) routes[0].constraint = schema.route.constraint
-    } else {
-      routes = schema.route
     }
   }
 
@@ -126,8 +124,8 @@ function checkRouteSetting (schema, name) {
  * @param {String} name - the page name
  * @api private
  */
-function checkCacheSetting (schema, name) {
-  if (schema.page.cache) {
+function checkCacheSetting(schema, name) {
+  if (schema.page.cache !== undefined) {
     schema.settings.cache = schema.page.cache
     delete schema.page.cache
 

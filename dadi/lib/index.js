@@ -7,8 +7,7 @@ var bodyParser = require('body-parser')
 var colors = require('colors')
 var compress = require('compression')
 var crypto = require('crypto')
-var dust = require('dustjs-linkedin')
-var dustHelpers = require('dustjs-helpers')
+var dust = require('./dust')
 var enableDestroy = require('server-destroy')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
@@ -26,8 +25,8 @@ if (nodeVersion < 1) {
   mongoStore = require('connect-mongo/es5')(session)
 } else {
   mongoStore = require('connect-mongo')(session)
+  var RedisStore = require('connect-redis')(session)
 }
-var RedisStore = require('connect-redis')(session)
 
 // let's ensure there's at least a dev config file here
 var devConfigPath = __dirname + '/../../config/config.development.json'
@@ -45,7 +44,6 @@ var auth = require(__dirname + '/auth')
 var cache = require(__dirname + '/cache')
 var Controller = require(__dirname + '/controller')
 var datasource = require(__dirname + '/datasource')
-var dustHelpersExtension = require(__dirname + '/dust/helpers.js')
 var forceDomain = require(__dirname + '/controller/forceDomain')
 var help = require(__dirname + '/help')
 var middleware = require(__dirname + '/middleware')
@@ -212,10 +210,10 @@ Server.prototype.start = function (done) {
   })
 
   // dust configuration
-  dust.isDebug = config.get('dust.debug')
-  dust.debugLevel = config.get('dust.debugLevel')
-  dust.config.cache = config.get('dust.cache')
-  dust.config.whitespace = config.get('dust.whitespace')
+  dust.setDebug(config.get('dust.debug'))
+  dust.setDebugLevel(config.get('dust.debugLevel'))
+  dust.setConfig('cache', config.get('dust.cache'))
+  dust.setConfig('whitespace', config.get('dust.whitespace'))
 
   this.readyState = 1
 
@@ -293,8 +291,8 @@ Server.prototype.loadPaths = function (paths) {
   options.helpersPath = path.resolve(paths.helpers || __dirname + '/../../app/utils/helpers')
 
   options.tokenWalletsPath = path.resolve(paths.tokenWallets || __dirname + '/../../.wallet')
-
   if (paths.media) options.mediaPath = path.resolve(paths.media)
+
   if (paths.public) options.publicPath = path.resolve(paths.public)
 
   _.each(options, (path, key) => {
@@ -351,7 +349,6 @@ Server.prototype.loadApi = function (options) {
   })
 
   this.ensureDirectories(options, (text) => {
-
     // load routes
     this.updatePages(options.pagePath, options, false)
 
@@ -359,7 +356,7 @@ Server.prototype.loadApi = function (options) {
     this.initMiddleware(options.middlewarePath, options)
 
     // compile all dust templates
-    this.dustCompile(options)
+    this.compile(options)
 
     this.addMonitor(options.datasourcePath, (dsFile) => {
       this.updatePages(options.pagePath, options, true)
@@ -371,11 +368,11 @@ Server.prototype.loadApi = function (options) {
 
     this.addMonitor(options.pagePath, (pageFile) => {
       this.updatePages(options.pagePath, options, true)
-      this.dustCompile(options)
+      this.compile(options)
     })
 
     this.addMonitor(options.partialPath, (partialFile) => {
-      this.dustCompile(options)
+      this.compile(options)
     })
 
     this.addMonitor(options.routesPath, (file) => {
@@ -475,7 +472,6 @@ Server.prototype.addComponent = function (options, reload) {
       this.removeComponent(route.path)
     })
   }
-
   _.each(options.routes, (route) => {
 
     // only add a route once
@@ -486,7 +482,7 @@ Server.prototype.addComponent = function (options, reload) {
     // configure "index" route
     if (route.path === '/index') {
       this.app.use('/', (req, res, next) => {
-         if (options.component[req.method.toLowerCase()]) {
+        if (options.component[req.method.toLowerCase()]) {
           return options.component[req.method.toLowerCase()](req, res, next)
         }
 
@@ -551,103 +547,48 @@ Server.prototype.removeMonitor = function (filepath) {
   delete this.monitors[filepath]
 }
 
-Server.prototype.dustCompile = function (options) {
-  var pagePath = options.pagePath
+Server.prototype.compile = function (options) {
   var templatePath = options.pagePath
   var partialPath = options.partialPath
 
+  var self = this
+
   // reset the dust cache so
   // templates can be reloaded
-  dust.cache = {}
+  dust.clearCache()
 
-  _.each(this.components, (component) => {
-    try {
-      var filepath = path.join(templatePath, component.page.template)
-      var template = fs.readFileSync(filepath, 'utf8')
-      var name = component.page.template.slice(0, component.page.template.indexOf('.'))
-      var compiled = dust.compile(template, name, true)
-      dust.loadSource(compiled)
-    } catch (e) {
-      var message = '\nCouldn\'t compile Dust template at "' + filepath + '". ' + e + '\n'
-      console.log(message)
-      throw e
-    }
+  // Get a list of templates to render based on the registered components
+  var componentTemplates = Object.keys(self.components).map(function (route) {
+    return path.join(templatePath, self.components[route].page.template)
   })
 
-  // load templates in the template folder that haven't already been loaded
-  var templates = fs.readdirSync(templatePath)
-  templates.map(function (file) {
-    return path.join(templatePath, file)
-  }).filter(function (file) {
-    return path.extname(file) === '.dust'
-  }).forEach(function (file) {
-    var pageTemplateName = path.basename(file, '.dust')
-
-    if (!_.find(_.keys(dust.cache), function (k) { return k.indexOf(pageTemplateName) > -1; })) {
-      log.info({module: 'server'}, "Template not found in cache, loading '%s' (%s)", pageTemplateName, file)
-
-      var template = fs.readFileSync(file, 'utf8')
-
-      try {
-        var compiled = dust.compile(template, pageTemplateName, true)
-        dust.loadSource(compiled)
-      } catch (e) {
-        var message = '\nCouldn\'t compile Dust template "' + pageTemplateName + '". ' + e + '\n'
-        console.log(message)
-        throw e
-      }
-    }
-  })
-
-  var loadPartialsDirectory = function (directory) {
-    directory = directory || ''
-
-    var directoryList = fs.readdirSync(path.join(partialPath, directory))
-
-    directoryList.forEach(function (itemPath) {
-      var item = fs.statSync(path.join(partialPath, directory, itemPath))
-
-      if (item.isDirectory()) {
-        loadPartialsDirectory(directory + itemPath + '/')
-      } else {
-        // Load the template from file
-        var name = itemPath.slice(0, itemPath.lastIndexOf('.'))
-        var template = fs.readFileSync(path.join(partialPath, directory, itemPath), 'utf8')
-
-        try {
-          var compiled = dust.compile(template, 'partials/' + directory + name, true)
-          dust.loadSource(compiled)
-        } catch (e) {
-          var message = '\nCouldn\'t compile Dust partial at "' + path.join(partialPath, directory, itemPath) + '". ' + e + '\n'
-          console.log(message)
-          throw e
-        }
-      }
+  // Load component templates
+  dust.loadFiles(componentTemplates)
+    .then(function () {
+      // Load templates in the template folder that haven't already been loaded
+      return dust.loadDirectory(templatePath)
     })
-  }
-
-  loadPartialsDirectory()
-
-  // handle templates that are requested but not found in the cache
-  // `templateName` is the name of the template requested by dust.render / dust.stream
-  // or via a partial include, like {> "hello-world" /}
-  dust.onLoad = function (templateName, opts, callback) {
-    var template = templateName + '.dust'
-    if (template.indexOf('partials') > -1) {
-      template = partialPath + '/' + template.replace('partials/', '')
-    } else {
-      template = templatePath + '/' + template
-    }
-
-    fs.readFile(template, { encoding: 'utf8' }, function (err, data) {
-      if (err) {
-        // no template file found?
-        return callback(err, null)
-      }
-
-      return callback(null, data)
+    .then(function () {
+      // Load partials
+      return dust.loadDirectory(partialPath, 'partials', true)
     })
-  }
+    .then(function () {
+      // Load filters
+      return dust.requireDirectory(options.filtersPath)
+    })
+    .then(function () {
+      // Load helpers
+      return dust.requireDirectory(options.helpersPath)
+    })
+    .then(function () {
+      // Write client-side files
+      dust.writeClientsideFiles()
+    })
+    .catch(function (err) {
+      log.error({module: 'server'}, err)
+
+      throw err
+    })
 }
 
 Server.prototype.getSessionStore = function (sessionConfig, env) {
@@ -806,8 +747,8 @@ function onListening (e) {
       startText += '  API:         '.green + config.get('api.host') + ':' + config.get('api.port') + '\n'
     } else {
       startText += '  API:         '.green + 'Not found'.red + '\n'
+      startText += '  ----------------------------\n'
     }
-    startText += '  ----------------------------\n'
 
     if (env !== 'test') {
       console.log(startText)

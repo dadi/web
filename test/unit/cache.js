@@ -17,6 +17,10 @@ describe('Cache', function (done) {
     })
   })
 
+  afterEach(function(done) {
+    TestHelper.stopServer(done)
+  })
+
   it('should be a function', function (done) {
     cache.should.be.Function
     done()

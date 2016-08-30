@@ -39,6 +39,7 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.10.6",
     "mongodb": "1.4.7",
+    "node-uuid": "latest",
     "path-to-regexp": "^1.2.1",
     "perfy": "^1.1.0",
     "pluralist": "^1.0.3",
@@ -56,9 +57,11 @@
     "server-destroy": "1.0.1",
     "stack-trace": "latest",
     "toobusy-js": "^0.4.2",
+    "uglify-js": "^2.6.2",
     "underscore": "~1.6.0",
     "underscore.string": "^3.2.2",
-    "validate-commit-message": "^3.0.1"
+    "validate-commit-message": "^3.0.1",
+    "wildcard": "^1.1.2"
   },
   "devDependencies": {
     "coveralls": "^2.11.4",
