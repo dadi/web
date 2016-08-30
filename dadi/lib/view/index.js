@@ -3,10 +3,10 @@
  */
 var _ = require('underscore')
 var beautify_html = require('js-beautify').html
-var dust = require('dustjs-linkedin')
-//var dustHelpers = require('dustjs-helpers')
 var fs = require('fs')
 var path = require('path')
+
+var dust = require(__dirname + '/../dust')
 
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
 var help = require(__dirname + '/../help')
@@ -31,7 +31,7 @@ View.prototype.render = function (done) {
     // Return the raw data
     return done(null, this.data)
   } else {
-    dust.setConfig('whitespace', this.page.keepWhitespace);
+    dust.setConfig('whitespace', this.page.keepWhitespace)
 
     // Render the compiled template
     dust.render(this.pageTemplate, this.data, (err, result) => {
