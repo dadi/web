@@ -50,10 +50,8 @@ Page.prototype.constructRoutes = function (schema) {
     else if (schema.route.paths && typeof schema.route.paths === 'string') {
       routes = [{ 'path': schema.route.paths }]
       if (schema.route.constraint) routes[0].constraint = schema.route.constraint
-    } else {
-      routes = schema.route
     }
-    }
+  }
 
   // add default params to each route
   _.each(routes, (route) => {
