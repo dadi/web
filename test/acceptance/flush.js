@@ -15,7 +15,7 @@ var Server = require(__dirname + '/../../dadi/lib');
 var Page = require(__dirname + '/../../dadi/lib/page');
 var help = require(__dirname + '/../help');
 var libHelp = require(__dirname + '/../../dadi/lib/help');
-var config = require(__dirname + '/../../config.js');
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port');
 var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port');
@@ -109,8 +109,8 @@ describe.skip('Cache', function(done) {
       page.template = 'test_cache_flush.dust';
 
       // add two routes to the page for testing specific path cache clearing
-      page.route.paths[0] = '/test';
-      page.route.paths[1] = '/extra_test';
+      page.routes[0].path = '/test';
+      page.routes.push({path: '/extra_test'})
 
       page.events = [];
       delete page.route.constraint;
@@ -121,7 +121,7 @@ describe.skip('Cache', function(done) {
       page2.template = 'test.dust';
 
       // add two routes to the page for testing specific path cache clearing
-      page2.route.paths[0] = '/page2';
+      page2.routes[0].path = '/page2';
       page2.events = [];
       delete page2.route.constraint;
 

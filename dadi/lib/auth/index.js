@@ -3,7 +3,7 @@
  */
 var config = require(__dirname + '/../../../config.js');
 var help = require(__dirname + '/../help');
-var log = require(__dirname + '/../log');
+var log = require('@dadi/logger');
 var mkdirp = require('mkdirp');
 var path = require('path');
 

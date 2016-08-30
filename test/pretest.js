@@ -1,26 +1,25 @@
-var fs = require('fs');
-var path = require('path');
-var colors = require('colors');
+var fs = require('fs')
+var path = require('path')
+var colors = require('colors')
 
-var testConfigPath = './config/config.test.json';
-var testConfigSamplePath = './config/config.test.json.sample';
+var testConfigPath = './config/config.test.json'
+var testConfigSamplePath = './config/config.test.json.sample'
 
-function loadConfig() {
+function loadConfig () {
   try {
-    var testConfig = fs.readFileSync(testConfigPath, { encoding: 'utf-8'});
-  }
-  catch (err) {
+    var testConfig = fs.readFileSync(testConfigPath, { encoding: 'utf-8'})
+  } catch (err) {
     if (err.code === 'ENOENT') {
-      var testConfigSample = fs.readFileSync(testConfigSamplePath, { encoding: 'utf-8'});
+      var testConfigSample = fs.readFileSync(testConfigSamplePath, { encoding: 'utf-8'})
 
-      fs.writeFileSync(testConfigPath, testConfigSample);
-      loadConfig();
+      fs.writeFileSync(testConfigPath, testConfigSample)
+      loadConfig()
     }
   }
 }
 
-function stop() {
-  process.exit(1);
+function stop () {
+  process.exit(1)
 }
 
-loadConfig();
+loadConfig()

@@ -11,7 +11,7 @@ var conf = convict({
       default: "DADI Web (Repo Default)"
     }
   },
-	server: {
+  server: {
     host: {
       doc: "The IP address the web application will run on",
       format: '*',
@@ -32,9 +32,45 @@ var conf = convict({
       doc: "The number of seconds to wait before closing an idle socket",
       format: Number,
       default: 120
+    },
+    protocol: {
+      doc: "The protocol the web application will use",
+      format: String,
+      default: "http",
+      env: "PROTOCOL"
+    },
+    sslPassphrase: {
+      doc: "The passphrase of the SSL private key",
+      format: String,
+      default: "",
+      env: "SSL_PRIVATE_KEY_PASSPHRASE"
+    },
+    sslPrivateKeyPath: {
+      doc: "The filename of the SSL private key",
+      format: String,
+      default: "",
+      env: "SSL_PRIVATE_KEY_PATH"
+    },
+    sslCertificatePath: {
+      doc: "The filename of the SSL certificate",
+      format: String,
+      default: "",
+      env: "SSL_CERTIFICATE_PATH"
+    },
+    sslIntermediateCertificatePath: {
+      doc: "The filename of an SSL intermediate certificate, if any",
+      format: String,
+      default: "",
+      env: "SSL_INTERMEDIATE_CERTIFICATE_PATH"
+    },
+    sslIntermediateCertificatePaths: {
+      doc: "The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)",
+      format: Array,
+      default: [],
+      env: "SSL_INTERMEDIATE_CERTIFICATE_PATHS"
     }
   },
-	api: {
+  api: {
     host: {
       doc: "The IP address the DADI API application runs on",
       format: '*',
@@ -57,7 +93,7 @@ var conf = convict({
     }
   },
   auth: {
-  	tokenUrl: {
+    tokenUrl: {
       doc: "",
       format: String,
       default: "/token"
@@ -70,34 +106,73 @@ var conf = convict({
     clientId: {
       doc: "",
       format: String,
-      default: "testClient"
+      default: "testClient",
+      env: "AUTH_TOKEN_ID"
     },
     secret: {
       doc: "",
       format: String,
-      default: "superSecret"
+      default: "superSecret",
+      env: "AUTH_TOKEN_SECRET"
     }
   },
   aws: {
     accessKeyId: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_ACCESS_KEY"
     },
     secretAccessKey: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_SECRET_KEY"
     },
     region: {
       doc: "",
       format: String,
-      default: ""
+      default: "",
+      env: "AWS_REGION"
+    }
+  },
+  twitter: {
+    consumerKey: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_CONSUMER_KEY"
+    },
+    consumerSecret: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_CONSUMER_SECRET"
+    },
+    accessTokenKey: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_ACCESS_TOKEN_KEY"
+    },
+    accessTokenSecret: {
+      doc: "",
+      format: String,
+      default: "",
+      env: "TWITTER_ACCESS_TOKEN_SECRET"
+    }
+  },
+  wordpress: {
+    bearerToken: {
+      doc: "A pregenerated oauth access bearer token",
+      format: String,
+      default: "",
+      env: "WORDPRESS_BEARER_TOKEN"
     }
   },
   caching: {
     ttl: {
-      doc: "",
+      doc: "The time, in seconds, after which cached data is considered stale",
       format: Number,
       default: 300
     },
@@ -127,22 +202,25 @@ var conf = convict({
       host: {
         doc: "The Redis server host",
         format: String,
-        default: "127.0.0.1"
+        default: "127.0.0.1",
+        env: "REDIS_HOST"
       },
       port: {
         doc: "The port for the Redis server",
         format: 'port',
-        default: 6379
+        default: 6379,
+        env: "REDIS_PORT"
       },
       password: {
         doc: "",
         format: String,
-        default: ""
+        default: "",
+        env: "REDIS_PASSWORD"
       }
     }
   },
   dust: {
-  	cache: {
+    cache: {
       doc: "If true, compiled templates are saved to the Dust cache. Recommended setting: true",
       format: Boolean,
       default: true
@@ -202,7 +280,7 @@ var conf = convict({
     }
   },
   logging: {
-  	enabled: {
+    enabled: {
       doc: "If true, logging is enabled using the following settings.",
       format: Boolean,
       default: true
@@ -227,31 +305,11 @@ var conf = convict({
       format: String,
       default: "log"
     },
-    fileRotationPeriod: {
-      doc: "The period at which to rotate the log file. This is a string of the format '$number$scope' where '$scope' is one of 'ms' (milliseconds), 'h' (hours), 'd' (days), 'w' (weeks), 'm' (months), 'y' (years). The following names can be used 'hourly' (= '1h'), 'daily (= '1d'), 'weekly' ('1w'), 'monthly' ('1m'), 'yearly' ('1y').",
-      format: String,
-      default: ""  // disabled
-    },
-    fileRetentionCount: {
-      doc: "The number of rotated log files to keep.",
-      format: Number,
-      default: 7    // keep 7 back copies
-    },
     accessLog: {
       enabled: {
         doc: "If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`.",
         format: Boolean,
         default: true
-      },
-      fileRotationPeriod: {
-        doc: "The period at which to rotate the access log file. This is a string of the format '$number$scope' where '$scope' is one of 'ms' (milliseconds), 'h' (hours), 'd' (days), 'w' (weeks), 'm' (months), 'y' (years). The following names can be used 'hourly' (= '1h'), 'daily (= '1d'), 'weekly' ('1w'), 'monthly' ('1m'), 'yearly' ('1y').",
-        format: String,
-        default: "1d"  // daily rotation
-      },
-      fileRetentionCount: {
-        doc: "The number of rotated log files to keep.",
-        format: Number,
-        default: 7    // keep 7 back copies
       },
       kinesisStream: {
         doc: "An AWS Kinesis stream to write to log records to.",
@@ -303,7 +361,8 @@ var conf = convict({
     secret: {
       doc: "This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.",
       format: String,
-      default: "dadiwebsecretsquirrel"
+      default: "dadiwebsecretsquirrel",
+      env: "SESSION_SECRET"
     },
     resave: {
       doc: "Forces the session to be saved back to the session store, even if the session was never modified during the request.",
@@ -339,6 +398,16 @@ var conf = convict({
       format: String,
       default: ""
     },
+    loadDatasourceAsFile: {
+      doc: "",
+      format: Boolean,
+      default: false
+    },
+    datasourceRefreshTime: {
+      format: Number,
+      default: 5,
+      doc: "How often to refresh the datasource in minutes"
+    },
     path: {
       doc: "",
       format: String,
@@ -365,6 +434,18 @@ var conf = convict({
       default: ""
     }
   },
+  security: {
+    useSSL: {
+      doc: "Deprecated. Set server.protocol to https to use SSL.",
+      format: Boolean,
+      default: false
+    },
+    trustProxy: {
+      doc: "If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address",
+      format: "*",
+      default: true
+    }
+  },
   env: {
     doc: "The applicaton environment.",
     format: ["production", "development", "test", "qa"],
@@ -383,6 +464,11 @@ var conf = convict({
     default: false
   },
   toobusy: {
+    enabled: {
+      doc: "If true, server will respond with HTTP 503 if the server is deemed too busy.",
+      format: Boolean,
+      default: false
+    },
     maxLag: {
       doc: "The maximum amount of time in milliseconds that the event queue is behind before we consider the process 'too busy'.",
       format: Number,
@@ -394,6 +480,11 @@ var conf = convict({
       default: 500
     }
   },
+  cluster: {
+    doc: "If true, Web runs in cluster mode, starting a worker for each CPU core",
+    format: Boolean,
+    default: false
+  },
   debug: {
     doc: "If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.",
     format: Boolean,
@@ -402,8 +493,16 @@ var conf = convict({
   secret: {
     doc: "A value that must be passed to requests for the /config route, which allows viewing the application config in the browser",
     format: String,
-    default: "1dc10073-ca36-4373-a646-0d1092caf4a5"
+    default: "1dc10073-ca36-4373-a646-0d1092caf4a5",
+    env: "CONFIG_SECRET"
   },
+  data: {
+    preload: {
+      doc: "",
+      format: Array,
+      default: []
+    }
+  }
 });
 
 // Load environment dependent configuration
@@ -429,3 +528,7 @@ conf.updateConfigDataForDomain = function(domain) {
 conf.validate({strict: false});
 
 module.exports = conf;
+module.exports.configPath = function() {
+  var env = conf.get('env') || process.env['NODE_ENV']
+  return './config/config.' + env + '.json';
+}
