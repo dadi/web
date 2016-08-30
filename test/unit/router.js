@@ -94,7 +94,7 @@ describe('Router', function (done) {
           done()
         })
       })
-      
+
       it('should redirect to lowercased URL if the current request URL is not all lowercase', function (done) {
         var routerConfig = {
           rewrites: {
@@ -306,6 +306,216 @@ describe('Router', function (done) {
       should.throws(function () { server.app.Router.constrain(page.routes[0].path, page.route.constraint); }, Error)
 
       done()
+    })
+  })
+
+  describe('Page Routing', function () {
+    var pageRouteConfig
+
+    before(function(done) {
+      var routerConfig = {
+        rewrites: {
+          forceTrailingSlash: false,
+          forceLowerCase: true,
+          allowJsonView: true,
+          loadDatasourceAsFile: false,
+          datasource: ''
+        }
+      }
+
+      TestHelper.updateConfig(routerConfig).then(() => {
+        done()
+      })
+    })
+
+    describe('`in` Parameter', function () {
+      before(function() {
+        pageRouteConfig = {
+          routes: [
+            {
+              path: '/test/:title',
+              params: [
+                {
+                  param: 'title',
+                  in: ['war-and-peace']
+                }
+              ]
+            }
+          ]
+        }
+      })
+
+      it('should return 200 OK if the parameter matches one in the array', function(done) {
+        TestHelper.disableApiConfig().then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].routes = pageRouteConfig.routes
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client.get('/test/war-and-peace')
+            .end(function (err, res) {
+              if (err) return done(err)
+              res.statusCode.should.eql(200)
+              done()
+            })
+          })
+        })
+      })
+
+      it('should return 404 NOT FOUND if the parameter does not match one in the array', function(done) {
+        TestHelper.disableApiConfig().then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].routes = pageRouteConfig.routes
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client.get('/test/to-kill-a-mockingbird')
+            .end(function (err, res) {
+              if (err) return done(err)
+              res.statusCode.should.eql(404)
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    describe('`preload` Parameter', function () {
+      before(function() {
+        pageRouteConfig = {
+          routes: [
+            {
+              path: '/test/:make',
+              params: [
+                {
+                  param: "make",
+                  preload: {
+                    source: "car-makes",
+                    field: "make"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      })
+
+      it('should return 200 OK if the parameter matches preloaded data', function(done) {
+        TestHelper.updateConfig({data: { preload: ['car-makes']}}).then(() => {
+          TestHelper.disableApiConfig().then(() => {
+            var pages = TestHelper.setUpPages()
+            pages[0].routes = pageRouteConfig.routes
+
+            // provide API response
+            var results = { results: [{ "make": "ford" }, { "make": "mazda" }, { "make": "toyota" }] }
+            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            providerStub.onFirstCall().yields(null, results)
+
+            TestHelper.startServer(pages).then(() => {
+              var client = request(connectionString)
+              client.get('/test/mazda')
+              .end(function (err, res) {
+                if (err) return done(err)
+                providerStub.restore()
+                res.statusCode.should.eql(200)
+                done()
+              })
+            })
+          })
+        })
+      })
+
+      it('should return 404 NOT FOUND if the parameter does not match preloaded data', function(done) {
+        TestHelper.updateConfig({data: { preload: ['car-makes']}}).then(() => {
+          TestHelper.disableApiConfig().then(() => {
+            var pages = TestHelper.setUpPages()
+            pages[0].routes = pageRouteConfig.routes
+
+            // provide API response
+            var results = { results: [{ "make": "ford" }, { "make": "mazda" }, { "make": "toyota" }] }
+            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            providerStub.onFirstCall().yields(null, results)
+
+            TestHelper.startServer(pages).then(() => {
+              var client = request(connectionString)
+              client.get('/test/mitsubishi')
+              .end(function (err, res) {
+                if (err) return done(err)
+                providerStub.restore()
+                res.statusCode.should.eql(404)
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+
+    describe('`fetch` Parameter', function () {
+      before(function() {
+        pageRouteConfig = {
+          routes: [
+            {
+              path: '/test/:make',
+              params: [
+                {
+                  fetch: "car-makes-unchained"
+                }
+              ]
+            }
+          ]
+        }
+      })
+
+      it('should return 200 OK if the parameter matches a datasource lookup', function(done) {
+        TestHelper.updateConfig({data: { preload: []}}).then(() => {
+          TestHelper.disableApiConfig().then(() => {
+            var pages = TestHelper.setUpPages()
+            pages[0].routes = pageRouteConfig.routes
+
+            // provide API response
+            var results = { results: [{ "name": "ford" }, { "name": "mazda" }, { "name": "toyota" }] }
+            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            providerStub.onFirstCall().yields(null, results)
+
+            TestHelper.startServer(pages).then(() => {
+              var client = request(connectionString)
+              client.get('/test/ford')
+              .end(function (err, res) {
+                if (err) return done(err)
+                providerStub.restore()
+                res.statusCode.should.eql(200)
+                done()
+              })
+            })
+          })
+        })
+      })
+
+      it('should return 404 NOT FOUND if the parameter does not match a datasource lookup', function(done) {
+        TestHelper.updateConfig({data: { preload: []}}).then(() => {
+          TestHelper.disableApiConfig().then(() => {
+            var pages = TestHelper.setUpPages()
+            pages[0].routes = pageRouteConfig.routes
+
+            // provide API response
+            var results = { results: [] }
+            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            providerStub.onFirstCall().yields(null, results)
+
+            TestHelper.startServer(pages).then(() => {
+              var client = request(connectionString)
+              client.get('/test/mitsubishi')
+              .end(function (err, res) {
+                if (err) return done(err)
+                providerStub.restore()
+                res.statusCode.should.eql(404)
+                done()
+              })
+            })
+          })
+        })
+      })
     })
   })
 

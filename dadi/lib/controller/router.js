@@ -214,11 +214,15 @@ Router.prototype.validate = function (route, req, res) {
             return record[param.preload.field] === req.params[param.param]
           })
 
-          if (_.isEmpty(matches)) {
+          if (!_.isEmpty(matches)) {
+            return resolve('')
+          } else {
             return reject('')
           }
         } else if (param.in && _.isArray(param.in)) {
-          if (req.params[param.param] && !_.contains(param.in, req.params[param.param])) {
+          if (req.params[param.param] && _.contains(param.in, req.params[param.param])) {
+            return resolve('')
+          } else {
             return reject('')
           }
         } else if (param.fetch) {
@@ -233,6 +237,7 @@ Router.prototype.validate = function (route, req, res) {
     })
 
     paramsPromise.then(() => {
+      console.log('> test constraint')
       this.testConstraint(route.path, req, res, (passed) => {
         if (passed) {
           return resolve('')
