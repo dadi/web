@@ -1,13 +1,14 @@
 var _ = require('underscore')
 var fs = require('fs')
-var url = require('url')
 var http = require('http')
 var https = require('https')
+var nodePath = require('path')
 var raven = require('raven')
 var pathToRegexp = require('path-to-regexp')
+var url = require('url')
 
 var log = require('@dadi/logger')
-var config = require(__dirname + '/../../../config')
+var config = require(nodePath.join(__dirname, '/../../../config'))
 
 /**
  * Represents the main server.
@@ -68,10 +69,8 @@ var Api = function () {
       switch (ex.message) {
         case 'error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt':
           throw new Error(exPrefix + 'incorrect ssl passphrase')
-          break
         case 'error:0906A068:PEM routines:PEM_do_header:bad password read':
           throw new Error(exPrefix + 'required ssl passphrase not provided')
-          break
         default:
           throw new Error(exPrefix + ex.message)
       }
@@ -218,7 +217,6 @@ Api.prototype.listener = function (req, res) {
 Api.prototype._match = function (req) {
   var path = url.parse(req.url).pathname
   var paths = this.paths
-  var matches = []
   var handlers = []
 
   for (var idx = 0; idx < paths.length; idx++) {
@@ -233,7 +231,7 @@ Api.prototype._match = function (req) {
 
     // get all the dynamic keys from the route
     // i.e. anything that starts with ":" -> "/news/:title"
-    var keys = paths[idx].regex.keys
+    // var keys = paths[idx].regex.keys
 
     // add this route's controller
     handlers.push(paths[idx].handler)
@@ -290,9 +288,8 @@ function notFound (api, req, res) {
 
     if (path) {
       path.handler(req, res)
-    }
-    // otherwise, respond with default message
-    else {
+    } else {
+      // otherwise, respond with default message
       res.end('HTTP 404 Not Found')
     }
   }

@@ -4,7 +4,7 @@ var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
 var _ = require('underscore')
 var bodyParser = require('body-parser')
-var colors = require('colors')
+var colors = require('colors')  // eslint-disable-line 
 var compress = require('compression')
 var crypto = require('crypto')
 var dust = require('./dust')
@@ -20,37 +20,34 @@ var toobusy = require('toobusy-js')
 var url = require('url')
 var dadiStatus = require('@dadi/status')
 
-var mongoStore
+var MongoStore
 if (nodeVersion < 1) {
-  mongoStore = require('connect-mongo/es5')(session)
+  MongoStore = require('connect-mongo/es5')(session)
 } else {
-  mongoStore = require('connect-mongo')(session)
+  MongoStore = require('connect-mongo')(session)
   var RedisStore = require('connect-redis')(session)
 }
 
 // let's ensure there's at least a dev config file here
-var devConfigPath = __dirname + '/../../config/config.development.json'
-try {
-  var stats = fs.statSync(devConfigPath)
-} catch(err) {
-  if (err.code === 'ENOENT') {
+var devConfigPath = path.join(__dirname, '/../../config/config.development.json')
+fs.stat(devConfigPath, (err, stats) => {
+  if (err && err.code && err.code === 'ENOENT') {
     fs.writeFileSync(devConfigPath, fs.readFileSync(devConfigPath + '.sample'))
   }
-}
+})
 
-var api = require(__dirname + '/api')
-var apiMiddleware = require(__dirname + '/api/middleware')
-var auth = require(__dirname + '/auth')
-var cache = require(__dirname + '/cache')
-var Controller = require(__dirname + '/controller')
-var datasource = require(__dirname + '/datasource')
-var forceDomain = require(__dirname + '/controller/forceDomain')
-var help = require(__dirname + '/help')
-var middleware = require(__dirname + '/middleware')
-var monitor = require(__dirname + '/monitor')
-var Page = require(__dirname + '/page')
+var api = require(path.join(__dirname, '/api'))
+var apiMiddleware = require(path.join(__dirname, '/api/middleware'))
+var auth = require(path.join(__dirname, '/auth'))
+var cache = require(path.join(__dirname, '/cache'))
+var Controller = require(path.join(__dirname, '/controller'))
+var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
+var help = require(path.join(__dirname, '/help'))
+var Middleware = require(path.join(__dirname, '/middleware'))
+var monitor = require(path.join(__dirname, '/monitor'))
+var Page = require(path.join(__dirname, '/page'))
 var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
-var router = require(__dirname + '/controller/router')
+var router = require(path.join(__dirname, '/controller/router'))
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var log = require('@dadi/logger')
@@ -103,7 +100,7 @@ Server.prototype.start = function (done) {
   if (options.publicPath) {
     app.use(serveStatic(options.publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }))
     try {
-      app.use(serveFavicon((options.publicPath || __dirname + '/../../public') + '/favicon.ico'))
+      app.use(serveFavicon((options.publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico'))
     } catch (err) {
       // file not found
     }
@@ -111,7 +108,7 @@ Server.prototype.start = function (done) {
 
   // add debug files to static paths
   if (config.get('debug')) {
-    app.use(serveStatic(options.workspacePath + '/debug' || (__dirname + '/../../workspace/debug') , { 'index': false }))
+    app.use(serveStatic(options.workspacePath + '/debug' || (path.join(__dirname, '/../../workspace/debug')), { 'index': false }))
   }
 
   // add parsers
@@ -206,7 +203,7 @@ Server.prototype.start = function (done) {
 
   var virtualDirs = config.get('virtualDirectories')
   _.each(virtualDirs, function (dir) {
-    app.use(serveStatic(__dirname + '/../../' + dir.path , { 'index': dir.index, 'redirect': dir.forceTrailingSlash }))
+    app.use(serveStatic(path.join(__dirname, '/../../', dir.path), { 'index': dir.index, 'redirect': dir.forceTrailingSlash }))
   })
 
   // dust configuration
@@ -280,17 +277,17 @@ Server.prototype.stop = function (done) {
 Server.prototype.loadPaths = function (paths) {
   var options = {}
 
-  options.datasourcePath = path.resolve(paths.datasources || __dirname + '/../../app/datasources')
-  options.eventPath = path.resolve(paths.events || __dirname + '/../../app/events')
-  options.pagePath = path.resolve(paths.pages || __dirname + '/../../app/pages')
-  options.partialPath = path.resolve(paths.partials || __dirname + '/../../app/partials')
-  options.routesPath = path.resolve(paths.routes || __dirname + '/../../app/routes')
-  options.middlewarePath = path.resolve(paths.middleware || __dirname + '/../../app/middleware')
+  options.datasourcePath = path.resolve(paths.datasources || path.join(__dirname, '/../../app/datasources'))
+  options.eventPath = path.resolve(paths.events || path.join(__dirname, '/../../app/events'))
+  options.pagePath = path.resolve(paths.pages || path.join(__dirname, '/../../app/pages'))
+  options.partialPath = path.resolve(paths.partials || path.join(__dirname, '/../../app/partials'))
+  options.routesPath = path.resolve(paths.routes || path.join(__dirname, '/../../app/routes'))
+  options.middlewarePath = path.resolve(paths.middleware || path.join(__dirname, '/../../app/middleware'))
 
-  options.filtersPath = path.resolve(paths.filters || __dirname + '/../../app/utils/filters')
-  options.helpersPath = path.resolve(paths.helpers || __dirname + '/../../app/utils/helpers')
+  options.filtersPath = path.resolve(paths.filters || path.join(__dirname, '/../../app/utils/filters'))
+  options.helpersPath = path.resolve(paths.helpers || path.join(__dirname, '/../../app/utils/helpers'))
 
-  options.tokenWalletsPath = path.resolve(paths.tokenWallets || __dirname + '/../../.wallet')
+  options.tokenWalletsPath = path.resolve(paths.tokenWallets || path.join(__dirname, '/../../.wallet'))
   if (paths.media) options.mediaPath = path.resolve(paths.media)
 
   if (paths.public) options.publicPath = path.resolve(paths.public)
@@ -319,7 +316,7 @@ Server.prototype.loadApi = function (options) {
           message: 'Succeed to clear'
         })
       })
-
+    } else {
       next()
     }
   })
@@ -404,9 +401,8 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
   files.forEach((file) => {
     if (path.extname(file) !== '.js') return
 
-    var filepath = path.join(directoryPath, file)
     var name = file.slice(0, file.indexOf('.'))
-    var m = new middleware(name, options)
+    var m = new Middleware(name, options)
     middlewares.push(m)
   })
 
@@ -436,7 +432,6 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
 }
 
 Server.prototype.addRoute = function (obj, options, reload) {
-
   // get the page schema
   var schema
 
@@ -473,7 +468,6 @@ Server.prototype.addComponent = function (options, reload) {
     })
   }
   _.each(options.routes, (route) => {
-
     // only add a route once
     if (this.components[route.path]) return
 
@@ -618,11 +612,10 @@ Server.prototype.getSessionStore = function (sessionConfig, env) {
   }
 
   if (sessionConfig.store.indexOf('mongodb') > -1) {
-    return new mongoStore({
+    return new MongoStore({
       url: sessionConfig.store
     })
-  }
-  else if (sessionConfig.store.indexOf('redis') > -1) {
+  } else if (sessionConfig.store.indexOf('redis') > -1) {
     return new RedisStore({
       url: sessionConfig.store
     })
@@ -723,7 +716,6 @@ function onConnection (socket) {
 }
 
 function onListening (e) {
-
   // check that our API connection is valid
   help.isApiAvailable(function (err, result) {
     if (err) {
@@ -758,7 +750,7 @@ function onListening (e) {
 }
 
 function onError (err) {
-  if (err.code == 'EADDRINUSE') {
+  if (err.code === 'EADDRINUSE') {
     var message = "Can't connect to local address, is something already listening on port " + config.get('server.port') + '?'
     err.localIp = config.get('server.host')
     err.localPort = config.get('server.port')

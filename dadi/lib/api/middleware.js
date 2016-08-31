@@ -1,14 +1,14 @@
 var middleware = module.exports
 var path = require('path')
 var proxyaddr = require('proxy-addr')
-var url = require('url')
-var config = require(path.resolve(__dirname + '/../../../config.js'))
-var log = require('@dadi/logger');
+
+var config = require(path.resolve(path.join(__dirname, '/../../../config.js')))
+var log = require('@dadi/logger')
 
 var HTTP = 'http:'
 var HTTPS = 'https:'
 
-var compileTrust = function(val) {
+var compileTrust = function (val) {
   if (typeof val === 'function') return val
 
   if (val === true) {
@@ -34,21 +34,19 @@ middleware.handleHostHeader = function () {
     if (!req.headers.host || req.headers.host === '') {
       res.statusCode = 400
       return res.end()
-    }
-    else {
+    } else {
       next()
     }
   }
 }
 
-
 middleware.setUpRequest = function () {
   return function (req, res, next) {
     Object.defineProperty(req, 'protocol', {
-      get: function() {
+      get: function () {
         var protocol = config.get('server.protocol') || 'http'
 
-        //var protocol = req.connection.encrypted ? 'https' : 'http'
+        // var protocol = req.connection.encrypted ? 'https' : 'http'
         var trust = compileTrust(config.get('security.trustProxy'))
 
         if (!trust(req.connection.remoteAddress, 0)) {
@@ -65,7 +63,7 @@ middleware.setUpRequest = function () {
     })
 
     Object.defineProperty(req, 'secure', {
-      get: function() {
+      get: function () {
         return req.protocol === 'https'
       },
       enumerable: true,
@@ -82,7 +80,7 @@ middleware.setUpRequest = function () {
      * @public
      */
     Object.defineProperty(req, 'ip', {
-      get: function() {
+      get: function () {
         var trust = compileTrust(config.get('security.trustProxy'))
         return proxyaddr(this, trust)
       },
@@ -102,7 +100,7 @@ middleware.setUpRequest = function () {
      * @public
      */
     Object.defineProperty(req, 'ips', {
-      get: function() {
+      get: function () {
         var trust = compileTrust(config.get('security.trustProxy'))
         var addrs = proxyaddr.all(this, trust)
         return addrs.slice(1).reverse()
@@ -116,7 +114,6 @@ middleware.setUpRequest = function () {
 }
 
 middleware.transportSecurity = function () {
-
   var protocol = config.get('server.protocol')
   var scheme = protocol === 'https' ? HTTPS : HTTP
 
@@ -134,8 +131,7 @@ middleware.transportSecurity = function () {
 
   if (securityEnabled()) {
     log.info('Transport security is enabled.')
-  }
-  else {
+  } else {
     log.info('Transport security is not enabled.')
   }
 
@@ -143,12 +139,10 @@ middleware.transportSecurity = function () {
     if (securityEnabled() && !req.secure) {
       log.info('Redirecting insecure request for', req.url)
       redirect(req, res, HTTPS)
-    }
-    else if (!securityEnabled() && req.secure) {
+    } else if (!securityEnabled() && req.secure) {
       log.info('Redirecting secure request for', req.url)
       redirect(req, res, HTTP)
-    }
-    else {
+    } else {
       next()
     }
   }

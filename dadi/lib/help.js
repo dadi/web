@@ -8,21 +8,15 @@ var http = require('http')
 var https = require('https')
 var path = require('path')
 var perfy = require('perfy')
-var url = require('url')
-var util = require('util')
-var zlib = require('zlib')
 
-var auth = require(__dirname + '/auth')
-var cache = require(__dirname + '/cache')
-var config = require(__dirname + '/../../config.js')
-var DatasourceCache = require(__dirname + '/cache/datasource')
-var log = require('@dadi/logger')
+var cache = require(path.join(__dirname, '/cache'))
+var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
 
 var self = this
 
 module.exports.htmlEncode = function (input) {
-  var encodedStr = input.replace(/[\u00A0-\u9999<>\&]/gim, function (i) {
+  var encodedStr = input.replace(/[\u00A0-\u9999<>&]/gim, function (i) {
     return '&#' + i.charCodeAt(0) + ';'
   })
   return encodedStr
@@ -114,6 +108,7 @@ module.exports.sendBackJSON = function (successCode, res, next) {
 
 module.exports.sendBackJSONP = function (callbackName, res, next) {
   return function (err, results) {
+    if (err) console.log(err)
 
     // callback MUST be made up of letters only
     if (!callbackName.match(/^[a-zA-Z]+$/)) return res.send(400)
@@ -209,7 +204,7 @@ module.exports.parseQuery = function (queryStr) {
   var ret
   try {
     // strip leading zeroes from querystring before attempting to parse
-    ret = JSON.parse(queryStr.replace(/\b0(\d+)/, '\$1'))
+    ret = JSON.parse(queryStr.replace(/\b0(\d+)/, '$1'))
   } catch (e) {
     ret = {}
   }
@@ -244,14 +239,14 @@ module.exports.clearCache = function (req, callback) {
 
     _.each(endpoint.page.datasources, function (datasource) {
       var cachePrefix = crypto.createHash('sha1').update(datasource).digest('hex')
-      datasourceCachePaths = _.extend(datasourceCachePaths, _.filter(files, function (file) { return file.indexOf(cachePrefix) > -1; }))
-      datasourceCachePaths = _.map(datasourceCachePaths, function (file) { return path.join(config.get('caching.directory.path'), file); })
+      datasourceCachePaths = _.extend(datasourceCachePaths, _.filter(files, function (file) { return file.indexOf(cachePrefix) > -1 }))
+      datasourceCachePaths = _.map(datasourceCachePaths, function (file) { return path.join(config.get('caching.directory.path'), file) })
     })
   }
 
   var walkSync = function (dir, filelist) {
     var files = fs.readdirSync(dir)
-    var filelist = filelist || []
+    filelist = filelist || []
 
     files.forEach(function (file) {
       if (fs.statSync(dir + file).isDirectory()) {
@@ -262,10 +257,12 @@ module.exports.clearCache = function (req, callback) {
     })
     return filelist
   }
+
   // delete using Redis client
   if (cache.client()) {
     setTimeout(function () {
       cache.delete(modelDir, function (err) {
+        if (err) console.log(err)
         return callback(null)
       })
     }, 200)
@@ -277,21 +274,21 @@ module.exports.clearCache = function (req, callback) {
       return callback(null)
     } else {
       if (fs.statSync(cachePath).isDirectory()) {
-        var files = fs.readdirSync(cachePath)
-        if (pathname == '*') {
-          files = walkSync(cachePath + '/')
+        var cacheFiles = fs.readdirSync(cachePath)
+        if (pathname === '*') {
+          cacheFiles = walkSync(cachePath + '/')
         }
 
-        files.forEach(function (filename) {
+        cacheFiles.forEach(function (filename) {
           var file = path.join(cachePath, filename)
-          if (pathname == '*') file = filename
+          if (pathname === '*') file = filename
 
           fs.unlinkSync(file)
 
           i++
 
           // finished, all files processed
-          if (i == files.length) {
+          if (i === cacheFiles.length) {
             return callback(null)
           }
         })
@@ -303,7 +300,7 @@ module.exports.clearCache = function (req, callback) {
           i++
 
           // finished, all files processed
-          if (i == datasourceCachePaths.length) {
+          if (i === datasourceCachePaths.length) {
             return callback(null)
           }
         })
@@ -319,7 +316,7 @@ module.exports.clearCache = function (req, callback) {
 module.exports.slugify = function (input) {
   return input.toString()
     .toLowerCase()
-    .replace(/[\?\#][\s\S]*$/g, '')
+    .replace(/[\?#][\s\S]*$/g, '')
     .replace(/\/+/g, '-')
     .replace(/\s+/g, '')
     .replace(/[^\w\-]+/g, '')
@@ -359,7 +356,8 @@ module.exports.getToken = function () {
 // creates a new function in the underscore.js namespace
 // allowing us to pluck multiple properties - used to return only the
 // fields we require from an array of objects
-_.mixin({selectFields: function () {
+_.mixin({
+  selectFields: function () {
     var args = _.rest(arguments, 1)[0]
     return _.map(arguments[0], function (item) {
       var obj = {}

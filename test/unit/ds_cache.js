@@ -11,24 +11,28 @@ var api = require(__dirname + '/../../dadi/lib/api')
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var cache = require(__dirname + '/../../dadi/lib/cache')
 var datasourceCache = require(__dirname + '/../../dadi/lib/cache/datasource')
-var datasource = require(__dirname + '/../../dadi/lib/datasource')
+var Datasource = require(__dirname + '/../../dadi/lib/datasource')
 var page = require(__dirname + '/../../dadi/lib/page')
 var Server = require(__dirname + '/../../dadi/lib')
 var TestHelper = require(__dirname + '/../help')()
 
-describe('Datasource Cache', function (done) {
-  var server, ds, cachepath
+var server
+var ds
+var cachepath
 
+describe('Datasource Cache', function (done) {
   beforeEach(function (done) {
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
-        ds = datasource(page('test', TestHelper.getPageSchema()), 'car-makes', TestHelper.getPathOptions(), function () {})
+        new Datasource(page('test', TestHelper.getPageSchema()), 'car-makes', TestHelper.getPathOptions()).init(function (err, datasource) {
+          ds = datasource
 
-        server = sinon.mock(Server)
-        server.object.app = api()
-        cache.reset()
+          server = sinon.mock(Server)
+          server.object.app = api()
+          cache.reset()
 
-        done()
+          done()
+        })
       })
     })
   })

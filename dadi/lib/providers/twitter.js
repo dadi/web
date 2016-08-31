@@ -1,9 +1,10 @@
 'use strict'
 
 const _ = require('underscore')
+const path = require('path')
 const Purest = require('purest')
-const config = require(__dirname + '/../../../config.js')
-const DatasourceCache = require(__dirname + '/../cache/datasource')
+const config = require(path.join(__dirname, '/../../../config.js'))
+const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const TwitterProvider = function () {}
 
@@ -14,7 +15,7 @@ const TwitterProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-TwitterProvider.prototype.initialise = function initialise(datasource, schema) {
+TwitterProvider.prototype.initialise = function initialise (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
@@ -30,7 +31,7 @@ TwitterProvider.prototype.initialise = function initialise(datasource, schema) {
  *
  * @return {obj} query params to pass to the twitter api
  */
-TwitterProvider.prototype.buildQueryParams = function buildQueryParams() {
+TwitterProvider.prototype.buildQueryParams = function buildQueryParams () {
   const params = {}
   const datasource = this.schema.datasource
 
@@ -50,7 +51,7 @@ TwitterProvider.prototype.buildQueryParams = function buildQueryParams() {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-TwitterProvider.prototype.load = function load(requestUrl, done) {
+TwitterProvider.prototype.load = function load (requestUrl, done) {
   try {
     const endpoint = this.schema.datasource.source.endpoint
     const queryParams = this.buildQueryParams()
@@ -83,7 +84,7 @@ TwitterProvider.prototype.load = function load(requestUrl, done) {
  * @param  {fn} done
  * @return {void}
  */
-TwitterProvider.prototype.processOutput = function processOutput(res, data, done) {
+TwitterProvider.prototype.processOutput = function processOutput (res, data, done) {
   // if the error is anything other than Success or Bad Request, error
   if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     const err = new Error()
@@ -94,18 +95,17 @@ TwitterProvider.prototype.processOutput = function processOutput(res, data, done
     err.message = `Datasource "${this.datasource.name}" failed. ${info}`
     if (data) err.message += '\n' + data
 
-    log.error({ module: 'helper' }, info)
     return done(err)
   }
 
   if (res.statusCode === 200) {
     data = this.processFields(data)
-    this.dataCache.cacheResponse(JSON.stringify(data), () => {})
+    this.dataCache.cacheResponse(JSON.stringify(data), () => {
+    })
   }
 
   return done(null, data)
 }
-
 
 /**
  * processFields - remove any unwanted fields from the dataset
@@ -113,15 +113,16 @@ TwitterProvider.prototype.processOutput = function processOutput(res, data, done
  * @param  {obj} data before it's been processed
  * @return {obj} data after it's been processed
  */
-TwitterProvider.prototype.processFields = function processFields(data) {
+TwitterProvider.prototype.processFields = function processFields (data) {
   const fields = this.schema.datasource.fields
 
   console.log('**fields'.red, fields)
 
-  if (fields && Object.keys(fields).length)
-  {
+  if (fields && Object.keys(fields).length) {
     const keys = Object.keys(fields)
     console.log('**keys'.red, keys)
+
+    console.log(data)
 
     if (_.isArray(data)) {
       for (let i = 0; i < data.length; i++) {
@@ -130,7 +131,6 @@ TwitterProvider.prototype.processFields = function processFields(data) {
     } else {
       data = _.pick(data, keys)
     }
-
 
     console.log('data', data)
   }
@@ -144,7 +144,7 @@ TwitterProvider.prototype.processFields = function processFields(data) {
  * @param  {obj} req - web request object
  * @return {void}
  */
-TwitterProvider.prototype.processRequest = function processRequest(req) {
+TwitterProvider.prototype.processRequest = function processRequest (req) {
   // not used
 }
 
@@ -153,7 +153,7 @@ TwitterProvider.prototype.processRequest = function processRequest(req) {
  *
  * @return {void}
  */
-TwitterProvider.prototype.setAuthStrategy = function setAuthStrategy() {
+TwitterProvider.prototype.setAuthStrategy = function setAuthStrategy () {
   const auth = this.schema.datasource.auth
 
   this.consumerKey = auth && auth.consumer_key || config.get('twitter.consumerKey')

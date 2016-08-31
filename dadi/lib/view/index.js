@@ -1,17 +1,9 @@
 /**
  * @module View
  */
-var _ = require('underscore')
-var beautify_html = require('js-beautify').html
-var fs = require('fs')
+var beautifyHtml = require('js-beautify').html
 var path = require('path')
-
-var dust = require(__dirname + '/../dust')
-
-var config = require(path.resolve(path.join(__dirname, '/../../../config')))
-var help = require(__dirname + '/../help')
-var log = require('@dadi/logger')
-var app = require(__dirname + '/../')
+var dust = require(path.join(__dirname, '/../dust'))
 
 var View = function (url, page, json) {
   this.url = url
@@ -43,7 +35,7 @@ View.prototype.render = function (done) {
 
       if (this.page.beautify) {
         try {
-          result = beautify_html(result)
+          result = beautifyHtml(result)
         } catch (e) {
           err = e
         }

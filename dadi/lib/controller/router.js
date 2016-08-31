@@ -7,7 +7,6 @@ var es = require('event-stream')
 var fs = require('fs')
 var path = require('path')
 var pathToRegexp = require('path-to-regexp')
-var querystring = require('querystring')
 var toobusy = require('toobusy-js')
 var url = require('url')
 
@@ -44,8 +43,6 @@ var Router = function (server, options) {
     toobusy.interval(config.get('toobusy.interval'))
   }
 
-  var self = this
-
   // load the route constraint specifications if they exist
   try {
     var constraintsPath = path.join(options.routesPath, '/constraints.js')
@@ -62,7 +59,7 @@ Router.prototype.loadRewrites = function (options, done) {
 
   if (self.rewritesDatasource && self.loadDatasourceAsFile) {
     // Get the rewritesDatasource
-    var datasource = new Datasource(self.rewritesDatasource, self.rewritesDatasource, this.options, function (err, ds) {
+    new Datasource(self.rewritesDatasource, self.rewritesDatasource, this.options).init(function (err, ds) {
       if (err) {
         log.error({module: 'router'}, err)
       }
@@ -82,8 +79,8 @@ Router.prototype.loadRewrites = function (options, done) {
 
       function refreshRewrites (cb) {
         // Get redirects from API collection
-        var fresh_rules = [];
-        ds.provider.load(null, function(err, response) {
+        var freshRules = []
+        ds.provider.load(null, function (err, response) {
           if (err) {
             console.log('Error loading data in Router Rewrite module')
             console.log(err)
@@ -99,16 +96,16 @@ Router.prototype.loadRewrites = function (options, done) {
             var idx = 0
 
             _.each(response.results, function (rule) {
-              fresh_rules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]')
+              freshRules.push(rule.rule + ' ' + rule.replacement + ' ' + '[R=' + rule.redirectType + ',L]')
               idx++
               if (idx === response.results.length) {
-                self.rules = fresh_rules
+                self.rules = freshRules
                 log.info('Loaded ' + idx + ' rewrites')
                 if (rewriteFunction) rewriteFunction = rewrite(self.rules)
                 if (cb) return cb(null)
               }
             })
-          }else {
+          } else {
             if (cb) return cb(null)
           }
         })
@@ -158,7 +155,7 @@ Router.prototype.constrain = function (route, constraint) {
     var err = new Error(error)
     err.name = 'Router'
     log.error({module: 'router'}, error)
-    throw(err)
+    throw (err)
   }
 
   return
@@ -288,8 +285,6 @@ Router.prototype.loadRewriteModule = function () {
 }
 
 module.exports = function (server, options) {
-  var self = this
-
   server.app.Router = new Router(server, options)
 
   // middleware which blocks requests when we're too busy
@@ -297,13 +292,15 @@ module.exports = function (server, options) {
     if (config.get('toobusy.enabled') && toobusy()) {
       res.statusCode = 503
       return res.end('HTTP Error 503 - Server Busy')
-    }else {
+    } else {
       next()
     }
   })
 
   // load the rewrites from the filesystem
   server.app.Router.loadRewrites(options, function (err) {
+    if (err) console.log(err)
+
     this.shouldCall = true
     rewriteFunction = rewrite(server.app.Router.rules)
 
@@ -321,17 +318,17 @@ module.exports = function (server, options) {
 
       if (!server.app.Router.rewritesDatasource || server.app.Router.loadDatasourceAsFile || server.app.Router.rewritesDatasource === '') return next()
 
-      var datasource = new Datasource('rewrites', server.app.Router.rewritesDatasource, options, function (err, ds) {
+      new Datasource('rewrites', server.app.Router.rewritesDatasource, options).init(function (err, ds) {
         if (err) {
           console.log(err)
-          throw(err)
+          throw (err)
         }
 
-        _.extend(ds.schema.datasource.filter, { "rule": req.url });
+        _.extend(ds.schema.datasource.filter, { 'rule': req.url })
 
-        ds.provider.processRequest(ds.page.name, req);
+        ds.provider.processRequest(ds.page.name, req)
 
-        ds.provider.load(req.url, function(err, result) {
+        ds.provider.load(req.url, function (err, result) {
           if (err) {
             console.log('Error loading data in Router Rewrite module')
             return next(err)
@@ -343,9 +340,9 @@ module.exports = function (server, options) {
             if (results && results.results && results.results.length > 0 && results.results[0].rule === req.url) {
               var rule = results.results[0]
               var location
-              if (/\:\/\//.test(rule.replacement)) {
+              if (/:\/\//.test(rule.replacement)) {
                 location = req.url.replace(rule.rule, rule.replacement)
-              }else {
+              } else {
                 location = 'http' + '://' + req.headers.host + req.url.replace(rule.rule, rule.replacement)
               }
 
@@ -401,7 +398,7 @@ module.exports = function (server, options) {
           Location: 'http' + '://' + req.headers.host + location
         })
         res.end()
-      }else {
+      } else {
         return next()
       }
     })

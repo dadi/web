@@ -11,11 +11,10 @@ const StaticProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-StaticProvider.prototype.initialise = function initialise(datasource, schema) {
+StaticProvider.prototype.initialise = function initialise (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
 }
-
 
 /**
  * load - loads data form the datasource
@@ -24,7 +23,7 @@ StaticProvider.prototype.initialise = function initialise(datasource, schema) {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-StaticProvider.prototype.load = function load(requestUrl, done) {
+StaticProvider.prototype.load = function load (requestUrl, done) {
   try {
     let data = this.schema.datasource.source.data
 

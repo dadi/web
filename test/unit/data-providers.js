@@ -10,7 +10,7 @@ var zlib = require('zlib')
 
 var api = require(__dirname + '/../../dadi/lib/api')
 var Controller = require(__dirname + '/../../dadi/lib/controller')
-var datasource = require(__dirname + '/../../dadi/lib/datasource')
+var Datasource = require(__dirname + '/../../dadi/lib/datasource')
 var help = require(__dirname + '/../../dadi/lib/help')
 var Page = require(__dirname + '/../../dadi/lib/page')
 var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
@@ -32,6 +32,7 @@ describe('Data Providers', function (done) {
   })
 
   afterEach(function (done) {
+    nock.cleanAll()
     TestHelper.stopServer(function() {})
     done()
   })
@@ -76,6 +77,68 @@ describe('Data Providers', function (done) {
         })
       })
     })
+
+    it('should return an errors collection when a datasource times out', function (done) {
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['car-makes-unchained']
+
+          TestHelper.setupApiIntercepts()
+
+          var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+
+          var scope = nock(apiConnectionString)
+          .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false')
+          .times(5)
+          .reply(504)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?cache=false&json=true')
+            .end((err, res) => {
+              should.exist(res.body['car-makes-unchained'].errors)
+              res.body['car-makes-unchained'].errors[0].title.should.eql('Datasource Timeout')
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return an errors collection when a datasource is not found', function (done) {
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['car-makes-unchained']
+
+          TestHelper.setupApiIntercepts()
+
+          var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+
+          var scope = nock(apiConnectionString)
+          .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false')
+          .times(5)
+          .reply(404)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?cache=false&json=true')
+            .end((err, res) => {
+              should.exist(res.body['car-makes-unchained'].errors)
+              res.body['car-makes-unchained'].errors[0].title.should.eql('Datasource Not Found')
+              done()
+            })
+          })
+        })
+      })
+    })
   })
 
   describe('Static', function (done) {
@@ -85,7 +148,7 @@ describe('Data Providers', function (done) {
         x: 100
       }
 
-      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -99,7 +162,7 @@ describe('Data Providers', function (done) {
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {
-              datasource.Datasource.prototype.loadDatasource.restore()
+              Datasource.Datasource.prototype.loadDatasource.restore()
 
               should.exist(res.body.static)
               res.body.static.should.eql({x:100})
@@ -124,7 +187,7 @@ describe('Data Providers', function (done) {
         datasource: _.extend(dsSchema.datasource, dsConfig)
       }
 
-      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -138,7 +201,7 @@ describe('Data Providers', function (done) {
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {
-              datasource.Datasource.prototype.loadDatasource.restore()
+              Datasource.Datasource.prototype.loadDatasource.restore()
               should.exist(res.body.static)
               res.body.static.should.be.Array
               res.body.static.length.should.eql(2)
@@ -163,7 +226,7 @@ describe('Data Providers', function (done) {
         datasource: _.extend(dsSchema.datasource, dsConfig)
       }
 
-      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -177,7 +240,7 @@ describe('Data Providers', function (done) {
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {
-              datasource.Datasource.prototype.loadDatasource.restore()
+              Datasource.Datasource.prototype.loadDatasource.restore()
               should.exist(res.body.static)
               res.body.static.should.be.Array
               res.body.static.length.should.eql(2)
@@ -202,7 +265,7 @@ describe('Data Providers', function (done) {
         datasource: _.extend(dsSchema.datasource, dsConfig)
       }
 
-      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -216,7 +279,7 @@ describe('Data Providers', function (done) {
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {
-              datasource.Datasource.prototype.loadDatasource.restore()
+              Datasource.Datasource.prototype.loadDatasource.restore()
               should.exist(res.body.static)
               res.body.static.should.be.Array
               res.body.static.length.should.eql(2)
@@ -235,31 +298,30 @@ describe('Data Providers', function (done) {
 
   describe('Twitter', function (done) {
     it('should use the datasource count property when querying the API', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.count = 10
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.count = 10
 
-      var params = ds.provider.buildQueryParams()
+        var params = ds.provider.buildQueryParams()
 
-      should.exists(params.count)
-      params.count.should.eql(10)
-      done()
+        should.exists(params.count)
+        params.count.should.eql(10)
+        done()
+      })
     })
 
     it('should use the datasource filter property when querying the API', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.filter = { 'field': 'value' }
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.filter = { 'field': 'value' }
 
-      var params = ds.provider.buildQueryParams()
+        var params = ds.provider.buildQueryParams()
 
-      should.exists(params.field)
-      params.field.should.eql('value')
-      done()
+        should.exists(params.field)
+        params.field.should.eql('value')
+        done()
+      })
     })
 
     it('should only return data matching specified datasource fields when data is an array', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.fields = { 'field1': 1, 'field3': 1 }
-
       var data = [
         {
           field1: '1',
@@ -275,15 +337,16 @@ describe('Data Providers', function (done) {
         }
       ]
 
-      var data = ds.provider.processFields(data)
-      data.should.eql([ { field1: '1', field3: '3' }, { field1: '5', field3: '7' } ])
-      done()
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.fields = { 'field1': 1, 'field3': 1 }
+
+        data = ds.provider.processFields(data)
+        data.should.eql([ { field1: '1', field3: '3' }, { field1: '5', field3: '7' } ])
+        done()
+      })
     })
 
     it('should only return data matching specified datasource fields when data is an object', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.fields = { 'field1': 1, 'field3': 1 }
-
       var data = {
         field1: '1',
         field2: '2',
@@ -291,9 +354,13 @@ describe('Data Providers', function (done) {
         field4: '4'
       }
 
-      var data = ds.provider.processFields(data)
-      data.should.eql({ field1: '1', field3: '3' })
-      done()
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'twitter', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.fields = { 'field1': 1, 'field3': 1 }
+
+        data = ds.provider.processFields(data)
+        data.should.eql({ field1: '1', field3: '3' })
+        done()
+      })
     })
 
     it('should use the auth details in main config if not specifed by the datasource', function(done) {
@@ -337,7 +404,7 @@ describe('Data Providers', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'twitter')
       dsSchema.datasource.auth = authConfig
 
-      sinon.stub(datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
@@ -346,7 +413,7 @@ describe('Data Providers', function (done) {
         var providerSpy = sinon.spy(twitterProvider.prototype, 'initialise')
 
         TestHelper.startServer(pages).then(() => {
-          datasource.Datasource.prototype.loadDatasource.restore()
+          Datasource.Datasource.prototype.loadDatasource.restore()
           providerSpy.restore()
 
           providerSpy.thisValues[0].consumerKey.should.eql(authConfig.consumer_key)
@@ -387,8 +454,6 @@ describe('Data Providers', function (done) {
 
   describe('Wordpress', function (done) {
     it('should add query parameters to the endpoint', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions(), function () {})
-
       var req = {
         url: '/posts/one-wet-day',
         params: {
@@ -396,51 +461,56 @@ describe('Data Providers', function (done) {
         }
       }
 
-      ds.provider.buildEndpoint(req)
-      ds.provider.endpoint.should.eql('sites/neversettleblog.wordpress.com/posts/slug:one-wet-day')
-      done()
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.provider.buildEndpoint(req)
+        ds.provider.endpoint.should.eql('sites/neversettleblog.wordpress.com/posts/slug:one-wet-day')
+        done()
+      })
     })
 
     it('should use the datasource count property when querying the API', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.count = 10
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.count = 10
 
-      var params = ds.provider.buildQueryParams()
-
-      should.exists(params.count)
-      params.count.should.eql(10)
-      done()
+        var params = ds.provider.buildQueryParams()
+        should.exists(params.count)
+        params.count.should.eql(10)
+        done()
+      })
     })
 
     it('should use an array of datasource fields when querying the API', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.fields = ['field1', 'field2']
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.fields = ['field1', 'field2']
 
-      var params = ds.provider.buildQueryParams()
-      should.exists(params.fields)
-      params.fields.should.eql('field1,field2')
-      done()
+        var params = ds.provider.buildQueryParams()
+        should.exists(params.fields)
+        params.fields.should.eql('field1,field2')
+        done()
+      })
     })
 
     it('should use an object of datasource fields when querying the API', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.fields = {'field1': 1, 'field2': 1}
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.fields = {'field1': 1, 'field2': 1}
 
-      var params = ds.provider.buildQueryParams()
-      should.exists(params.fields)
-      params.fields.should.eql('field1,field2')
-      done()
+        var params = ds.provider.buildQueryParams()
+        should.exists(params.fields)
+        params.fields.should.eql('field1,field2')
+        done()
+      })
     })
 
     it('should use the datasource filter property when querying the API', function(done) {
-      var ds = datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions(), function () {})
-      ds.schema.datasource.filter = { 'field': 'value' }
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'wordpress', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.filter = { 'field': 'value' }
 
-      var params = ds.provider.buildQueryParams()
+        var params = ds.provider.buildQueryParams()
 
-      should.exists(params.field)
-      params.field.should.eql('value')
-      done()
+        should.exists(params.field)
+        params.field.should.eql('value')
+        done()
+      })
     })
 
     it('should use the token specified in main config if no token is specifed by the datasource ')

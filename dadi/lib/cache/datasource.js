@@ -5,18 +5,14 @@ var fs = require('fs')
 var path = require('path')
 var url = require('url')
 var crypto = require('crypto')
-var redis = require('redis')
 var redisRStream = require('redis-rstream')
 var redisWStream = require('redis-wstream')
 var Readable = require('stream').Readable
 var s = require('underscore.string')
 
-var cache = require(__dirname + '/index.js')
-var config = require(__dirname + '/../../../config.js')
+var cache = require(path.join(__dirname, '/index.js'))
+var config = require(path.join(__dirname, '/../../../config.js'))
 var log = require('@dadi/logger')
-
-var cacheEncoding = 'utf8'
-var options = {}
 
 /**
  * Creates a new DatasourceCache instance for the specified datasource.
@@ -45,8 +41,6 @@ var DatasourceCache = function (datasource) {
   else this.filename += '_' + crypto.createHash('sha1').update(endpoint).digest('hex')
 
   this.setCachePath()
-
-  var self = this
 }
 
 DatasourceCache.prototype.setCachePath = function () {
@@ -92,10 +86,13 @@ DatasourceCache.prototype.getFromCache = function (done) {
   }
 
   var self = this
-  var readStream, data = ''
+  var readStream
+  var data = ''
 
   if (self.cache.redisClient) {
     self.cache.redisClient.exists(self.filename, function (err, exists) {
+      if (err) console.log(err)
+
       if (exists > 0) {
         readStream = redisRStream(self.cache.redisClient, self.filename)
 
@@ -104,6 +101,7 @@ DatasourceCache.prototype.getFromCache = function (done) {
         }
 
         readStream.on('error', function (err) {
+          if (err.code && err.code !== 'ENOENT') console.log(err)
           return done(false)
         })
 
@@ -128,6 +126,7 @@ DatasourceCache.prototype.getFromCache = function (done) {
     }
 
     readStream.on('error', function (err) {
+      if (err.code && err.code !== 'ENOENT') console.log(err)
       return done(false)
     })
 

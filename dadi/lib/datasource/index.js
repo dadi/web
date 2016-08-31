@@ -1,24 +1,26 @@
 /**
  * @module Datasource
  */
-var fs = require('fs')
-var url = require('url')
 var _ = require('underscore')
+var fs = require('fs')
+var path = require('path')
+var url = require('url')
 
-var Event = require(__dirname + '/../event')
-var config = require(__dirname + '/../../../config.js')
+var Event = require(path.join(__dirname, '/../event'))
 var log = require('@dadi/logger')
-var providers = require(__dirname + '/../providers')
+var providers = require(path.join(__dirname, '/../providers'))
 
 /**
  * Represents a Datasource.
  * @constructor
  */
-var Datasource = function (page, datasource, options, callback) {
+var Datasource = function (page, datasource, options) {
   this.page = page
   this.name = datasource
   this.options = options || {}
+}
 
+Datasource.prototype.init = function (callback) {
   var self = this
 
   this.loadDatasource(function (err, schema) {
@@ -95,7 +97,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // | process each of the datasource's requestParams, testing for their existence
   // | in the querystring's request params e.g. /car-reviews/:make/:model
 
-  var originalFilter = _.clone(this.schema.datasource.filter)
   var query = url.parse(req.url, true).query
 
   // handle the cache flag
@@ -140,21 +141,21 @@ Datasource.prototype.processRequest = function (datasource, req) {
   }
 
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
-  var paramRule = /(\"\{)(\bparams.\b)(.*?)(\}\")/gmi
+  var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gmi
   this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (match, p1, p2, p3, p4, offset, string) {
     if (req.params[p3]) {
       return req.params[p3]
     } else {
       return match
     }
-  }.bind(this)))
+  }))
 
   // add the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
   // NB don't replace a property that already exists
   _.each(this.requestParams, (obj) => {
     if (obj.field && req.params.hasOwnProperty(obj.param)) {
-      if (obj.type == 'Number') {
+      if (obj.type === 'Number') {
         this.schema.datasource.filter[obj.field] = Number(req.params[obj.param])
       } else {
         this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param])

@@ -12,9 +12,8 @@ var Readable = require('stream').Readable
 var url = require('url')
 var _ = require('underscore')
 
-var config = require(__dirname + '/../../../config.js')
+var config = require(path.join(__dirname, '/../../../config.js'))
 var log = require('@dadi/logger')
-var help = require(__dirname + '/../help')
 
 /**
  * Creates a new Cache instance for the server
@@ -39,8 +38,7 @@ var Cache = function (server) {
       if (err) log.error({module: 'cache'}, err)
       if (made) log.info({module: 'cache'}, 'Created cache directory ' + made)
     })
-  }
-  else if (config.get('caching.redis.enabled')) {
+  } else if (config.get('caching.redis.enabled')) {
     self.redisClient = self.initialiseRedisClient()
 
     self.redisClient.on('error', function (err) {
@@ -164,6 +162,7 @@ Cache.prototype.init = function () {
 
     if (self.redisClient) {
       self.redisClient.exists(filename, function (err, exists) {
+        if (err) console.log(err)
         if (exists > 0) {
           res.setHeader('X-Cache-Lookup', 'HIT')
 
@@ -189,6 +188,7 @@ Cache.prototype.init = function () {
       readStream = fs.createReadStream(cachepath, {encoding: this.encoding})
 
       readStream.on('error', function (err) {
+        if (err.code && err.code !== 'ENOENT') console.log(err)
         res.setHeader('X-Cache', 'MISS')
         res.setHeader('X-Cache-Lookup', 'MISS')
 
@@ -225,11 +225,14 @@ Cache.prototype.init = function () {
             res.setHeader('X-Cache-Lookup', 'HIT')
             return cacheResponse()
           }
-        } catch (err) {}
+        } catch (err) {
+          if (err.code && err.code !== 'ENOENT') console.log(err)
+        }
 
         log.info({module: 'cache'}, 'Serving ' + req.url + ' from cache file (' + cachepath + ')')
 
         fs.stat(cachepath, function (err, stat) {
+          if (err.code && err.code !== 'ENOENT') console.log(err)
           res.statusCode = 200
           res.setHeader('Server', config.get('server.name'))
           res.setHeader('Content-Type', contentType)
@@ -335,7 +338,7 @@ module.exports.delete = function (pattern, callback) {
       })
     },
     // test to see if iterator is done
-    function () { return iter != '0'; },
+    function () { return iter !== '0' },
     // done
     function (err) {
       if (err) {
@@ -348,6 +351,7 @@ module.exports.delete = function (pattern, callback) {
         var i = 0
         _.each(cacheKeys, function (key) {
           self.client().del(key, function (err, result) {
+            if (err) console.log(err)
             i++
             // finished, all keys deleted
             if (i === cacheKeys.length) {

@@ -3,19 +3,17 @@
  */
 var _ = require('underscore')
 var async = require('async')
-var beautify_html = require('js-beautify').html
 var crypto = require('crypto')
-var fs = require('fs')
-var Q = require('q')
+var path = require('path')
 var url = require('url')
 
-var config = require(__dirname + '/../../../config.js')
-var help = require(__dirname + '/../help')
+var config = require(path.join(__dirname, '/../../../config.js'))
+var help = require(path.join(__dirname, '/../help'))
 var log = require('@dadi/logger')
 
-var Datasource = require(__dirname + '/../datasource')
-var Event = require(__dirname + '/../event')
-var View = require(__dirname + '/../view')
+var Datasource = require(path.join(__dirname, '/../datasource'))
+var Event = require(path.join(__dirname, '/../event'))
+var View = require(path.join(__dirname, '/../view'))
 
 // helpers
 var sendBackHTML = help.sendBackHTML
@@ -54,12 +52,12 @@ Controller.prototype.attachDatasources = function (done) {
   var i = 0
 
   this.page.datasources.forEach((datasource) => {
-    var ds = new Datasource(this.page, datasource, this.options, (err, ds) => {
+    new Datasource(this.page, datasource, this.options).init((err, ds) => {
       if (err) return done(err)
 
       this.datasources[ds.schema.datasource.key] = ds
 
-      if (++i == this.page.datasources.length) {
+      if (++i === this.page.datasources.length) {
         return done(null)
       }
     })
@@ -157,7 +155,6 @@ Controller.prototype.process = function process (req, res, next) {
   help.timer.start(req.method.toLowerCase())
 
   var self = this
-  var settings = {}
   var done
 
   var statusCode = res.statusCode || 200
@@ -234,7 +231,7 @@ Controller.prototype.head = function (req, res, next) {
 
 Controller.prototype.loadEventData = function (events, req, res, data, done) {
   // return the global data object, no events to run
-  if (0 === Object.keys(events).length) {
+  if (Object.keys(events).length === 0) {
     return done(null, data)
   }
 
@@ -262,8 +259,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
         // reassign it to our global data object to avoid circular JSON
         if (result && result.checkValue && result.checkValue === checkValue) {
           data = result
-        }
-        else if (result) {
+        } else if (result) {
           // add the result to our global data object
           data[event.name] = result
         }
@@ -283,7 +279,6 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 }
 
 Controller.prototype.loadData = function (req, res, data, done) {
-  var idx = 0
   var self = this
 
   var primaryDatasources = {}
@@ -386,7 +381,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
   var idx = 0
   var self = this
 
-  if (0 === Object.keys(chainedDatasources).length) {
+  if (Object.keys(chainedDatasources).length === 0) {
     return done(null, data)
   }
 
@@ -408,8 +403,9 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     try {
       param =
         chainedDatasource.chained.outputParam.param.split('.').reduce(function (o, x) {
-          return o ? o[x] : '' }, data[chainedDatasource.chained.datasource])
-    } catch(e) {
+          return o ? o[x] : ''
+        }, data[chainedDatasource.chained.datasource])
+    } catch (e) {
       return done(e)
     }
 
@@ -441,7 +437,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
       var filter = JSON.stringify(chainedDatasource.schema.datasource.filter)
       var q = JSON.stringify(chainedDatasource.chained.outputParam.query)
 
-      if (typeof (param) != 'number') {
+      if (typeof (param) !== 'number') {
         param = '"' + param + '"'
       }
 
@@ -455,6 +451,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     // needed?
     // chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {})
     chainedDatasource.provider.load(req.url, function (err, result) {
+      if (err) log.error({module: 'controller'}, err)
+
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)')
 
       if (result) {

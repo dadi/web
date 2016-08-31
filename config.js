@@ -1,263 +1,263 @@
-var convict = require('convict');
-var fs = require('fs');
-var path = require('path');
+var convict = require('convict')
+var fs = require('fs')
+var path = require('path')
 
 // Define a schema
 var conf = convict({
   app: {
     name: {
-      doc: "The applicaton name",
+      doc: 'The applicaton name',
       format: String,
-      default: "DADI Web (Repo Default)"
+      default: 'DADI Web (Repo Default)'
     }
   },
   server: {
     host: {
-      doc: "The IP address the web application will run on",
+      doc: 'The IP address the web application will run on',
       format: '*',
       default: '0.0.0.0'
     },
     port: {
-      doc: "The port the web application will bind to",
+      doc: 'The port the web application will bind to',
       format: 'port',
       default: 8080,
-      env: "PORT"
+      env: 'PORT'
     },
     name: {
-      doc: "The server name.",
+      doc: 'The server name.',
       format: String,
-      default: "DADI (Web)"
+      default: 'DADI (Web)'
     },
     socketTimeoutSec: {
-      doc: "The number of seconds to wait before closing an idle socket",
+      doc: 'The number of seconds to wait before closing an idle socket',
       format: Number,
       default: 120
     },
     protocol: {
-      doc: "The protocol the web application will use",
+      doc: 'The protocol the web application will use',
       format: String,
-      default: "http",
-      env: "PROTOCOL"
+      default: 'http',
+      env: 'PROTOCOL'
     },
     sslPassphrase: {
-      doc: "The passphrase of the SSL private key",
+      doc: 'The passphrase of the SSL private key',
       format: String,
-      default: "",
-      env: "SSL_PRIVATE_KEY_PASSPHRASE"
+      default: '',
+      env: 'SSL_PRIVATE_KEY_PASSPHRASE'
     },
     sslPrivateKeyPath: {
-      doc: "The filename of the SSL private key",
+      doc: 'The filename of the SSL private key',
       format: String,
-      default: "",
-      env: "SSL_PRIVATE_KEY_PATH"
+      default: '',
+      env: 'SSL_PRIVATE_KEY_PATH'
     },
     sslCertificatePath: {
-      doc: "The filename of the SSL certificate",
+      doc: 'The filename of the SSL certificate',
       format: String,
-      default: "",
-      env: "SSL_CERTIFICATE_PATH"
+      default: '',
+      env: 'SSL_CERTIFICATE_PATH'
     },
     sslIntermediateCertificatePath: {
-      doc: "The filename of an SSL intermediate certificate, if any",
+      doc: 'The filename of an SSL intermediate certificate, if any',
       format: String,
-      default: "",
-      env: "SSL_INTERMEDIATE_CERTIFICATE_PATH"
+      default: '',
+      env: 'SSL_INTERMEDIATE_CERTIFICATE_PATH'
     },
     sslIntermediateCertificatePaths: {
-      doc: "The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)",
+      doc: 'The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)',
       format: Array,
       default: [],
-      env: "SSL_INTERMEDIATE_CERTIFICATE_PATHS"
+      env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
     }
   },
   api: {
     host: {
-      doc: "The IP address the DADI API application runs on",
+      doc: 'The IP address the DADI API application runs on',
       format: '*',
       default: '0.0.0.0'
     },
     protocol: {
-      doc: "The protocol to use for the DADI API application",
+      doc: 'The protocol to use for the DADI API application',
       format: String,
-      default: "http"
+      default: 'http'
     },
     port: {
-      doc: "The port for the DADI API application",
+      doc: 'The port for the DADI API application',
       format: 'port',
       default: 8080
     },
     enabled: {
-      doc: "Determines whether this web instance requires access to the API",
+      doc: 'Determines whether this web instance requires access to the API',
       format: Boolean,
       default: true
     }
   },
   auth: {
     tokenUrl: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "/token"
+      default: '/token'
     },
     protocol: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "http"
+      default: 'http'
     },
     clientId: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "testClient",
-      env: "AUTH_TOKEN_ID"
+      default: 'testClient',
+      env: 'AUTH_TOKEN_ID'
     },
     secret: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "superSecret",
-      env: "AUTH_TOKEN_SECRET"
+      default: 'superSecret',
+      env: 'AUTH_TOKEN_SECRET'
     }
   },
   aws: {
     accessKeyId: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "",
-      env: "AWS_ACCESS_KEY"
+      default: '',
+      env: 'AWS_ACCESS_KEY'
     },
     secretAccessKey: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "",
-      env: "AWS_SECRET_KEY"
+      default: '',
+      env: 'AWS_SECRET_KEY'
     },
     region: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "",
-      env: "AWS_REGION"
+      default: '',
+      env: 'AWS_REGION'
     }
   },
   twitter: {
     consumerKey: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "",
-      env: "TWITTER_CONSUMER_KEY"
+      default: '',
+      env: 'TWITTER_CONSUMER_KEY'
     },
     consumerSecret: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "",
-      env: "TWITTER_CONSUMER_SECRET"
+      default: '',
+      env: 'TWITTER_CONSUMER_SECRET'
     },
     accessTokenKey: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "",
-      env: "TWITTER_ACCESS_TOKEN_KEY"
+      default: '',
+      env: 'TWITTER_ACCESS_TOKEN_KEY'
     },
     accessTokenSecret: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "",
-      env: "TWITTER_ACCESS_TOKEN_SECRET"
+      default: '',
+      env: 'TWITTER_ACCESS_TOKEN_SECRET'
     }
   },
   wordpress: {
     bearerToken: {
-      doc: "A pregenerated oauth access bearer token",
+      doc: 'A pregenerated oauth access bearer token',
       format: String,
-      default: "",
-      env: "WORDPRESS_BEARER_TOKEN"
+      default: '',
+      env: 'WORDPRESS_BEARER_TOKEN'
     }
   },
   caching: {
     ttl: {
-      doc: "The time, in seconds, after which cached data is considered stale",
+      doc: 'The time, in seconds, after which cached data is considered stale',
       format: Number,
       default: 300
     },
     directory: {
       enabled: {
-        doc: "If enabled, cache files will be saved to the filesystem",
+        doc: 'If enabled, cache files will be saved to the filesystem',
         format: Boolean,
         default: true
       },
       path: {
-        doc: "The relative path to the cache directory",
+        doc: 'The relative path to the cache directory',
         format: String,
-        default: "./cache/web"
+        default: './cache/web'
       },
       extension: {
-        doc: "The extension to use for cache files",
+        doc: 'The extension to use for cache files',
         format: String,
-        default: "html"
+        default: 'html'
       }
     },
     redis: {
       enabled: {
-        doc: "If enabled, cache files will be saved to the specified Redis server",
+        doc: 'If enabled, cache files will be saved to the specified Redis server',
         format: Boolean,
         default: false
       },
       host: {
-        doc: "The Redis server host",
+        doc: 'The Redis server host',
         format: String,
-        default: "127.0.0.1",
-        env: "REDIS_HOST"
+        default: '127.0.0.1',
+        env: 'REDIS_HOST'
       },
       port: {
-        doc: "The port for the Redis server",
+        doc: 'The port for the Redis server',
         format: 'port',
         default: 6379,
-        env: "REDIS_PORT"
+        env: 'REDIS_PORT'
       },
       password: {
-        doc: "",
+        doc: '',
         format: String,
-        default: "",
-        env: "REDIS_PASSWORD"
+        default: '',
+        env: 'REDIS_PASSWORD'
       }
     }
   },
   dust: {
     cache: {
-      doc: "If true, compiled templates are saved to the Dust cache. Recommended setting: true",
+      doc: 'If true, compiled templates are saved to the Dust cache. Recommended setting: true',
       format: Boolean,
       default: true
     },
     debug: {
-      doc: "",
+      doc: '',
       format: Boolean,
       default: false
     },
     debugLevel: {
-      doc: "",
+      doc: '',
       format: String,
-      default: "WARN"
+      default: 'WARN'
     },
     whitespace: {
-      doc: "",
+      doc: '',
       format: Boolean,
       default: false
     },
     clientRender: {
       enabled: {
-        doc: "If true, compiled templates are made available to the client-side",
+        doc: 'If true, compiled templates are made available to the client-side',
         format: Boolean,
         default: false
       },
       format: {
         doc: "Defines whether compiled templates are written to individual JS files ('separate') or combined into a single one ('combined')",
-        format: ["separate", "combined"],
-        default: "separate"
+        format: ['separate', 'combined'],
+        default: 'separate'
       },
       path: {
         doc: "The location where compiled templates should be written to, relative to 'public'. This should be a folder when 'format' is 'separate' and a file when 'combined'",
         format: String,
-        default: "templates"
+        default: 'templates'
       },
       whitelist: {
-        doc: "When defined, only templates with names matching an entry in whitelist will be made available to the client. Wildcards supported.",
+        doc: 'When defined, only templates with names matching an entry in whitelist will be made available to the client. Wildcards supported.',
         format: Array,
         default: []
       }
@@ -273,37 +273,37 @@ var conf = convict({
       doc: "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
       format: Object,
       default: {
-        "text/css": "public, max-age=86400",
-        "text/javascript": "public, max-age=86400",
-        "application/javascript": "public, max-age=86400"
+        'text/css': 'public, max-age=86400',
+        'text/javascript': 'public, max-age=86400',
+        'application/javascript': 'public, max-age=86400'
       }
     }
   },
   logging: {
     enabled: {
-      doc: "If true, logging is enabled using the following settings.",
+      doc: 'If true, logging is enabled using the following settings.',
       format: Boolean,
       default: true
     },
     level: {
-      doc: "Sets the logging level.",
-      format: ['debug','info','warn','error','trace'],
+      doc: 'Sets the logging level.',
+      format: ['debug', 'info', 'warn', 'error', 'trace'],
       default: 'info'
     },
     path: {
-      doc: "The absolute or relative path to the directory for log files.",
+      doc: 'The absolute or relative path to the directory for log files.',
       format: String,
-      default: "./log"
+      default: './log'
     },
     filename: {
-      doc: "The name to use for the log file, without extension.",
+      doc: 'The name to use for the log file, without extension.',
       format: String,
-      default: "web"
+      default: 'web'
     },
     extension: {
-      doc: "The extension to use for the log file.",
+      doc: 'The extension to use for the log file.',
       format: String,
-      default: "log"
+      default: 'log'
     },
     accessLog: {
       enabled: {
@@ -312,60 +312,60 @@ var conf = convict({
         default: true
       },
       kinesisStream: {
-        doc: "An AWS Kinesis stream to write to log records to.",
+        doc: 'An AWS Kinesis stream to write to log records to.',
         format: String,
-        default: ""
+        default: ''
       }
     },
     sentry: {
       dsn: {
         doc: "The 'DSN' to use for logging errors and events to a Sentry server. It should be similar to 'https://693ef18da3184cffa82144fde2979cbc:a0651b0286784761a62ef8e8fc128722@app.getsentry.com/59524'.",
         format: String,
-        default: ""
+        default: ''
       }
     }
   },
   globalEvents: {
-    doc: "",
+    doc: '',
     format: Array,
     default: []
   },
   paths: {
-    doc: "",
+    doc: '',
     format: Object,
     default: {
-      datasources: __dirname + '/app/datasources',
-      events: __dirname + '/app/events',
-      filters: __dirname + '/app/utils/filters',
-      helpers: __dirname + '/app/utils/helpers',
-      media: __dirname + '/app/media',
-      middleware: __dirname + '/app/middleware',
-      pages: __dirname + '/app/pages',
-      partials: __dirname + '/app/partials',
-      public: __dirname + '/app/public',
-      routes: __dirname + '/app/routes',
-      tokenWallets: __dirname + '/.wallet'
+      datasources: path.join(__dirname, '/app/datasources'),
+      events: path.join(__dirname, '/app/events'),
+      filters: path.join(__dirname, '/app/utils/filters'),
+      helpers: path.join(__dirname, '/app/utils/helpers'),
+      media: path.join(__dirname, '/app/media'),
+      middleware: path.join(__dirname, '/app/middleware'),
+      pages: path.join(__dirname, '/app/pages'),
+      partials: path.join(__dirname, '/app/partials'),
+      public: path.join(__dirname, '/app/public'),
+      routes: path.join(__dirname, '/app/routes'),
+      tokenWallets: path.join(__dirname, '/.wallet')
     }
   },
   sessions: {
     enabled: {
-      doc: "",
+      doc: '',
       format: Boolean,
       default: false
     },
     name: {
       doc: "The session cookie name. The default value is 'dadiweb.sid'",
       format: String,
-      default: "dadiweb.sid"
+      default: 'dadiweb.sid'
     },
     secret: {
-      doc: "This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.",
+      doc: 'This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.',
       format: String,
-      default: "dadiwebsecretsquirrel",
-      env: "SESSION_SECRET"
+      default: 'dadiwebsecretsquirrel',
+      env: 'SESSION_SECRET'
     },
     resave: {
-      doc: "Forces the session to be saved back to the session store, even if the session was never modified during the request.",
+      doc: 'Forces the session to be saved back to the session store, even if the session was never modified during the request.',
       format: Boolean,
       default: false
     },
@@ -375,9 +375,9 @@ var conf = convict({
       default: false
     },
     store: {
-      doc: "The session store instance, defaults to a new MemoryStore instance.",
+      doc: 'The session store instance, defaults to a new MemoryStore instance.',
       format: String,
-      default: ""
+      default: ''
     },
     cookie: {
       maxAge: {
@@ -386,7 +386,7 @@ var conf = convict({
         default: 60000
       },
       secure: {
-        doc: "",
+        doc: '',
         format: Boolean,
         default: false
       }
@@ -394,32 +394,32 @@ var conf = convict({
   },
   rewrites: {
     datasource: {
-      doc: "",
+      doc: '',
       format: String,
-      default: ""
+      default: ''
     },
     loadDatasourceAsFile: {
-      doc: "",
+      doc: '',
       format: Boolean,
       default: false
     },
     datasourceRefreshTime: {
       format: Number,
       default: 5,
-      doc: "How often to refresh the datasource in minutes"
+      doc: 'How often to refresh the datasource in minutes'
     },
     path: {
-      doc: "",
+      doc: '',
       format: String,
-      default: ""
+      default: ''
     },
     forceLowerCase: {
-      doc: "If true, converts URLs to lowercase and redirects",
+      doc: 'If true, converts URLs to lowercase and redirects',
       format: Boolean,
       default: false
     },
     forceTrailingSlash: {
-      doc: "If true, adds a trailing slash to URLs and redirects",
+      doc: 'If true, adds a trailing slash to URLs and redirects',
       format: Boolean,
       default: false
     },
@@ -429,29 +429,29 @@ var conf = convict({
       default: []
     },
     forceDomain: {
-      doc: "The domain to force requests to",
+      doc: 'The domain to force requests to',
       format: String,
-      default: ""
+      default: ''
     }
   },
   security: {
     useSSL: {
-      doc: "Deprecated. Set server.protocol to https to use SSL.",
+      doc: 'Deprecated. Set server.protocol to https to use SSL.',
       format: Boolean,
       default: false
     },
     trustProxy: {
-      doc: "If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address",
-      format: "*",
+      doc: 'If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address',
+      format: '*',
       default: true
     }
   },
   env: {
-    doc: "The applicaton environment.",
-    format: ["production", "development", "test", "qa"],
-    default: "development",
-    env: "NODE_ENV",
-    arg: "node_env"
+    doc: 'The applicaton environment.',
+    format: ['production', 'development', 'test', 'qa'],
+    default: 'development',
+    env: 'NODE_ENV',
+    arg: 'node_env'
   },
   virtualDirectories: {
     doc: "Allows specifying folders relative to the root of the application where additional static content may reside. An array entry should like look { path: 'data/legacy_features', index: 'default.html', forceTrailingSlash: false } ",
@@ -459,13 +459,13 @@ var conf = convict({
     default: []
   },
   allowJsonView: {
-    doc: "If true, allows appending ?json=true to the querystring to view the raw JSON output for each page.",
+    doc: 'If true, allows appending ?json=true to the querystring to view the raw JSON output for each page.',
     format: Boolean,
     default: false
   },
   toobusy: {
     enabled: {
-      doc: "If true, server will respond with HTTP 503 if the server is deemed too busy.",
+      doc: 'If true, server will respond with HTTP 503 if the server is deemed too busy.',
       format: Boolean,
       default: false
     },
@@ -475,60 +475,59 @@ var conf = convict({
       default: 70
     },
     interval: {
-      doc: "The time in milliseconds between each latency check.",
+      doc: 'The time in milliseconds between each latency check.',
       format: Number,
       default: 500
     }
   },
   cluster: {
-    doc: "If true, Web runs in cluster mode, starting a worker for each CPU core",
+    doc: 'If true, Web runs in cluster mode, starting a worker for each CPU core',
     format: Boolean,
     default: false
   },
   debug: {
-    doc: "If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.",
+    doc: 'If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.',
     format: Boolean,
     default: false
   },
   secret: {
-    doc: "A value that must be passed to requests for the /config route, which allows viewing the application config in the browser",
+    doc: 'A value that must be passed to requests for the /config route, which allows viewing the application config in the browser',
     format: String,
-    default: "1dc10073-ca36-4373-a646-0d1092caf4a5",
-    env: "CONFIG_SECRET"
+    default: '1dc10073-ca36-4373-a646-0d1092caf4a5',
+    env: 'CONFIG_SECRET'
   },
   data: {
     preload: {
-      doc: "",
+      doc: '',
       format: Array,
       default: []
     }
   }
-});
+})
 
 // Load environment dependent configuration
-var env = conf.get('env');
-conf.loadFile('./config/config.' + env + '.json');
+var env = conf.get('env')
+conf.loadFile('./config/config.' + env + '.json')
 
 // Load domain-specific configuration
-conf.updateConfigDataForDomain = function(domain) {
-  var domainConfig = './config/' + domain + '.json';
-  try {
-    var stats = fs.statSync(domainConfig);
-    // no error, file exists
-    conf.loadFile(domainConfig);
-  }
-  catch(err) {
-    if (err.code === 'ENOENT') {
-      // console.log('No domain-specific configuration file: ' + domainConfig);
+conf.updateConfigDataForDomain = function (domain) {
+  var domainConfig = './config/' + domain + '.json'
+  fs.stat(domainConfig, (err, stats) => {
+    if (err && err.code === 'ENOENT') {
+      // No domain-specific configuration file
+      return
     }
-  }
-};
+
+    // no error, file exists
+    conf.loadFile(domainConfig)
+  })
+}
 
 // Perform validation
-conf.validate({strict: false});
+conf.validate({strict: false})
 
-module.exports = conf;
-module.exports.configPath = function() {
+module.exports = conf
+module.exports.configPath = function () {
   var env = conf.get('env') || process.env['NODE_ENV']
-  return './config/config.' + env + '.json';
+  return './config/config.' + env + '.json'
 }

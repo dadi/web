@@ -1,10 +1,11 @@
-var config = require(__dirname + '/../../../config.js')
 var dust = require('dustjs-linkedin')
 var fs = require('fs')
-var log = require('@dadi/logger')
 var mkdirp = require('mkdirp')
 var path = require('path')
 var wildcard = require('wildcard')
+
+var config = require(path.join(__dirname, '/../../../config.js'))
+var log = require('@dadi/logger')
 
 var Dust = function () {
   this.templates = {}
@@ -12,13 +13,13 @@ var Dust = function () {
   // Loading core Dust helpers
   require('dustjs-helpers')
 
-  dust.onLoad = ((templateName, opts, callback) => {
+  dust.onLoad = (templateName, opts, callback) => {
     if (!this.templates[templateName]) {
       return callback({message: 'Template not found: ' + templateName}, null)
     }
 
     return callback(null, this.templates[templateName])
-  })
+  }
 }
 
 Dust.prototype._writeToFile = function (filePath, content, append) {
@@ -66,6 +67,8 @@ Dust.prototype.loadDirectory = function (directory, prefix, recursive) {
 
   return new Promise(function (resolve, reject) {
     fs.readdir(directory, function (err, files) {
+      if (err) console.log(err)
+
       var filesAbsolute = files.map(function (file) {
         return path.join(directory, file)
       })
@@ -85,6 +88,8 @@ Dust.prototype.loadFiles = function (files, prefix, recursive) {
 
     files.forEach(function (file) {
       fs.stat(file, function (err, stats) {
+        if (err) console.log(err)
+
         var basename = path.basename(file, '.dust')
 
         if (stats.isDirectory() && recursive) {
@@ -93,6 +98,7 @@ Dust.prototype.loadFiles = function (files, prefix, recursive) {
           var name = path.join(prefix, basename)
 
           fs.readFile(file, 'utf8', function (err, data) {
+            if (err) console.log(err)
             queue.push(Promise.resolve(self.load(data, name)))
           })
         }
@@ -191,17 +197,17 @@ Dust.prototype.writeClientsideFiles = function () {
       var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'))
       var templatesOutput = ''
 
-      templates.forEach((function (name) {
+      templates.forEach((name) => {
         templatesOutput += this.templates[name]
-      }).bind(this))
+      })
 
       queue.push(this._writeToFile(templatesOutputFile, templatesOutput))
     } else {
-      templates.forEach((function (name) {
+      templates.forEach((name) => {
         var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'), name) + '.js'
 
         queue.push(this._writeToFile(templatesOutputFile, this.templates[name]))
-      }).bind(this))
+      })
     }
   }
 

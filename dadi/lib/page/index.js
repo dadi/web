@@ -2,15 +2,16 @@
  * @module Page
  */
 var _ = require('underscore')
+var path = require('path')
 var pathToRegexp = require('path-to-regexp')
-var config = require(__dirname + '/../../../config')
+var config = require(path.join(__dirname, '/../../../config'))
 
 var _pages = {}
 
 var Page = function (name, schema) {
   schema.settings = schema.settings || {}
 
-  this.name = name; // schema.page.name || name
+  this.name = name // schema.page.name || name
   this.key = schema.page.key || name
   this.template = schema.template || name + '.dust'
   this.contentType = schema.contentType || 'text/html'
@@ -46,8 +47,7 @@ Page.prototype.constructRoutes = function (schema) {
     if (schema.route.path && typeof schema.route.path === 'string') {
       routes = [{ 'path': schema.route.path }]
       if (schema.route.constraint) routes[0].constraint = schema.route.constraint
-    }
-    else if (schema.route.paths && typeof schema.route.paths === 'string') {
+    } else if (schema.route.paths && typeof schema.route.paths === 'string') {
       routes = [{ 'path': schema.route.paths }]
       if (schema.route.constraint) routes[0].constraint = schema.route.constraint
     }
@@ -107,7 +107,7 @@ function getWhitespaceSetting (settings) {
  * @api private
  */
 function checkRouteSetting (schema, name) {
-  if (!schema.routes && schema.route && typeof schema.route != 'object') {
+  if (!schema.routes && schema.route && typeof schema.route !== 'object') {
     var newSchema = schema
     newSchema.routes = [{ 'path': schema.route }]
     delete newSchema.route
@@ -124,7 +124,7 @@ function checkRouteSetting (schema, name) {
  * @param {String} name - the page name
  * @api private
  */
-function checkCacheSetting(schema, name) {
+function checkCacheSetting (schema, name) {
   if (schema.page.cache !== undefined) {
     schema.settings.cache = schema.page.cache
     delete schema.page.cache

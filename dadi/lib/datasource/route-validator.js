@@ -1,12 +1,7 @@
-var _ = require("underscore")
-var path = require("path")
-
-var config = require(path.resolve(path.join(__dirname, '/../../../config')))
+var path = require('path')
 var Datasource = require(path.join(__dirname, '/../datasource'))
-var help = require(path.join(__dirname, '/../help'))
-var log = require('@dadi/logger')
 
-var RouteValidator = function(route, param, options) {
+var RouteValidator = function (route, param, options) {
   this.route = route
   this.param = param
   this.options = options
@@ -15,7 +10,7 @@ var RouteValidator = function(route, param, options) {
 
 RouteValidator.prototype.get = function (req) {
   return new Promise((resolve, reject) => {
-    new Datasource(this.route.path, this.param.fetch, this.options, (err, datasource) => {
+    new Datasource(this.route.path, this.param.fetch, this.options).init((err, datasource) => {
       if (err) {
         if (err) return reject(err)
       }
@@ -38,7 +33,7 @@ RouteValidator.prototype.get = function (req) {
   })
 }
 
-module.exports = function(route, param, options) {
+module.exports = function (route, param, options) {
   return new RouteValidator(route, param, options)
 }
 

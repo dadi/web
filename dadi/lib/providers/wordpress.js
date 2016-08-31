@@ -1,10 +1,11 @@
 'use strict'
 
 const _ = require('underscore')
+const path = require('path')
 const Purest = require('purest')
 const log = require('@dadi/logger')
-const config = require(__dirname + '/../../../config.js')
-const DatasourceCache = require(__dirname + '/../cache/datasource')
+const config = require(path.join(__dirname, '/../../../config.js'))
+const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const WordPressProvider = function () {}
 
@@ -15,7 +16,7 @@ const WordPressProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-WordPressProvider.prototype.initialise = function initialise(datasource, schema) {
+WordPressProvider.prototype.initialise = function initialise (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
@@ -31,7 +32,7 @@ WordPressProvider.prototype.initialise = function initialise(datasource, schema)
  * @param  {obj} req - web request object
  * @return {void}
  */
-WordPressProvider.prototype.buildEndpoint = function buildEndpoint(req) {
+WordPressProvider.prototype.buildEndpoint = function buildEndpoint (req) {
   const endpointParams = this.schema.datasource.endpointParams || []
   const endpoint = this.schema.datasource.source.endpoint
 
@@ -41,7 +42,7 @@ WordPressProvider.prototype.buildEndpoint = function buildEndpoint(req) {
   if (endpointParams.length > 0) {
     endpointParams.forEach((element, index, array) => {
       if (element.param && req.params[element.param]) {
-        this.endpoint = this.endpoint.replace(`\$${element.field}`, req.params[element.param])
+        this.endpoint = this.endpoint.replace(`$${element.field}`, req.params[element.param])
       }
     })
   }
@@ -52,17 +53,18 @@ WordPressProvider.prototype.buildEndpoint = function buildEndpoint(req) {
  *
  * @return {obj} query params to pass to the wordpress api
  */
-WordPressProvider.prototype.buildQueryParams = function buildQueryParams() {
+WordPressProvider.prototype.buildQueryParams = function buildQueryParams () {
   const params = {}
   const datasource = this.schema.datasource
 
   params.count = datasource.count
   params.fields = ''
 
-  if (_.isArray(datasource.fields))
+  if (_.isArray(datasource.fields)) {
     params.fields = datasource.fields.join(',')
-  else if (_.isObject(datasource.fields))
+  } else if (_.isObject(datasource.fields)) {
     params.fields = Object.keys(datasource.fields).join(',')
+  }
 
   for (let f in datasource.filter) {
     params[f] = datasource.filter[f]
@@ -78,7 +80,7 @@ WordPressProvider.prototype.buildQueryParams = function buildQueryParams() {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-WordPressProvider.prototype.load = function load(requestUrl, done) {
+WordPressProvider.prototype.load = function load (requestUrl, done) {
   try {
     const queryParams = this.buildQueryParams()
 
@@ -110,7 +112,7 @@ WordPressProvider.prototype.load = function load(requestUrl, done) {
  * @param  {fn} done
  * @return {void}
  */
-WordPressProvider.prototype.processOutput = function processOutput(res, data, done) {
+WordPressProvider.prototype.processOutput = function processOutput (res, data, done) {
   // if the error is anything other than Success or Bad Request, error
   if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     const err = new Error()
@@ -124,7 +126,8 @@ WordPressProvider.prototype.processOutput = function processOutput(res, data, do
   }
 
   if (res.statusCode === 200) {
-    this.dataCache.cacheResponse(JSON.stringify(data), () => {})
+    this.dataCache.cacheResponse(JSON.stringify(data), () => {
+    })
   }
 
   return done(null, data)
@@ -136,7 +139,7 @@ WordPressProvider.prototype.processOutput = function processOutput(res, data, do
  * @param  {obj} req - web request object
  * @return {void}
  */
-WordPressProvider.prototype.processRequest = function processRequest(req) {
+WordPressProvider.prototype.processRequest = function processRequest (req) {
   this.buildEndpoint(req)
 }
 
@@ -145,7 +148,7 @@ WordPressProvider.prototype.processRequest = function processRequest(req) {
  *
  * @return {void}
  */
-WordPressProvider.prototype.setAuthStrategy = function setAuthStrategy() {
+WordPressProvider.prototype.setAuthStrategy = function setAuthStrategy () {
   const auth = this.schema.datasource.auth
 
   this.bearerToken = auth && auth.bearerToken || config.get('wordpress.bearerToken')

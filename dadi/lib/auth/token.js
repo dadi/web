@@ -1,1 +1,1 @@
-exports.authToken = {};
+exports.authToken = {}

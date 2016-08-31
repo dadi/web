@@ -1,9 +1,7 @@
 /**
  * @module Middleware
  */
-var fs = require('fs')
 var path = require('path')
-var config = require(path.join(__dirname, '/../../../config'))
 var log = require('@dadi/logger')
 
 var Middleware = function (name, options) {
@@ -29,7 +27,7 @@ Middleware.prototype.init = function (app) {
     this.load()(app)
   } catch (err) {
     log.error({module: 'middleware'}, err)
-    throw(err)
+    throw (err)
   }
 }
 

@@ -4,13 +4,14 @@ const _ = require('underscore')
 const url = require('url')
 const http = require('http')
 const https = require('https')
+const path = require('path')
 const zlib = require('zlib')
 
-const config = require(__dirname + '/../../../config.js')
+const config = require(path.join(__dirname, '/../../../config.js'))
 const log = require('@dadi/logger')
-const help = require(__dirname + '/../help')
-const BearerAuthStrategy = require(__dirname + '/../auth/bearer')
-const DatasourceCache = require(__dirname + '/../cache/datasource')
+const help = require(path.join(__dirname, '/../help'))
+const BearerAuthStrategy = require(path.join(__dirname, '/../auth/bearer'))
+const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const RemoteProvider = function () {}
 
@@ -21,7 +22,7 @@ const RemoteProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-RemoteProvider.prototype.initialise = function initialise(datasource, schema) {
+RemoteProvider.prototype.initialise = function initialise (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
@@ -33,7 +34,7 @@ RemoteProvider.prototype.initialise = function initialise(datasource, schema) {
  *
  * @return {void}
  */
-RemoteProvider.prototype.buildEndpoint = function buildEndpoint() {
+RemoteProvider.prototype.buildEndpoint = function buildEndpoint () {
   const apiConfig = config.get('api')
   const source = this.schema.datasource.source
 
@@ -42,7 +43,7 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint() {
   const port = source.port || apiConfig.port
 
   const uri = [protocol, '://', host, (port !== '' ? ':' : ''),
-               port, '/', source.endpoint].join('')
+    port, '/', source.endpoint].join('')
 
   this.endpoint = this.processDatasourceParameters(this.schema, uri)
 }
@@ -53,7 +54,7 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint() {
  * @param  {fn} done - callback
  * @return {void}
  */
-RemoteProvider.prototype.getHeaders = function getHeaders(done) {
+RemoteProvider.prototype.getHeaders = function getHeaders (done) {
   const headers = {
     'accept-encoding': 'gzip'
   }
@@ -95,8 +96,7 @@ RemoteProvider.prototype.getHeaders = function getHeaders(done) {
         help.timer.stop('auth')
         return done(err)
       })
-    }
-    catch (err) {
+    } catch (err) {
       console.log(err.stack)
     }
   }
@@ -109,7 +109,7 @@ RemoteProvider.prototype.getHeaders = function getHeaders(done) {
  * @param  {fn} done - callback
  * @return {void}
  */
-RemoteProvider.prototype.handleResponse = function handleResponse(res, done) {
+RemoteProvider.prototype.handleResponse = function handleResponse (res, done) {
   const self = this
   const encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : ''
   let output = ''
@@ -123,6 +123,7 @@ RemoteProvider.prototype.handleResponse = function handleResponse(res, done) {
     }).on('end', () => {
       output = buffer.join('')
       self.processOutput(res, output, (err, data, res) => {
+        if (err) return done(err)
         return done(null, data, res)
       })
     }).on('error', (err) => {
@@ -137,6 +138,7 @@ RemoteProvider.prototype.handleResponse = function handleResponse(res, done) {
 
     res.on('end', () => {
       self.processOutput(res, output, (err, data, res) => {
+        if (err) return done(err)
         return done(null, data, res)
       })
     })
@@ -149,7 +151,7 @@ RemoteProvider.prototype.handleResponse = function handleResponse(res, done) {
  * @param  {string} protocol
  * @return {module} http|https
  */
-RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent(protocol) {
+RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
   return (protocol === 'https')
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
@@ -195,7 +197,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
       })
 
       request.on('error', (err) => {
-        const message = err.toString() + '. Couldn\'t request data from ' + self.datasource.endpoint
+        const message = err.toString() + ". Couldn't request data from " + self.datasource.endpoint
         err.name = 'GetData'
         err.message = message
         err.remoteIp = self.options.host
@@ -215,22 +217,22 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
  * @param  {type} uri - the original datasource endpoint
  * @return {string} uri with query string appended
  */
-RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters(schema, uri) {
+RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters (schema, uri) {
   let query = '?'
 
   const params = [
-    { "count": (schema.datasource.count || 0) },
-    { "skip": (schema.datasource.skip) },
-    { "page": (schema.datasource.page || 1) },
-    { "referer": schema.datasource.referer },
-    { "filter": schema.datasource.filter || {} },
-    { "fields": schema.datasource.fields || {} },
-    { "sort": this.processSortParameter(schema.datasource.sort) }
+    { 'count': (schema.datasource.count || 0) },
+    { 'skip': (schema.datasource.skip) },
+    { 'page': (schema.datasource.page || 1) },
+    { 'referer': schema.datasource.referer },
+    { 'filter': schema.datasource.filter || {} },
+    { 'fields': schema.datasource.fields || {} },
+    { 'sort': this.processSortParameter(schema.datasource.sort) }
   ]
 
   // pass cache flag to API endpoint
   if (schema.datasource.hasOwnProperty('cache')) {
-    params.push({ "cache": schema.datasource.cache })
+    params.push({ 'cache': schema.datasource.cache })
   }
 
   params.forEach((param) => {
@@ -252,7 +254,7 @@ RemoteProvider.prototype.processDatasourceParameters = function processDatasourc
  * @param  {fn} done
  * @return {void}
  */
-RemoteProvider.prototype.processOutput = function processOutput(res, data, done) {
+RemoteProvider.prototype.processOutput = function processOutput (res, data, done) {
   const self = this
 
   // Return a 202 Accepted response immediately,
@@ -261,9 +263,27 @@ RemoteProvider.prototype.processOutput = function processOutput(res, data, done)
     return done(null, JSON.parse(data), res)
   }
 
-  // if the error is anything other than
-  // Success or Bad Request, error
-  if (res.statusCode && !/200|400/.exec(res.statusCode)) {
+  // return 5xx error as the datasource response
+  if (res.statusCode && /^5/.exec(res.statusCode)) {
+    data = {
+      'results': [],
+      'errors': [{
+        'code': 'WEB-0005',
+        'title': 'Datasource Timeout',
+        'details': "The datasource '" + this.datasource.name + "' timed out: " + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
+      }]
+    }
+  } else if (res.statusCode === 404) {
+    data = {
+      'results': [],
+      'errors': [{
+        'code': 'WEB-0004',
+        'title': 'Datasource Not Found',
+        'details': 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
+      }]
+    }
+  } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
+    // if the error is anything other than Success or Bad Request, error
     const err = new Error()
     err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
     if (data) err.message += '\n' + data
@@ -272,13 +292,16 @@ RemoteProvider.prototype.processOutput = function processOutput(res, data, done)
     err.remotePort = self.options.port
 
     log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint)
-    //return done(err)
-    throw(err)
+
+    console.log(err)
+    // return done(err)
+    throw (err)
   }
 
   // Cache 200 responses
   if (res.statusCode === 200) {
-    this.dataCache.cacheResponse(data, () => {})
+    this.dataCache.cacheResponse(data, () => {
+    })
   }
 
   return done(null, data)
@@ -290,7 +313,7 @@ RemoteProvider.prototype.processOutput = function processOutput(res, data, done)
  * @param  {obj} req - web request object
  * @return {void}
  */
-RemoteProvider.prototype.processRequest = function processRequest(req) {
+RemoteProvider.prototype.processRequest = function processRequest (req) {
   this.buildEndpoint()
 }
 
@@ -300,7 +323,7 @@ RemoteProvider.prototype.processRequest = function processRequest(req) {
  * @param  {?} obj - sort parameter
  * @return {?}
  */
-RemoteProvider.prototype.processSortParameter = function processSortParameter(obj) {
+RemoteProvider.prototype.processSortParameter = function processSortParameter (obj) {
   let sort = {}
 
   if (typeof obj !== 'object' || obj === null) return sort
@@ -325,7 +348,7 @@ RemoteProvider.prototype.processSortParameter = function processSortParameter(ob
  *
  * @return {void}
  */
-RemoteProvider.prototype.setAuthStrategy = function setAuthStrategy() {
+RemoteProvider.prototype.setAuthStrategy = function setAuthStrategy () {
   if (!this.schema.datasource.auth) return null
   this.authStrategy = new BearerAuthStrategy(this.schema.datasource.auth)
 }
