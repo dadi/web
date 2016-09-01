@@ -501,9 +501,18 @@ DataHelper.prototype.processOutput = function(res, data, done) {
     return done(null, JSON.parse(data), res);
   }
 
-  // if the error is anything other than
-  // Success or Bad Request, error
-  if (res.statusCode && !/200|400/.exec(res.statusCode)) {
+  if (res.statusCode && /503|504/.exec(res.statusCode)) {
+    data = {
+      results: [],
+      errors: [{
+        code: 'WEB-0005',
+        title: 'Datasource Timeout',
+        details: 'The datasource "' + this.datasource.name + '" timed out: ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.datasource.endpoint
+      }]
+    }
+  }
+  // if the error is anything other than Success or Bad Request, throw error
+  else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     var err = new Error();
     err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.datasource.endpoint;
     if (data) err.message += '\n' + data;
