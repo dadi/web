@@ -346,17 +346,20 @@ describe('Router', function (done) {
       })
 
       it('should return 200 OK if the parameter matches one in the array', function(done) {
-        TestHelper.disableApiConfig().then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].routes = pageRouteConfig.routes
+        TestHelper.updateConfig({data: { preload: []}}).then(() => {
+          TestHelper.disableApiConfig().then(() => {
+            TestHelper.setupApiIntercepts()
+            var pages = TestHelper.setUpPages()
+            pages[0].routes = pageRouteConfig.routes
 
-          TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
-            client.get('/test/war-and-peace')
-            .end(function (err, res) {
-              if (err) return done(err)
-              res.statusCode.should.eql(200)
-              done()
+            TestHelper.startServer(pages).then(() => {
+              var client = request(connectionString)
+              client.get('/test/war-and-peace')
+              .end(function (err, res) {
+                if (err) return done(err)
+                res.statusCode.should.eql(200)
+                done()
+              })
             })
           })
         })

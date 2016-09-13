@@ -1,7 +1,7 @@
 # DADI Web
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
-[![coverage](https://img.shields.io/badge/coverage-62%25-yellow.svg?style=flat-square)](https://github.com/dadi/web)
+[![coverage](https://img.shields.io/badge/coverage-61%25-yellow.svg?style=flat-square)](https://github.com/dadi/web)
 [![build](http://ci.dadi.technology/dadi/web/badge?branch=master&service=shield)](http://ci.dadi.technology/dadi/web)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 

@@ -542,4 +542,77 @@ describe('Data Providers', function (done) {
       })
     })
   })
+
+  describe('RSS', function (done) {
+    it('should use the datasource count property when querying the endpoint', function(done) {
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'rss', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.count = 10
+
+        var params = ds.provider.buildQueryParams()
+        should.exists(params.count)
+        params.count.should.eql(10)
+        done()
+      })
+    })
+
+    it('should use an array of datasource fields when querying the endpoint', function(done) {
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'rss', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.fields = ['field1', 'field2']
+
+        var params = ds.provider.buildQueryParams()
+        should.exists(params.fields)
+        params.fields.should.eql('field1,field2')
+        done()
+      })
+    })
+
+    it('should use an object of datasource fields when querying the endpoint', function(done) {
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'rss', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.fields = {'field1': 1, 'field2': 1}
+
+        var params = ds.provider.buildQueryParams()
+        should.exists(params.fields)
+        params.fields.should.eql('field1,field2')
+        done()
+      })
+    })
+
+    it('should use the datasource filter property when querying the endpoint', function(done) {
+      new Datasource(Page('test', TestHelper.getPageSchema()), 'rss', TestHelper.getPathOptions()).init(function (err, ds) {
+        ds.schema.datasource.filter = { 'field': 'value' }
+
+        var params = ds.provider.buildQueryParams()
+
+        should.exists(params.field)
+        params.field.should.eql('value')
+        done()
+      })
+    })
+
+    it.skip('should return data when no error is encountered', function(done) {
+      var host = 'http://www.feedforall.com'
+      var path = '/sample.xml'
+      var scope = nock(host).get(path).reply(200, { x: 'y' })
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['rss']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              should.exist(res.body['rss'])
+              res.body['rss'].should.eql({x:'y'})
+              done()
+            })
+          })
+        })
+      })
+    })
+  })
 })

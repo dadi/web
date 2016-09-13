@@ -1,0 +1,12 @@
+{
+  "datasource": {
+    "key": "rss",
+    "name": "RSS example datasource",
+    "source": {
+      "type": "rss",
+      "endpoint": "http://www.feedforall.com/sample.xml"
+    },
+    "endpointParams": [],
+    "requestParams": []
+  }
+}
