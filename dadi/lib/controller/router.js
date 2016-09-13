@@ -365,9 +365,10 @@ module.exports = function (server, options) {
     server.app.use(function (req, res, next) {
       var redirect = false
       var location = req.url
+      var rewritesConfig = config.get('rewrites')
 
       // force a URL to lowercase
-      if (config.get('rewrites.forceLowerCase')) {
+      if (rewritesConfig.forceLowerCase) {
         if (location !== location.toLowerCase()) {
           location = location.toLowerCase()
           redirect = true
@@ -375,9 +376,10 @@ module.exports = function (server, options) {
       }
 
       // stripIndexPages
-      if (!_.isEmpty(config.get('rewrites.stripIndexPages'))) {
-        var files = config.get('rewrites.stripIndexPages')
+      if (!_.isEmpty(rewritesConfig.stripIndexPages)) {
+        var files = rewritesConfig.stripIndexPages
         var re = new RegExp(files.join('|'), 'gi')
+
         if (location.match(re)) {
           location = location.replace(re, '')
           redirect = true
@@ -385,7 +387,7 @@ module.exports = function (server, options) {
       }
 
       // force a trailing slash
-      if (config.get('rewrites.forceTrailingSlash')) {
+      if (rewritesConfig.forceTrailingSlash) {
         var parsed = url.parse(location, true)
         if (/^([^.]*[^/])$/.test(parsed.pathname) === true) {
           location = parsed.pathname + '/' + parsed.search

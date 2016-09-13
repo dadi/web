@@ -4,7 +4,7 @@ var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
 var _ = require('underscore')
 var bodyParser = require('body-parser')
-var colors = require('colors')  // eslint-disable-line 
+var colors = require('colors')  // eslint-disable-line
 var compress = require('compression')
 var crypto = require('crypto')
 var dust = require('./dust')
@@ -51,7 +51,7 @@ var router = require(path.join(__dirname, '/controller/router'))
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var log = require('@dadi/logger')
-log.init(config.get('logging'), {}, process.env.NODE_ENV)
+log.init(config.get('logging'), config.get('aws'), process.env.NODE_ENV)
 
 /**
  * Creates a new Server instance.
