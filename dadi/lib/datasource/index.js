@@ -190,6 +190,10 @@ Datasource.prototype.processRequest = function (datasource, req) {
     this.schema.datasource.referer = encodeURIComponent(req.headers.referer);
   }
 
+  if (this.page.passHeaders) {
+    this.requestHeaders = req.headers
+  }
+
   // if the current datasource matches the page name
   // add some params from the query string or request params
   if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters) {

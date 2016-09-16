@@ -538,6 +538,10 @@ DataHelper.prototype.getHeaders = function(done) {
     'accept-encoding': 'gzip'
   };
 
+  if (this.datasource.requestHeaders) {
+    headers = _.extend(headers, this.datasource.requestHeaders)
+  }
+
   // If the data-source has its own auth strategy, use it.
   // Otherwise, authenticate with the main server via bearer token
   if (this.datasource.authStrategy) {
