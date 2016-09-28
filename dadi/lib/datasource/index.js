@@ -36,9 +36,9 @@ Datasource.prototype.init = function (callback) {
       self.source.type = 'remote'
     }
 
-    if (self.source.type === 'static') {
-      callback(null, self)
-    }
+    // if (self.source.type === 'static') {
+    //   callback(null, self)
+    // }
 
     if (!providers[self.source.type]) {
       err = new Error(`no provider available for datasource type ${self.source.type}`, __filename)

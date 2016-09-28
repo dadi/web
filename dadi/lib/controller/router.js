@@ -181,12 +181,14 @@ Router.prototype.validate = function (route, req, res) {
     // i.e. anything that starts with ":" -> "/news/:title"
     this.injectRequestParams(match, regex.keys, req)
 
-    var paramsPromise = new Promise((resolve, reject) => {
-      if (_.isEmpty(route.params)) {
-        return resolve('')
-      }
+    var paramsPromises = []
 
-      _.each(route.params, (param) => {
+    _.each(route.params, (param) => {
+      paramsPromises.push(new Promise((resolve, reject) => {
+        if (_.isEmpty(route.params)) {
+          return resolve('')
+        }
+
         if (param.preload && param.preload.source) {
           var data = Preload().get(param.preload.source)
           var matches = _.filter(data, (record) => {
@@ -196,26 +198,26 @@ Router.prototype.validate = function (route, req, res) {
           if (!_.isEmpty(matches)) {
             return resolve('')
           } else {
-            return reject('')
+            return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in preloaded data "' + param.preload.source + '"')
           }
         } else if (param.in && _.isArray(param.in)) {
           if (req.params[param.param] && _.contains(param.in, req.params[param.param])) {
             return resolve('')
           } else {
-            return reject('')
+            return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in array "' + param.in + '"')
           }
         } else if (param.fetch) {
           var routeValidator = new RouteValidator(route, param, this.options)
           routeValidator.get(req).then(() => {
             return resolve('')
           }).catch((err) => {
-            return reject(err)
+            return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in datasource "' + param.fetch + '"')
           })
         }
-      })
+      }))
     })
 
-    paramsPromise.then(() => {
+    Promise.all(paramsPromises).then((result) => {
       this.testConstraint(route.path, req, res, (passed) => {
         if (passed) {
           return resolve('')
@@ -224,7 +226,8 @@ Router.prototype.validate = function (route, req, res) {
         }
       })
     }).catch((err) => {
-      return reject(err)
+      log.warn(err)
+      return reject('')
     })
   })
 }
