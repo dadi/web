@@ -254,8 +254,11 @@ function onError (api) {
     var data = {
       statusCode: err.statusCode || 500,
       code: err.name,
-      message: err.message,
-      stack: err.stack.split('\n')
+      message: err.message
+    }
+
+    if (err.stack) {
+      data.stack = err.stack.split('\n')
     }
 
     // look for a loaded path that matches the error code
