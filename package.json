@@ -32,7 +32,6 @@
     "event-stream": "^3.3.1",
     "express-session": "1.12.1",
     "feedparser": "^1.1.4",
-    "htmlstrip-native": "0.1.3",
     "js-beautify": "^1.5.10",
     "json5": "0.2.0",
     "kinesis": "^1.2.2",
