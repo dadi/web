@@ -239,7 +239,8 @@ Server.prototype.exitHandler = function (options, err) {
   }
 
   if (err) {
-    console.log(err.stack.toString())
+    console.log(err)
+    if (err.stack) console.log(err.stack.toString())
   }
 
   if (options.exit) {
