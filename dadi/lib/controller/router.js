@@ -211,7 +211,7 @@ Router.prototype.validate = function (route, req, res) {
           routeValidator.get(req).then(() => {
             return resolve('')
           }).catch((err) => {
-            return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in datasource "' + param.fetch + '"')
+            return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in datasource "' + param.fetch + '". ' + err)
           })
         }
       }))
