@@ -69,14 +69,20 @@ Page.prototype.constructRoutes = function (schema) {
  * @api public
  */
 Page.prototype.toPath = function (params) {
-  var error, url
+  var error
+  var url
 
   this.routes.forEach(function (route) {
-    try {
-      url = pathToRegexp.compile(route.path)(params)
-      error = null
-    } catch (err) {
-      error = err
+    var keys = pathToRegexp(route.path).keys
+
+    // only attempt this if the route's parameters match those passed to toPath
+    if (_.difference(_.pluck(keys, 'name'), Object.keys(params)).length === 0) {
+      try {
+        url = pathToRegexp.compile(route.path)(params)
+        error = null
+      } catch (err) {
+        error = err
+      }
     }
   })
 
