@@ -11,7 +11,7 @@ var Monitor = function (path) {
   this.path = path
 
   var self = this
-  this.watcher = fs.watch(this.path, function (eventName, filename) {
+  this.watcher = fs.watch(this.path, {recursive: true}, function (eventName, filename) {
     self.emit('change', filename)
   })
 }
