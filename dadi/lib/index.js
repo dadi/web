@@ -201,9 +201,9 @@ Server.prototype.start = function (done) {
   // preload data
   Preload().init(options)
 
-  var virtualDirs = config.get('virtualDirectories')
-  _.each(virtualDirs, function (dir) {
-    app.use(serveStatic(path.join(__dirname, '/../../', dir.path), { 'index': dir.index, 'redirect': dir.forceTrailingSlash }))
+  // initialise virtualDirectories for serving static content
+  _.each(config.get('virtualDirectories'), function (directory) {
+    app.use(serveStatic(path.resolve(directory.path), { index: directory.index, redirect: directory.forceTrailingSlash }))
   })
 
   // dust configuration
