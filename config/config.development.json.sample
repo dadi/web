@@ -20,7 +20,7 @@
   },
   "virtualDirectories": [
     {
-      "path": "data/legacy_features",
+      "path": "/data/legacy_features",
       "index": "default.html",
       "forceTrailingSlash": false
     }
