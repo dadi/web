@@ -72,7 +72,7 @@ Page.prototype.toPath = function (params) {
   var error
   var url
 
-  this.routes.forEach(function (route) {
+  this.routes.forEach((route) => {
     var keys = pathToRegexp(route.path).keys
 
     // only attempt this if the route's parameters match those passed to toPath
@@ -85,6 +85,10 @@ Page.prototype.toPath = function (params) {
       }
     }
   })
+
+  if (!url) {
+    error = new Error('No routes for page "' + this.name + '" match the supplied number of parameters')
+  }
 
   if (!url && error) throw error
 
