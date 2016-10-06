@@ -454,7 +454,7 @@ var conf = convict({
     arg: 'node_env'
   },
   virtualDirectories: {
-    doc: "Allows specifying folders relative to the root of the application where additional static content may reside. An array entry should like look { path: 'data/legacy_features', index: 'default.html', forceTrailingSlash: false } ",
+    doc: "Allows specifying folders where additional static content may reside. An array entry should like look { path: 'data/legacy_features', index: 'default.html', forceTrailingSlash: false } ",
     format: Array,
     default: []
   },
