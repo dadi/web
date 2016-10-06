@@ -102,3 +102,9 @@ function restartWorkers () {
 module.exports.Config = require('./config')
 module.exports.Event = require(path.join(__dirname, '/dadi/lib/event'))
 module.exports.Preload = require(path.join(__dirname, '/dadi/lib/datasource/preload'))
+
+// Loaded page & route components
+module.exports.Components = require(path.join(__dirname, '/dadi/lib')).components
+
+// Dust template lib
+module.exports.Dust = require(path.join(__dirname, '/dadi/lib/dust'))
