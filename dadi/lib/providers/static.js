@@ -63,6 +63,10 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
       const fields = this.schema.datasource.fields || []
 
       if (search) data = _.where(data, search)
+
+      // apply a filter
+      data = _.where(data, this.schema.datasource.filter)
+
       if (sortField) data = _.sortBy(data, sortField)
       if (sortDir === 'desc') data = data.reverse()
 
