@@ -65,6 +65,8 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
       if (search) data = _.where(data, search)
 
       // apply a filter
+      console.log(this.schema.datasource)
+      console.log(this.schema.datasource.filter)
       data = _.where(data, this.schema.datasource.filter)
 
       if (sortField) data = _.sortBy(data, sortField)
