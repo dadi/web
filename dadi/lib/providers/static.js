@@ -65,18 +65,23 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
       if (search) data = _.where(data, search)
 
       // apply a filter
-      console.log(this.schema.datasource)
-      console.log(this.schema.datasource.filter)
       data = _.where(data, this.schema.datasource.filter)
+      console.log(data)
 
       if (sortField) data = _.sortBy(data, sortField)
       if (sortDir === 'desc') data = data.reverse()
 
+      console.log(data)
+
       if (count) data = _.first(data, count)
       if (fields && !_.isEmpty(fields)) data = _.chain(data).selectFields(fields.join(',')).value()
+
+
+
+      console.log(data)
     }
 
-    done(null, data)
+    done(null, { results: data })
   } catch (ex) {
     done(ex, null)
   }
