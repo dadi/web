@@ -73,7 +73,7 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
       if (fields && !_.isEmpty(fields)) data = _.chain(data).selectFields(fields.join(',')).value()
     }
 
-    done(null, { results: data })
+    done(null, { results: _.isArray(data) ? data : [data] })
   } catch (ex) {
     done(ex, null)
   }

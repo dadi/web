@@ -142,7 +142,7 @@ describe('Data Providers', function (done) {
   })
 
   describe('Static', function (done) {
-    it('should return the data as-is when it is an object', function(done) {
+    it('should wrap the data in a `results` node before returning', function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
       dsSchema.datasource.source.data = {
         x: 100
@@ -165,7 +165,7 @@ describe('Data Providers', function (done) {
               Datasource.Datasource.prototype.loadDatasource.restore()
 
               should.exist(res.body.static)
-              res.body.static.should.eql({x:100})
+              res.body.static.should.eql({ results: [ {x:100} ] })
               done()
             })
           })
@@ -203,8 +203,9 @@ describe('Data Providers', function (done) {
             .end((err, res) => {
               Datasource.Datasource.prototype.loadDatasource.restore()
               should.exist(res.body.static)
-              res.body.static.should.be.Array
-              res.body.static.length.should.eql(2)
+              should.exist(res.body.static.results)
+              res.body.static.results.should.be.Array
+              res.body.static.results.length.should.eql(2)
               done()
             })
           })
@@ -242,10 +243,11 @@ describe('Data Providers', function (done) {
             .end((err, res) => {
               Datasource.Datasource.prototype.loadDatasource.restore()
               should.exist(res.body.static)
-              res.body.static.should.be.Array
-              res.body.static.length.should.eql(2)
+              should.exist(res.body.static.results)
+              res.body.static.results.should.be.Array
+              res.body.static.results.length.should.eql(2)
 
-              var result = res.body.static[0]
+              var result = res.body.static.results[0]
               Object.keys(result).should.eql(["title", "director"])
               done()
             })
@@ -281,10 +283,10 @@ describe('Data Providers', function (done) {
             .end((err, res) => {
               Datasource.Datasource.prototype.loadDatasource.restore()
               should.exist(res.body.static)
-              res.body.static.should.be.Array
-              res.body.static.length.should.eql(2)
+              res.body.static.results.should.be.Array
+              res.body.static.results.length.should.eql(2)
 
-              res.body.static.forEach((result) => {
+              res.body.static.results.forEach((result) => {
                 result.author.should.eql('Roger Ebert')
               })
 
