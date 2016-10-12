@@ -1,19 +1,24 @@
 {
-	"datasource": {
-		"key": "car-makes-unchained",
-		"name": "Makes datasource",
-		"source": {
-			"type": "remote",
-			"protocol": "http",
-			"host": "127.0.0.1",
-			"port": "3000",
-			"endpoint": "1.0/cars/makes"
-		},
+  "datasource": {
+    "key": "car-makes-unchained",
+    "name": "Makes datasource",
+    "source": {
+      "type": "remote",
+      "protocol": "http",
+      "host": "127.0.0.1",
+      "port": "3000",
+      "endpoint": "1.0/cars/makes"
+    },
     "caching": {
-      "enabled": true,
-      "ttl": 50,
-      "directory": "./cache/web/",
-      "extension": "json"
+      "ttl": 300,
+      "directory": {
+        "enabled": true,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
     },
     "auth": {
       "type": "bearer",
@@ -25,14 +30,22 @@
         "secret": "superSecret"
       }
     },
-  	"paginate": true,
-  	"count": 20,
-  	"sort": { "name": 1 },
-  	"search": {},
+    "paginate": true,
+    "count": 20,
+    "sort": {
+      "name": 1
+    },
+    "search": {},
     "filter": {},
-  	"fields": { "name": 1, "_id": 0 },
+    "fields": {
+      "name": 1,
+      "_id": 0
+    },
     "requestParams": [
-      { "param": "make", "field": "name" }
+      {
+        "param": "make",
+        "field": "name"
+      }
     ]
-	}
+  }
 }

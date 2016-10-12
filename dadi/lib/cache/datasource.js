@@ -1,18 +1,17 @@
 /**
  * @module Cache
  */
-var fs = require('fs')
+var _ = require('underscore')
 var path = require('path')
 var url = require('url')
 var crypto = require('crypto')
-var redisRStream = require('redis-rstream')
-var redisWStream = require('redis-wstream')
-var Readable = require('stream').Readable
 var s = require('underscore.string')
 
-var cache = require(path.join(__dirname, '/index.js'))
+var mainCache = require(path.join(__dirname, '/index.js'))
 var config = require(path.join(__dirname, '/../../../config.js'))
 var log = require('@dadi/logger')
+
+var DadiCache = require('@dadi/cache')
 
 /**
  * Creates a new DatasourceCache instance for the specified datasource.
@@ -22,46 +21,61 @@ var log = require('@dadi/logger')
 var DatasourceCache = function (datasource) {
   this.datasource = datasource
 
-  this.cache = cache()
+  this.mainCache = mainCache()
   this.options = this.datasource.schema.datasource.caching || {}
 
   // enabled if main cache module is enabled and this is not a static datasource
-  this.enabled = this.cache.enabled && this.datasource.source.type !== 'static'
+  this.enabled = this.mainCache.enabled && this.datasource.source.type !== 'static'
 
   // we build the filename with a hashed hex string so we can be unique
   // and avoid using file system reserved characters in the name, but not
-  // datasource providers work with url endpoints so we allow the use of
+  // all datasource providers work with url endpoints so we allow the use of
   // a unique cacheKey instead
-  var name = this.datasource.name
-  var endpoint = this.datasource.provider.endpoint || ''
-  var cacheKey = this.datasource.provider.cacheKey || ''
+  this.filename = crypto.createHash('sha1').update(this.datasource.name).digest('hex')
 
-  this.filename = crypto.createHash('sha1').update(name).digest('hex')
-  if (cacheKey !== '') this.filename += '_' + crypto.createHash('sha1').update(cacheKey).digest('hex')
-  else this.filename += '_' + crypto.createHash('sha1').update(endpoint).digest('hex')
-
-  this.setCachePath()
-}
-
-DatasourceCache.prototype.setCachePath = function () {
-  var cachePath = '.'
-  var defaultExtension = '.json'
-
-  // if the datasource file defines a directory and extension, use those, otherwise
-  // fallback to using the main cache module settings
-  if (!s.isBlank(this.options.directory) && !s.isBlank(this.options.extension)) {
-    cachePath = path.join(this.options.directory, this.filename + '.' + this.options.extension)
+  if (this.datasource.provider.cacheKey) {
+    this.filename += '_' + crypto.createHash('sha1').update(this.datasource.provider.cacheKey).digest('hex')
   } else {
-    cachePath = path.join(this.cache.dir, this.filename + defaultExtension)
+    this.filename += '_' + crypto.createHash('sha1').update(this.datasource.provider.endpoint).digest('hex')
   }
 
-  this.cachepath = cachePath
+  if (_.isEmpty(this.options)) {
+    this.options = config.get('caching')
+  }
+
+  if (!this.options.directory || s.isBlank(this.options.directory.path)) {
+    this.options.directory = {
+      path: config.get('caching.directory.path')
+    }
+  }
+
+  if (!this.options.directory.extension || s.isBlank(this.options.directory.extension)) {
+    this.options.directory.extension = '.json'
+  }
+
+  this.cache = new DadiCache(this.options)
 }
 
+// DatasourceCache.prototype.setCachePath = function () {
+//   var cachePath = '.'
+//   var defaultExtension = '.json'
+//
+//   // if the datasource file defines a directory and extension, use those, otherwise
+//   // fallback to using the main cache module settings
+//   if (!s.isBlank(this.options.directory) && !s.isBlank(this.options.extension)) {
+//     cachePath = path.join(this.options.directory, this.filename + '.' + this.options.extension)
+//   } else {
+//     cachePath = path.join(this.mainCache.dir, this.filename + defaultExtension)
+//   }
+//
+//   this.cachepath = cachePath
+// }
+
+/**
+ *
+ */
 DatasourceCache.prototype.cachingEnabled = function () {
   var enabled = this.enabled || false
-
-  if (!this.cachepath) enabled = false
 
   // check the querystring for a no cache param
   if (typeof this.datasource.provider.endpoint !== 'undefined') {
@@ -71,110 +85,50 @@ DatasourceCache.prototype.cachingEnabled = function () {
     }
   }
 
-  // allow debug to overrride unless allowCachingInDebug is set
-  if (config.get('debug') && !config.get('allowCachingInDebug')) {
+  if (config.get('debug')) {
     enabled = false
   }
 
   // enabled if the datasource caching block says it's enabled
-  return enabled && this.options.enabled
+  return enabled && (this.options.directory.enabled || this.options.redis.enabled)
 }
 
+/**
+ *
+ */
 DatasourceCache.prototype.getFromCache = function (done) {
   if (!this.cachingEnabled()) {
     return done(false)
   }
 
-  var self = this
-  var readStream
   var data = ''
 
-  if (self.cache.redisClient) {
-    self.cache.redisClient.exists(self.filename, function (err, exists) {
-      if (err) console.log(err)
+  // attempt to get from the cache
+  this.cache.get(this.filename).then((stream) => {
+    log.info({module: 'cache'}, 'Serving datasource from Redis (' + this.datasource.name + ', ' + this.filename + ')')
 
-      if (exists > 0) {
-        readStream = redisRStream(self.cache.redisClient, self.filename)
-
-        if (!readStream) {
-          return done(false)
-        }
-
-        readStream.on('error', function (err) {
-          if (err.code && err.code !== 'ENOENT') console.log(err)
-          return done(false)
-        })
-
-        readStream.on('data', function (chunk) {
-          if (chunk) data += chunk
-        })
-
-        readStream.on('end', function () {
-          log.info({module: 'cache'}, 'Serving datasource from Redis (' + self.datasource.name + ', ' + self.filename + ')')
-
-          return done(data)
-        })
-      } else {
-        return done(false)
-      }
-    })
-  } else {
-    readStream = fs.createReadStream(self.cachepath, {encoding: self.encoding})
-
-    if (!readStream) {
-      return done(false)
-    }
-
-    readStream.on('error', function (err) {
-      if (err.code && err.code !== 'ENOENT') console.log(err)
-      return done(false)
-    })
-
-    readStream.on('data', function (chunk) {
+    stream.on('data', (chunk) => {
       if (chunk) data += chunk
     })
 
-    readStream.on('end', function () {
-      // check if ttl has elapsed
-      var stats = fs.statSync(self.cachepath)
-      var ttl = self.options.ttl || config.get('caching.ttl')
-      var lastMod = stats && stats.mtime && stats.mtime.valueOf()
-      if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
-        return done(false)
-      }
-
-      log.info({module: 'cache'}, 'Serving datasource from cache file (' + self.datasource.name + ', ' + self.cachepath + ')')
-
+    stream.on('end', () => {
       return done(data)
     })
-  }
+  }).catch(() => {
+    // key doesn't exist in cache
+    return done(false)
+  })
 }
 
+/**
+ *
+ */
 DatasourceCache.prototype.cacheResponse = function (data, done) {
-  // TODO: do we need to grab a lock here?
   if (!this.cachingEnabled()) return
 
-  var self = this
-
-  var readStream = new Readable()
-
-  readStream.push(data)
-  readStream.push(null)
-
-  if (self.cache.redisClient) {
-    // save to redis
-    readStream.pipe(redisWStream(self.cache.redisClient, self.filename)).on('finish', function () {
-      var ttl = self.options.ttl || config.get('caching.ttl')
-      if (config.get('caching.ttl')) {
-        self.cache.redisClient.expire(self.filename, ttl)
-      }
-    })
-  } else {
-    var cacheFile = fs.createWriteStream(self.cachepath, {flags: 'w'})
-    readStream.pipe(cacheFile)
-  }
-
-  done()
+  this.cache.set(this.filename, data).then(() => {
+    done()
+  })
 }
 
 module.exports = function (datasource) {

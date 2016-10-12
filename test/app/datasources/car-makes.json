@@ -10,10 +10,15 @@
 			"endpoint": "1.0/cars/makes"
 		},
     "caching": {
-      "enabled": true,
-      "ttl": 50,
-      "directory": "./cache/web/",
-      "extension": "json"
+      "ttl": 300,
+      "directory": {
+        "enabled": true,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
     },
     "auth": {
       "type": "bearer",

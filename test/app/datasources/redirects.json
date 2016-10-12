@@ -10,8 +10,15 @@
 			"endpoint": "1.0/test/redirects"
 		},
     "caching": {
-      "enabled": false,
-      "ttl": 1800
+      "ttl": 1800,
+      "directory": {
+        "enabled": false,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
     },
 		"paginate": false,
 		"count": 3,

@@ -10,10 +10,15 @@
 			"endpoint": "1.0/library/categories"
 		},
     "caching": {
-      "enabled": false,
-      "ttl": 50,
-      "directory": "./cache/web/",
-      "extension": "json"
+      "ttl": 300,
+      "directory": {
+        "enabled": false,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
     },
   	"paginate": true,
   	"count": 20,

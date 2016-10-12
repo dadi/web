@@ -10,10 +10,15 @@
 			"endpoint": "1.0/cars/makes"
 		},
     "caching": {
-      "enabled": false,
-      "ttl": 50,
-      "directory": "./cache/rosecomb/",
-      "extension": "json"
+      "ttl": 300,
+      "directory": {
+        "enabled": false,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
     },
     "auth": {
       "type": "bearer",
