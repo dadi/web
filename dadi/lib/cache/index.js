@@ -2,18 +2,15 @@
  * @module Cache
  */
 var crypto = require('crypto')
-var fs = require('fs')
-var mkdirp = require('mkdirp')
 var path = require('path')
-var redis = require('redis')
-var redisRStream = require('redis-rstream')
-var redisWStream = require('redis-wstream')
-var Readable = require('stream').Readable
 var url = require('url')
 var _ = require('underscore')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
 var log = require('@dadi/logger')
+
+var DadiCache = require('@dadi/cache')
+var cache = new DadiCache(config.get('caching'))
 
 /**
  * Creates a new Cache instance for the server
@@ -24,27 +21,8 @@ var Cache = function (server) {
   log.info({module: 'cache'}, 'Cache logging started.')
   this.server = server
   this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled')
-  this.dir = config.get('caching.directory.path')
-  this.extension = config.get('caching.directory.extension')
-  this.redisClient = null
   this.encoding = 'utf8'
   this.options = {}
-
-  var self = this
-
-  // create cache directory or initialise Redis
-  if (config.get('caching.directory.enabled')) {
-    mkdirp(self.dir, {}, function (err, made) {
-      if (err) log.error({module: 'cache'}, err)
-      if (made) log.info({module: 'cache'}, 'Created cache directory ' + made)
-    })
-  } else if (config.get('caching.redis.enabled')) {
-    self.redisClient = self.initialiseRedisClient()
-
-    self.redisClient.on('error', function (err) {
-      log.error({module: 'cache'}, err)
-    })
-  }
 }
 
 var instance
@@ -120,14 +98,6 @@ Cache.prototype.getEndpointContentType = function (req) {
 }
 
 /**
- * Initialises a RedisClient using the main configuration settings
- * @returns {RedisClient}
- */
-Cache.prototype.initialiseRedisClient = function () {
-  return redis.createClient(config.get('caching.redis.port'), config.get('caching.redis.host'), {detect_buffers: true, max_attempts: 3})
-}
-
-/**
  * Adds the Cache middleware to the stack
  */
 Cache.prototype.init = function () {
@@ -149,7 +119,6 @@ Cache.prototype.init = function () {
     // and avoid using file system reserved characters in the name
     var requestUrl = url.parse(req.url, true).path
     var filename = crypto.createHash('sha1').update(requestUrl).digest('hex')
-    var cachepath = path.join(self.dir, filename + '.' + config.get('caching.directory.extension'))
 
     // allow query string param to bypass cache
     var query = url.parse(req.url, true).query
@@ -158,96 +127,31 @@ Cache.prototype.init = function () {
     // get contentType that current endpoint requires
     var contentType = self.getEndpointContentType(req)
 
-    var readStream
+    // attempt to get from the cache
+    cache.get(filename).then((stream) => {
+      log.info({module: 'cache'}, 'Serving ' + req.url + ' from cache')
 
-    if (self.redisClient) {
-      self.redisClient.exists(filename, function (err, exists) {
-        if (err) console.log(err)
-        if (exists > 0) {
-          res.setHeader('X-Cache-Lookup', 'HIT')
+      res.setHeader('X-Cache-Lookup', 'HIT')
 
-          if (noCache) {
-            res.setHeader('X-Cache', 'MISS')
-            return next()
-          }
-
-          res.statusCode = 200
-          res.setHeader('X-Cache', 'HIT')
-          res.setHeader('Server', config.get('server.name'))
-          res.setHeader('Content-Type', contentType)
-
-          readStream = redisRStream(self.redisClient, filename)
-          readStream.pipe(res)
-        } else {
-          res.setHeader('X-Cache', 'MISS')
-          res.setHeader('X-Cache-Lookup', 'MISS')
-          return cacheResponse()
-        }
-      })
-    } else {
-      readStream = fs.createReadStream(cachepath, {encoding: this.encoding})
-
-      readStream.on('error', function (err) {
-        if (err.code && err.code !== 'ENOENT') console.log(err)
+      if (noCache) {
         res.setHeader('X-Cache', 'MISS')
-        res.setHeader('X-Cache-Lookup', 'MISS')
+        return next()
+      }
 
-        if (!noCache) {
-          return cacheResponse()
-        }
-      })
+      res.statusCode = 200
+      res.setHeader('X-Cache', 'HIT')
+      res.setHeader('Server', config.get('server.name'))
+      res.setHeader('Content-Type', contentType)
+      //   res.setHeader('Content-Length', stat.size)
 
-      var data = ''
-      readStream.on('data', function (chunk) {
-        if (chunk) data += chunk
-      })
-
-      readStream.on('end', function () {
-        if (data === '') {
-          res.setHeader('X-Cache', 'MISS')
-          res.setHeader('X-Cache-Lookup', 'MISS')
-          return cacheResponse()
-        }
-
-        if (noCache) {
-          res.setHeader('X-Cache', 'MISS')
-          res.setHeader('X-Cache-Lookup', 'HIT')
-          return next()
-        }
-
-        // check if ttl has elapsed
-        try {
-          var stats = fs.statSync(cachepath)
-          var ttl = self.options.ttl || config.get('caching.ttl')
-          var lastMod = stats && stats.mtime && stats.mtime.valueOf()
-          if (!(lastMod && (Date.now() - lastMod) / 1000 <= ttl)) {
-            res.setHeader('X-Cache', 'MISS')
-            res.setHeader('X-Cache-Lookup', 'HIT')
-            return cacheResponse()
-          }
-        } catch (err) {
-          if (err.code && err.code !== 'ENOENT') console.log(err)
-        }
-
-        log.info({module: 'cache'}, 'Serving ' + req.url + ' from cache file (' + cachepath + ')')
-
-        fs.stat(cachepath, function (err, stat) {
-          if (err.code && err.code !== 'ENOENT') console.log(err)
-          res.statusCode = 200
-          res.setHeader('Server', config.get('server.name'))
-          res.setHeader('Content-Type', contentType)
-          res.setHeader('Content-Length', stat.size)
-          res.setHeader('X-Cache', 'HIT')
-          res.setHeader('X-Cache-Lookup', 'HIT')
-
-          var stream = new Readable()
-          stream.push(data)
-          stream.push(null)
-
-          stream.pipe(res)
-        })
-      })
-    }
+      // send cached content back
+      stream.pipe(res)
+    }).catch(() => {
+      // not found in cache
+      res.setHeader('X-Cache', 'MISS')
+      res.setHeader('X-Cache-Lookup', 'MISS')
+      return cacheResponse()
+    })
 
     /**
      * Writes the current response body to either the filesystem or a Redis server,
@@ -273,23 +177,10 @@ Cache.prototype.init = function () {
         // if response is not 200 don't cache
         if (res.statusCode !== 200) return
 
-        var stream = new Readable()
-        stream.push(data)
-        stream.push(null)
+        // cache the content
+        cache.set(filename, data).then(() => {
 
-        if (self.redisClient) {
-          // save to redis
-          stream.pipe(redisWStream(self.redisClient, filename)).on('finish', function () {
-            if (config.get('caching.ttl')) {
-              self.redisClient.expire(filename, config.get('caching.ttl'))
-            }
-          })
-        } else {
-          // TODO: do we need to grab a lock here?
-
-          var cacheFile = fs.createWriteStream(cachepath, {flags: 'w'})
-          stream.pipe(cacheFile)
-        }
+        })
       }
       return next()
     }
@@ -298,7 +189,7 @@ Cache.prototype.init = function () {
 
 // get method for redis client
 module.exports.client = function () {
-  if (instance) return instance.redisClient
+  // if (instance) return instance.redisClient
   return null
 }
 

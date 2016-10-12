@@ -199,6 +199,11 @@ var conf = convict({
         format: Boolean,
         default: false
       },
+      cluster: {
+        doc: '',
+        format: Boolean,
+        default: false
+      },
       host: {
         doc: 'The Redis server host',
         format: String,

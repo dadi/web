@@ -58,7 +58,17 @@
           }
         ]
     },
-    "cache": false,
+    "caching": {
+      "ttl": 300,
+      "directory": {
+        "enabled": false,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
+    },
     "paginate": true,
     "count": 10,
     "sort": { "title": -1 },

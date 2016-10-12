@@ -10,11 +10,16 @@
 			"endpoint": "1.0/cars/models"
 		},
     "caching": {
-      "enabled": false,
-      "ttl": 50,
-      "directory": "./cache/rosecomb/",
-      "extension": "json"
-  	},
+      "ttl": 300,
+      "directory": {
+        "enabled": false,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
+    },
     "auth": {
       "type": "bearer",
       "host": "127.0.0.1",
