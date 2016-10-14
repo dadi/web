@@ -1,13 +1,15 @@
-var dust = require('dustjs-linkedin')
-var fs = require('fs')
-var mkdirp = require('mkdirp')
-var path = require('path')
-var wildcard = require('wildcard')
+'use strict'
 
-var config = require(path.join(__dirname, '/../../../config.js'))
-var log = require('@dadi/logger')
+const dust = require('dustjs-linkedin')
+const fs = require('fs')
+const mkdirp = require('mkdirp')
+const path = require('path')
+const wildcard = require('wildcard')
 
-var Dust = function () {
+const config = require(path.join(__dirname, '/../../../config.js'))
+const log = require('@dadi/logger')
+
+const Dust = function () {
   this.templates = {}
 
   // Loading core Dust helpers
@@ -31,7 +33,7 @@ Dust.prototype._writeToFile = function (filePath, content, append) {
         return reject(err)
       }
 
-      var writeFunction = append ? fs.appendFile : fs.writeFile
+      const writeFunction = append ? fs.appendFile : fs.writeFile
 
       writeFunction.call(this, filePath, content, function (err) {
         if (err) {
@@ -63,17 +65,15 @@ Dust.prototype.load = function (source, templateName) {
 Dust.prototype.loadDirectory = function (directory, prefix, recursive) {
   prefix = prefix || ''
 
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    fs.readdir(directory, function (err, files) {
+  return new Promise((resolve, reject) => {
+    fs.readdir(directory, (err, files) => {
       if (err) console.log(err)
 
-      var filesAbsolute = files.map(function (file) {
+      const filesAbsolute = files.map(file => {
         return path.join(directory, file)
       })
 
-      resolve(self.loadFiles(filesAbsolute, prefix, recursive))
+      resolve(this.loadFiles(filesAbsolute, prefix, recursive))
     })
   })
 }
@@ -81,28 +81,28 @@ Dust.prototype.loadDirectory = function (directory, prefix, recursive) {
 Dust.prototype.loadFiles = function (files, prefix, recursive) {
   prefix = prefix || ''
 
-  var self = this
+  return new Promise((resolve, reject) => {
+    let queue = []
 
-  return new Promise(function (resolve, reject) {
-    var queue = []
+    files.forEach(file => {
+      const stats = fs.statSync(file)
+      const basename = path.basename(file, '.dust')
 
-    files.forEach(function (file) {
-      fs.stat(file, function (err, stats) {
-        if (err) console.log(err)
+      if (stats.isDirectory() && recursive) {
+        queue.push(this.loadDirectory(file, path.join(prefix, basename)))
+      } else if (stats.isFile() && (path.extname(file) === '.dust')) {
+        const name = path.join(prefix, basename)
 
-        var basename = path.basename(file, '.dust')
+        const readFile = new Promise((resolve, reject) => {
+          fs.readFile(file, 'utf8', (err, data) => {
+            if (err) return reject(err)
 
-        if (stats.isDirectory() && recursive) {
-          queue.push(self.loadDirectory(file, path.join(prefix, basename)))
-        } else if (stats.isFile() && (path.extname(file) === '.dust')) {
-          var name = path.join(prefix, basename)
-
-          fs.readFile(file, 'utf8', function (err, data) {
-            if (err) console.log(err)
-            queue.push(Promise.resolve(self.load(data, name)))
+            return resolve(this.load(data, name))
           })
-        }
-      })
+        })
+
+        queue.push(readFile)
+      }
     })
 
     resolve(Promise.all(queue))
@@ -114,28 +114,28 @@ Dust.prototype.render = function (templateName, data, callback) {
 }
 
 Dust.prototype.requireDirectory = function (directory) {
-  return new Promise(function (resolve, reject) {
-    fs.stat(directory, function (err, stats) {
+  return new Promise((resolve, reject) => {
+    fs.stat(directory, (err, stats) => {
       if (err) {
         reject(err)
       }
 
       if (stats.isDirectory()) {
-        fs.readdir(directory, function (err, files) {
+        fs.readdir(directory, (err, files) => {
           if (err) {
             reject(err)
           }
 
-          var filesToRead = files.length
+          let filesToRead = files.length
 
           if (filesToRead === 0) {
             return resolve()
           }
 
-          files.forEach(function (file) {
-            var filepath = path.resolve(directory, file)
+          files.forEach(file => {
+            const filepath = path.resolve(directory, file)
 
-            fs.stat(filepath, function (err, stats) {
+            fs.stat(filepath, (err, stats) => {
               filesToRead--
 
               if (err) {
@@ -174,18 +174,18 @@ Dust.prototype.setOptions = function (options) {
 }
 
 Dust.prototype.writeClientsideFiles = function () {
-  var queue = []
-  var templates = Object.keys(this.templates)
+  let queue = []
+  let templates = Object.keys(this.templates)
 
   if (!config.get('dust.clientRender.enabled')) return Promise.resolve(true)
 
   if (config.get('dust.clientRender.whitelist').length > 0) {
-    var whitelist = config.get('dust.clientRender.whitelist')
+    const whitelist = config.get('dust.clientRender.whitelist')
 
-    templates = templates.filter(function (templateName) {
-      var match = false
+    templates = templates.filter(templateName => {
+      let match = false
 
-      whitelist.forEach(function (item) {
+      whitelist.forEach(item => {
         match = match || wildcard(item, templateName)
       })
 
@@ -195,17 +195,17 @@ Dust.prototype.writeClientsideFiles = function () {
 
   // Write templates
   if (config.get('dust.clientRender.format') === 'combined') {
-    var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'))
-    var templatesOutput = ''
+    const templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'))
+    let templatesOutput = ''
 
-    templates.forEach((name) => {
+    templates.forEach(name => {
       templatesOutput += dust.compile(this.templates[name], name)
     })
 
     queue.push(this._writeToFile(templatesOutputFile, templatesOutput))
   } else {
-    templates.forEach((name) => {
-      var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'), name) + '.js'
+    templates.forEach(name => {
+      const templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'), name) + '.js'
 
       queue.push(this._writeToFile(templatesOutputFile, dust.compile(this.templates[name], name)))
     })
