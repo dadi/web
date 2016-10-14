@@ -177,6 +177,8 @@ Dust.prototype.writeClientsideFiles = function () {
   var queue = []
   var templates = Object.keys(this.templates)
 
+  if (!config.get('dust.clientRender.enabled')) return Promise.resolve(true)
+
   if (config.get('dust.clientRender.whitelist').length > 0) {
     var whitelist = config.get('dust.clientRender.whitelist')
 
@@ -192,23 +194,21 @@ Dust.prototype.writeClientsideFiles = function () {
   }
 
   // Write templates
-  if (config.get('dust.clientRender.enabled')) {
-    if (config.get('dust.clientRender.format') === 'combined') {
-      var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'))
-      var templatesOutput = ''
+  if (config.get('dust.clientRender.format') === 'combined') {
+    var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'))
+    var templatesOutput = ''
 
-      templates.forEach((name) => {
-        templatesOutput += this.templates[name]
-      })
+    templates.forEach((name) => {
+      templatesOutput += dust.compile(this.templates[name], name)
+    })
 
-      queue.push(this._writeToFile(templatesOutputFile, templatesOutput))
-    } else {
-      templates.forEach((name) => {
-        var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'), name) + '.js'
+    queue.push(this._writeToFile(templatesOutputFile, templatesOutput))
+  } else {
+    templates.forEach((name) => {
+      var templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'), name) + '.js'
 
-        queue.push(this._writeToFile(templatesOutputFile, this.templates[name]))
-      })
-    }
+      queue.push(this._writeToFile(templatesOutputFile, dust.compile(this.templates[name], name)))
+    })
   }
 
   return Promise.all(queue)
