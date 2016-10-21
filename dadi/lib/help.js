@@ -539,6 +539,14 @@ DataHelper.prototype.getHeaders = function(done) {
   };
 
   if (this.datasource.requestHeaders) {
+    delete this.datasource.requestHeaders['host']
+    delete this.datasource.requestHeaders['content-length']
+    delete this.datasource.requestHeaders['accept']
+
+    if (this.datasource.requestHeaders['content-type'] !== 'application/json') {
+      this.datasource.requestHeaders['content-type'] = 'application/json'
+    }
+
     headers = _.extend(headers, this.datasource.requestHeaders)
   }
 
