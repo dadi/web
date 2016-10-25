@@ -99,7 +99,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // | in the querystring's request params e.g. /car-reviews/:make/:model
 
   this.schema.datasource.filter = this.originalFilter
-    
+
   var query = url.parse(req.url, true).query
 
   // handle the cache flag
