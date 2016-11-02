@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.6.14] - 2016-11-02
+### Added
+- export the main application instance, so client apps can access the running server
+```
+var app = require('@dadi/web').App
+```
+
 ## [1.6.13] - 2016-10-21
 ### Changed
 - remove log rotation option from log modules (these have been removed already from @dadi/logger, however Web 1.6 hasn't yet been modified to use the external library)
