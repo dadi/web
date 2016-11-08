@@ -264,6 +264,47 @@ describe('Router', function (done) {
         });
       });
     })
+
+    it('should add Cache-Control headers to redirects', function(done) {
+      config.set('api.enabled', false);
+      config.set('allowJsonView', true);
+      config.set('loadDatasourceAsFile', false);
+      config.set('rewrites.datasource', 'redirects');
+
+      var page = getPage();
+      var pages = [page]
+      var options = testHelper.getPathOptions();
+      var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      testHelper.startServer(pages, function() {
+
+        // provide API response
+        var redirectResults = { results: [{"rule": "/test", "replacement": "/books", "redirectType":301}] }
+        sinon.stub(libHelp.DataHelper.prototype, 'load').yields(null, redirectResults);
+
+        var client = request(connectionString);
+
+        client
+        .get(page.route.paths[0])
+        .end(function (err, res) {
+          if (err) return done(err);
+
+          libHelp.DataHelper.prototype.load.restore();
+          datasource.Datasource.prototype.loadDatasource.restore();
+
+          res.statusCode.should.eql(301)
+          should.exist(res.headers['cache-control'])
+          res.headers['cache-control'].should.eql('no-cache')
+          res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/books')
+
+          config.set('rewrites.datasource', '');
+          config.set('headers.cacheControl', null);
+
+          cleanup(done);
+        });
+      });
+    })
   })
 
   describe('Add Constraint', function(done) {
