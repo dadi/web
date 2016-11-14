@@ -1,4 +1,4 @@
-# DADI Web
+<img src="http://52.209.207.148/assets/products/dadi-web-full.png" alt="DADI Web" height="65"/>
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
 [![coverage](https://img.shields.io/badge/coverage-62%25-yellow.svg?style=flat-square)](https://github.com/dadi/web)
@@ -35,7 +35,7 @@ npm start
 
 ## Documentation
 
-Documentation is maintained under the `docs` branch.
+Documentation can be found at the [DADI Docs site](http://docs.dadi.tech/web/).
 
 ## Licence
 
