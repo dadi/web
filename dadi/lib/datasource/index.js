@@ -31,6 +31,7 @@ Datasource.prototype.init = function (callback) {
     self.schema = schema
     self.source = schema.datasource.source
     self.schema.datasource.filter = self.schema.datasource.filter || {}
+    self.originalFilter = _.clone(self.schema.datasource.filter)
 
     if (!self.source.type) {
       self.source.type = 'remote'
@@ -96,6 +97,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // called from lib/controller:processSearchParameters for reason:
   // | process each of the datasource's requestParams, testing for their existence
   // | in the querystring's request params e.g. /car-reviews/:make/:model
+
+  this.schema.datasource.filter = this.originalFilter
 
   var query = url.parse(req.url, true).query
 
