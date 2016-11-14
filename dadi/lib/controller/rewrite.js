@@ -1,11 +1,14 @@
 /**
  * Module dependencies
  */
+var _ = require('underscore')
 var url = require('url')
 var qs = require('qs')
 var httpReq = require('http').request
 var httpsReq = require('https').request
 var defaultVia = '1.1 ' + require('os').hostname()
+var path = require('path')
+var config = require(path.resolve(path.join(__dirname, '/../../../config')))
 
 /**
  * Syntaxes
@@ -96,10 +99,19 @@ module.exports = function (rules) {
 
       // Redirect
       if (rule.redirect) {
-        res.writeHead(rule.redirect, {
+        var headers = {
           Location: location
+        }
+
+        _.each(config.get('headers.cacheControl'), (value, key) => {
+          if (rule.redirect.toString() === key && value !== '') {
+            headers['Cache-Control'] = value
+          }
         })
+
+        res.writeHead(rule.redirect, headers)
         res.end()
+
         callNext = false
         return true
       }

@@ -95,7 +95,7 @@ module.exports.sendBackJSON = function (successCode, res, next) {
   return function (err, results) {
     if (err) return next(err)
 
-    var resBody = JSON.stringify(results, null, 4)
+    var resBody = JSON.stringify(results, null, 2)
 
     res.setHeader('Server', config.get('server.name'))
 

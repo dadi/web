@@ -349,10 +349,17 @@ module.exports = function (server, options) {
                 location = 'http' + '://' + req.headers.host + req.url.replace(rule.rule, rule.replacement)
               }
 
-              res.writeHead(rule.redirectType, {
+              var headers = {
                 Location: location
+              }
+
+              _.each(config.get('headers.cacheControl'), (value, key) => {
+                if (rule.redirectType.toString() === key && value !== '') {
+                  headers['Cache-Control'] = value
+                }
               })
 
+              res.writeHead(rule.redirectType, headers)
               res.end()
             } else {
               return next()
