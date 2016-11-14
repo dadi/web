@@ -270,6 +270,51 @@ describe('Router', function (done) {
         })
       })
     })
+
+    it('should add Cache-Control headers to redirects', function (done) {
+      var configUpdate = {
+        headers: {
+          cacheControl: {
+            301: 'no-cache'
+          }
+        },
+        rewrites: {
+          forceLowerCase: true,
+          allowJsonView: true,
+          loadDatasourceAsFile: false,
+          datasource: 'redirects'
+        }
+      }
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig(configUpdate).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['redirects']
+
+          // provide API response
+          var redirectResults = { results: [{'rule': '/test', 'replacement': '/books', 'redirectType': 301}] }
+          var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+          providerStub.yields(null, redirectResults)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+            .get(pages[0].routes[0].path)
+            .end(function (err, res) {
+              if (err) return done(err)
+
+              providerStub.restore()
+
+              res.statusCode.should.eql(301)
+              should.exist(res.headers['cache-control'])
+              res.headers['cache-control'].should.eql('no-cache')
+              res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/books')
+              done()
+            })
+          })
+        })
+      })
+    })
   })
 
   describe('Add Constraint', function (done) {

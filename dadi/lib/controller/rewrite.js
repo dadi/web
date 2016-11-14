@@ -1,6 +1,7 @@
 /**
  * Module dependencies
  */
+var _ = require('underscore')
 var url = require('url')
 var qs = require('qs')
 var httpReq = require('http').request
