@@ -1,4 +1,11 @@
-# Version 1.6.0 / 2016-06-08
+# Change Log
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](http://keepachangelog.com/)
+and this project adheres to [Semantic Versioning](http://semver.org/).
+
+
+## [1.6.0] - 2016-06-08
 
 This version update adds the ability to use a datasource as the main source of the htaccess style rewrites
 
@@ -10,9 +17,11 @@ rewrites: {
  }
 ```
 
-# Version 1.5.0 / 2016-06-08
+## [1.5.0] - 2016-06-08
 
-## Cluster support
+### Added
+
+* Cluster support
 This version adds support for running in cluster mode to take advantage of multiple core CPUs.
 
 The default configuration _does not_ use cluster mode. To enable, add the following to configuration:
@@ -31,14 +40,10 @@ Web will report it is running in cluster mode at startup.
 
 * add 503 server too busy response
 
-# Version 1.4.0 / 2016-05-05
+## [1.4.0] - 2016-05-05
 
+### Added
 * allow port configuration to be set from environment variable PORT
-* fix: bug where an ID parameter from the request URL was added to all subsequent datasource filters
-* fix: bug where caching was performed routing, therefore sometimes ignoring routes
-* fix: allow datasource configuration to override protocol:
-  * Previous versions assumed if the API settings used HTTPS then the datasource calls should too. Fix to allow
-   a datasource to specify it's protocol and have that override the API setting.
 * add support for HTTPS
 * add page template metadata to returned JSON:
   ```
@@ -48,11 +53,6 @@ Web will report it is running in cluster mode at startup.
     "language": "en"
   }
   ```
-
-* fix #48: test current URL against returned redirect results:
-  * when using a datasource for redirects, ensure that any results
-  returned are matched against the URL before redirecting the request
-
 * add config option to force a domain redirect
 
     this allows a setting in config as below which will force redirecting
@@ -64,6 +64,21 @@ Web will report it is running in cluster mode at startup.
     }
     ```
 
+  * allow Redis use for session store configuration
+  * add token wallet path to `paths` configuration blocks
+  * integration of @dadi/passport for token generation/validation
+  * add protocol option to `api` and `auth` configuration blocks
+
+### Changed
+
+* fix: bug where an ID parameter from the request URL was added to all subsequent datasource filters
+* fix: bug where caching was performed routing, therefore sometimes ignoring routes
+* fix: allow datasource configuration to override protocol:
+  * Previous versions assumed if the API settings used HTTPS then the datasource calls should too. Fix to allow
+   a datasource to specify it's protocol and have that override the API setting.
+* fix #48: test current URL against returned redirect results:
+  * when using a datasource for redirects, ensure that any results
+  returned are matched against the URL before redirecting the request
 * fix: allow any format for config setting sessions.cookie.maxAge
 
     the default for express-session is to use `cookie.maxAge = null`
@@ -72,15 +87,11 @@ Web will report it is running in cluster mode at startup.
 
     When the user closes the browser the cookie (and session) will be removed.
 
-* allow Redis use for session store configuration
-* add token wallet path to `paths` configuration blocks
-* integration @dadi/passport for token generation/validation
-* add protocol option to `api` and `auth` configuration blocks
+## [1.3.0] - 2016-03-22
 
+### Added
 
-# Version 1.3.0 / 2016-03-22
-
-## Status endpoint
+#### Status endpoint
 
 Adds an endpoint at `/api/status` which returns server/application data in JSON format.
 
@@ -94,11 +105,7 @@ Content-Type: application/json
 {"clientId": "testClient","secret": "superSecret"}
 ```
 
-## Partials in subdirectories
-
-Storing partials in subdirectories of the main partials folder previously caused the application crash. Now it doesn't. Thanks @eduardoboucas!
-
-## requestParams type definition
+#### requestParams type definition
 
 Now allows the ability to specify a type definition of 'Number' on requestParams in a datasource
 schema to override default of String. Thanks @mingard!
@@ -109,19 +116,29 @@ schema to override default of String. Thanks @mingard!
 ]
 ```
 
-# Version 1.2.0 / 2016-03-18
+### Changed
 
+#### Partials in subdirectories
+
+Storing partials in subdirectories of the main partials folder previously caused the application crash. Now it doesn't. Thanks @eduardoboucas!
+
+## [1.2.0] - 2016-03-18
+
+### Added
 * Add: additional routing/rewriting config properties
 * Add #37: Global events loader
+
+### Changed
 * Fix #38: replace datasource loader in router
 * Fix #36: load events in the order they were specified
 * Fix #32: load template from filesystem if Dust cache is_disabled
 * Fix #31: define the zlib variable
 * Fix #29: refresh endpoint filter on subsequent page loads
 
-# Version 1.1.0 / 2016-03-11
+## [1.1.0] - 2016-03-11
 
-### Cache Invalidation
+### Added
+#### Cache Invalidation
 Version 1.1.0 introduces a cache invalidation endpoint which allows an authorised user to flush the cache
 for either a specific path or the entire website. This process clears both page and datasource cache files.
 
@@ -144,7 +161,31 @@ Host: www.example.com
 { "path": "/books/crime", "clientId": "testClient", "secret": "superSecret" }
 ```
 
-### Datasource Sort property
+#### Datasource filter events
+
+A datasource can now specify a `filterEvent` property. Before the datasource attempts to load data
+it will load and run an event file matching the `filterEvent` property. Filter events are identical to normal
+event files, but they should return a filter object that the datasource will use when querying the API for data.
+
+**Example filter event: /app/events/datasourceFilterTest.js**
+```js
+// the `data` parameter contains the data already loaded by
+// the page's datasources
+var Event = function (req, res, data, callback) {
+  var filter = { "x": "1" }
+  callback(null, filter)
+}
+
+module.exports = function (req, res, data, callback) {
+  return new Event(req, res, data, callback)
+}
+
+module.exports.Event = Event;
+```
+
+
+### Changed
+#### Datasource Sort property
 
 The sort property in a datasource schema has been extended to allow a variety of styles.
 The sort property can now take one of the following forms:
@@ -169,30 +210,7 @@ To sort by multiple fields, as a MongoDB-style object:
 "sort": { "name": 1, "age": -1 }
 ```
 
-### Datasource filter events
-
-A datasource can now specify a `filterEvent` property. Before the datasource attempts to load data
-it will load and run an event file matching the `filterEvent` property. Filter events are identical to normal
-event files, but they should return a filter object that the datasource will use when querying the API for data.
-
-**Example filter event: /app/events/datasourceFilterTest.js**
-```js
-// the `data` parameter contains the data already loaded by
-// the page's datasources
-var Event = function (req, res, data, callback) {
-  var filter = { "x": "1" };
-  callback(null, filter);
-};
-
-module.exports = function (req, res, data, callback) {
-  return new Event(req, res, data, callback);
-};
-
-module.exports.Event = Event;
-```
-
-
-# Version 0.5.0 / 2016-01-08
+## [0.5.0] - 2016-01-08
 
 * Cache:
  - Ensure a more unique datasource cache key by including the datasource name as well as the endpoint
@@ -215,17 +233,14 @@ module.exports.Event = Event;
  - Added new `replace` helper, usage: {@replace str="hello.world" search="." replace="-" /}
 
 
-# Version 0.1.7 / 2015-12-06
+## [0.1.7] - 2015-12-06
 
-* Config:
-  - Add config option for socket timeout, defaults to 30 seconds
-
-* Keepalive header added to Serama data & auth requests
-
+### Added
+* Add config option for socket timeout, defaults to 30 seconds
+* Keepalive header added to API data & auth requests
 
 
-# Version 0.1.7 / 2015-11-26
-
+## [0.1.7] - 2015-11-26
 
 * Server:
   - Error if the configured API can't be reached
@@ -237,7 +252,7 @@ module.exports.Event = Event;
 * Config:
   - Provide configuration for logging to a Sentry server
 
-# Version 0.1.6 / 2015-11-12
+## [0.1.6] - 2015-11-12
 
   * Cache:
     - Don't cache requests that use ?json=true in the querystring
