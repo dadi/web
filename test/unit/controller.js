@@ -28,6 +28,26 @@ describe('Controller', function (done) {
     TestHelper.stopServer(done)
   })
 
+  it("should return a 404 template if one is configured", function (done) {
+    TestHelper.disableApiConfig().then(() => {
+      var pages = TestHelper.setUp404Page()
+      pages[0].settings.cache = false
+
+      TestHelper.startServer(pages).then(() => {
+        var client = request(connectionString)
+
+        client
+          .get('/not-a-page')
+          .expect(404)
+          .end(function (err, res) {
+            if (err) return done(err)
+            res.text.should.eql('Page Not Found Template')
+            done()
+          })
+      })
+    })
+  })
+
   it("should return a 404 if a page's requiredDatasources are not populated", function (done) {
     TestHelper.disableApiConfig().then(() => {
       var pages = TestHelper.setUpPages()
@@ -127,14 +147,16 @@ describe('Controller', function (done) {
   describe('Preload Events', function (done) {
     it('should load preloadEvents in the controller instance', function (done) {
       TestHelper.disableApiConfig().then(() => {
-        var pages = TestHelper.setUpPages()
-        pages[0].events = ['test_event']
-        pages[0].preloadEvents = ['test_preload_event']
+        TestHelper.updateConfig({'globalEvents': []}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].events = ['test_event']
+          pages[0].preloadEvents = ['test_preload_event']
 
-        controller = Controller(pages[0], TestHelper.getPathOptions())
-        controller.preloadEvents.should.exist
-        controller.preloadEvents[0].name.should.eql(pages[0].preloadEvents[0])
-        done()
+          controller = Controller(pages[0], TestHelper.getPathOptions())
+          should.exist(controller.preloadEvents)
+          controller.preloadEvents[0].name.should.eql(pages[0].preloadEvents[0])
+          done()
+        })
       })
     })
 

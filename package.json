@@ -13,7 +13,7 @@
     "@dadi/api-wrapper": "^1.1.0",
     "@dadi/cache": "latest",
     "@dadi/logger": "latest",
-    "@dadi/passport": "^1.0.x",
+    "@dadi/passport": "latest",
     "@dadi/status": "git+https://git@github.com/dadi/status.git",
     "async": "^1.4.2",
     "aws-kinesis-writable": "^1.3.1",

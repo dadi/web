@@ -172,6 +172,11 @@ Router.prototype.validate = function (route, req, res) {
     var regex = pathToRegexp(route.path)
     var match = regex.exec(pathname)
 
+    // allow a 404 to sail through this
+    if (route.path === '/404') {
+      return resolve()
+    }
+
     // move to the next route if no match
     if (!match) {
       return reject('')

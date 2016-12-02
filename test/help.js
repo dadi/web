@@ -132,6 +132,21 @@ TestHelper.prototype.setUpPages = function () {
   return pages
 }
 
+TestHelper.prototype.setUp404Page = function () {
+  var page = Page('404', this.getPageSchema())
+  page.name = '404'
+  page.template = '404.dust'
+  page.routes[0].path = '/404'
+  page.datasources = []
+  page.events = []
+  page.settings.cache = false
+
+  var pages = []
+  pages.push(page)
+
+  return pages
+}
+
 TestHelper.prototype.newPage = function (name, path, template, datasources, events) {
   var page = Page(name, this.getPageSchema())
   page.datasources = datasources
