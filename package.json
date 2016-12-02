@@ -1,6 +1,6 @@
 {
   "name": "@dadi/web",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Web frontend and template layer for @dadi/api",
   "main": "main.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "posttest": "./scripts/coverage.js"
   },
   "dependencies": {
-    "@dadi/api-wrapper": "^1.1.0",
+    "@dadi/api-wrapper": "latest",
     "@dadi/cache": "latest",
     "@dadi/logger": "latest",
     "@dadi/passport": "latest",
@@ -50,8 +50,6 @@
     "qs": "^5.2.0",
     "raven": "^0.9.0",
     "redis": "^2.2.5",
-    "redis-rstream": "^0.1.2",
-    "redis-wstream": "^0.2.5",
     "request": "^2.74.0",
     "send": "^0.13.0",
     "serve-favicon": "^2.3.0",
