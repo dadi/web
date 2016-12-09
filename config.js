@@ -12,17 +12,6 @@ var conf = convict({
     }
   },
   server: {
-    host: {
-      doc: 'The IP address the web application will run on',
-      format: '*',
-      default: '0.0.0.0'
-    },
-    port: {
-      doc: 'The port the web application will bind to',
-      format: 'port',
-      default: 8080,
-      env: 'PORT'
-    },
     name: {
       doc: 'The server name.',
       format: String,
@@ -33,41 +22,73 @@ var conf = convict({
       format: Number,
       default: 120
     },
-    protocol: {
-      doc: 'The protocol the web application will use',
-      format: String,
-      default: 'http',
-      env: 'PROTOCOL'
+    http: {
+      enabled: {
+        doc: 'Enable http functionality',
+        format: Boolean,
+        default: true,
+        env: 'ENABLE_HTTP'
+      },
+      host: {
+        doc: 'The IP address the web application will run on',
+        format: '*',
+        default: '0.0.0.0'
+      },
+      port: {
+        doc: 'The port the web application will bind HTTP to',
+        format: 'port',
+        default: 8080,
+        env: 'HTTP_PORT'
+      }
     },
-    sslPassphrase: {
-      doc: 'The passphrase of the SSL private key',
-      format: String,
-      default: '',
-      env: 'SSL_PRIVATE_KEY_PASSPHRASE'
-    },
-    sslPrivateKeyPath: {
-      doc: 'The filename of the SSL private key',
-      format: String,
-      default: '',
-      env: 'SSL_PRIVATE_KEY_PATH'
-    },
-    sslCertificatePath: {
-      doc: 'The filename of the SSL certificate',
-      format: String,
-      default: '',
-      env: 'SSL_CERTIFICATE_PATH'
-    },
-    sslIntermediateCertificatePath: {
-      doc: 'The filename of an SSL intermediate certificate, if any',
-      format: String,
-      default: '',
-      env: 'SSL_INTERMEDIATE_CERTIFICATE_PATH'
-    },
-    sslIntermediateCertificatePaths: {
-      doc: 'The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)',
-      format: Array,
-      default: [],
-      env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
+    https: {
+      enabled: {
+        doc: 'Enable https functionality',
+        format: Boolean,
+        default: false,
+        env: 'ENABLE_HTTPS'
+      },
+      host: {
+        doc: 'The IP address the web application will run on',
+        format: '*',
+        default: '0.0.0.0'
+      },
+      port: {
+        doc: 'The port the web application will bind HTTPS to',
+        format: 'port',
+        default: 443,
+        env: 'HTTPS_PORT'
+      },
+      sslPassphrase: {
+        doc: 'The passphrase of the SSL private key',
+        format: String,
+        default: '',
+        env: 'SSL_PRIVATE_KEY_PASSPHRASE'
+      },
+      sslPrivateKeyPath: {
+        doc: 'The filename of the SSL private key',
+        format: String,
+        default: '',
+        env: 'SSL_PRIVATE_KEY_PATH'
+      },
+      sslCertificatePath: {
+        doc: 'The filename of the SSL certificate',
+        format: String,
+        default: '',
+        env: 'SSL_CERTIFICATE_PATH'
+      },
+      sslIntermediateCertificatePath: {
+        doc: 'The filename of an SSL intermediate certificate, if any',
+        format: String,
+        default: '',
+        env: 'SSL_INTERMEDIATE_CERTIFICATE_PATH'
+      },
+      sslIntermediateCertificatePaths: {
+        doc: 'The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)',
+        format: Array,
+        default: [],
+        env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
+      }
     }
   },
   api: {

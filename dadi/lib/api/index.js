@@ -30,20 +30,34 @@ var Api = function () {
   // permanently bind context to listener
   this.listener = this.listener.bind(this)
 
-  this.protocol = config.get('server.protocol') || 'http'
+  var httpEnabled = config.get('server.http.enabled')
+  var httpsEnabled = config.get('server.https.enabled')
+  if (!httpEnabled && !httpsEnabled) httpEnabled = true
 
-  if (this.protocol === 'https') {
+  // http only
+  if (httpEnabled && !httpsEnabled) {
+    this.httpInstance = http.createServer(this.listener)
+  }
+
+  // https enabled
+  if (httpsEnabled) {
+
+    // Redirect http to https
+    if (httpEnabled) {
+      this.redirectInstance = http.createServer(this.redirectListener)
+    }
+
     var readFileSyncSafe = (path) => {
-      try { return fs.readFileSync(path) } catch (ex) {}
+      try { return fs.readFileSync(path) } catch (ex) { console.log('error loading ssl file:', ex) }
       return null
     }
 
-    var passphrase = config.get('server.sslPassphrase')
-    var caPath = config.get('server.sslIntermediateCertificatePath')
-    var caPaths = config.get('server.sslIntermediateCertificatePaths')
+    var passphrase = config.get('server.https.sslPassphrase')
+    var caPath = config.get('server.https.sslIntermediateCertificatePath')
+    var caPaths = config.get('server.https.sslIntermediateCertificatePaths')
     var serverOptions = {
-      key: readFileSyncSafe(config.get('server.sslPrivateKeyPath')),
-      cert: readFileSyncSafe(config.get('server.sslCertificatePath'))
+      key: readFileSyncSafe(config.get('server.https.sslPrivateKeyPath')),
+      cert: readFileSyncSafe(config.get('server.https.sslCertificatePath'))
     }
 
     if (passphrase && passphrase.length >= 4) {
@@ -63,7 +77,7 @@ var Api = function () {
     // we need to catch any errors resulting from bad parameters
     // such as incorrect passphrase or no passphrase provided
     try {
-      this.serverInstance = https.createServer(serverOptions, this.listener)
+      this.httpsInstance = https.createServer(serverOptions, this.listener)
     } catch (ex) {
       var exPrefix = 'error starting https server: '
       switch (ex.message) {
@@ -75,9 +89,6 @@ var Api = function () {
           throw new Error(exPrefix + ex.message)
       }
     }
-  } else {
-    // default to http
-    this.serverInstance = http.createServer(this.listener)
   }
 }
 
@@ -143,16 +154,32 @@ Api.prototype.unuse = function (path) {
 }
 
 /**
- *  convenience method that creates http server and attaches listener
- *  @param {Number} port
- *  @param {String} host
+ *  convenience method that creates http/https server and attaches listener
  *  @param {Number} backlog
  *  @param {Function} [done]
- *  @return http.Server
+ *  @return http.Server or https.Server
  *  @api public
  */
-Api.prototype.listen = function (port, host, backlog, done) {
-  return this.serverInstance.listen(port, host, backlog, done)
+Api.prototype.listen = function (backlog, done) {
+  var httpPort = config.get('server.http.port')
+  var httpHost = config.get('server.http.host')
+  var httpsPort = config.get('server.https.port')
+  var httpsHost = config.get('server.https.host')
+
+  // If http only, return the http instance
+  if (this.httpInstance) {
+    return this.httpInstance.listen(httpPort, httpHost, backlog, done)
+  }
+
+  // If http should redirect to https, listen but don't return
+  if (this.redirectInstance) {
+    this.redirectInstance.listen(httpPort, httpHost, backlog, done)
+  }
+
+  // If https enabled, return the https instance
+  if (this.httpsInstance) {
+    return this.httpsInstance.listen(httpsPort, httpsHost, backlog, done)
+  }
 }
 
 /**
@@ -206,6 +233,23 @@ Api.prototype.listener = function (req, res) {
 
   // start going through the middleware/routes
   doStack(0)()
+}
+
+/**
+ *  listener function to be passed to node's `createServer`
+ *  @param {http.IncomingMessage} req
+ *  @param {http.ServerResponse} res
+ *  @return undefined
+ *  @api public
+ */
+Api.prototype.redirectListener = function (req, res) {
+  var httpsPort = config.get('server.https.port')
+  var hostname = req.headers.host.split(':')[0]
+  var location = 'https://' + hostname + ':' + httpsPort + req.url
+
+  res.statusCode = 302
+  res.setHeader('Location', location)
+  res.end()
 }
 
 /**

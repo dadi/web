@@ -183,7 +183,7 @@ Server.prototype.start = function (done) {
   }
 
   // start listening
-  var server = this.server = app.listen(config.get('server.port'), config.get('server.host'))
+  var server = this.server = app.listen()
 
   server.on('connection', onConnection)
   server.on('listening', onListening)
@@ -329,9 +329,17 @@ Server.prototype.loadApi = function (options) {
         package: '@dadi/web',
         version: version,
         healthCheck: {
-          baseUrl: 'http://' + config.get('server.host') + ':' + config.get('server.port'),
+          baseUrl: 'http://' + config.get('server.http.host') + ':' + config.get('server.http.port'),
           routes: config.get('status.routes')
         }
+      }
+
+      var httpsEnabled = config.get('server.https.enabled')
+      if (httpsEnabled) {
+        var httpsHost = config.get('server.https.host')
+        var httpsPort = config.get('server.https.port')
+        var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
+        params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
       }
 
       dadiStatus(params, (err, data) => {
@@ -726,20 +734,31 @@ function onListening (e) {
     }
 
     var env = config.get('env')
+    var httpEnabled = config.get('server.http.enabled')
+    var httpsEnabled = config.get('server.https.enabled')
+    if (!httpEnabled && !httpsEnabled) httpEnabled = true
+    var extraPadding = httpEnabled && httpsEnabled && '          ' || ''
 
     var startText = '\n'
     startText += '  ----------------------------\n'
     startText += '  ' + config.get('app.name').green + '\n'
     startText += "  Started 'DADI Web'\n"
     startText += '  ----------------------------\n'
-    startText += '  Server:      '.green + config.get('server.host') + ':' + config.get('server.port') + '\n'
-    startText += '  Version:     '.green + version + '\n'
-    startText += '  Node.JS:     '.green + nodeVersion + '\n'
-    startText += '  Environment: '.green + env + '\n'
+    if (httpEnabled && !httpsEnabled) {
+      startText += '  Server:      '.green + extraPadding + 'http://' + config.get('server.http.host') + ':' + config.get('server.http.port') + '\n'
+    } else if (httpsEnabled) {
+      if (httpEnabled) {
+        startText += '  Server (http > https): '.green + 'http://' + config.get('server.http.host') + ':' + config.get('server.http.port') + '\n'
+      }
+      startText += '  Server:      '.green + extraPadding + 'https://' + config.get('server.https.host') + ':' + config.get('server.https.port') + '\n'
+    }
+    startText += '  Version:     '.green + extraPadding + version + '\n'
+    startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
+    startText += '  Environment: '.green + extraPadding + env + '\n'
     if (config.get('api.enabled') === true) {
-      startText += '  API:         '.green + config.get('api.host') + ':' + config.get('api.port') + '\n'
+      startText += '  API:         '.green + extraPadding + config.get('api.host') + ':' + config.get('api.port') + '\n'
     } else {
-      startText += '  API:         '.green + 'Not found'.red + '\n'
+      startText += '  API:         '.green + extraPadding + 'Not found'.red + '\n'
       startText += '  ----------------------------\n'
     }
 
