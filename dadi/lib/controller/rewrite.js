@@ -19,7 +19,7 @@ var proxySyntax = /P/
 var redirectSyntax = /R=?(\d+)?/
 var forbiddenSyntax = /F/
 var goneSyntax = /G/
-var typeSyntax = /T=([\w|\/]+,?)/
+var typeSyntax = /T=([\w|/]+,?)/
 var hostSyntax = /H=([^,]+)/
 var flagSyntax = /\[([^\]]+)]$/
 var partsSyntax = /\s+|\t+/g
