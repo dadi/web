@@ -6,7 +6,7 @@
   "scripts": {
     "init": "validate-commit-msg",
     "start": "node ./main.js",
-    "test": "standard && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/mocha test",
+    "test": "standard && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test -- --require babel-register",
     "posttest": "node ./scripts/coverage.js"
   },
   "dependencies": {
@@ -27,7 +27,7 @@
     "connect-mongo": "1.0.1",
     "connect-redis": "3.0.2",
     "console-stamp": "^0.2.2",
-    "convict": "1.1.1",
+    "convict": "2.0.0",
     "dustjs-helpers": "^1.7.3",
     "dustjs-linkedin": "^2.7.2",
     "event-stream": "^3.3.1",
@@ -64,9 +64,10 @@
     "wildcard": "^1.1.2"
   },
   "devDependencies": {
+    "babel-register": "^6.18.0",
     "coveralls": "^2.11.4",
     "env-test": "^1.0.0",
-    "istanbul": "^0.3.22",
+    "istanbul": "^1.1.0-alpha.1",
     "istanbul-cobertura-badger": "^1.1.0",
     "kinesalite": "^1.9.0",
     "mocha": "latest",
