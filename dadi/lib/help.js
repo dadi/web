@@ -314,15 +314,7 @@ module.exports.clearCache = function (req, callback) {
  * @param {Object} input - object to be slugified
  */
 module.exports.slugify = function (input) {
-  return input.toString()
-    .toLowerCase()
-    .replace(/[\?#][\s\S]*$/g, '')
-    .replace(/\/+/g, '-')
-    .replace(/\s+/g, '')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '')
+  return require('underscore.string').slugify(input.toString())
 }
 
 /**

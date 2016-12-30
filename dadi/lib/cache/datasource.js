@@ -22,7 +22,6 @@ var DatasourceCache = function (datasource) {
   this.datasource = datasource
 
   this.mainCache = mainCache()
-  this.options = this.datasource.schema.datasource.caching || {}
 
   // enabled if main cache module is enabled and this is not a static datasource
   this.enabled = this.mainCache.enabled && this.datasource.source.type !== 'static'
@@ -39,8 +38,12 @@ var DatasourceCache = function (datasource) {
     this.filename += '_' + crypto.createHash('sha1').update(this.datasource.provider.endpoint).digest('hex')
   }
 
+  this.options = this.datasource.schema.datasource.caching || {}
+
   if (_.isEmpty(this.options)) {
     this.options = config.get('caching')
+  } else {
+    this.options = _.extend(config.get('caching'), this.options)
   }
 
   if (!this.options.directory || s.isBlank(this.options.directory.path)) {

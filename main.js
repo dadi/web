@@ -37,7 +37,7 @@ if (config.get('cluster')) {
     // Watch the current directory for a "restart.web" file
     var watcher = chokidar.watch(process.cwd(), {
       depth: 0,
-      ignored: /[\/\\]\./,
+      ignored: /(^|[/\\])\../,  // ignores dotfiles, see https://regex101.com/r/7VuO4e/1
       ignoreInitial: true
     })
 
