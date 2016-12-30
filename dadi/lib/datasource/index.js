@@ -103,7 +103,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   var query = url.parse(req.url, true).query
 
   // handle the cache flag
-  if (query.hasOwnProperty('cache') && query.cache === 'false') {
+  if (query.cache && query.cache === 'false') {
     this.schema.datasource.cache = false
   } else {
     delete this.schema.datasource.cache
