@@ -41,7 +41,6 @@ var Api = function () {
 
   // https enabled
   if (httpsEnabled) {
-
     // Redirect http to https
     if (httpEnabled) {
       this.redirectInstance = http.createServer(this.redirectListener)
