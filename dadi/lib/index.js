@@ -329,15 +329,15 @@ Server.prototype.loadApi = function (options) {
         package: '@dadi/web',
         version: version,
         healthCheck: {
-          baseUrl: 'http://' + config.get('server.http.host') + ':' + config.get('server.http.port'),
+          baseUrl: 'http://' + config.get('server.host') + ':' + config.get('server.port'),
           routes: config.get('status.routes')
         }
       }
 
-      var httpsEnabled = config.get('server.https.enabled')
-      if (httpsEnabled) {
-        var httpsHost = config.get('server.https.host')
-        var httpsPort = config.get('server.https.port')
+      var protocol = config.get('server.protocol') || 'http'
+      if (protocol === 'https') {
+        var httpsHost = config.get('server.host')
+        var httpsPort = config.get('server.port')
         var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
         params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
       }
@@ -734,23 +734,26 @@ function onListening (e) {
     }
 
     var env = config.get('env')
-    var httpEnabled = config.get('server.http.enabled')
-    var httpsEnabled = config.get('server.https.enabled')
-    if (!httpEnabled && !httpsEnabled) httpEnabled = true
-    var extraPadding = httpEnabled && httpsEnabled && '          ' || ''
+    var protocol = config.get('server.protocol') || 'http'
+    var redirectPort = config.get('server.redirectPort')
+    var extraPadding = redirectPort > 0 && '          ' || ''
+
+    console.log('protocol is', protocol)
+    console.log('redirectPort is', redirectPort)
+    console.log('typeof redirectPort is', typeof redirectPort)
 
     var startText = '\n'
     startText += '  ----------------------------\n'
     startText += '  ' + config.get('app.name').green + '\n'
     startText += "  Started 'DADI Web'\n"
     startText += '  ----------------------------\n'
-    if (httpEnabled && !httpsEnabled) {
-      startText += '  Server:      '.green + extraPadding + 'http://' + config.get('server.http.host') + ':' + config.get('server.http.port') + '\n'
-    } else if (httpsEnabled) {
-      if (httpEnabled) {
-        startText += '  Server (http > https): '.green + 'http://' + config.get('server.http.host') + ':' + config.get('server.http.port') + '\n'
+    if (protocol === 'http') {
+      startText += '  Server:      '.green + extraPadding + 'http://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
+    } else if (protocol === 'https') {
+      if (redirectPort > 0) {
+        startText += '  Server (http > https): '.green + 'http://' + config.get('server.host') + ':' + config.get('server.redirectPort') + '\n'
       }
-      startText += '  Server:      '.green + extraPadding + 'https://' + config.get('server.https.host') + ':' + config.get('server.https.port') + '\n'
+      startText += '  Server:      '.green + extraPadding + 'https://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
     }
     startText += '  Version:     '.green + extraPadding + version + '\n'
     startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'

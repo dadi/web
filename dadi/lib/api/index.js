@@ -30,19 +30,14 @@ var Api = function () {
   // permanently bind context to listener
   this.listener = this.listener.bind(this)
 
-  var httpEnabled = config.get('server.http.enabled')
-  var httpsEnabled = config.get('server.https.enabled')
-  if (!httpEnabled && !httpsEnabled) httpEnabled = true
+  this.protocol = config.get('server.protocol') || 'http'
+  this.redirectPort = config.get('server.redirectPort')
 
-  // http only
-  if (httpEnabled && !httpsEnabled) {
+  if (this.protocol === 'http') {
     this.httpInstance = http.createServer(this.listener)
-  }
-
-  // https enabled
-  if (httpsEnabled) {
+  } else if (this.protocol === 'https') {
     // Redirect http to https
-    if (httpEnabled) {
+    if (this.redirectPort > 0) {
       this.redirectInstance = http.createServer(this.redirectListener)
     }
 
@@ -51,12 +46,12 @@ var Api = function () {
       return null
     }
 
-    var passphrase = config.get('server.https.sslPassphrase')
-    var caPath = config.get('server.https.sslIntermediateCertificatePath')
-    var caPaths = config.get('server.https.sslIntermediateCertificatePaths')
+    var passphrase = config.get('server.sslPassphrase')
+    var caPath = config.get('server.sslIntermediateCertificatePath')
+    var caPaths = config.get('server.sslIntermediateCertificatePaths')
     var serverOptions = {
-      key: readFileSyncSafe(config.get('server.https.sslPrivateKeyPath')),
-      cert: readFileSyncSafe(config.get('server.https.sslCertificatePath'))
+      key: readFileSyncSafe(config.get('server.sslPrivateKeyPath')),
+      cert: readFileSyncSafe(config.get('server.sslCertificatePath'))
     }
 
     if (passphrase && passphrase.length >= 4) {
@@ -160,24 +155,23 @@ Api.prototype.unuse = function (path) {
  *  @api public
  */
 Api.prototype.listen = function (backlog, done) {
-  var httpPort = config.get('server.http.port')
-  var httpHost = config.get('server.http.host')
-  var httpsPort = config.get('server.https.port')
-  var httpsHost = config.get('server.https.host')
+  var port = config.get('server.port')
+  var host = config.get('server.host')
+  var redirectPort = config.get('server.redirectPort')
 
   // If http only, return the http instance
   if (this.httpInstance) {
-    return this.httpInstance.listen(httpPort, httpHost, backlog, done)
+    return this.httpInstance.listen(port, host, backlog, done)
   }
 
   // If http should redirect to https, listen but don't return
   if (this.redirectInstance) {
-    this.redirectInstance.listen(httpPort, httpHost, backlog, done)
+    this.redirectInstance.listen(redirectPort, host, backlog, done)
   }
 
   // If https enabled, return the https instance
   if (this.httpsInstance) {
-    return this.httpsInstance.listen(httpsPort, httpsHost, backlog, done)
+    return this.httpsInstance.listen(port, host, backlog, done)
   }
 }
 
@@ -242,9 +236,9 @@ Api.prototype.listener = function (req, res) {
  *  @api public
  */
 Api.prototype.redirectListener = function (req, res) {
-  var httpsPort = config.get('server.https.port')
+  var port = config.get('server.port')
   var hostname = req.headers.host.split(':')[0]
-  var location = 'https://' + hostname + ':' + httpsPort + req.url
+  var location = 'https://' + hostname + ':' + port + req.url
 
   res.statusCode = 302
   res.setHeader('Location', location)

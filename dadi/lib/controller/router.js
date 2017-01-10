@@ -381,8 +381,7 @@ module.exports = function (server, options) {
       var redirect = false
       var location = req.url
       var rewritesConfig = config.get('rewrites')
-      var httpsEnabled = config.get('server.https.enabled')
-      var protocol = httpsEnabled ? 'https' : 'http'
+      var protocol = config.get('server.protocol') || 'http'
 
       // force a URL to lowercase
       if (rewritesConfig.forceLowerCase) {
