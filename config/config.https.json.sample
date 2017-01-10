@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "Project Name Here"
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 443,
+    "redirectPort": 80,
+    "protocol": "https",
+    "sslPrivateKeyPath": "ssl/key.pem",
+    "sslCertificatePath": "ssl/cert.pem"
+  },
+  "api": {
+    "host": "127.0.0.1",
+    "port": 3000
+  },
+  "auth": {
+    "tokenUrl":"/token",
+    "clientId":"testClient",
+    "secret":"superSecret"
+  },
+  "global" : {
+    "baseUrl": "http://www.example.com"
+  },
+  "virtualDirectories": [
+    {
+      "path": "/data/legacy_features",
+      "index": "default.html",
+      "forceTrailingSlash": false
+    }
+  ]
+}
