@@ -381,10 +381,14 @@ module.exports = function (server, options) {
       var redirect = false
       var location = req.url
       var rewritesConfig = config.get('rewrites')
+      var httpsEnabled = config.get('server.https.enabled')
+      var protocol = httpsEnabled ? 'https' : 'http'
 
       // force a URL to lowercase
       if (rewritesConfig.forceLowerCase) {
+        console.log('[ A ]')
         if (location !== location.toLowerCase()) {
+          console.log('[ B ]')
           location = location.toLowerCase()
           redirect = true
         }
@@ -392,6 +396,7 @@ module.exports = function (server, options) {
 
       // stripIndexPages
       if (!_.isEmpty(rewritesConfig.stripIndexPages)) {
+        console.log('[ C ]')
         var files = rewritesConfig.stripIndexPages
         var re = new RegExp(files.join('|'), 'gi')
 
@@ -412,7 +417,7 @@ module.exports = function (server, options) {
 
       if (redirect) {
         res.writeHead(301, {
-          Location: 'http' + '://' + req.headers.host + location
+          Location: protocol + '://' + req.headers.host + location
         })
         res.end()
       } else {
