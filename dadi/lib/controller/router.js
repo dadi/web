@@ -386,9 +386,7 @@ module.exports = function (server, options) {
 
       // force a URL to lowercase
       if (rewritesConfig.forceLowerCase) {
-        console.log('[ A ]')
         if (location !== location.toLowerCase()) {
-          console.log('[ B ]')
           location = location.toLowerCase()
           redirect = true
         }
@@ -396,7 +394,6 @@ module.exports = function (server, options) {
 
       // stripIndexPages
       if (!_.isEmpty(rewritesConfig.stripIndexPages)) {
-        console.log('[ C ]')
         var files = rewritesConfig.stripIndexPages
         var re = new RegExp(files.join('|'), 'gi')
 
