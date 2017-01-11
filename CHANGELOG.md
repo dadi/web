@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.7.3] - 2017-01-11
+
+### Changed
+* Now runs on latest Node versions 4.7.0, 5.12.0, 6.9.2
+* Improved build and test for cross platform usage, now works under Windows 10
+
 ## [1.7.2] - 2016-12-02
 
 ### Changed
