@@ -744,8 +744,8 @@ function onListening (e) {
     }
 
     if (env !== 'test') {
+      startText += '\n\n  Copyright ' + String.fromCharCode(169) + ' 2015-' + new Date().getFullYear() + ' DADI+ Limited (https://dadi.tech)'.white + '\n'
       console.log(startText)
-      console.log('  Copyright %s 2015 DADI+ Limited (https://dadi.tech)'.white, String.fromCharCode(169))
     }
   })
 }
