@@ -381,6 +381,7 @@ module.exports = function (server, options) {
       var redirect = false
       var location = req.url
       var rewritesConfig = config.get('rewrites')
+      var protocol = config.get('server.protocol') || 'http'
 
       // force a URL to lowercase
       if (rewritesConfig.forceLowerCase) {
@@ -412,7 +413,7 @@ module.exports = function (server, options) {
 
       if (redirect) {
         res.writeHead(301, {
-          Location: 'http' + '://' + req.headers.host + location
+          Location: protocol + '://' + req.headers.host + location
         })
         res.end()
       } else {

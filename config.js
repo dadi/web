@@ -23,6 +23,12 @@ var conf = convict({
       default: 8080,
       env: 'PORT'
     },
+    redirectPort: {
+      doc: 'Port to redirect http connections to https from',
+      format: 'port',
+      default: 0,
+      env: 'REDIRECT_PORT'
+    },
     name: {
       doc: 'The server name.',
       format: String,
@@ -440,11 +446,6 @@ var conf = convict({
     }
   },
   security: {
-    useSSL: {
-      doc: 'Deprecated. Set server.protocol to https to use SSL.',
-      format: Boolean,
-      default: false
-    },
     trustProxy: {
       doc: 'If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address',
       format: '*',

@@ -183,7 +183,7 @@ Server.prototype.start = function (done) {
   }
 
   // start listening
-  var server = this.server = app.listen(config.get('server.port'), config.get('server.host'))
+  var server = this.server = app.listen()
 
   server.on('connection', onConnection)
   server.on('listening', onListening)
@@ -194,6 +194,10 @@ Server.prototype.start = function (done) {
 
   // enhance with a 'destroy' function
   enableDestroy(server)
+
+  if (app.redirectInstance) {
+    enableDestroy(app.redirectInstance)
+  }
 
   // load app specific routes
   this.loadApi(options)
@@ -269,6 +273,11 @@ Server.prototype.stop = function (done) {
 
   this.server.destroy()
 
+  if (this.app.redirectInstance) {
+    this.app.redirectInstance.destroy()
+    delete this.app.redirectInstance
+  }
+
   this.server.close((err) => {
     this.readyState = 0
     return done && done(err)
@@ -332,6 +341,14 @@ Server.prototype.loadApi = function (options) {
           baseUrl: 'http://' + config.get('server.host') + ':' + config.get('server.port'),
           routes: config.get('status.routes')
         }
+      }
+
+      var protocol = config.get('server.protocol') || 'http'
+      if (protocol === 'https') {
+        var httpsHost = config.get('server.host')
+        var httpsPort = config.get('server.port')
+        var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
+        params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
       }
 
       dadiStatus(params, (err, data) => {
@@ -726,20 +743,33 @@ function onListening (e) {
     }
 
     var env = config.get('env')
+    var protocol = config.get('server.protocol') || 'http'
+    var redirectPort = config.get('server.redirectPort')
+    var extraPadding = redirectPort > 0 && '          ' || ''
 
     var startText = '\n'
     startText += '  ----------------------------\n'
     startText += '  ' + config.get('app.name').green + '\n'
     startText += "  Started 'DADI Web'\n"
     startText += '  ----------------------------\n'
-    startText += '  Server:      '.green + config.get('server.host') + ':' + config.get('server.port') + '\n'
-    startText += '  Version:     '.green + version + '\n'
-    startText += '  Node.JS:     '.green + nodeVersion + '\n'
-    startText += '  Environment: '.green + env + '\n'
+
+    if (protocol === 'http') {
+      startText += '  Server:      '.green + extraPadding + 'http://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
+    } else if (protocol === 'https') {
+      if (redirectPort > 0) {
+        startText += '  Server (http > https): '.green + 'http://' + config.get('server.host') + ':' + config.get('server.redirectPort') + '\n'
+      }
+      startText += '  Server:      '.green + extraPadding + 'https://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
+    }
+
+    startText += '  Version:     '.green + extraPadding + version + '\n'
+    startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
+    startText += '  Environment: '.green + extraPadding + env + '\n'
+
     if (config.get('api.enabled') === true) {
-      startText += '  API:         '.green + config.get('api.host') + ':' + config.get('api.port') + '\n'
+      startText += '  API:         '.green + extraPadding + config.get('api.host') + ':' + config.get('api.port') + '\n'
     } else {
-      startText += '  API:         '.green + 'Not found'.red + '\n'
+      startText += '  API:         '.green + extraPadding + 'Not found'.red + '\n'
       startText += '  ----------------------------\n'
     }
 
