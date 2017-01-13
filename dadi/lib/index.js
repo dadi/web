@@ -738,10 +738,6 @@ function onListening (e) {
     var redirectPort = config.get('server.redirectPort')
     var extraPadding = redirectPort > 0 && '          ' || ''
 
-    console.log('protocol is', protocol)
-    console.log('redirectPort is', redirectPort)
-    console.log('typeof redirectPort is', typeof redirectPort)
-
     var startText = '\n'
     startText += '  ----------------------------\n'
     startText += '  ' + config.get('app.name').green + '\n'
