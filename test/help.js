@@ -76,6 +76,13 @@ TestHelper.prototype.enableApiConfig = function () {
   })
 }
 
+TestHelper.prototype.getConfig = function () {
+  return new Promise((resolve, reject) => {
+    var originalConfig = JSON.parse(this.originalConfigString)
+    return resolve(_.extend({}, originalConfig))
+  })
+}
+
 TestHelper.prototype.updateConfig = function (configBlock) {
   return new Promise((resolve, reject) => {
     var originalConfig = JSON.parse(this.originalConfigString)
