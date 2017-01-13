@@ -195,6 +195,10 @@ Server.prototype.start = function (done) {
   // enhance with a 'destroy' function
   enableDestroy(server)
 
+  if (app.redirectInstance) {
+    enableDestroy(app.redirectInstance)
+  }
+
   // load app specific routes
   this.loadApi(options)
 
@@ -268,6 +272,11 @@ Server.prototype.stop = function (done) {
   Object.keys(this.components).forEach(this.removeComponent.bind(this))
 
   this.server.destroy()
+
+  if (this.app.redirectInstance) {
+    this.app.redirectInstance.destroy()
+    delete this.app.redirectInstance
+  }
 
   this.server.close((err) => {
     this.readyState = 0
@@ -743,6 +752,7 @@ function onListening (e) {
     startText += '  ' + config.get('app.name').green + '\n'
     startText += "  Started 'DADI Web'\n"
     startText += '  ----------------------------\n'
+
     if (protocol === 'http') {
       startText += '  Server:      '.green + extraPadding + 'http://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
     } else if (protocol === 'https') {
@@ -751,9 +761,11 @@ function onListening (e) {
       }
       startText += '  Server:      '.green + extraPadding + 'https://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
     }
+
     startText += '  Version:     '.green + extraPadding + version + '\n'
     startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
     startText += '  Environment: '.green + extraPadding + env + '\n'
+
     if (config.get('api.enabled') === true) {
       startText += '  API:         '.green + extraPadding + config.get('api.host') + ':' + config.get('api.port') + '\n'
     } else {
