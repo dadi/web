@@ -33,7 +33,7 @@ describe('Routing', function (done) {
 
   after(function(done) {
     delete require.cache[path.resolve(path.join(__dirname, '/../../config'))]
-    
+
     TestHelper.updateConfig({
       server: {
         host: '127.0.0.1',

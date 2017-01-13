@@ -446,11 +446,6 @@ var conf = convict({
     }
   },
   security: {
-    useSSL: {
-      doc: 'Deprecated. Set server.protocol to https to use SSL.',
-      format: Boolean,
-      default: false
-    },
     trustProxy: {
       doc: 'If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address',
       format: '*',
