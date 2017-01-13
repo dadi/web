@@ -16,8 +16,8 @@
   },
   "auth": {
     "tokenUrl":"/token",
-    "clientId":"testClient",
-    "secret":"superSecret"
+    "clientId":"your-client-id",
+    "secret":"your-secret"
   },
   "global" : {
     "baseUrl": "http://www.example.com"
