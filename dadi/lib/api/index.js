@@ -240,8 +240,8 @@ Api.prototype.redirectListener = function (req, res) {
   var hostname = req.headers.host.split(':')[0]
   var location = 'https://' + hostname + ':' + port + req.url
 
-  res.statusCode = 302
   res.setHeader('Location', location)
+  res.statusCode = 301
   res.end()
 }
 
