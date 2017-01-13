@@ -31,6 +31,21 @@ describe('Routing', function (done) {
     done()
   })
 
+  after(function(done) {
+    delete require.cache[path.resolve(path.join(__dirname, '/../../config'))]
+    
+    TestHelper.updateConfig({
+      server: {
+        host: '127.0.0.1',
+        port: 5111,
+        redirectPort: 0,
+        protocol: 'http'
+      }
+    }).then(() => {
+      TestHelper.stopServer(done)
+    })
+  })
+
   beforeEach(function(done) {
     //scope = nock(apiHost).post('/token').reply(200, { accessToken: 'xx' })
     var configUpdate = {
