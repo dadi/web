@@ -28,26 +28,17 @@ MarkdownProvider.prototype.initialise = function initialise (datasource, schema)
  * @return {?}
  */
 MarkdownProvider.prototype.processSortParameter = function processSortParameter (obj) {
-  // TODO: implement sort
-  return {}
+  let sort = {}
 
-  // let sort = {}
-  //
-  // if (typeof obj !== 'object' || obj === null) return sort
-  //
-  // if (_.isArray(obj)) {
-  //   _.each(obj, (value, key) => {
-  //     if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
-  //       sort[value.field] = (value.order === 'asc') ? 1 : -1
-  //     }
-  //   })
-  // } else if (obj.hasOwnProperty('field') && obj.hasOwnProperty('order')) {
-  //   sort[obj.field] = (obj.order === 'asc') ? 1 : -1
-  // } else {
-  //   sort = obj
-  // }
-  //
-  // return sort
+  if (_.isObject(obj)) {
+    _.each(obj, (sortInteger, field) => {
+      if (sortInteger === -1 || sortInteger === 1) {
+        sort[field] = sortInteger
+      }
+    })
+  }
+
+  return sort
 }
 
 /**
@@ -67,6 +58,46 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
       if (err) return done(err, null)
 
       this.parseRawDataAsync(readResults, (posts) => {
+        const sort = this.processSortParameter(this.schema.datasource.sort)
+        const search = this.schema.datasource.search
+        const count = this.schema.datasource.count
+        const fields = this.schema.datasource.fields || []
+        const filter = this.schema.datasource.filter
+
+        if (search) {
+          posts = _.where(posts, search)
+        }
+
+        if (filter) {
+          posts = _.filter(posts, (post) => {
+            return _.where([post.metadata], filter).length > 0
+          })
+        }
+
+        // Sort posts by metadata field (with date support)
+        if (sort && Object.keys(sort).length > 0) {
+          Object.keys(sort).forEach(field => {
+            posts = _.sortBy(posts, (post) => {
+              const value = post.metadata[field]
+              const valueAsDate = new Date(value)
+              return (valueAsDate.toString() !== 'Invalid Date')
+                ? +(valueAsDate)
+                : value
+            })
+            if (sort[field] === -1) {
+              posts = posts.reverse()
+            }
+          })
+        }
+
+        if (count) {
+          posts = _.first(posts, count)
+        }
+
+        if (fields && !_.isEmpty(fields)) {
+          posts = _.chain(posts).selectFields(fields.join(',')).value()
+        }
+
         done(null, { results: posts })
       })
     })
