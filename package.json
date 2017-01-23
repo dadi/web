@@ -1,13 +1,14 @@
 {
   "name": "@dadi/web",
-  "version": "1.7.3",
+  "version": "0.0.0-development",
   "description": "Web frontend and template layer for @dadi/api",
   "main": "main.js",
   "scripts": {
     "init": "validate-commit-msg",
     "start": "node ./main.js",
     "test": "standard && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test -- --require babel-register",
-    "posttest": "node ./scripts/coverage.js"
+    "posttest": "node ./scripts/coverage.js",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "dependencies": {
     "@dadi/api-wrapper": "latest",
@@ -79,11 +80,12 @@
     "standard": "*",
     "superagent": "^1.8.0-beta.2",
     "superagent-mock": "^1.10.0",
-    "supertest": "latest"
+    "supertest": "latest",
+    "semantic-release": "^6.3.2"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dadi/web.git"
+    "url": "https://github.com/dadi/web.git"
   },
   "bugs": {
     "url": "https://github.com/dadi/web/issues"
