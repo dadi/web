@@ -9,6 +9,7 @@ var request = require('supertest')
 var zlib = require('zlib')
 
 var api = require(__dirname + '/../../dadi/lib/api')
+var Bearer = require(__dirname + '/../../dadi/lib/auth/bearer')
 var Controller = require(__dirname + '/../../dadi/lib/controller')
 var Datasource = require(__dirname + '/../../dadi/lib/datasource')
 var help = require(__dirname + '/../../dadi/lib/help')
@@ -38,6 +39,38 @@ describe('Data Providers', function (done) {
   })
 
   describe('Remote', function (done) {
+    it('should use the datasource auth block when obtaining a token', function (done) {
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['car-models']
+
+          TestHelper.setupApiIntercepts()
+
+          var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+
+          var stub = sinon.stub(Bearer.BearerAuthStrategy.prototype, 'getToken', function(strategy, callback) {
+            should.exist(strategy.config)
+            should.exist(strategy.config)
+            strategy.config.host.should.eql('127.0.0.1')
+
+            stub.restore()
+            return done()
+          })
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?cache=false&json=true')
+            .end((err, res) => {
+            })
+          })
+        })
+      })
+    })
+
     it('should return gzipped response if accept header specifies it', function (done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()

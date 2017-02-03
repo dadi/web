@@ -15,8 +15,8 @@ BearerAuthStrategy.prototype.getType = function () {
   return 'bearer'
 }
 
-BearerAuthStrategy.prototype.getToken = function (datasource, done) {
-  var strategy = datasource.authStrategy.config
+BearerAuthStrategy.prototype.getToken = function (strategy, done) {
+  var strategy = strategy.config
   var self = this
 
   Passport({
