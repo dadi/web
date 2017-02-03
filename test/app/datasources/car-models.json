@@ -26,8 +26,8 @@
       "port": "3000",
       "tokenUrl": "/token",
       "credentials": {
-        "clientId": "rosecombClient",
-        "secret": "superSecret"
+        "clientId": "client",
+        "secret": "secret"
       }
     },
   	"paginate": true,

@@ -61,10 +61,10 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
 
   // If the data-source has its own auth strategy, use it.
   // Otherwise, authenticate with the main server via bearer token
-  if (this.datasource.authStrategy) {
+  if (this.authStrategy) {
     // This could eventually become a switch statement that handles different auth types
-    if (this.datasource.authStrategy.getType() === 'bearer') {
-      this.datasource.authStrategy.getToken(this.datasource, (err, bearerToken) => {
+    if (this.authStrategy.getType() === 'bearer') {
+      this.authStrategy.getToken(this.authStrategy, (err, bearerToken) => {
         if (err) {
           return done(err)
         }
