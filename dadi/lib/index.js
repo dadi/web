@@ -7,6 +7,7 @@ var bodyParser = require('body-parser')
 var colors = require('colors')  // eslint-disable-line
 var compress = require('compression')
 var crypto = require('crypto')
+var debug = require('debug')('server')
 var dust = require('./dust')
 var enableDestroy = require('server-destroy')
 var fs = require('fs')
@@ -20,13 +21,8 @@ var toobusy = require('toobusy-js')
 var url = require('url')
 var dadiStatus = require('@dadi/status')
 
-var MongoStore
-if (nodeVersion < 1) {
-  MongoStore = require('connect-mongo/es5')(session)
-} else {
-  MongoStore = require('connect-mongo')(session)
-  var RedisStore = require('connect-redis')(session)
-}
+var MongoStore = require('connect-mongo')(session)
+var RedisStore = require('connect-redis')(session)
 
 // let's ensure there's at least a dev config file here
 var devConfigPath = path.join(__dirname, '/../../config/config.development.json')
@@ -60,8 +56,6 @@ log.init(config.get('logging'), config.get('aws'), process.env.NODE_ENV)
 var Server = function () {
   this.components = {}
   this.monitors = {}
-
-  log.info({module: 'server'}, 'Server logging started.')
 }
 
 Server.prototype.start = function (done) {
@@ -69,7 +63,7 @@ Server.prototype.start = function (done) {
 
   this.readyState = 2
 
-  var options = this.loadPaths(config.get('paths') || {})
+  var options = this.loadPaths()
 
   // create app
   var app = this.app = api()
@@ -155,18 +149,6 @@ Server.prototype.start = function (done) {
     // add the session middleware
     app.use(session(sessionOptions))
   }
-
-  app.use('/config', function (req, res, next) {
-    var hash = crypto.createHash('md5').update(config.get('secret') + config.get('app.name')).digest('hex')
-    console.log(hash)
-    if (url.parse(req.url, true).query.secret === hash) {
-      res.statusCode = 200
-      // res.end(config.toString())
-      res.end(config.getSchemaString())
-    } else {
-      next()
-    }
-  })
 
   // set up cache
   var cacheLayer = cache(self)
@@ -284,40 +266,40 @@ Server.prototype.stop = function (done) {
   })
 }
 
-Server.prototype.loadPaths = function (paths) {
+Server.prototype.resolvePaths = function (paths) {
+  if (Array.isArray(paths)) {
+    return _.map(paths, (p) => {
+      return path.resolve(p)
+    })
+  } else {
+    return [path.resolve(paths)]
+  }
+}
+
+Server.prototype.loadPaths = function () {
+  var paths = config.get('paths')
   var options = {}
 
-  options.datasourcePath = path.resolve(paths.datasources || path.join(__dirname, '/../../app/datasources'))
-  options.eventPath = path.resolve(paths.events || path.join(__dirname, '/../../app/events'))
-  options.pagePath = path.resolve(paths.pages || path.join(__dirname, '/../../app/pages'))
-  options.partialPath = path.resolve(paths.partials || path.join(__dirname, '/../../app/partials'))
-  options.routesPath = path.resolve(paths.routes || path.join(__dirname, '/../../app/routes'))
-  options.middlewarePath = path.resolve(paths.middleware || path.join(__dirname, '/../../app/middleware'))
+  options.datasourcePath = path.resolve(paths.datasources)
+  options.eventPath = path.resolve(paths.events)
+  options.filtersPath = path.resolve(paths.filters)
+  options.helpersPath = path.resolve(paths.helpers)
+  options.mediaPath = path.resolve(paths.media)
+  options.middlewarePath = path.resolve(paths.middleware)
+  options.pagePath = path.resolve(paths.pages)
+  options.partialPaths = this.resolvePaths(paths.partials)
+  options.publicPath = path.resolve(paths.public)
+  options.routesPath = path.resolve(paths.routes)
+  options.tokenWalletsPath = path.resolve(paths.tokenWallets)
 
-  options.filtersPath = path.resolve(paths.filters || path.join(__dirname, '/../../app/utils/filters'))
-  options.helpersPath = path.resolve(paths.helpers || path.join(__dirname, '/../../app/utils/helpers'))
-
-  options.tokenWalletsPath = path.resolve(paths.tokenWallets || path.join(__dirname, '/../../.wallet'))
-  if (paths.media) options.mediaPath = path.resolve(paths.media)
-
-  if (paths.public) options.publicPath = path.resolve(paths.public)
-
-  _.each(options, (path, key) => {
-    fs.stat(path, (err, stats) => {
-      if (err) {
-        if (err.code === 'ENOENT') {
-          this.ensureDirectories(options, () => {
-            //
-          })
-        }
-      }
-    })
-  })
+  this.ensureDirectories(options, () => {})
 
   return options
 }
 
 Server.prototype.loadApi = function (options) {
+  debug('loadApi %O', options)
+
   this.app.use('/api/flush', (req, res, next) => {
     if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
       return help.clearCache(req, (err) => {
@@ -363,43 +345,43 @@ Server.prototype.loadApi = function (options) {
     }
   })
 
-  this.ensureDirectories(options, (text) => {
-    // load routes
-    this.updatePages(options.pagePath, options, false)
+  // load routes
+  this.updatePages(options.pagePath, options, false)
 
-    // Load middleware
-    this.initMiddleware(options.middlewarePath, options)
+  // Load middleware
+  this.initMiddleware(options.middlewarePath, options)
 
-    // compile all dust templates
-    this.compile(options)
+  // compile all dust templates
+  this.compile(options)
 
-    this.addMonitor(options.datasourcePath, (dsFile) => {
-      this.updatePages(options.pagePath, options, true)
-    })
-
-    this.addMonitor(options.eventPath, (eventFile) => {
-      this.updatePages(options.pagePath, options, true)
-    })
-
-    this.addMonitor(options.pagePath, (pageFile) => {
-      this.updatePages(options.pagePath, options, true)
-      this.compile(options)
-    })
-
-    this.addMonitor(options.partialPath, (partialFile) => {
-      this.compile(options)
-    })
-
-    this.addMonitor(options.routesPath, (file) => {
-      if (this.app.Router) {
-        this.app.Router.loadRewrites(options, () => {
-          this.app.Router.loadRewriteModule()
-        })
-      }
-    })
-
-    log.info({module: 'server'}, 'Load complete.')
+  this.addMonitor(options.datasourcePath, (dsFile) => {
+    this.updatePages(options.pagePath, options, true)
   })
+
+  this.addMonitor(options.eventPath, (eventFile) => {
+    this.updatePages(options.pagePath, options, true)
+  })
+
+  this.addMonitor(options.pagePath, (pageFile) => {
+    this.updatePages(options.pagePath, options, true)
+    this.compile(options)
+  })
+
+  _.each(options.partialPaths, (partialPath) => {
+    this.addMonitor(partialPath, (partialFile) => {
+      this.compile(options)
+    })
+  })
+
+  this.addMonitor(options.routesPath, (file) => {
+    if (this.app.Router) {
+      this.app.Router.loadRewrites(options, () => {
+        this.app.Router.loadRewriteModule()
+      })
+    }
+  })
+
+  debug('load complete')
 }
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
@@ -428,25 +410,25 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
 }
 
 Server.prototype.updatePages = function (directoryPath, options, reload) {
-  if (!fs.existsSync(directoryPath)) return
+  if (fs.existsSync(directoryPath)) {
+    var pages = fs.readdirSync(directoryPath)
 
-  var pages = fs.readdirSync(directoryPath)
+    pages.forEach((page) => {
+      if (path.extname(page) !== '.json') return
 
-  pages.forEach((page) => {
-    if (path.extname(page) !== '.json') return
+      // get the full path to the page file
+      var pageFilepath = path.join(directoryPath, page)
 
-    // get the full path to the page file
-    var pageFilepath = path.join(directoryPath, page)
+      // strip the filename minus the extension
+      // to use as the page name
+      var name = page.slice(0, page.indexOf('.'))
 
-    // strip the filename minus the extension
-    // to use as the page name
-    var name = page.slice(0, page.indexOf('.'))
-
-    this.addRoute({
-      name: name,
-      filepath: pageFilepath
-    }, options, reload)
-  })
+      this.addRoute({
+        name: name,
+        filepath: pageFilepath
+      }, options, reload)
+    })
+  }
 }
 
 Server.prototype.addRoute = function (obj, options, reload) {
@@ -543,6 +525,7 @@ Server.prototype.getComponent = function (key) {
 }
 
 Server.prototype.addMonitor = function (filepath, callback) {
+  debug('addMonitor %s', filepath)
   filepath = path.normalize(filepath)
 
   // only add one watcher per path
@@ -561,17 +544,14 @@ Server.prototype.removeMonitor = function (filepath) {
 
 Server.prototype.compile = function (options) {
   var templatePath = options.pagePath
-  var partialPath = options.partialPath
+  var partialPaths = options.partialPaths
 
-  var self = this
-
-  // reset the dust cache so
-  // templates can be reloaded
+  // reset the dust cache so templates can be reloaded
   dust.clearCache()
 
   // Get a list of templates to render based on the registered components
-  var componentTemplates = Object.keys(self.components).map(function (route) {
-    return path.join(templatePath, self.components[route].page.template)
+  var componentTemplates = Object.keys(this.components).map((route) => {
+    return path.join(templatePath, this.components[route].page.template)
   })
 
   // Load component templates
@@ -582,7 +562,9 @@ Server.prototype.compile = function (options) {
     })
     .then(function () {
       // Load partials
-      return dust.loadDirectory(partialPath, 'partials', true)
+      return _.each(partialPaths, (partialPath) => {
+        return dust.loadDirectory(partialPath, path.basename(partialPath), true)
+      })
     })
     .then(function () {
       // Load filters
@@ -593,6 +575,7 @@ Server.prototype.compile = function (options) {
       return dust.requireDirectory(options.helpersPath)
     })
     .then(function () {
+      debug('templates loaded %O', Object.keys(dust.templates).sort())
       // Write client-side files
       dust.writeClientsideFiles()
     })
@@ -648,25 +631,27 @@ Server.prototype.getSessionStore = function (sessionConfig, env) {
  *  @api public
  */
 Server.prototype.ensureDirectories = function (options, done) {
-  // create workspace directories if they don't exist
-  // permissions default to 0777
+  // create workspace directories if they don't exist; permissions default to 0777
   var idx = 0
+
   _.each(options, (dir) => {
-    mkdirp(dir, {}, (err, made) => {
-      if (err) {
-        log.error({module: 'server'}, err)
-        console.log(err)
-      }
+    if (Array.isArray(dir)) {
+      this.ensureDirectories(dir, () => {})
+    } else {
+      mkdirp(dir, {}, (err, made) => {
+        if (err) {
+          log.error({module: 'server'}, err)
+        }
 
-      if (made) {
-        log.info({module: 'server'}, 'Created directory ' + made)
-        console.log('Created directory ' + made)
-      }
+        if (made) {
+          debug('Created directory %s', made)
+        }
 
-      idx++
+        idx++
 
-      if (idx === Object.keys(options).length) return done()
-    })
+        if (idx === Object.keys(options).length) return done()
+      })
+    }
   })
 }
 
