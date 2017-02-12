@@ -3,7 +3,7 @@ REWRITE INFO:
 https://github.com/tinganho/connect-modrewrite
 */
 var _ = require('underscore')
-var debug = require('debug')('router')
+var debug = require('debug')('web:router')
 var es = require('event-stream')
 var fs = require('fs')
 var path = require('path')

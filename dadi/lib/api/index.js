@@ -1,5 +1,5 @@
 var _ = require('underscore')
-var debug = require('debug')('api')
+var debug = require('debug')('web:api')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')

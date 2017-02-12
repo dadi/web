@@ -1,7 +1,7 @@
 /**
  * @module Middleware
  */
-var debug = require('debug')('middleware')
+var debug = require('debug')('web:middleware')
 var log = require('@dadi/logger')
 var path = require('path')
 

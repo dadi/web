@@ -1,6 +1,6 @@
 'use strict'
 
-const debug = require('debug')('dust')
+const debug = require('debug')('web:dust')
 const dust = require('dustjs-linkedin')
 const fs = require('fs')
 const mkdirp = require('mkdirp')
