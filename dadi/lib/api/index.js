@@ -1,4 +1,5 @@
 var _ = require('underscore')
+var debug = require('debug')('api')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
@@ -108,7 +109,7 @@ Api.prototype.use = function (path, handler) {
     regex: regex
   })
 
-  log.warn({module: 'api'}, 'Loaded ' + path)
+  debug('loaded %s', path)
 
   this.paths.sort((a, b) => {
     return b.order - a.order

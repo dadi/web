@@ -1,6 +1,7 @@
 var chokidar = require('chokidar')
 var cluster = require('cluster')
 var config = require('./config')
+var debug = require('debug')('cluster')
 var fs = require('fs')
 var path = require('path')
 
@@ -66,11 +67,11 @@ if (config.get('cluster')) {
   }
 } else {
   // Single thread start
-  log.info('Starting DADI Web in single thread mode.')
+  debug('starting DADI Web in single thread mode.')
 
   app = require(path.join(__dirname, '/index.js'))
   app.start(function () {
-    log.info('Process ' + process.pid + ' is listening for incoming requests')
+    debug('process ' + process.pid + ' is listening for incoming requests')
   })
 }
 
