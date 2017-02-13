@@ -1,10 +1,10 @@
 /**
  * @module Cache
  */
+var _ = require('underscore')
 var crypto = require('crypto')
 var path = require('path')
 var url = require('url')
-var _ = require('underscore')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
 var log = require('@dadi/logger')
@@ -18,7 +18,6 @@ var cache = new DadiCache(config.get('caching'))
  * @param {Server} server - the main server instance
  */
 var Cache = function (server) {
-  log.info({module: 'cache'}, 'Cache logging started.')
   this.server = server
   this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled')
   this.encoding = 'utf8'

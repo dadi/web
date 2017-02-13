@@ -489,22 +489,16 @@ var conf = convict({
   cluster: {
     doc: 'If true, Web runs in cluster mode, starting a worker for each CPU core',
     format: Boolean,
-    default: false
+    default: true
   },
   debug: {
     doc: 'If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.',
     format: Boolean,
     default: false
   },
-  secret: {
-    doc: 'A value that must be passed to requests for the /config route, which allows viewing the application config in the browser',
-    format: String,
-    default: '1dc10073-ca36-4373-a646-0d1092caf4a5',
-    env: 'CONFIG_SECRET'
-  },
   data: {
     preload: {
-      doc: '',
+      doc: 'An array of datasources to load at startup',
       format: Array,
       default: []
     }

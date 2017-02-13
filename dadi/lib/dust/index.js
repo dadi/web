@@ -1,5 +1,6 @@
 'use strict'
 
+const debug = require('debug')('web:dust')
 const dust = require('dustjs-linkedin')
 const fs = require('fs')
 const mkdirp = require('mkdirp')
@@ -63,6 +64,7 @@ Dust.prototype.load = function (source, templateName) {
 }
 
 Dust.prototype.loadDirectory = function (directory, prefix, recursive) {
+  debug('loadDirectory %o %s %s', directory, prefix, recursive)
   prefix = prefix || ''
 
   return new Promise((resolve, reject) => {

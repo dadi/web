@@ -1,11 +1,12 @@
 /**
  * @module Middleware
  */
-var path = require('path')
+var debug = require('debug')('web:middleware')
 var log = require('@dadi/logger')
+var path = require('path')
 
 var Middleware = function (name, options) {
-  log.info({module: 'middleware'}, 'Middleware logging started (' + name + ').')
+  debug('loaded %s', name)
 
   this.name = name
   this.options = options || {}

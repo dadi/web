@@ -3,6 +3,7 @@ REWRITE INFO:
 https://github.com/tinganho/connect-modrewrite
 */
 var _ = require('underscore')
+var debug = require('debug')('web:router')
 var es = require('event-stream')
 var fs = require('fs')
 var path = require('path')
@@ -22,8 +23,6 @@ var RouteValidator = require(path.join(__dirname, '../datasource/route-validator
 var rewriteFunction = null
 
 var Router = function (server, options) {
-  log.info({module: 'router'}, 'Router logging started.')
-
   this.data = {}
   this.params = {}
   this.constraints = {}
@@ -149,7 +148,7 @@ Router.prototype.constrain = function (route, constraint) {
   // add constraint from /{routesPath}/constraints.js if it exists
   if (this.handlers[constraint]) {
     this.constraints[route] = this.handlers[constraint]
-    log.info({module: 'router'}, "Added route constraint function '%s' for '%s'", constraint, route)
+    debug('added route constraint function "%s" for %s', constraint, route)
   } else {
     var error = "Route constraint '" + constraint + "' not found. Is it defined in '" + this.options.routesPath + "/constraints.js'?"
     var err = new Error(error)
