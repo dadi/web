@@ -114,14 +114,13 @@ middleware.setUpRequest = function () {
 }
 
 middleware.transportSecurity = function () {
-  var protocol = config.get('server.protocol') || 'http'
-  var scheme = protocol === 'https' ? HTTPS : HTTP
-
-  function securityEnabled () {
-    return scheme === HTTPS
+  function securityEnabled() {
+    var transportSecurity = config.get('security.transportSecurity')
+    var protocol = config.get('server.protocol')
+    return protocol === 'https' || transportSecurity
   }
 
-  function redirect (req, res, scheme) {
+  function redirect(req, res, scheme) {
     var location = scheme + '//' + req.headers.host + req.url
     res.writeHead(301, {
       Location: location
