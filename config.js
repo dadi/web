@@ -450,6 +450,11 @@ var conf = convict({
       doc: 'If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address',
       format: '*',
       default: true
+    },
+    transportSecurity: {
+      doc: 'If true, requires requests to be secure. Overridden if server.protocol is set to https.',
+      format: '*',
+      default: false
     }
   },
   env: {
