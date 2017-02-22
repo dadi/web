@@ -120,7 +120,7 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
   for (let i = 0; i < data.length; i++) {
     const bits = yamlRegex.exec(data[i])
     const metadata = yaml.safeLoad(bits[1] || '')
-    const contentText = bits[2] || '';
+    const contentText = bits[2] || ''
     const contentHtml = marked(contentText)
 
     posts.push({
