@@ -63,6 +63,7 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
         const count = this.schema.datasource.count
         const fields = this.schema.datasource.fields || []
         const filter = this.schema.datasource.filter
+        const page = this.schema.datasource.page || 1
 
         if (search) {
           posts = _.where(posts, search)
@@ -90,8 +91,10 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
           })
         }
 
-        if (count) {
-          posts = _.first(posts, count)
+        // Paginate if required
+        if (page && count) {
+          const offset = (page - 1) * count
+          posts = posts.slice(offset, offset + count)
         }
 
         if (fields && !_.isEmpty(fields)) {
