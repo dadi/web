@@ -66,7 +66,7 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
         const page = this.schema.datasource.page || 1
 
         let metadata = []
-        
+
         if (search) {
           posts = _.where(posts, search)
         }
@@ -105,8 +105,8 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
           options['page'] = parseInt(page)
           options['limit'] = parseInt(count)
 
-          metadata = this.getMetadata(options,  parseInt(postCount))
-        }       
+          metadata = this.getMetadata(options, parseInt(postCount))
+        }
 
         if (fields && !_.isEmpty(fields)) {
           posts = _.chain(posts).selectFields(fields.join(',')).value()
