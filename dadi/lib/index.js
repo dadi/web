@@ -99,7 +99,7 @@ Server.prototype.start = function (done) {
 
     app.use(apiMiddleware.handleHostHeader())
     app.use(apiMiddleware.setUpRequest())
-    app.use(apiMiddleware.transportSecurity())
+    // app.use(apiMiddleware.transportSecurity())
 
     // serve static files (css,js,fonts)
     if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }));
