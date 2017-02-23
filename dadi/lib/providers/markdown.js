@@ -65,21 +65,23 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
         const filter = this.schema.datasource.filter
         const page = this.schema.datasource.page || 1
 
+         let metadata = []
+        
         if (search) {
           posts = _.where(posts, search)
         }
 
         if (filter) {
           posts = _.filter(posts, (post) => {
-            return _.where([post.metadata], filter).length > 0
+            return _.where([post.attributes], filter).length > 0
           })
         }
 
-        // Sort posts by metadata field (with date support)
+        // Sort posts by attributes field (with date support)
         if (sort && Object.keys(sort).length > 0) {
           Object.keys(sort).forEach(field => {
             posts = _.sortBy(posts, (post) => {
-              const value = post.metadata[field]
+              const value = post.attributes[field]
               const valueAsDate = new Date(value)
               return (valueAsDate.toString() !== 'Invalid Date')
                 ? +(valueAsDate)
@@ -95,13 +97,20 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
         if (page && count) {
           const offset = (page - 1) * count
           posts = posts.slice(offset, offset + count)
-        }
+
+          // Metadata for pagination
+          const options = []
+          options['page'] = parseInt(page)
+          options['limit'] = parseInt(count)
+
+          metadata = this.getMetadata(options, filepaths.length)
+        }       
 
         if (fields && !_.isEmpty(fields)) {
           posts = _.chain(posts).selectFields(fields.join(',')).value()
         }
 
-        done(null, { results: posts })
+        done(null, { results: posts, metadata: metadata || null })
       })
     })
   } catch (ex) {
@@ -119,19 +128,41 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
 
   for (let i = 0; i < data.length; i++) {
     const bits = yamlRegex.exec(data[i])
-    const metadata = yaml.safeLoad(bits[1] || '')
+    const attributes = yaml.safeLoad(bits[1] || '')
     const contentText = bits[2] || ''
     const contentHtml = marked(contentText)
 
     posts.push({
       original: data[i],
-      metadata,
+      attributes,
       contentText,
       contentHtml
     })
   }
 
   callback(posts)
+}
+
+// From @dadi/api
+// https://github.com/dadi/api/blob/master/dadi/lib/model/index.js#L1019
+MarkdownProvider.prototype.getMetadata = function (options, count) {
+  var meta = _.extend({}, options)
+  delete meta.skip
+
+  meta.page = options.page || 1
+  meta.offset = options.skip || 0
+  meta.totalCount = count
+  meta.totalPages = Math.ceil(count / (options.limit || 1))
+
+  if (meta.page < meta.totalPages) {
+    meta.nextPage = (meta.page + 1)
+  }
+
+  if (meta.page > 1 && meta.page <= meta.totalPages) {
+    meta.prevPage = meta.page - 1
+  }
+
+  return meta
 }
 
 module.exports = MarkdownProvider
