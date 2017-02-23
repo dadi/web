@@ -65,7 +65,7 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
         const filter = this.schema.datasource.filter
         const page = this.schema.datasource.page || 1
 
-         let metadata = []
+        let metadata = []
         
         if (search) {
           posts = _.where(posts, search)
@@ -76,6 +76,8 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
             return _.where([post.attributes], filter).length > 0
           })
         }
+
+        let postCount = posts.length
 
         // Sort posts by attributes field (with date support)
         if (sort && Object.keys(sort).length > 0) {
@@ -103,7 +105,7 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
           options['page'] = parseInt(page)
           options['limit'] = parseInt(count)
 
-          metadata = this.getMetadata(options, filepaths.length)
+          metadata = this.getMetadata(options,  parseInt(postCount))
         }       
 
         if (fields && !_.isEmpty(fields)) {
@@ -143,7 +145,7 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
   callback(posts)
 }
 
-// From @dadi/api
+// Stolen from @dadi/api
 // https://github.com/dadi/api/blob/master/dadi/lib/model/index.js#L1019
 MarkdownProvider.prototype.getMetadata = function (options, count) {
   var meta = _.extend({}, options)
