@@ -752,7 +752,7 @@ function onListening (e) {
     if (config.get('api.enabled') === true) {
       startText += '  API:         '.green + extraPadding + config.get('api.host') + ':' + config.get('api.port') + '\n'
     } else {
-      startText += '  API:         '.green + extraPadding + 'Not found'.red + '\n'
+      startText += '  API:         '.green + extraPadding + 'Disabled'.red + '\n'
       startText += '  ----------------------------\n'
     }
 
