@@ -52,7 +52,8 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
   try {
     const sourcePath = path.normalize(this.schema.datasource.source.path)
     const filenames = fs.readdirSync(sourcePath)
-    const filepaths = filenames.map(i => path.join(sourcePath, i))
+    const filepaths = filenames.map(i => path.join(sourcePath, i)).filter(item => !(/(^|\/)\.[^\/\.]/g).test(item))
+    // N.B. filter above acts to remove hidden system files
 
     async.map(filepaths, this.readFileAsync, (err, readResults) => {
       if (err) return done(err, null)
