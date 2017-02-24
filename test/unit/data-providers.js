@@ -18,6 +18,7 @@ var Server = require(__dirname + '/../../dadi/lib')
 var TestHelper = require(__dirname + '/../help')()
 var twitterProvider = require(__dirname + '/../../dadi/lib/providers/twitter')
 var wordpressProvider = require(__dirname + '/../../dadi/lib/providers/wordpress')
+var markdownProvider = require(__dirname + '/../../dadi/lib/providers/markdown')
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var controller
@@ -610,6 +611,46 @@ describe('Data Providers', function (done) {
             .end((err, res) => {
               should.exist(res.body['rss'])
               res.body['rss'].should.eql({x:'y'})
+              done()
+            })
+          })
+        })
+      })
+    })
+  })
+
+  describe('Markdown', function (done) {
+    it('should process frontmatter from the markdown files', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              console.log(res)
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results.should.eql([{
+                  "original": "---\ntitle: A Quick Brown Fox\ncategory: Guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n",
+                  "attributes": {
+                    "title": "A Quick Brown Fox",
+                    "category": "Guggenheim",
+                    "date": "2010-01-01T00:00:00.000Z"
+                  },
+                  "contentText": "# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n",
+                  "contentHtml": "<h1 id=\"basic-markdown\">Basic markdown</h1>\n<p>Markdown can have <a href=\"https://dadi.tech\">links</a>, <em>emphasis</em> and <strong>bold</strong> formatting.</p>\n"
+              }])
               done()
             })
           })

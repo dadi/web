@@ -1,0 +1,23 @@
+{
+  "datasource": {
+    "key": "markdown",
+    "name": "Markdown DS",
+    "source": {
+      "type": "markdown",
+      "path": "./test/app/public"
+    },
+    "paginate": true,
+    "count": 10,
+    "sort": {
+      "date": -1
+    },
+    "requestParams": [
+      {
+        "param": "article", "field": "handle"
+      },
+      {
+        "param": "category", "field": "category"
+      }
+    ]
+  }
+}
