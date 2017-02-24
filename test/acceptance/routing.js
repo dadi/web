@@ -50,6 +50,7 @@ describe('Routing', function (done) {
     //scope = nock(apiHost).post('/token').reply(200, { accessToken: 'xx' })
     var configUpdate = {
       server: {
+        enabled: true,
         host: '127.0.0.1',
         port: 5000
       }
