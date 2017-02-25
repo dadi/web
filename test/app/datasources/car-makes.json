@@ -39,8 +39,8 @@
     "chained": {
       "datasource": "global",
       "outputParam": {
-      "param": "results.0.id",
-      "field": "makeId"
+        "param": "results.0.id",
+        "field": "_id"
       }
     },
     "requestParams": [

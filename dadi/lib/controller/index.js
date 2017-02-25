@@ -4,6 +4,7 @@
 var _ = require('underscore')
 var async = require('async')
 var crypto = require('crypto')
+var debug = require('debug')('web:controller')
 var path = require('path')
 var url = require('url')
 
@@ -152,6 +153,7 @@ Controller.prototype.buildInitialViewData = function (req) {
  *
  */
 Controller.prototype.process = function process (req, res, next) {
+  debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
   var self = this
@@ -283,6 +285,9 @@ Controller.prototype.loadData = function (req, res, data, done) {
 
   var primaryDatasources = {}
   var chainedDatasources = {}
+
+  debug('datasources %o %o', _.map(self.datasources, (ds) => { return ds.name }))
+
   _.each(self.datasources, function (ds, key) {
     if (ds.chained) {
       chainedDatasources[key] = ds
@@ -290,6 +295,8 @@ Controller.prototype.loadData = function (req, res, data, done) {
       primaryDatasources[key] = ds
     }
   })
+
+  debug('loadData %o %o', _.map(primaryDatasources, (ds) => { return ds.name }), _.map(chainedDatasources, (ds) => { return ds.name }))
 
   help.timer.start('load data')
 
@@ -386,6 +393,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
   }
 
   _.each(chainedDatasources, function (chainedDatasource, chainedKey) {
+    debug('datasource (chained): %s > %s', chainedDatasource.chained.datasource, chainedKey)
     help.timer.start('datasource: ' + chainedDatasource.name + ' (chained)')
 
     if (!data[chainedDatasource.chained.datasource]) {
@@ -448,8 +456,9 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
       chainedDatasource.schema.datasource.filter = JSON.parse(filter)
     }
 
-    // needed?
-    // chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function() {})
+    chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function () {})
+
+    debug('datasource (load): %s %o', chainedDatasource.name, chainedDatasource.schema.datasource.filter)
     chainedDatasource.provider.load(req.url, function (err, result) {
       if (err) log.error({module: 'controller'}, err)
 

@@ -6,7 +6,7 @@
   "scripts": {
     "init": "validate-commit-msg",
     "start": "node ./main.js",
-    "test": "standard && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test -- --require babel-register",
+    "test": "standard && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test",
     "posttest": "node ./scripts/coverage.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "snyk-protect": "snyk protect",
@@ -59,14 +59,14 @@
     "serve-favicon": "^2.3.0",
     "serve-static": "^1.10.0",
     "server-destroy": "1.0.1",
+    "snyk": "^1.25.0",
     "stack-trace": "latest",
     "toobusy-js": "^0.4.2",
     "uglify-js": "^2.6.2",
     "underscore": "~1.6.0",
     "underscore.string": "^3.2.2",
     "validate-commit-message": "^3.0.1",
-    "wildcard": "^1.1.2",
-    "snyk": "^1.25.0"
+    "wildcard": "^1.1.2"
   },
   "devDependencies": {
     "babel-register": "^6.18.0",
