@@ -1,6 +1,7 @@
 'use strict'
 
 const _ = require('underscore')
+const debug = require('debug')('web:provider:remote')
 const url = require('url')
 const http = require('http')
 const https = require('https')
@@ -165,6 +166,7 @@ RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
  * @return {void}
  */
 RemoteProvider.prototype.load = function (requestUrl, done) {
+  debug('load %s', this.endpoint)
   const self = this
 
   this.requestUrl = requestUrl
@@ -213,9 +215,9 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 /**
  * processDatasourceParameters - adds querystring parameters to the datasource endpoint using properties defined in the schema
  *
- * @param  {json} schema - the datasource schema
+ * @param  {Object} schema - the datasource schema
  * @param  {type} uri - the original datasource endpoint
- * @return {string} uri with query string appended
+ * @returns {string} uri with query string appended
  */
 RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters (schema, uri) {
   let query = '?'

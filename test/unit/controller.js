@@ -239,6 +239,61 @@ describe('Controller', function (done) {
     })
   })
 
+  describe('Chained Datasource', function () {
+    this.timeout(5000)
+
+    it('should apply datasource output params to the chained datasource', function (done) {
+      TestHelper.enableApiConfig().then(() => {
+        var pages = TestHelper.setUpPages()
+        pages[0].datasources = ['global','car-makes']
+
+        var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+
+        var endpointGlobal = '/1.0/system/all?count=20&page=1&filter=%7B%7D&fields=%7B%7D&sort=%7B%22name%22:1%7D'
+
+        var results1 = JSON.stringify({ results: [ { id: '1234', name: 'Test' } ] })
+        var results2 = JSON.stringify({ results: [ { name: 'Crime' } ] })
+
+        TestHelper.setupApiIntercepts()
+
+        var scope1 = nock(host)
+          .get(endpointGlobal)
+          .reply(200, results1)
+
+        var scope2 = nock(host)
+          .get(/cars\/makes/)
+          .reply(200, results2)
+
+        var providerSpy = sinon.spy(remoteProvider.prototype, 'load')
+
+        TestHelper.startServer(pages).then(() => {
+          var client = request(connectionString)
+
+          client
+          .get(pages[0].routes[0].path)
+          .end(function (err, res) {
+            if (err) return done(err)
+
+            providerSpy.restore()
+
+            var call = providerSpy.secondCall
+            var provider = call.thisValue
+
+            var q = require('url').parse(provider.endpoint, true).query
+            var filter = q.filter
+            var filterObj = JSON.parse(filter)
+            should.exist(filterObj._id)
+            filterObj._id.should.eql('1234')
+
+            done()
+          })
+        }).catch((err) => {
+          done(err)
+        })
+      })
+    })
+  })
+
   describe.skip('Datasource Filter Events', function (done) {
     it('should run an attached `filterEvent` before datasource loads', function (done) {
       TestHelper.enableApiConfig().then(() => {
