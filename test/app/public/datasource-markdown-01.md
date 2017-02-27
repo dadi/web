@@ -1,6 +1,6 @@
 ---
 title: A Quick Brown Fox
-category: Guggenheim
+category: guggenheim
 date: 2010-01-01
 ---
 

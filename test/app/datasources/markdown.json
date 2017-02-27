@@ -7,14 +7,11 @@
       "path": "./test/app/public"
     },
     "paginate": true,
-    "count": 10,
+    "count": 1,
     "sort": {
-      "date": -1
+      "date": 1
     },
     "requestParams": [
-      {
-        "param": "article", "field": "handle"
-      },
       {
         "param": "category", "field": "category"
       }

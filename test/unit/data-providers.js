@@ -620,7 +620,7 @@ describe('Data Providers', function (done) {
   })
 
   describe('Markdown', function (done) {
-    it('should process frontmatter from the markdown files', function(done) {
+    it('should process frontmatter from the files in the datasource path', function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
 
       sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
@@ -637,20 +637,111 @@ describe('Data Providers', function (done) {
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {
-              console.log(res)
               Datasource.Datasource.prototype.loadDatasource.restore()
 
               should.exist(res.body.markdown.results)
               res.body.markdown.results.should.eql([{
-                  "original": "---\ntitle: A Quick Brown Fox\ncategory: Guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n",
+                  "original": "---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n",
                   "attributes": {
                     "title": "A Quick Brown Fox",
-                    "category": "Guggenheim",
+                    "category": "guggenheim",
                     "date": "2010-01-01T00:00:00.000Z"
                   },
                   "contentText": "# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n",
                   "contentHtml": "<h1 id=\"basic-markdown\">Basic markdown</h1>\n<p>Markdown can have <a href=\"https://dadi.tech\">links</a>, <em>emphasis</em> and <strong>bold</strong> formatting.</p>\n"
               }])
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return correct pagination metadata', function (done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              res.body.markdown.metadata.page.should.equal(1)
+              res.body.markdown.metadata.limit.should.equal(1)
+              res.body.markdown.metadata.totalPages.should.be.above(1);
+              res.body.markdown.metadata.nextPage.should.equal(2)
+
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should use the datasource requestParams to filter the results', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+          pages[0].routes[0].path = '/test/:category?'
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get('/test/sports?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              res.body.params['category'].should.equal('sports');
+              res.body.markdown.results[0].attributes.category.should.equal('sports')
+              res.body.markdown.metadata.page.should.equal(1)
+              res.body.markdown.metadata.limit.should.equal(1)
+              res.body.markdown.metadata.totalPages.should.equal(1);
+              should.not.exist(res.body.markdown.metadata.nextPage);
+
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return the number of records specified by the count property', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results.length.should.eql(1)
               done()
             })
           })
