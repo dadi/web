@@ -52,9 +52,7 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
   try {
     const sourcePath = path.normalize(this.schema.datasource.source.path)
     const filenames = fs.readdirSync(sourcePath)
-
-    const hiddenRegex = /(^|\/)\.[^/.]/g
-    const filepaths = filenames.map(i => path.join(sourcePath, i)).filter(item => !hiddenRegex.test(item))
+    const filepaths = filenames.map(i => path.join(sourcePath, i)).filter(item => !/(^|\/)\.[^/.]/g.test(item))
 
     async.map(filepaths, this.readFileAsync, (err, readResults) => {
       if (err) return done(err, null)
