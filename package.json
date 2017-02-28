@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@dadi/api-wrapper": "latest",
-    "@dadi/cache": "latest",
+    "@dadi/cache": "1.3.0",
     "@dadi/logger": "latest",
     "@dadi/metadata": "^1.0.0",
     "@dadi/passport": "latest",
