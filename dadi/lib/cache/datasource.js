@@ -52,9 +52,7 @@ var DatasourceCache = function (datasource) {
     }
   }
 
-  if (!this.options.directory.extension || s.isBlank(this.options.directory.extension)) {
-    this.options.directory.extension = '.json'
-  }
+  this.options.directory.extension = 'json'
 
   this.cache = new DadiCache(this.options)
 }
