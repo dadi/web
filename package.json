@@ -15,6 +15,7 @@
     "@dadi/api-wrapper": "latest",
     "@dadi/cache": "latest",
     "@dadi/logger": "latest",
+    "@dadi/metadata": "^1.0.0",
     "@dadi/passport": "latest",
     "@dadi/status": "latest",
     "async": "^1.5.2",

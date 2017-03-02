@@ -6,6 +6,7 @@ const path = require('path')
 const async = require('async')
 const yaml = require('js-yaml')
 const marked = require('marked')
+const meta = require('@dadi/metadata')
 
 const MarkdownProvider = function () {}
 
@@ -105,7 +106,7 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
           options['page'] = parseInt(page)
           options['limit'] = parseInt(count)
 
-          metadata = this.getMetadata(options, parseInt(postCount))
+          metadata = meta(options, parseInt(postCount))
         }
 
         if (fields && !_.isEmpty(fields)) {
@@ -143,28 +144,6 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
   }
 
   callback(posts)
-}
-
-// Stolen from @dadi/api
-// https://github.com/dadi/api/blob/master/dadi/lib/model/index.js#L1019
-MarkdownProvider.prototype.getMetadata = function (options, count) {
-  var meta = _.extend({}, options)
-  delete meta.skip
-
-  meta.page = options.page || 1
-  meta.offset = options.skip || 0
-  meta.totalCount = count
-  meta.totalPages = Math.ceil(count / (options.limit || 1))
-
-  if (meta.page < meta.totalPages) {
-    meta.nextPage = (meta.page + 1)
-  }
-
-  if (meta.page > 1 && meta.page <= meta.totalPages) {
-    meta.prevPage = meta.page - 1
-  }
-
-  return meta
 }
 
 module.exports = MarkdownProvider
