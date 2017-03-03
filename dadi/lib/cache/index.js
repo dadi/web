@@ -19,7 +19,11 @@ var cache = new DadiCache(config.get('caching'))
  */
 var Cache = function (server) {
   this.server = server
-  this.enabled = config.get('caching.directory.enabled') || config.get('caching.redis.enabled')
+
+  var directoryEnabled = config.get('caching.directory.enabled')
+  var redisEnabled = config.get('caching.redis.enabled')
+
+  this.enabled = !(directoryEnabled === false && redisEnabled === false)
   this.encoding = 'utf8'
   this.options = {}
 }

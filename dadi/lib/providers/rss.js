@@ -69,9 +69,9 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
     // const queryParams = this.buildQueryParams()
 
     this.cacheKey = [this.endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
-    this.dataCache = new DatasourceCache(this.datasource)
+    this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache((cachedData) => {
+    this.dataCache.getFromCache(this.datasource, (cachedData) => {
       if (cachedData) return done(null, cachedData)
 
       const items = []
@@ -93,10 +93,12 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
 
       // feedparser events
       feedparser.on('error', done)
+
       feedparser.on('end', () => {
-        context.dataCache.cacheResponse(JSON.stringify(items), () => {})
+        context.dataCache.cacheResponse(this.datasource, JSON.stringify(items), () => {})
         done(null, items)
       })
+
       feedparser.on('readable', function () {
         let item
         while ((item = this.read())) {
