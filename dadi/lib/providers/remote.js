@@ -170,7 +170,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
   const self = this
 
   this.requestUrl = requestUrl
-  this.dataCache = new DatasourceCache(this.datasource, requestUrl)
+  this.dataCache = DatasourceCache()
 
   this.options = {
     protocol: this.datasource.source.protocol || config.get('api.protocol'),
@@ -183,7 +183,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
   this.options.agent = this.keepAliveAgent(this.options.protocol)
   this.options.protocol = this.options.protocol + ':'
 
-  this.dataCache.getFromCache((cachedData) => {
+  this.dataCache.getFromCache(this.datasource, (cachedData) => {
     if (cachedData) return done(null, cachedData)
 
     self.getHeaders((err, headers) => {
@@ -302,7 +302,8 @@ RemoteProvider.prototype.processOutput = function processOutput (res, data, done
 
   // Cache 200 responses
   if (res.statusCode === 200) {
-    this.dataCache.cacheResponse(data, () => {
+    this.dataCache.cacheResponse(this.datasource, data, () => {
+      //
     })
   }
 

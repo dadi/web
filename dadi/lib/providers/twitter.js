@@ -57,9 +57,9 @@ TwitterProvider.prototype.load = function load (requestUrl, done) {
     const queryParams = this.buildQueryParams()
 
     this.cacheKey = [endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
-    this.dataCache = new DatasourceCache(this.datasource)
+    this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache((cachedData) => {
+    this.dataCache.getFromCache(this.datasource, (cachedData) => {
       if (cachedData) return done(null, cachedData)
 
       this.twitterApi.query()
@@ -100,7 +100,8 @@ TwitterProvider.prototype.processOutput = function processOutput (res, data, don
 
   if (res.statusCode === 200) {
     data = this.processFields(data)
-    this.dataCache.cacheResponse(JSON.stringify(data), () => {
+    this.dataCache.cacheResponse(this.datasource, JSON.stringify(data), () => {
+      //
     })
   }
 
@@ -116,13 +117,13 @@ TwitterProvider.prototype.processOutput = function processOutput (res, data, don
 TwitterProvider.prototype.processFields = function processFields (data) {
   const fields = this.schema.datasource.fields
 
-  console.log('**fields'.red, fields)
+  // console.log('**fields'.red, fields)
 
   if (fields && Object.keys(fields).length) {
     const keys = Object.keys(fields)
-    console.log('**keys'.red, keys)
+    // console.log('**keys'.red, keys)
 
-    console.log(data)
+    // console.log(data)
 
     if (_.isArray(data)) {
       for (let i = 0; i < data.length; i++) {
@@ -132,7 +133,7 @@ TwitterProvider.prototype.processFields = function processFields (data) {
       data = _.pick(data, keys)
     }
 
-    console.log('data', data)
+    // console.log('data', data)
   }
 
   return data
