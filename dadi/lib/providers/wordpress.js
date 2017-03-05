@@ -85,9 +85,9 @@ WordPressProvider.prototype.load = function load (requestUrl, done) {
     const queryParams = this.buildQueryParams()
 
     this.cacheKey = [this.endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
-    this.dataCache = new DatasourceCache(this.datasource)
+    this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache((cachedData) => {
+    this.dataCache.getFromCache(this.datasource, (cachedData) => {
       if (cachedData) return done(null, cachedData)
 
       this.wordpressApi.query()
@@ -126,7 +126,8 @@ WordPressProvider.prototype.processOutput = function processOutput (res, data, d
   }
 
   if (res.statusCode === 200) {
-    this.dataCache.cacheResponse(JSON.stringify(data), () => {
+    this.dataCache.cacheResponse(this.datasource, JSON.stringify(data), () => {
+      //
     })
   }
 
