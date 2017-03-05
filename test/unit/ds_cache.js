@@ -1,3 +1,4 @@
+var exec = require('child_process').exec
 var fs = require('fs')
 var path = require('path')
 var url = require('url')
@@ -39,13 +40,19 @@ describe('Datasource Cache', function (done) {
     })
   })
 
+  const cleanup = (dir, done) => {
+    exec('rm -rf ' + dir, (err, stdout, stderr) => {
+      exec('mkdir ' + dir)
+      done()
+    })
+  }
+
   afterEach(function (done) {
     try {
-      if (cachepath) fs.unlinkSync(cachepath)
-    } catch (err) {}
-
-    cache.reset()
-    done()
+      cleanup(path.resolve(__dirname + '/../../cache/web'), done)
+    } catch (err) {
+      done(err)
+    }
   })
 
   describe('Module', function (done) {
@@ -97,7 +104,7 @@ describe('Datasource Cache', function (done) {
         caching: {
           directory: {
             enabled: true,
-            path: '/Users',
+            path: 'cache/web',
             extension: 'cache'
           },
           redis: {
@@ -110,7 +117,7 @@ describe('Datasource Cache', function (done) {
         delete ds.schema.datasource.caching.directory.path
         var c = cache(server.object)
         var dsCache = datasourceCache()
-        dsCache.getOptions(ds).directory.path.indexOf('/Users').should.be.above(-1)
+        dsCache.getOptions(ds).directory.path.indexOf('cache/web').should.be.above(-1)
         done()
       })
     })
@@ -120,7 +127,7 @@ describe('Datasource Cache', function (done) {
         caching: {
           directory: {
             enabled: true,
-            path: '/Users',
+            path: 'cache/web',
             extension: 'cache'
           },
           redis: {
@@ -255,10 +262,11 @@ describe('Datasource Cache', function (done) {
         var expected = 'ds content from filesystem'
 
         fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function (err) {
-          if (err) console.log(err.toString())
+          if (err) done(err)
 
           setTimeout(function() {
             var dsCache = datasourceCache()
+
             dsCache.getFromCache(ds, function (data) {
               data.should.eql(expected)
               done()

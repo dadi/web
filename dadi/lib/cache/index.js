@@ -10,7 +10,6 @@ var config = require(path.join(__dirname, '/../../../config.js'))
 var log = require('@dadi/logger')
 
 var DadiCache = require('@dadi/cache')
-var cache = new DadiCache(config.get('caching'))
 
 /**
  * Creates a new Cache instance for the server
@@ -19,6 +18,7 @@ var cache = new DadiCache(config.get('caching'))
  */
 var Cache = function (server) {
   this.server = server
+  this.cache = new DadiCache(config.get('caching'))
 
   var directoryEnabled = config.get('caching.directory.enabled')
   var redisEnabled = config.get('caching.redis.enabled')
@@ -131,7 +131,7 @@ Cache.prototype.init = function () {
     var contentType = self.getEndpointContentType(req)
 
     // attempt to get from the cache
-    cache.get(filename).then((stream) => {
+    self.cache.get(filename).then((stream) => {
       log.info({module: 'cache'}, 'Serving ' + req.url + ' from cache')
 
       res.setHeader('X-Cache-Lookup', 'HIT')
@@ -181,7 +181,7 @@ Cache.prototype.init = function () {
         if (res.statusCode !== 200) return
 
         // cache the content
-        cache.set(filename, data).then(() => {
+        self.cache.set(filename, data).then(() => {
 
         })
       }

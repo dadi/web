@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@dadi/api-wrapper": "latest",
-    "@dadi/cache": "git+https://github.com/dadi/cache.git#33ebd693ce35e122a87202fffbd3767cd2a6aa8a",
+    "@dadi/cache": "1.5.0",
     "@dadi/logger": "latest",
     "@dadi/passport": "latest",
     "@dadi/status": "latest",
@@ -80,7 +80,7 @@
     "proxyquire": "1.7.3",
     "should": "latest",
     "sinon": "latest",
-    "standard": "*",
+    "standard": "8.x.x",
     "superagent": "^1.8.0-beta.2",
     "superagent-mock": "^1.10.0",
     "supertest": "latest",

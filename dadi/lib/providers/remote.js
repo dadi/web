@@ -166,7 +166,6 @@ RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
  * @return {void}
  */
 RemoteProvider.prototype.load = function (requestUrl, done) {
-  debug('load %s', this.endpoint)
   const self = this
 
   this.requestUrl = requestUrl
@@ -185,6 +184,8 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 
   this.dataCache.getFromCache(this.datasource, (cachedData) => {
     if (cachedData) return done(null, cachedData)
+
+    debug('load %s', this.endpoint)
 
     self.getHeaders((err, headers) => {
       err && done(err)
