@@ -2,21 +2,22 @@
  * @module Cache
  */
 var _ = require('underscore')
-var path = require('path')
-var url = require('url')
 var crypto = require('crypto')
+var debug = require('debug')('web:datasource-cache')
+var path = require('path')
 var s = require('underscore.string')
+var url = require('url')
 
+var Cache = require(path.join(__dirname, '/index.js'))
 var config = require(path.join(__dirname, '/../../../config.js'))
-var log = require('@dadi/logger')
-
-var DadiCache = require('@dadi/cache')
+// var log = require('@dadi/logger')
 
 /**
  * Creates a new DatasourceCache singleton for caching datasource results
  * @constructor
  */
 var DatasourceCache = function () {
+  this.cache = Cache().cache
   this.cacheOptions = config.get('caching')
 
   var directoryEnabled = this.cacheOptions.directory.enabled
@@ -100,19 +101,20 @@ DatasourceCache.prototype.getOptions = function (datasource) {
  * @param {object} datasource - a datasource schema object containing the datasource settings
  */
 DatasourceCache.prototype.getFromCache = function (datasource, done) {
+  debug('get (%s)', datasource.name)
+
   if (!this.cachingEnabled(datasource)) {
     return done(false)
   }
 
   var filename = this.getFilename(datasource)
   var options = this.getOptions(datasource)
-  var cache = new DadiCache(options)
 
   var data = ''
 
   // attempt to get from the cache
-  cache.get(filename).then((stream) => {
-    log.info({module: 'cache'}, 'Serving datasource from Redis (' + datasource.name + ', ' + filename + ')')
+  this.cache.get(filename, options).then((stream) => {
+    debug('serving %s from cache (%s)', datasource.name, filename)
 
     stream.on('data', (chunk) => {
       if (chunk) data += chunk
@@ -131,13 +133,14 @@ DatasourceCache.prototype.getFromCache = function (datasource, done) {
  *
  */
 DatasourceCache.prototype.cacheResponse = function (datasource, data, done) {
+  debug('write to cache (%s)', datasource.name)
+
   if (!this.cachingEnabled(datasource)) return
 
   var filename = this.getFilename(datasource)
   var options = this.getOptions(datasource)
-  var cache = new DadiCache(options)
 
-  cache.set(filename, data).then(() => {
+  this.cache.set(filename, data, options).then(() => {
     done()
   })
 }
