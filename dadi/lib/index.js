@@ -86,6 +86,11 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.setUpRequest())
   app.use(apiMiddleware.transportSecurity())
 
+  // add gzip compression
+  if (config.get('headers.useGzipCompression')) {
+    app.use(compress())
+  }
+
   // serve static files (css,js,fonts)
   if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }))
 
@@ -111,11 +116,6 @@ Server.prototype.start = function (done) {
 
   // request logging middleware
   app.use(log.requestLogger)
-
-  // add gzip compression
-  if (config.get('headers.useGzipCompression')) {
-    app.use(compress())
-  }
 
   // update configuration based on domain
   var domainConfigLoaded
