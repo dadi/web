@@ -318,7 +318,7 @@ module.exports = function (server, options) {
     })
 
     // load rewrites from our DS and handle them
-    server.app.use(function (req, res, next) {
+    server.app.use((req, res, next) => {
       if (!this.shouldCall) return next()
 
       log.debug({module: 'router'}, '[Router] processing: ' + req.url)
@@ -376,16 +376,19 @@ module.exports = function (server, options) {
     })
 
     // handle generic url rewrite rules
-    server.app.use(function (req, res, next) {
+    server.app.use((req, res, next) => {
       var redirect = false
       var location = req.url
+      var parsed = url.parse(location, true)
+      var pathname = parsed.pathname
       var rewritesConfig = config.get('rewrites')
       var protocol = config.get('server.protocol') || 'http'
 
       // force a URL to lowercase
       if (rewritesConfig.forceLowerCase) {
-        if (location !== location.toLowerCase()) {
-          location = location.toLowerCase()
+        if (pathname !== pathname.toLowerCase()) {
+          pathname = pathname.toLowerCase()
+          location = location.replace(parsed.pathname, pathname)
           redirect = true
         }
       }
@@ -403,9 +406,8 @@ module.exports = function (server, options) {
 
       // force a trailing slash
       if (rewritesConfig.forceTrailingSlash) {
-        var parsed = url.parse(location, true)
-        if (/^([^.]*[^/])$/.test(parsed.pathname) === true) {
-          location = parsed.pathname + '/' + parsed.search
+        if (/^([^.]*[^/])$/.test(pathname) === true) {
+          location = pathname + '/' + parsed.search
           redirect = true
         }
       }
