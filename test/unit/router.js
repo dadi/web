@@ -68,7 +68,7 @@ describe('Router', function (done) {
     var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
     var host2 = 'http://127.0.0.1:3000'
     var scope1 = nock(host).post('/token').reply(200, { accessToken: 'xx' })
-    var scope2 = nock(host2).post('/token').reply(200, { accessToken: 'xx' })
+    var scope2 = nock(host2).post('/token').times(5).reply(200, { accessToken: 'xx' })
 
     done();
   });
@@ -140,6 +140,7 @@ describe('Router', function (done) {
       })
 
       it('should not redirect to lowercased URL if only URL parameters are not lowercase', function (done) {
+        config.set('api.enabled', true)
         config.set('rewrites.forceLowerCase', true)
 
         var pages = testHelper.setUpPages()
@@ -158,6 +159,8 @@ describe('Router', function (done) {
 
             should.not.exist(res.headers.location)
             res.statusCode.should.eql(200)
+
+            config.set('api.enabled', false)
             config.set('rewrites.forceTrailingSlash', false)
             cleanup(done);
           })

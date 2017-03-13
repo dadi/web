@@ -4,9 +4,6 @@
 		"name": "redirects ds",
 		"source": {
 			"type": "remote",
-			"protocol": "http",
-      "host": "127.0.0.1",
-			"port": "3000",
 			"endpoint": "1.0/test/redirects"
 		},
     "caching": {
