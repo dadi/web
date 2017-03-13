@@ -369,50 +369,54 @@ module.exports = function (server, options) {
       });
     });
 
-    //handle generic url rewrite rules
-    server.app.use(function (req, res, next) {
-      var redirect = false;
-      var location = req.url;
+    // handle generic url rewrite rules
+    server.app.use((req, res, next) => {
+      var redirect = false
+      var location = req.url
+      var parsed = url.parse(location, true)
+      var pathname = parsed.pathname
+      var rewritesConfig = config.get('rewrites')
+
+      var protocol = req.protocol || 'http'
 
       // force a URL to lowercase
-      if (config.get('rewrites.forceLowerCase')) {
-        if (location !== location.toLowerCase()) {
-          location = location.toLowerCase();
-          redirect = true;
+      if (rewritesConfig.forceLowerCase) {
+        if (pathname !== pathname.toLowerCase()) {
+          pathname = pathname.toLowerCase()
+          location = location.replace(parsed.pathname, pathname)
+          redirect = true
         }
       }
 
       // stripIndexPages
-      if (!_.isEmpty(config.get('rewrites.stripIndexPages'))) {
-        var files = config.get('rewrites.stripIndexPages');
-        var re = new RegExp(files.join('|'), 'gi');
+      if (!_.isEmpty(rewritesConfig.stripIndexPages)) {
+        var files = rewritesConfig.stripIndexPages
+        var re = new RegExp(files.join('|'), 'gi')
+
         if (location.match(re)) {
-          location = location.replace(re, '');
-          redirect = true;
+          location = location.replace(re, '')
+          redirect = true
         }
       }
 
       // force a trailing slash
-      if (config.get('rewrites.forceTrailingSlash')) {
-        var parsed = url.parse(location, true);
-        if (/^([^.]*[^/])$/.test(parsed.pathname) === true) {
-          location = parsed.pathname + '/' + parsed.search;
-          redirect = true;
+      if (rewritesConfig.forceTrailingSlash) {
+        if (/^([^.]*[^/])$/.test(pathname) === true) {
+          location = pathname + '/' + parsed.search
+          redirect = true
         }
       }
 
       if (redirect) {
         res.writeHead(301, {
-          Location : 'http' + '://' + req.headers.host + location
-        });
-        res.end();
+          Location: protocol + '://' + req.headers.host + location
+        })
+        res.end()
+      } else {
+        return next()
       }
-      else {
-        return next();
-      }
-    });
+    })
+  })
+}
 
-  });
-};
-
-module.exports.Router = Router;
+module.exports.Router = Router

@@ -282,7 +282,7 @@ describe('Routing', function(done) {
   })
 
   describe('protocol redirect', function() {
-    it('should redirect to http when useSSL is false and X-Forwarded-Proto = https', function(done) {
+    it.skip('should redirect to http when useSSL is false and X-Forwarded-Proto = https', function(done) {
       config.set('security.useSSL', false)
       config.set('security.trustProxy', true)
 
@@ -297,7 +297,7 @@ describe('Routing', function(done) {
       })
     })
 
-    it('should redirect to https when useSSL is true and X-Forwarded-Proto = http', function(done) {
+    it.skip('should redirect to https when useSSL is true and X-Forwarded-Proto = http', function(done) {
       config.set('security.useSSL', true)
       config.set('security.trustProxy', true)
 
