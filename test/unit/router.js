@@ -1,4 +1,5 @@
 var fs = require('fs');
+var nock = require('nock')
 var path = require('path');
 var sinon = require('sinon');
 var should = require('should');
@@ -33,6 +34,8 @@ function getPage() {
 }
 
 function cleanup(done) {
+  nock.cleanAll()
+
   Server.stop(function() {
     done();
   });
@@ -61,6 +64,11 @@ describe('Router', function (done) {
     constraints += "};\n";
 
     fs.writeFileSync(constraintsPath, constraints);
+
+    var host = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+    var host2 = 'http://127.0.0.1:3000'
+    var scope1 = nock(host).post('/token').reply(200, { accessToken: 'xx' })
+    var scope2 = nock(host2).post('/token').reply(200, { accessToken: 'xx' })
 
     done();
   });
@@ -110,32 +118,74 @@ describe('Router', function (done) {
     describe('Configurable', function(done) {
       config.set('api.enabled', false);
 
-      it('should redirect to lowercased URL if the current request URL is not all lowercase', function(done) {
+      it('should redirect to lowercased URL if the current request URL is not all lowercase', function (done) {
         config.set('rewrites.forceLowerCase', true)
 
-        var page = getPage();
-        var pages = [page]
-        var options = testHelper.getPathOptions();
-        var dsSchema = testHelper.getSchemaFromFile(options.datasourcePath, 'car-makes');
-        sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+        var pages = testHelper.setUpPages()
+        pages[0].datasources = ['car-makes']
 
         testHelper.startServer(pages, function() {
-
-          var client = request(connectionString);
+          var client = request(connectionString)
           client
           .get('/TeSt')
           .end(function (err, res) {
-            if (err) return done(err);
-
-            datasource.Datasource.prototype.loadDatasource.restore();
+            if (err) return done(err)
 
             res.statusCode.should.eql(301)
             res.headers.location.should.eql('http://' + config.get('server.host') + ':' + config.get('server.port') + '/test')
-
-            config.set('rewrites.forceLowerCase', false)
+            config.set('rewrites.forceTrailingSlash', false)
             cleanup(done);
-          });
-        });
+          })
+        })
+      })
+
+      it('should not redirect to lowercased URL if only URL parameters are not lowercase', function (done) {
+        config.set('rewrites.forceLowerCase', true)
+
+        var pages = testHelper.setUpPages()
+        pages[0].datasources = ['car-makes-unchained']
+
+        // provide API response
+        var results = { results: [{'make': 'ford'}] }
+        var scope1 = nock(connectionString).get(/test/).reply(200, results)
+
+        testHelper.startServer(pages, function() {
+          var client = request(connectionString)
+          client
+          .get('/test?p=OMG')
+          .end(function (err, res) {
+            if (err) return done(err)
+
+            should.not.exist(res.headers.location)
+            res.statusCode.should.eql(200)
+            config.set('rewrites.forceTrailingSlash', false)
+            cleanup(done);
+          })
+        })
+      })
+
+      it('should not lowercase URL parameters when redirecting to lowercase URL', function (done) {
+        config.set('rewrites.forceLowerCase', true)
+
+        var pages = testHelper.setUpPages()
+        pages[0].datasources = ['car-makes-unchained']
+
+        // provide API response
+        var results = { results: [{'make': 'ford'}] }
+
+        testHelper.startServer(pages, function() {
+          var client = request(connectionString)
+          client
+          .get('/tEsT?p=OMG')
+          .end(function (err, res) {
+            if (err) return done(err)
+
+            res.statusCode.should.eql(301)
+            res.headers.location.should.eql('http://127.0.0.1:5000/test?p=OMG')
+            config.set('rewrites.forceTrailingSlash', false)
+            cleanup(done);
+          })
+        })
       })
 
       it('should add a trailing slash and redirect if the current request URL does not end with a slash', function(done) {
@@ -270,6 +320,7 @@ describe('Router', function (done) {
       config.set('allowJsonView', true);
       config.set('loadDatasourceAsFile', false);
       config.set('rewrites.datasource', 'redirects');
+      config.set('headers.cacheControl', { '301': 'no-cache' });
 
       var page = getPage();
       var pages = [page]

@@ -176,7 +176,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   var self = this;
   var originalFilter = _.clone(this.schema.datasource.filter);
-  var query = url.parse(req.url, true).query;
+  var query = JSON.parse(JSON.stringify(url.parse(req.url, true).query));
 
   // handle the cache flag
   if (query.hasOwnProperty('cache') && query.cache === 'false') {
