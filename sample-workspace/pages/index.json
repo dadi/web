@@ -1,0 +1,12 @@
+{
+    "page": {
+        "name": "index",
+        "description": "An introduction to DADI Web.",
+        "language": "en"
+    },
+    "routes": [
+        {
+            "path": "/"
+        }
+    ]
+}
