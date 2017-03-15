@@ -83,8 +83,7 @@
     "standard": "8.x.x",
     "superagent": "^1.8.0-beta.2",
     "superagent-mock": "^1.10.0",
-    "supertest": "latest",
-    "semantic-release": "^6.3.2"
+    "supertest": "latest"
   },
   "repository": {
     "type": "git",
