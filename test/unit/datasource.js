@@ -483,6 +483,34 @@ describe('Datasource', function (done) {
       })
     })
 
+    it('should use requestParams to replace placeholders in the endpoint', function (done) {
+      var name = 'test'
+      var schema = TestHelper.getPageSchema()
+      var p = page(name, schema)
+      var dsName = 'car-makes'
+      var options = TestHelper.getPathOptions()
+      var dsSchema = TestHelper.getSchemaFromFile(options.datasourcePath, dsName)
+
+      // modify the endpoint to give it a placeholder
+      dsSchema.datasource.source.endpoint = '1.0/makes/{name}'
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      // add type
+      dsSchema.datasource.requestParams[0].type = 'String'
+      dsSchema.datasource.requestParams[0].target = 'endpoint'
+
+      var params = { 'make': 'ford' }
+      var req = { params: params, url: '/1.0/makes/ford' }
+
+      new Datasource(p, dsName, options).init(function (err, ds) {
+        Datasource.Datasource.prototype.loadDatasource.restore()
+        ds.processRequest(dsName, req)
+        ds.provider.endpoint.should.eql('http://127.0.0.1:3000/1.0/makes/ford?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}')
+        done()
+      })
+    })
+
     it('should use page from requestParams when constructing the endpoint', function (done) {
       var name = 'car-makes'
       var schema = TestHelper.getPageSchema()
