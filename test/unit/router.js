@@ -130,6 +130,76 @@ describe('Router', function (done) {
         })
       })
 
+      it('should not redirect to lowercased URL if only URL parameters are not lowercase', function (done) {
+        var routerConfig = {
+          rewrites: {
+            forceLowerCase: true
+          }
+        }
+
+        TestHelper.disableApiConfig().then(() => {
+          TestHelper.updateConfig(routerConfig).then(() => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['car-makes-unchained']
+
+            // provide API response
+            var results = { results: [{'make': 'ford'}] }
+            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            providerStub.yields(null, results)
+
+            TestHelper.startServer(pages).then(() => {
+              var client = request(connectionString)
+              client
+              .get('/test?p=OMG')
+              .end(function (err, res) {
+                if (err) return done(err)
+
+                providerStub.restore()
+
+                should.not.exist(res.headers.location)
+                res.statusCode.should.eql(200)
+                done()
+              })
+            })
+          })
+        })
+      })
+
+      it('should not lowercase URL parameters when redirecting to lowercase URL', function (done) {
+        var routerConfig = {
+          rewrites: {
+            forceLowerCase: true
+          }
+        }
+
+        TestHelper.disableApiConfig().then(() => {
+          TestHelper.updateConfig(routerConfig).then(() => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['car-makes-unchained']
+
+            // provide API response
+            var results = { results: [{'make': 'ford'}] }
+            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            providerStub.yields(null, results)
+
+            TestHelper.startServer(pages).then(() => {
+              var client = request(connectionString)
+              client
+              .get('/tEsT?p=OMG')
+              .end(function (err, res) {
+                if (err) return done(err)
+
+                providerStub.restore()
+
+                res.statusCode.should.eql(301)
+                res.headers.location.should.eql('http://127.0.0.1:5000/test?p=OMG')
+                done()
+              })
+            })
+          })
+        })
+      })
+
       it('should add a trailing slash and redirect if the current request URL does not end with a slash', function (done) {
         var routerConfig = {
           rewrites: {
