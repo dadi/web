@@ -142,6 +142,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
   var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gmi
+
   this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (match, p1, p2, p3, p4, offset, string) {
     if (req.params[p3]) {
       return req.params[p3]
@@ -168,7 +169,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
         this.schema.datasource.filter[obj.field] = paramValue
       } else if (obj.target === 'endpoint') {
         var placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
-        this.schema.datasource.source.endpoint = this.schema.datasource.source.endpoint.replace(placeholderRegex, paramValue)
+        this.source.modifiedEndpoint = this.schema.datasource.source.endpoint.replace(placeholderRegex, paramValue)
       }
     } else {
       if (obj.target === 'filter') {

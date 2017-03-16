@@ -13,7 +13,6 @@ var TestHelper = require(__dirname + '/../help')()
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
-var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
 var testConfigPath = './config/config.test.json'
 var domainConfigPath
 
@@ -22,7 +21,6 @@ function createDomainConfig () {
     server: {
       host: '127.0.0.1',
       port: 5111,
-      redirectPort: 0,
       protocol: 'http'
     }
   }).then(() => {
@@ -49,7 +47,7 @@ function cleanup () {
   }
 }
 
-describe.skip('Config', function (done) {
+describe('Config', function (done) {
   before(function(done) {
     delete require.cache[__dirname + '/../../dadi/lib/api']
     api = require(__dirname + '/../../dadi/lib/api')
@@ -69,13 +67,7 @@ describe.skip('Config', function (done) {
   })
 
   it('should load a domain specific config file if available', function (done) {
-    var apiConfig = {
-      api: {
-        enabled: false
-      }
-    }
-
-    TestHelper.updateConfig(apiConfig).then(() => {
+    TestHelper.disableApiConfig().then(() => {
       createDomainConfig()
 
       setTimeout(function() {
@@ -83,6 +75,8 @@ describe.skip('Config', function (done) {
         pages[0].contentType = 'application/json'
 
         delete require.cache[path.resolve(path.join(__dirname, '/../../config'))]
+
+        var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
 
         TestHelper.startServer(pages).then(() => {
           var client = request(connectionString)

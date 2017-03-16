@@ -1,3 +1,4 @@
+var _ = require('underscore')
 var exec = require('child_process').exec
 var fs = require('fs')
 var path = require('path')
@@ -165,6 +166,57 @@ describe('Datasource Cache', function (done) {
         var dsCache = datasourceCache()
         dsCache.getFilename(ds).indexOf(expectToFind).should.be.above(-1)
         done()
+      })
+    })
+
+    it('should use different cache filenames when datasource endpoints use placeholders', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
+
+      var name = 'test'
+      var schema = TestHelper.getPageSchema()
+      var p = page(name, schema)
+      var dsName = 'car-makes'
+      var options = TestHelper.getPathOptions()
+      var dsSchema = _.clone(TestHelper.getSchemaFromFile(options.datasourcePath, dsName))
+
+      dsSchema.datasource.source.endpoint = '1.0/makes/{make}'
+      dsSchema.datasource.requestParams = [
+        {
+          param: 'make',
+          field: 'make',
+          target: 'endpoint'
+        }
+      ]
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+
+        new Datasource(p, dsName, options).init((err, datasource) => {
+
+          Datasource.Datasource.prototype.loadDatasource.restore()
+          var dsCache = datasourceCache()
+
+          // process the http request so parameters are injected
+          datasource.processRequest(datasource.schema.datasource.key, { url: '/1.0/makes/ford' , params: { 'make': 'ford' } })
+          var filename1 = dsCache.getFilename(datasource)
+          datasource.processRequest(datasource.schema.datasource.key, { url: '/1.0/makes/mazda' , params: { 'make': 'mazda' } })
+          var filename2 = dsCache.getFilename(datasource)
+
+          filename1.should.not.eql(filename2)
+
+          done()
+        })
       })
     })
   })
