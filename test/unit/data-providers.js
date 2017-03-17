@@ -625,10 +625,11 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it.skip('should return data when no error is encountered', function(done) {
+    it('should return data when no error is encountered', function(done) {
       var host = 'http://www.feedforall.com'
       var path = '/sample.xml'
-      var scope = nock(host).get(path).reply(200, { x: 'y' })
+
+      var scope = nock(host).get(path).replyWithFile(200, __dirname + '/../rss.xml')
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -642,8 +643,8 @@ describe('Data Providers', function (done) {
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {
-              should.exist(res.body['rss'])
-              res.body['rss'].should.eql({x:'y'})
+              should.exist(res.body.rss)
+              should.exist(res.body.rss[0].title)
               done()
             })
           })
