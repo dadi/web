@@ -44,7 +44,7 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint () {
   const port = source.port || apiConfig.port
 
   const uri = [protocol, '://', host, (port !== '' ? ':' : ''),
-    port, '/', source.endpoint].join('')
+    port, '/', this.datasource.source.modifiedEndpoint || source.endpoint].join('')
 
   this.endpoint = this.processDatasourceParameters(this.schema, uri)
 }
@@ -111,7 +111,6 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
  * @return {void}
  */
 RemoteProvider.prototype.handleResponse = function handleResponse (res, done) {
-  const self = this
   const encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : ''
   let output = ''
 
@@ -123,7 +122,7 @@ RemoteProvider.prototype.handleResponse = function handleResponse (res, done) {
       buffer.push(data.toString())
     }).on('end', () => {
       output = buffer.join('')
-      self.processOutput(res, output, (err, data, res) => {
+      this.processOutput(res, output, (err, data, res) => {
         if (err) return done(err)
         return done(null, data, res)
       })
@@ -138,7 +137,7 @@ RemoteProvider.prototype.handleResponse = function handleResponse (res, done) {
     })
 
     res.on('end', () => {
-      self.processOutput(res, output, (err, data, res) => {
+      this.processOutput(res, output, (err, data, res) => {
         if (err) return done(err)
         return done(null, data, res)
       })
@@ -166,8 +165,6 @@ RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
  * @return {void}
  */
 RemoteProvider.prototype.load = function (requestUrl, done) {
-  const self = this
-
   this.requestUrl = requestUrl
   this.dataCache = DatasourceCache()
 
@@ -187,24 +184,24 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 
     debug('load %s', this.endpoint)
 
-    self.getHeaders((err, headers) => {
+    this.getHeaders((err, headers) => {
       err && done(err)
 
-      self.options = _.extend(self.options, headers)
+      this.options = _.extend(this.options, headers)
 
-      log.info({module: 'helper'}, "GET datasource '" + self.datasource.schema.datasource.key + "': " + self.options.path)
+      log.info({module: 'helper'}, "GET datasource '" + this.datasource.schema.datasource.key + "': " + this.options.path)
 
-      const agent = (self.options.protocol === 'https') ? https : http
-      let request = agent.request(self.options, (res) => {
-        self.handleResponse(res, done)
+      const agent = (this.options.protocol === 'https') ? https : http
+      let request = agent.request(this.options, (res) => {
+        this.handleResponse(res, done)
       })
 
       request.on('error', (err) => {
-        const message = err.toString() + ". Couldn't request data from " + self.datasource.endpoint
+        const message = err.toString() + ". Couldn't request data from " + this.datasource.endpoint
         err.name = 'GetData'
         err.message = message
-        err.remoteIp = self.options.host
-        err.remotePort = self.options.port
+        err.remoteIp = this.options.host
+        err.remotePort = this.options.port
         return done(err)
       })
 
@@ -221,6 +218,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
  * @returns {string} uri with query string appended
  */
 RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters (schema, uri) {
+  debug('processDatasourceParameters %s', uri)
   let query = '?'
 
   const params = [
@@ -258,8 +256,6 @@ RemoteProvider.prototype.processDatasourceParameters = function processDatasourc
  * @return {void}
  */
 RemoteProvider.prototype.processOutput = function processOutput (res, data, done) {
-  const self = this
-
   // Return a 202 Accepted response immediately,
   // along with the datasource response
   if (res.statusCode === 202) {
@@ -291,8 +287,8 @@ RemoteProvider.prototype.processOutput = function processOutput (res, data, done
     err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
     if (data) err.message += '\n' + data
 
-    err.remoteIp = self.options.host
-    err.remotePort = self.options.port
+    err.remoteIp = this.options.host
+    err.remotePort = this.options.port
 
     log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint)
 

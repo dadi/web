@@ -76,6 +76,7 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
 
       const items = []
       const feedparser = new FeedParser()
+
       const req = request(this.endpoint, {
         pool: false,
         headers: {
@@ -86,6 +87,7 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
 
       // request events
       req.on('error', done)
+
       req.on('response', (res) => {
         if (res.statusCode !== 200) return done('Bad status code', null)
         res.pipe(feedparser)
@@ -96,7 +98,7 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
 
       feedparser.on('end', () => {
         context.dataCache.cacheResponse(this.datasource, JSON.stringify(items), () => {})
-        done(null, items)
+        return done(null, items)
       })
 
       feedparser.on('readable', function () {

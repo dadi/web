@@ -9,11 +9,16 @@ var https = require('https')
 var path = require('path')
 var perfy = require('perfy')
 
+var version = require('../../package.json').version
 var cache = require(path.join(__dirname, '/cache'))
 var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
 
 var self = this
+
+module.exports.getVersion = function () {
+  if (config.get('debug')) return version
+}
 
 module.exports.htmlEncode = function (input) {
   var encodedStr = input.replace(/[\u00A0-\u9999<>&]/gim, function (i) {

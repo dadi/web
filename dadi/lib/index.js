@@ -718,7 +718,7 @@ function onConnection (socket) {
 
 function onListening (e) {
   // check that our API connection is valid
-  help.isApiAvailable(function (err, result) {
+  help.isApiAvailable((err, result) => {
     if (err) {
       console.log(err)
       console.log()
@@ -752,7 +752,7 @@ function onListening (e) {
     if (config.get('api.enabled') === true) {
       startText += '  API:         '.green + extraPadding + config.get('api.host') + ':' + config.get('api.port') + '\n'
     } else {
-      startText += '  API:         '.green + extraPadding + 'Not found'.red + '\n'
+      startText += '  API:         '.green + extraPadding + 'Disabled'.red + '\n'
       startText += '  ----------------------------\n'
     }
 
@@ -774,47 +774,3 @@ function onError (err) {
     process.exit(0)
   }
 }
-
-// function processSortParameter (obj) {
-//   var sort = {}
-//   if (typeof obj !== 'object' || obj === null) return sort
-//
-//   _.each(obj, function (value, key) {
-//     if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
-//       sort[value.field] = (value.order === 'asc') ? 1 : -1
-//     }
-//   })
-//
-//   return sort
-// }
-
-// function parseRoutes (endpoints, req_path) {
-//   var params = {}
-//   var route_path = ''
-//   _.each(endpoints, function (endpoint) {
-//     var paths = endpoint.page.route.paths
-//     var req_path_items = req_path.split('/')
-//     _.each(paths, function (path) {
-//       path_items = path.split('/')
-//       if (path_items.length == req_path_items.length) {
-//         var alias = _.filter(path_items, function (item) {
-//           return item == '' || item.slice(0, 1) != ':'
-//         })
-//
-//         if (_.difference(alias, _.intersection(path_items, req_path_items)).length == 0) {
-//           _.each(path_items, function (item, index) {
-//             if (item != '' && item.slice(0, 1) == ':') {
-//               params[item.slice(1)] = req_path_items[index]
-//             }
-//           })
-//           route_path = path
-//         }
-//       }
-//     })
-//   })
-//
-//   return {
-//     route_path: route_path,
-//     params: params
-//   }
-// }

@@ -95,7 +95,7 @@ var conf = convict({
     enabled: {
       doc: 'Determines whether this web instance requires access to the API',
       format: Boolean,
-      default: true
+      default: false
     }
   },
   auth: {

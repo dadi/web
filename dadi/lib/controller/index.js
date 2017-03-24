@@ -193,6 +193,8 @@ Controller.prototype.process = function process (req, res, next) {
     help.timer.stop(req.method.toLowerCase())
     if (data) data.stats = help.timer.getStats()
 
+    if (data) data.version = help.getVersion()
+
     if (data.json) {
       return done(null, data)
     }

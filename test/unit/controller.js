@@ -294,7 +294,7 @@ describe('Controller', function (done) {
     })
   })
 
-  describe.skip('Datasource Filter Events', function (done) {
+  describe('Datasource Filter Events', function (done) {
     it('should run an attached `filterEvent` before datasource loads', function (done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
@@ -321,7 +321,6 @@ describe('Controller', function (done) {
         var providerSpy = sinon.spy(remoteProvider.prototype, 'load')
 
         TestHelper.startServer(pages).then(() => {
-
           var client = request(connectionString)
           client
           .get(pages[0].routes[0].path + '?json=true')
