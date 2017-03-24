@@ -337,7 +337,7 @@ var conf = convict({
     }
   },
   globalEvents: {
-    doc: '',
+    doc: 'Events to be loaded on every request.',
     format: Array,
     default: []
   },
