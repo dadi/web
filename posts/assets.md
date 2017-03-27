@@ -1,8 +1,8 @@
 ---
-date: 2016-03-17
-title: How to create serve assets
-handle: pages
+date: 2016-02-17
+title: How to serve static assets
+handle: assets
 author: The DADI Team
 ---
 
-how to serve new assets...
+Anything you put in the `workspace/public` (path configurable in `config/config.development.json) will be served as a static asset. For example your [robots.txt](/robots.txt), or [CSS file](/styles.css)

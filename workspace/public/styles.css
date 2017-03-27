@@ -87,6 +87,12 @@ article ol, ul {
 
 code {
 	display: inline-block;
+	background: #EFEFE9;
+}
+pre code {
+	padding: 10px;
+	margin-bottom: 20px;
+	display: block;
 }
 
 
