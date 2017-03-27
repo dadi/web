@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>{+title}{global.site}{/title}{?title} – {global.site}{/title}</title>
+		<title>{+metaTitle}{global.site}{/metaTitle}</title>
 		
 		<meta charset="utf-8">
   		<meta name="viewport" content="width=device-width,initial-scale=1">

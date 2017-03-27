@@ -1,8 +1,8 @@
 {>"partials/header" /}
 
-{<title}
-	{posts.results[0].attributes.title}
-{/title}
+{<metaTitle}
+	{posts.results[0].attributes.title} – {global.site}
+{/metaTitle}
 
 {#posts.results}
 	{>"partials/post" /}
