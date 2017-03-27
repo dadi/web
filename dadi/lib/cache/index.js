@@ -3,11 +3,11 @@
  */
 var _ = require('underscore')
 var crypto = require('crypto')
+var debug = require('debug')('web:cache')
 var path = require('path')
 var url = require('url')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
-var log = require('@dadi/logger')
 
 var DadiCache = require('@dadi/cache')
 
@@ -75,14 +75,26 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
   var endpoints = this.server.components
   var requestUrl = url.parse(req.url, true).pathname
 
+  if (requestUrl !== '/' && requestUrl[requestUrl.length - 1] === '/') {
+    requestUrl = requestUrl.substring(0, requestUrl.length - 1)
+  }
+
+  // get the host key that matches the request's host header
+  var virtualHosts = config.get('virtualHosts')
+
+  var host = _.findKey(virtualHosts, (virtualHost) => {
+    return _.contains(virtualHost.hostnames, req.headers.host)
+  }) || ''
+
   // check if there is a match in the loaded routes for the current request URL
-  var endpoint = _.find(endpoints, function (endpoint) {
-    return _.contains(_.pluck(endpoint.page.routes, 'path')[0], requestUrl)
+  var endpoint = _.find(endpoints, (endpoint) => {
+    var paths = _.pluck(endpoint.page.routes, 'path')[0]
+    return _.contains(paths, requestUrl) && (endpoint.options ? endpoint.options.host === host : true)
   })
 
   // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
   if (!endpoint) {
-    endpoint = _.find(endpoints, function (endpoint) {
+    endpoint = _.find(endpoints, (endpoint) => {
       return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths))
     })
   }
@@ -113,6 +125,9 @@ Cache.prototype.init = function () {
    */
   this.server.app.use(function (req, res, next) {
     var enabled = self.cachingEnabled(req)
+
+    debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
+
     if (!enabled) return next()
 
     // only cache GET requests
@@ -121,7 +136,15 @@ Cache.prototype.init = function () {
     // we build the filename with a hashed hex string so we can be unique
     // and avoid using file system reserved characters in the name
     var requestUrl = url.parse(req.url, true).path
-    var filename = crypto.createHash('sha1').update(requestUrl).digest('hex')
+
+    // get the host key that matches the request's host header
+    var virtualHosts = config.get('virtualHosts')
+
+    var host = _.findKey(virtualHosts, (virtualHost) => {
+      return _.contains(virtualHost.hostnames, req.headers.host)
+    }) || ''
+
+    var filename = crypto.createHash('sha1').update(`${host}_${requestUrl}`).digest('hex')
 
     // allow query string param to bypass cache
     var query = url.parse(req.url, true).query
@@ -132,7 +155,7 @@ Cache.prototype.init = function () {
 
     // attempt to get from the cache
     self.cache.get(filename).then((stream) => {
-      log.info({module: 'cache'}, 'Serving ' + req.url + ' from cache')
+      debug('serving %s%s from cache', req.headers.host, req.url)
 
       res.setHeader('X-Cache-Lookup', 'HIT')
 
