@@ -11,7 +11,7 @@ The next step is probably to explore the [documentation](http://docs.dadi.tech) 
 
 ### Things to try
 
-1. You are reading <em>posts/welcome-to-dadi.md</em>. Try changing something in this file, save and refresh to see it updated here.
+1. You are reading `posts/welcome.md`. Try changing something in this file, save and refresh to see it updated here.
 
 2. Create your first datasource. Here is an example of a markdown based one, which is serving the content you are reading.
 ```JSON
