@@ -1,0 +1,149 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	padding: 5%;
+	background: #FAFAF4;
+	max-width: 690px;
+	font-family: Muli, "Helvetica Neue", Helvetica, Arial, Verdana, sans-serif;
+	color: #000;
+	font-size: 17px;
+	margin: 0 auto;
+}
+h1,h2,h3,h4, time, header, .pagination, footer {
+}
+
+a {
+	text-decoration: none;
+	color: inherit;
+}
+
+h1 {
+	margin-top: 30px;
+	margin-bottom: 5px;
+	font-size: 22px;
+	color: #000;
+}
+h2 {
+	font-size: 30px;
+	margin-bottom: 15px;
+	font-weight: 900;
+	line-height: 1.1em;
+}
+h3 {
+	font-size: 20px;
+	margin-top: 35px;
+	margin-bottom: 25px;
+}
+
+/* 
+	Header
+*/
+
+header {
+	margin-bottom: 80px;
+}
+
+/*
+	Article styling
+*/
+
+article {
+	margin: 18% 0;
+	line-height: 1.5em;
+}
+article header {
+	margin-bottom: 50px;
+}
+article a {
+	color: #2F8FE4;
+	border-bottom: 2px solid #ddd;
+	text-decoration: none;
+}
+article a:hover {
+	border-bottom-color: #2F8FE4;
+}
+article p {
+	margin-bottom: 1.2em;
+}
+article img {
+	max-width: 100%;
+	height: auto;
+	display: inline-block;
+}
+article ol, ul {
+	margin-left: 20px;
+}
+
+/*
+	Code highlighting
+*/
+
+code {
+	display: inline-block;
+	background: #EFEFE9;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	padding: 0 5px;
+	margin-bottom: -1px;
+	font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+}
+pre code {
+	padding: 15px;
+	margin-bottom: 20px;
+	display: block;
+	overflow: scroll;
+}
+
+
+/*
+	Pagination
+*/
+
+.pagination {
+	display: block;
+	padding-top: 20px;
+	font-size: 15px;
+}
+.pagination--page {
+	margin: 0 5px 0 0;
+	border-radius: 100px;
+	display: inline-block;
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	text-align: center;
+}
+.pagination--page:hover {
+	background: #ddd;
+}
+.pagination li {
+	display: inline-block;
+	list-style: none;
+}
+.pagination--active {
+	color: #fff;
+	background: #000;
+}
+.pagination--next,
+.pagination--prev {
+	color: #969693;
+}
+.pagination--page {
+	display: inline-block;
+}
+
+/* 
+	Footer
+*/
+
+footer {
+	margin-top: 80px;
+	font-size: 15px;
+}
+footer a {
+	color: #e42918;
+	font-weight: bold;
+}

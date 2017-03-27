@@ -1,11 +1,5 @@
-<h4>This is the footer.</h4>
+<footer>Powered by <a href="https://dadi.tech/platform/web">DADI Web {version}</a><br>© {@formatDate unix=global.timestamp format="YYYY" /}
+</footer>
 
-<p>Bind to datasource results in partials:</p>
-
-<ul>
-{#books.results}
-  <li>
-    <p>{name}, {byline} by {authorId}</p>
-  </li>
-{/books.results}
-</ul>
+</body>
+</html>

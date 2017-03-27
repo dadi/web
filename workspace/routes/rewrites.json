@@ -1,7 +1,0 @@
-{
-  "rewrites" : [
-    ".(css|js|jpg|png|gif)$ - [L]", // don't change asset paths
-    "^(.*[^/])$ $1/ [R=301,L]", // ensure trailing slash
-    "^(.*[^/])\\?(.*)?$ $1/?$2 [R=301,L]" // ensure trailing slash, and append querystring if provided
-  ]
-}

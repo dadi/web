@@ -1,0 +1,8 @@
+{>"partials/header" /}
+
+<article>
+	<h2>Page not found!</h2>
+	<p>It has either been moved, or it never existed at all.</p>
+</article>
+
+{>"partials/footer" /}
