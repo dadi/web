@@ -1,5 +1,4 @@
-<footer>
-© {@formatDate unix=global.timestamp format="YYYY" /}. Powered by <a href="https://dadi.tech/platform/web">DADI Web {version}</a>.
+<footer>Powered by <a href="https://dadi.tech/platform/web">DADI Web {version}</a><br>© {@formatDate unix=global.timestamp format="YYYY" /}
 </footer>
 
 </body>
