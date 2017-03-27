@@ -15,26 +15,26 @@ The next step is probably to explore the [documentation](http://docs.dadi.tech) 
 
 2. Create your first datasource. Here is an example of a markdown based one, which is serving the content you are reading.
 ```JSON
-	{
-	  "datasource": {
-	    "key": "posts",
-	    "name": "Blog posts as markdown files.",
-	    "source": {
-	      "type": "markdown",
-	      "path": "./posts"
-	    },
-	    "paginate": true,
-	    "count": 5,
-	    "sort": {
-	      "date": -1
-	    },
-	    "requestParams": [
-	      {
-	        "param": "handle", "field": "handle"
-	      }
-	    ]
-	  }
+{
+	"datasource": {
+		"key": "posts",
+		"name": "Blog posts as markdown files.",
+		"source": {
+			"type": "markdown",
+			"path": "./posts"
+		},
+		"paginate": true,
+		"count": 5,
+		"sort": {
+			"date": -1
+		},
+		"requestParams": [
+			{
+				"param": "handle", "field": "handle"
+			}
+		]
 	}
+}
 ```
 
 3. Learn more about [DADI API](https://dadi.tech/platform/api/) and how you can use it with your new installation of <em>DADI Web</em>
