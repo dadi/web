@@ -1,18 +1,19 @@
 <article>
-	<time datetime="{attributes.date}">
-		{@formatDate 
-			data=attributes.date 
-			parseFormat="YYYY-DD-MMMTh:mm:ss.ZZ" 
-			format="Do MMMM YYYY" 
-		/}
-	</time>
+	<header>
+		<h2><a href="/post/{attributes.handle}">{attributes.title}</a></h2>
+		<p>
+			By <strong>{attributes.author}</strong>
 
-	<div class="content">
-		<header>
-			<h2><a href="/post/{attributes.handle}">{attributes.title}</a></h2>
-			<p class="author">By {attributes.author}</p>
-		</header>
+			on
+			<time datetime="{attributes.date}">
+				{@formatDate 
+					data=attributes.date 
+					parseFormat="YYYY-DD-MMMTh:mm:ss.ZZ" 
+					format="MMMM Do, YYYY" 
+				/}
+			</time>
+		</p>
+	</header>	
 
-		{@markdown}{contentText|s}{/markdown}
-	</div>
+	{@markdown}{contentText|s}{/markdown}
 </article>
