@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{+title}{global.site}{/title}{?title} – {global.site}{/title}</title>
+		
+		<meta charset="utf-8">
+  		<meta name="viewport" content="width=device-width,initial-scale=1">
+  		{! <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet"> !}
+  		<link rel="stylesheet" type="text/css" href="/styles.css">
+		<meta name="copyright" content="{@formatDate unix=global.timestamp format="YYYY" /}">
+
+		<meta name="description" content="{global.description}">
+
+		<link rel="stylesheet" type="text/css" href="/assets/css/main.min.css?v=1481817850">
+
+		<link rel="icon" type="image/png" href="/assets/img/favicon.png">
+	</head>
+<body>
+
+<header>
+	<a href="/">
+		<img src="/logo.png" alt="Site logo" width="60">
+		<h1>{global.site}</h1>
+	</a>
+	<p>{global.description}</p>
+</header>

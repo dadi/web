@@ -1,0 +1,7 @@
+{>"partials/header" /}
+
+{#posts.results}
+	{>"partials/post" /}
+{/posts.results}
+
+{>"partials/footer" /}
