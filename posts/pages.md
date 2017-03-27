@@ -23,7 +23,7 @@ Add a your-page-name.json and your-page-name.dust to the `workspace/pages` folde
 
 In your dust file you can put any HTML or [Dust.js](http://www.dustjs.com/)
 
-```dustjs
+```
 {>"partials/header" /}
 
 Hello world!

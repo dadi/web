@@ -7,7 +7,7 @@ body {
 	padding: 5%;
 	background: #FAFAF4;
 	max-width: 800px;
-	font-family: Georgia, serif;
+	font-family: Georgia, "Times New Roman", serif;
 	color: #323232;
 	font-size: 15px;
 }
@@ -18,17 +18,6 @@ h1,h2,h3,h4, time, header, .pagination, footer {
 a {
 	text-decoration: none;
 	color: inherit;
-}
-article {
-	line-height: 1.3em;
-}
-article a {
-	color: #2F8FE4;
-	border-bottom: 1px solid #ddd;
-	text-decoration: none;
-}
-article a:hover {
-	border-bottom-color: #2F8FE4;
 }
 
 h1 {
@@ -44,23 +33,26 @@ h3 {
 	margin-top: 30px;
 }
 
-time {
-	color: #777;
-	font-weight: bold;
-	margin-bottom: 10px;
-	display: block;
-}
+/* 
+	Header
+*/
 
 header {
 	padding-bottom: 20px;
 }
-footer {
-	margin-top: 80px;
-	font-size: 13px;
+header .author {
+	color: #969693;
 }
-footer a {
-	color: #e42918;
+
+/*
+	Article styling
+*/
+
+time {
+	color: #969693;
 	font-weight: bold;
+	margin-bottom: 10px;
+	display: block;
 }
 
 article {
@@ -69,9 +61,26 @@ article {
 	border-bottom: 1px solid #ddd;
 	overflow: auto;
 	zoom: 1;
+	line-height: 1.5em;
+}
+article a {
+	color: #2F8FE4;
+	border-bottom: 1px solid #ddd;
+	text-decoration: none;
+}
+article a:hover {
+	border-bottom-color: #2F8FE4;
 }
 article p {
 	margin-bottom: 1.2em;
+}
+article img {
+	max-width: 100%;
+	height: auto;
+	display: inline-block;
+}
+article ol, ul {
+	margin-left: 15px;
 }
 
 @media only screen and (min-width: 500px) {
@@ -85,24 +94,36 @@ article p {
 	}
 }
 
-article ol, ul {
-	margin-left: 15px;
-}
+/*
+	Code highlighting
+*/
 
-code {
+code, .hljs {
 	display: inline-block;
 	background: #EFEFE9;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	padding: 0 5px;
+	margin-bottom: -1px;
 }
 pre code {
-	padding: 10px;
+	padding: 15px;
 	margin-bottom: 20px;
 	display: block;
+	overflow: scroll;
 }
 
+
+/*
+	Pagination
+*/
 
 .pagination {
 	text-align: center;
 	display: block;
+}
+.pagination a {
+	padding: 2px 3px;
 }
 .pagination li {
 	display: inline-block;
@@ -120,5 +141,17 @@ pre code {
 }
 .pagination--page {
 	display: inline-block;
-	padding: 2px 5px;
+}
+
+/* 
+	Footer
+*/
+
+footer {
+	margin-top: 80px;
+	font-size: 13px;
+}
+footer a {
+	color: #e42918;
+	font-weight: bold;
 }
