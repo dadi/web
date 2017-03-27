@@ -50,6 +50,8 @@ var Controller = function (page, options, meta) {
  *
  */
 Controller.prototype.attachDatasources = function (done) {
+  if (this.page.datasources.length === 0) return done(null)
+
   var i = 0
 
   this.page.datasources.forEach((datasource) => {
@@ -156,13 +158,13 @@ Controller.prototype.process = function process (req, res, next) {
   debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
-  var self = this
   var done
 
   var statusCode = res.statusCode || 200
 
   var data = this.buildInitialViewData(req)
-  var view = new View(req.url, self.page, data.json)
+
+  var view = new View(req.url, this.page, data.json)
 
   if (data.json) {
     done = sendBackJSON(statusCode, res, next)
@@ -170,9 +172,9 @@ Controller.prototype.process = function process (req, res, next) {
     done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next)
   }
 
-  self.loadData(req, res, data, function (err, data, dsResponse) {
+  this.loadData(req, res, data, (err, data, dsResponse) => {
     // return 404 if requiredDatasources contain no data
-    if (!self.requiredDataPresent(data)) {
+    if (!this.requiredDataPresent(data)) {
       return next()
     }
 
@@ -201,7 +203,7 @@ Controller.prototype.process = function process (req, res, next) {
 
     view.setData(data)
 
-    view.render(function (err, result) {
+    view.render((err, result) => {
       if (err) return next(err)
       return done(null, result)
     })

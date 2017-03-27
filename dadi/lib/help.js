@@ -3,6 +3,7 @@
  */
 var _ = require('underscore')
 var crypto = require('crypto')
+var debug = require('debug')('web:timer')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
@@ -34,13 +35,13 @@ module.exports.timer = {
 
   start: function start (key) {
     if (!this.isDebugEnabled()) return
-    console.log('Start timer: ' + key)
+    debug('start: %s', key)
     perfy.start(key, false)
   },
 
   stop: function stop (key) {
     if (!this.isDebugEnabled()) return
-    console.log('Stop timer: ' + key)
+    debug('stop: %s', key)
     if (perfy.exists(key)) perfy.end(key)
   },
 
@@ -53,7 +54,6 @@ module.exports.timer = {
     perfy.destroyAll()
     return stats
   }
-
 }
 
 module.exports.isApiAvailable = function (done) {
