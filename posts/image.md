@@ -1,7 +1,7 @@
 ---
 date: 2015-04-17
 title: Look, a post with an image in
-handle: pages
+handle: images
 author: The DADI Team
 ---
 
