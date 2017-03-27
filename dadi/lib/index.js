@@ -71,6 +71,55 @@ Server.prototype.start = function (done) {
     config.loadFile(options.configPath)
   }
 
+  // override configuration variables based on request's host header
+  app.use((req, res, next) => {
+    var virtualHosts = config.get('virtualHosts')
+
+    if (_.isEmpty(virtualHosts)) {
+      return next()
+    }
+
+    var host = _.findKey(virtualHosts, (virtualHost) => {
+      return _.contains(virtualHost.hostnames, req.headers.host)
+    })
+
+    var hostConfigFile = './config/' + virtualHosts[host].configFile
+
+    fs.stat(hostConfigFile, (err, stats) => {
+      if (err && err.code === 'ENOENT') {
+        // No domain-specific configuration file
+        console.error('Host config not found:', hostConfigFile)
+        return next()
+      }
+
+      var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
+
+      config.load({
+        global: hostConfig.global
+      })
+
+      return next()
+    })
+
+    // config.updateConfigDataForDomain(host).then(() => {
+
+      // options = this.loadPaths(config.get('paths'))
+      //
+      // options.host = req.headers.host
+
+      // this.loadApi(options, true, () => {
+      //   debug('config loaded for domain "%s"', req.headers.host)
+      // return next()
+      // })
+    // }).catch((err) => {
+    //   if (err) {
+    //     return next(err)
+    //   } else {
+    //     return next()
+    //   }
+    // })
+  })
+
   if (config.get('logging.sentry.dsn') !== '') {
     app.use(raven.middleware.express.requestHandler(config.get('logging.sentry.dsn')))
   }
@@ -117,15 +166,6 @@ Server.prototype.start = function (done) {
   // request logging middleware
   app.use(log.requestLogger)
 
-  // update configuration based on domain
-  var domainConfigLoaded
-  app.use(function (req, res, next) {
-    if (domainConfigLoaded) return next()
-    config.updateConfigDataForDomain(req.headers.host)
-    domainConfigLoaded = true
-    return next()
-  })
-
   // session manager
   var sessionConfig = config.get('sessions')
 
@@ -157,10 +197,10 @@ Server.prototype.start = function (done) {
   if (config.get('api.enabled')) {
     // authentication layer
     auth(self)
-
-    // initialise the cache
-    cacheLayer.init()
   }
+
+  // initialise the cache
+  cacheLayer.init()
 
   // start listening
   var server = this.server = app.listen()
@@ -181,6 +221,26 @@ Server.prototype.start = function (done) {
 
   // load app specific routes
   this.loadApi(options)
+
+  _.each(config.get('virtualHosts'), (virtualHost, key) => {
+    var hostConfigFile = './config/' + virtualHost.configFile
+
+    fs.stat(hostConfigFile, (err, stats) => {
+      if (err && err.code === 'ENOENT') {
+        // No domain-specific configuration file
+        console.error('Host config not found:', hostConfigFile)
+      }
+
+      var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
+      var hostOptions = this.loadPaths(hostConfig.paths)
+
+      hostOptions.host = key
+
+      this.loadApi(hostOptions, true, () => {
+        debug('routes loaded for domain "%s"', key)
+      })
+    })
+  })
 
   // preload data
   Preload().init(options)
@@ -274,8 +334,8 @@ Server.prototype.resolvePaths = function (paths) {
   }
 }
 
-Server.prototype.loadPaths = function () {
-  var paths = config.get('paths')
+Server.prototype.loadPaths = function (paths) {
+  paths = _.extend({}, config.get('paths'), paths || {})
   var options = {}
 
   options.datasourcePath = path.resolve(paths.datasources)
@@ -295,91 +355,97 @@ Server.prototype.loadPaths = function () {
   return options
 }
 
-Server.prototype.loadApi = function (options) {
-  debug('loadApi %O', options)
+Server.prototype.loadApi = function (options, reload, callback) {
+  debug('loadApi %o', options)
 
-  this.app.use('/api/flush', (req, res, next) => {
-    if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
-      return help.clearCache(req, (err) => {
-        help.sendBackJSON(200, res, next)(err, {
-          result: 'success',
-          message: 'Succeed to clear'
+  if (!reload) {
+    this.app.use('/api/flush', (req, res, next) => {
+      if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
+        return help.clearCache(req, (err) => {
+          help.sendBackJSON(200, res, next)(err, {
+            result: 'success',
+            message: 'Succeed to clear'
+          })
         })
-      })
-    } else {
-      next()
-    }
-  })
+      } else {
+        next()
+      }
+    })
 
-  this.app.use('/api/status', (req, res, next) => {
-    if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
-      var params = {
-        site: site,
-        package: '@dadi/web',
-        version: version,
-        healthCheck: {
-          baseUrl: 'http://' + config.get('server.host') + ':' + config.get('server.port'),
-          routes: config.get('status.routes')
+    this.app.use('/api/status', (req, res, next) => {
+      if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
+        var params = {
+          site: site,
+          package: '@dadi/web',
+          version: version,
+          healthCheck: {
+            baseUrl: 'http://' + config.get('server.host') + ':' + config.get('server.port'),
+            routes: config.get('status.routes')
+          }
         }
+
+        var protocol = config.get('server.protocol') || 'http'
+        if (protocol === 'https') {
+          var httpsHost = config.get('server.host')
+          var httpsPort = config.get('server.port')
+          var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
+          params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
+        }
+
+        dadiStatus(params, (err, data) => {
+          if (err) return next(err)
+          var resBody = JSON.stringify(data, null, 2)
+
+          res.statusCode = 200
+          res.setHeader('Content-Type', 'application/json')
+          res.setHeader('content-length', Buffer.byteLength(resBody))
+          res.end(resBody)
+        })
       }
-
-      var protocol = config.get('server.protocol') || 'http'
-      if (protocol === 'https') {
-        var httpsHost = config.get('server.host')
-        var httpsPort = config.get('server.port')
-        var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
-        params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
-      }
-
-      dadiStatus(params, (err, data) => {
-        if (err) return next(err)
-        var resBody = JSON.stringify(data, null, 2)
-
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'application/json')
-        res.setHeader('content-length', Buffer.byteLength(resBody))
-        res.end(resBody)
-      })
-    }
-  })
+    })
+  }
 
   // load routes
-  this.updatePages(options.pagePath, options, false)
+  this.updatePages(options.pagePath, options, reload || false)
 
   // Load middleware
   this.initMiddleware(options.middlewarePath, options)
 
   // compile all dust templates
-  this.compile(options)
+  this.compile(options).then(() => {
+    this.addMonitor(options.datasourcePath, (dsFile) => {
+      this.updatePages(options.pagePath, options, true)
+    })
 
-  this.addMonitor(options.datasourcePath, (dsFile) => {
-    this.updatePages(options.pagePath, options, true)
-  })
+    this.addMonitor(options.eventPath, (eventFile) => {
+      this.updatePages(options.pagePath, options, true)
+    })
 
-  this.addMonitor(options.eventPath, (eventFile) => {
-    this.updatePages(options.pagePath, options, true)
-  })
-
-  this.addMonitor(options.pagePath, (pageFile) => {
-    this.updatePages(options.pagePath, options, true)
-    this.compile(options)
-  })
-
-  _.each(options.partialPaths, (partialPath) => {
-    this.addMonitor(partialPath, (partialFile) => {
+    this.addMonitor(options.pagePath, (pageFile) => {
+      this.updatePages(options.pagePath, options, true)
       this.compile(options)
     })
-  })
 
-  this.addMonitor(options.routesPath, (file) => {
-    if (this.app.Router) {
-      this.app.Router.loadRewrites(options, () => {
-        this.app.Router.loadRewriteModule()
+    _.each(options.partialPaths, (partialPath) => {
+      this.addMonitor(partialPath, (partialFile) => {
+        this.compile(options)
       })
+    })
+
+    this.addMonitor(options.routesPath, (file) => {
+      if (this.app.Router) {
+        this.app.Router.loadRewrites(options, () => {
+          this.app.Router.loadRewriteModule()
+        })
+      }
+    })
+
+    debug('load complete')
+
+    if (callback && typeof callback === 'function') {
+      callback()
     }
   })
-
-  debug('load complete')
 }
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
@@ -442,14 +508,15 @@ Server.prototype.addRoute = function (obj, options, reload) {
 
   // create a page with the supplied schema,
   // using the filename as the page name
-  var page = Page(obj.name, schema)
+  var page = new Page(obj.name, schema)
 
   // create a handler for requests to this page
-  var controller = Controller(page, options, schema.page)
+  var controller = new Controller(page, options, schema.page)
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods
   this.addComponent({
+    host: options.host || '',
     key: page.key,
     routes: page.routes,
     component: controller,
@@ -462,14 +529,18 @@ Server.prototype.addComponent = function (options, reload) {
 
   if (reload) {
     _.each(options.routes, (route) => {
-      this.removeComponent(route.path)
+      var hostWithPath = `${options.host}${route.path}`
+      this.removeComponent(hostWithPath)
     })
   }
+
   _.each(options.routes, (route) => {
     // only add a route once
-    if (this.components[route.path]) return
+    var hostWithPath = `${options.host}${route.path}`
 
-    this.components[route.path] = options.component
+    if (this.components[hostWithPath]) return
+
+    this.components[hostWithPath] = options.component
 
     // configure "index" route
     if (route.path === '/index') {
@@ -482,9 +553,12 @@ Server.prototype.addComponent = function (options, reload) {
       })
     } else {
       // attach any route constraints
-      if (route.constraint) this.app.Router.constrain(route.path, route.constraint)
+      if (route.constraint) {
+        this.app.Router.constrain(route.path, route.constraint)
+      }
 
-      this.app.use(route.path, (req, res, next) => {
+      // attach route handler to middleware stack
+      this.app.use(route.path, options.host, (req, res, next) => {
         if (options.component[req.method.toLowerCase()]) {
           // a matching route found, validate it
           return this.app.Router.validate(route, req, res).then(() => {
@@ -511,9 +585,9 @@ Server.prototype.addComponent = function (options, reload) {
   })
 }
 
-Server.prototype.removeComponent = function (route) {
-  this.app.unuse(route)
-  delete this.components[route]
+Server.prototype.removeComponent = function (path) {
+  this.app.unuse(path)
+  delete this.components[path]
 }
 
 Server.prototype.getComponent = function (key) {
@@ -523,7 +597,6 @@ Server.prototype.getComponent = function (key) {
 }
 
 Server.prototype.addMonitor = function (filepath, callback) {
-  debug('addMonitor %s', filepath)
   filepath = path.normalize(filepath)
 
   // only add one watcher per path
@@ -541,47 +614,53 @@ Server.prototype.removeMonitor = function (filepath) {
 }
 
 Server.prototype.compile = function (options) {
-  var templatePath = options.pagePath
-  var partialPaths = options.partialPaths
+  return new Promise((resolve, reject) => {
+    var templatePath = options.pagePath
+    var partialPaths = options.partialPaths
 
-  // reset the dust cache so templates can be reloaded
-  dust.clearCache()
+    // reset the dust cache so templates can be reloaded
+    dust.clearCache()
 
-  // Get a list of templates to render based on the registered components
-  var componentTemplates = Object.keys(this.components).map((route) => {
-    return path.join(templatePath, this.components[route].page.template)
-  })
+    // Get a list of templates to render based on the registered components
+    var componentTemplates = _.compact(Object.keys(this.components).map((route) => {
+      if (this.components[route].options.host === options.host) {
+        return path.join(templatePath, this.components[route].page.template)
+      }
+    }))
 
-  // Load component templates
-  dust.loadFiles(componentTemplates)
-    .then(function () {
-      // Load templates in the template folder that haven't already been loaded
-      return dust.loadDirectory(templatePath)
-    })
-    .then(function () {
-      // Load partials
-      return _.each(partialPaths, (partialPath) => {
-        return dust.loadDirectory(partialPath, path.basename(partialPath), true)
+    // Load component templates
+    dust.loadFiles(componentTemplates)
+      .then(() => {
+        // Load templates in the template folder that haven't already been loaded
+        return dust.loadDirectory(templatePath)
       })
-    })
-    .then(function () {
-      // Load filters
-      return dust.requireDirectory(options.filtersPath)
-    })
-    .then(function () {
-      // Load helpers
-      return dust.requireDirectory(options.helpersPath)
-    })
-    .then(function () {
-      debug('templates loaded %O', Object.keys(dust.templates).sort())
-      // Write client-side files
-      dust.writeClientsideFiles()
-    })
-    .catch(function (err) {
-      log.error({module: 'server'}, err)
+      .then(() => {
+        // Load partials
+        return _.each(partialPaths, (partialPath) => {
+          return dust.loadDirectory(partialPath, path.basename(partialPath), true)
+        })
+      })
+      .then(() => {
+        // Load filters
+        return dust.requireDirectory(options.filtersPath)
+      })
+      .then(() => {
+        // Load helpers
+        return dust.requireDirectory(options.helpersPath)
+      })
+      .then(() => {
+        debug('templates loaded %O', Object.keys(dust.templates).sort())
+        // Write client-side files
+        dust.writeClientsideFiles()
 
-      throw err
-    })
+        return resolve()
+      })
+      .catch((err) => {
+        log.error({module: 'server'}, err)
+
+        throw err
+      })
+  })
 }
 
 Server.prototype.getSessionStore = function (sessionConfig, env) {

@@ -3,13 +3,13 @@ var debug = require('debug')('web:api')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
-var nodePath = require('path')
-var raven = require('raven')
+var path = require('path')
 var pathToRegexp = require('path-to-regexp')
+var raven = require('raven')
 var url = require('url')
 
 var log = require('@dadi/logger')
-var config = require(nodePath.join(__dirname, '/../../../config'))
+var config = require(path.join(__dirname, '/../../../config'))
 
 /**
  * Represents the main server.
@@ -90,26 +90,37 @@ var Api = function () {
 /**
  *  Connects a handler to a specific path
  *  @param {String} path
+ *  @param {String} host
  *  @param {Controller} handler
  *  @return undefined
  *  @api public
  */
-Api.prototype.use = function (path, handler) {
+Api.prototype.use = function (path, host, handler) {
   if (typeof path === 'function') {
     if (path.length === 4) return this.errors.push(path)
     return this.all.push(path)
   }
 
+  if (typeof host === 'function') {
+    handler = host
+    host = ''
+  } else if (typeof host === 'undefined') {
+    host = ''
+  }
+
+  debug('use %s%s', host, path)
+
   var regex = pathToRegexp(path)
+  var hostWithPath = `${host}${path}`
 
   this.paths.push({
-    path: path,
+    path: hostWithPath,
     order: routePriority(path, regex.keys),
     handler: handler,
     regex: regex
   })
 
-  debug('loaded %s', path)
+  debug('loaded %s%s', host, path)
 
   this.paths.sort((a, b) => {
     return b.order - a.order
@@ -123,6 +134,7 @@ Api.prototype.use = function (path, handler) {
  *  @api public
  */
 Api.prototype.unuse = function (path) {
+  debug('unuse %s', path)
   var indx = 0
 
   if (typeof path === 'function') {
@@ -132,13 +144,13 @@ Api.prototype.unuse = function (path) {
     }
 
     var functionStr = path.toString()
-    _.each(this.all, function (func) {
+    _.each(this.all, (func) => {
       if (func.toString() === functionStr) {
         return this.all.splice(indx, 1)
       } else {
         indx++
       }
-    }, this)
+    })
 
   // indx = this.all.indexOf(path)
   // return !!~indx && this.all.splice(indx, 1)
@@ -184,8 +196,10 @@ Api.prototype.listen = function (backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
+  debug('request %s%s', req.headers.host, req.url)
+
   // clone the middleware stack
-  var stack = this.all.slice(0)
+  this.stack = this.all.slice(0)
 
   req.params = {}
   req.paths = []
@@ -204,7 +218,7 @@ Api.prototype.listener = function (req, res) {
       _.extend(req.params, originalReqParams)
 
       try {
-        stack[i](req, res, doStack(++i))
+        self.stack[i](req, res, doStack(++i))
       } catch (e) {
         return errStack(0)(e)
       }
@@ -220,10 +234,10 @@ Api.prototype.listener = function (req, res) {
   }
 
   // add path specific handlers
-  stack = stack.concat(matches)
+  this.stack = this.stack.concat(matches)
 
   // add 404 handler
-  stack.push(notFound(this, req, res))
+  this.stack.push(notFound(this, req, res))
 
   // start going through the middleware/routes
   doStack(0)()
@@ -254,8 +268,17 @@ Api.prototype.redirectListener = function (req, res) {
  */
 Api.prototype._match = function (req) {
   var path = url.parse(req.url).pathname
-  var paths = this.paths
   var handlers = []
+
+  // get the host key that matches the request's host header
+  var virtualHosts = config.get('virtualHosts')
+  var host = _.findKey(virtualHosts, (virtualHost) => {
+    return _.contains(virtualHost.hostnames, req.headers.host)
+  }) || ''
+
+  var paths = _.filter(this.paths, (path) => {
+    return path.path.indexOf(host) > -1
+  })
 
   for (var idx = 0; idx < paths.length; idx++) {
     // test the supplied url against each loaded route.

@@ -341,6 +341,11 @@ var conf = convict({
     format: Array,
     default: []
   },
+  global: {
+    doc: '',
+    format: Object,
+    default: {}
+  },
   paths: {
     doc: '',
     format: Object,
@@ -464,8 +469,13 @@ var conf = convict({
     env: 'NODE_ENV',
     arg: 'node_env'
   },
+  virtualHosts: {
+    doc: 'Allows serving multiple domains from a single instance of DADI Web',
+    format: Object,
+    default: {}
+  },
   virtualDirectories: {
-    doc: "Allows specifying folders where additional static content may reside. An array entry should like look { path: 'data/legacy_features', index: 'default.html', forceTrailingSlash: false } ",
+    doc: 'Allows specifying folders where additional static content may reside. An array entry should like look { "path": "data/legacy_features", "index": "default.html", "forceTrailingSlash": false }',
     format: Array,
     default: []
   },
@@ -516,15 +526,19 @@ conf.loadFile('./config/config.' + env + '.json')
 
 // Load domain-specific configuration
 conf.updateConfigDataForDomain = function (domain) {
-  var domainConfig = './config/' + domain + '.json'
-  fs.stat(domainConfig, (err, stats) => {
-    if (err && err.code === 'ENOENT') {
-      // No domain-specific configuration file
-      return
-    }
+  return new Promise((resolve, reject) => {
+    var domainConfig = './config/' + domain + '.json'
+    fs.stat(domainConfig, (err, stats) => {
+      if (err && err.code === 'ENOENT') {
+        // No domain-specific configuration file
+        return reject()
+      }
 
-    // no error, file exists
-    conf.loadFile(domainConfig)
+      // no error, file exists
+      conf.loadFile(domainConfig)
+
+      return resolve()
+    })
   })
 }
 

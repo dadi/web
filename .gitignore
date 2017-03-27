@@ -3,7 +3,6 @@
 
 public/*
 app/*
-workspace/*
 !test/app
 !test/app/public
 !test/workspace
