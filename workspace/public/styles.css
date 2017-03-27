@@ -4,7 +4,7 @@
 }
 
 body {
-	padding: 3%;
+	padding: 5%;
 	background: #FAFAF4;
 	max-width: 800px;
 	font-family: Georgia, serif;
@@ -69,21 +69,24 @@ article {
 article p {
 	margin-bottom: 1.2em;
 }
-article time {
-	float: left;
-	width: 20%;
+
+@media only screen and (min-width: 500px) {
+	article time {
+		float: left;
+		width: 20%;
+	}
+	article .content {
+		width: 80%;
+		float: left;
+	}
 }
-article .content {
-	width: 80%;
-	float: left;
-}
+
 article ol, ul {
 	margin-left: 15px;
 }
 
 code {
-	padding-bottom: 20px;
-	display: block;
+	display: inline-block;
 }
 
 
