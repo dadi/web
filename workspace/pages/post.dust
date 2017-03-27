@@ -1,5 +1,9 @@
 {>"partials/header" /}
 
+{<title}
+	{posts.results[0].attributes.title}
+{/title}
+
 {#posts.results}
 	{>"partials/post" /}
 {/posts.results}
