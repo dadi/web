@@ -4,7 +4,7 @@
     "name": "Blog posts as markdown files.",
     "source": {
       "type": "markdown",
-      "path": "./posts"
+      "path": "./workspace/posts"
     },
     "paginate": true,
     "count": 5,
