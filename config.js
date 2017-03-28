@@ -242,12 +242,12 @@ var conf = convict({
       default: false
     },
     debugLevel: {
-      doc: '',
+      doc: 'One of [ DEBUG | INFO | WARN | ERROR ]',
       format: String,
       default: 'WARN'
     },
     whitespace: {
-      doc: '',
+      doc: 'Minify the HTML output',
       format: Boolean,
       default: false
     },
