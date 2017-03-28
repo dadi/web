@@ -367,7 +367,7 @@ function notFound (api, req, res) {
  * @param {Object} req -
  * @param {Array} paths -
  * @param {string} pathString -
- * @returns {Object} - 
+ * @returns {Object} -
  */
 function findPath (req, paths, pathString) {
   // get the host key that matches the request's host header
