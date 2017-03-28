@@ -8,11 +8,12 @@ var config = require(path.join(__dirname, '/../../../config'))
 
 var _pages = {}
 
-var Page = function (name, schema) {
+var Page = function (name, schema, hostKey) {
   schema.settings = schema.settings || {}
 
   this.name = name // schema.page.name || name
   this.key = schema.page.key || name
+  this.hostKey = hostKey || ''
   this.template = schema.template || name + '.dust'
   this.contentType = schema.contentType || 'text/html'
   this.datasources = schema.datasources || []
@@ -30,7 +31,7 @@ var Page = function (name, schema) {
 
   this.routes = this.constructRoutes(schema)
 
-  _pages[name] = this
+  _pages[hostKey + name] = this
 }
 
 /**
@@ -148,9 +149,9 @@ function checkCacheSetting (schema, name) {
 }
 
 // exports
-module.exports = function (name, schema) {
-  if (name && schema) return new Page(name, schema)
-  return _pages[name]
+module.exports = function (name, schema, hostKey) {
+  if (name && schema) return new Page(name, schema, hostKey)
+  return _pages[hostKey + name]
 }
 
 module.exports.Page = Page

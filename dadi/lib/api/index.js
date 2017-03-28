@@ -322,10 +322,14 @@ function onError (api) {
       data.stack = err.stack.split('\n')
     }
 
-    // look for a loaded path that matches the error code
-    var path = _.findWhere(api.paths, { path: '/' + data.statusCode })
+    // look for a page that has been loaded
+    // that matches the error code and call its handler if it exists
+    var path = findPath(req, api.paths, data.statusCode)
+
     // fallback to a generic /error path
-    if (!path) path = _.findWhere(api.paths, { path: '/error' })
+    if (!path) {
+      path = findPath(req, api.paths, '/error')
+    }
 
     if (path) {
       req.error = data
@@ -346,17 +350,42 @@ function notFound (api, req, res) {
     res.statusCode = 404
 
     // look for a 404 page that has been loaded
-    // along with the rest of the API, and call its
-    // handler if it exists
-    var path = _.findWhere(api.paths, { path: '/404' })
+    // and call its handler if it exists
+    var path = findPath(req, api.paths, '404')
 
-    if (path) {
-      path.handler(req, res)
+    if (path && Array.isArray(path) && path[0]) {
+      path[0].handler(req, res)
     } else {
       // otherwise, respond with default message
       res.end('HTTP 404 Not Found')
     }
   }
+}
+
+/**
+ *
+ * @param {Object} req -
+ * @param {Array} paths -
+ * @param {string} pathString -
+ * @returns {Object} - 
+ */
+function findPath (req, paths, pathString) {
+  // get the host key that matches the request's host header
+  var virtualHosts = config.get('virtualHosts')
+
+  var host = _.findKey(virtualHosts, (virtualHost) => {
+    return _.contains(virtualHost.hostnames, req.headers.host)
+  }) || ''
+
+  var matchingPaths = _.filter(paths, (path) => {
+    return path.path.indexOf(host) > -1
+  })
+
+  // look for a page matching the pathString that has been loaded
+  // along with the rest of the API
+  return _.filter(matchingPaths, (path) => {
+    return path.path.indexOf(pathString) > -1
+  })
 }
 
 function routePriority (path, keys) {

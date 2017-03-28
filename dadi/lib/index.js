@@ -508,7 +508,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
 
   // create a page with the supplied schema,
   // using the filename as the page name
-  var page = new Page(obj.name, schema)
+  var page = Page(obj.name, schema, options.host)
 
   // create a handler for requests to this page
   var controller = new Controller(page, options, schema.page)
@@ -629,22 +629,26 @@ Server.prototype.compile = function (options) {
     }))
 
     // Load component templates
-    dust.loadFiles(componentTemplates)
+    dust.loadFiles(componentTemplates, '', false, options.host)
       .then(() => {
+        debug('templates loaded')
         // Load templates in the template folder that haven't already been loaded
         return dust.loadDirectory(templatePath)
       })
       .then(() => {
+        debug('additional templates loaded %s', templatePath)
         // Load partials
         return _.each(partialPaths, (partialPath) => {
-          return dust.loadDirectory(partialPath, path.basename(partialPath), true)
+          return dust.loadDirectory(partialPath, path.basename(partialPath), true, options.host)
         })
       })
       .then(() => {
+        debug('partials loaded %s', partialPaths.join(', '))
         // Load filters
         return dust.requireDirectory(options.filtersPath)
       })
       .then(() => {
+        debug('filters loaded %s', options.filtersPath)
         // Load helpers
         return dust.requireDirectory(options.helpersPath)
       })

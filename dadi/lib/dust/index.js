@@ -17,11 +17,21 @@ const Dust = function () {
   require('dustjs-helpers')
 
   dust.onLoad = (templateName, opts, callback) => {
-    if (!this.templates[templateName]) {
-      return callback({message: 'Template not found: ' + templateName}, null)
+    var name
+    if (opts && opts.host && templateName.indexOf(opts.host) === -1 && this.templates[opts.host + templateName]) {
+      name = opts.host + templateName
+    } else {
+      name = templateName
     }
 
-    return callback(null, this.templates[templateName])
+    if (!this.templates[name]) {
+      return callback({message: 'Template not found: ' + name}, null)
+    }
+
+    var compiled = dust.compile(this.templates[name])
+    var tmpl = dust.loadSource(compiled)
+
+    return callback(null, tmpl)
   }
 }
 
@@ -57,15 +67,18 @@ Dust.prototype.getEngine = function () {
   return dust
 }
 
-Dust.prototype.load = function (source, templateName) {
-  this.templates[templateName] = source
+Dust.prototype.load = function (source, templateName, key) {
+  key = key || ''
+  this.templates[key + templateName] = source
 
   return source
 }
 
-Dust.prototype.loadDirectory = function (directory, prefix, recursive) {
-  debug('loadDirectory %o %s %s', directory, prefix, recursive)
+Dust.prototype.loadDirectory = function (directory, prefix, recursive, key) {
+  key = key || ''
   prefix = prefix || ''
+
+  debug('loadDirectory %o %s %s %s', directory, prefix, recursive, key)
 
   return new Promise((resolve, reject) => {
     fs.readdir(directory, (err, files) => {
@@ -75,12 +88,12 @@ Dust.prototype.loadDirectory = function (directory, prefix, recursive) {
         return path.join(directory, file)
       })
 
-      resolve(this.loadFiles(filesAbsolute, prefix, recursive))
+      resolve(this.loadFiles(filesAbsolute, prefix, recursive, key))
     })
   })
 }
 
-Dust.prototype.loadFiles = function (files, prefix, recursive) {
+Dust.prototype.loadFiles = function (files, prefix, recursive, key) {
   prefix = prefix || ''
 
   return new Promise((resolve, reject) => {
@@ -91,7 +104,7 @@ Dust.prototype.loadFiles = function (files, prefix, recursive) {
       const basename = path.basename(file, '.dust')
 
       if (stats.isDirectory() && recursive) {
-        queue.push(this.loadDirectory(file, path.join(prefix, basename)))
+        queue.push(this.loadDirectory(file, path.join(prefix, basename), false, key))
       } else if (stats.isFile() && (path.extname(file) === '.dust')) {
         const name = path.join(prefix, basename)
 
@@ -99,7 +112,7 @@ Dust.prototype.loadFiles = function (files, prefix, recursive) {
           fs.readFile(file, 'utf8', (err, data) => {
             if (err) return reject(err)
 
-            return resolve(this.load(data, name))
+            return resolve(this.load(data, name, key))
           })
         })
 
