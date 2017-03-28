@@ -9,21 +9,23 @@ var configPath = path.join(__dirname, '../config/config.development.json.sample'
 var destinationDir = path.join(currentPath, '../../../config')
 var destinationFile = path.join(destinationDir, 'config.development.json')
 
-mkdirp(destinationDir, (err, made) => {
-  if (err) throw err
+if (!fs.existsSync(destinationDir)) {
+  mkdirp(destinationDir, (err, made) => {
+    if (err) throw err
 
-  fs.stat(destinationFile, (err, stats) => {
-    if (err && err.code && err.code === 'ENOENT') {
-      // file doesn't exist
-      fs.readFile(configPath, (err, data) => {
-        if (err) throw err
-
-        fs.writeFile(destinationFile, data, (err) => {
+    fs.stat(destinationFile, (err, stats) => {
+      if (err && err.code && err.code === 'ENOENT') {
+        // file doesn't exist
+        fs.readFile(configPath, (err, data) => {
           if (err) throw err
 
-          console.log('Web configuration created at', destinationFile)
+          fs.writeFile(destinationFile, data, (err) => {
+            if (err) throw err
+
+            console.log('Web configuration created at', destinationFile)
+          })
         })
-      })
-    }
+      }
+    })
   })
-})
+}
