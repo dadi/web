@@ -197,11 +197,11 @@ Controller.prototype.process = function process (req, res, next) {
 
     if (data) data.version = help.getVersion()
 
+    view.setData(data)
+
     if (data.json) {
       return done(null, data)
     }
-
-    view.setData(data)
 
     view.render((err, result) => {
       if (err) return next(err)
