@@ -8,6 +8,7 @@
     "start": "node ./main.js",
     "test": "standard && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test",
     "posttest": "node ./scripts/coverage.js",
+    "postinstall": "node ./scripts/copy-config.js && node ./scripts/copy-workspace.js",
     "snyk-protect": "snyk protect",
     "prepublish": "npm run snyk-protect"
   },
