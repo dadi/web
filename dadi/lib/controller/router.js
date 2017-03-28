@@ -172,7 +172,7 @@ Router.prototype.validate = function (route, req, res) {
     var match = regex.exec(pathname)
 
     // don't subject 404 and 5xx to validation
-    if (/(^\/404$|^\/5[0-9]{2}$)/.test(route.path)) {
+    if (/(404|5[0-9]{2})/.test(res.statusCode)) {
       return resolve()
     }
 
