@@ -11,9 +11,7 @@ var RouteValidator = function (route, param, options) {
 RouteValidator.prototype.get = function (req) {
   return new Promise((resolve, reject) => {
     new Datasource(this.route.path, this.param.fetch, this.options).init((err, datasource) => {
-      if (err) {
-        if (err) return reject(err)
-      }
+      if (err) return reject(err)
 
       datasource.processRequest(this.route.path, req)
 

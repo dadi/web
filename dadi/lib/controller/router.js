@@ -163,7 +163,7 @@ Router.prototype.constrain = function (route, constraint) {
 /**
  * Validates the current route against existing data or business rules
  */
-Router.prototype.validate = function (route, req, res) {
+Router.prototype.validate = function (route, options, req, res) {
   return new Promise((resolve, reject) => {
     // test the supplied url against each matched route.
     // for example: does "/test/2" match "/test/:page"?
@@ -211,7 +211,8 @@ Router.prototype.validate = function (route, req, res) {
             return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in array "' + param.in + '"')
           }
         } else if (param.fetch) {
-          var routeValidator = new RouteValidator(route, param, this.options)
+          var routeValidator = new RouteValidator(route, param, options)
+
           routeValidator.get(req).then(() => {
             return resolve('')
           }).catch((err) => {

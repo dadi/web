@@ -561,7 +561,7 @@ Server.prototype.addComponent = function (options, reload) {
       this.app.use(route.path, options.host, (req, res, next) => {
         if (options.component[req.method.toLowerCase()]) {
           // a matching route found, validate it
-          return this.app.Router.validate(route, req, res).then(() => {
+          return this.app.Router.validate(route, options.component.options, req, res).then(() => {
             return options.component[req.method.toLowerCase()](req, res, next)
           }).catch((err) => {
             if (err) return next(err)
