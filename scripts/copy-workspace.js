@@ -7,9 +7,11 @@ var currentPath = process.cwd() // should be node_modules/@dadi/web
 var workspacePath = path.join(currentPath, 'workspace')
 var destinationDir = path.join(currentPath, '../../../workspace')
 
-if (!fs.existsSync(destinationDir)) {
-  fs.copy(workspacePath, destinationDir, { overwrite: false }, (err) => {
-    if (err) return console.error(err)
-    console.log('Web workspace created at', destinationDir)
-  })
-}
+fs.stat(destinationDir, (err, stats) => {
+  if (err && err.code && err.code === 'ENOENT') {
+    fs.copy(workspacePath, destinationDir, { overwrite: false }, (err) => {
+      if (err) return console.error(err)
+      console.log('Web workspace created at', destinationDir)
+    })
+  }
+})

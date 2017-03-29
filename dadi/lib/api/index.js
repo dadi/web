@@ -331,10 +331,10 @@ function onError (api) {
       path = findPath(req, api.paths, '/error')
     }
 
-    if (path) {
+    if (path && Array.isArray(path) && path[0]) {
       req.error = data
       res.statusCode = data.statusCode
-      path.handler(req, res)
+      path[0].handler(req, res)
     } else {
       // no page found to display the error, output raw data
       res.statusCode = 500
