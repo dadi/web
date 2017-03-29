@@ -13,7 +13,7 @@ fs.stat(destinationFile, (err, stats) => {
     // file doesn't exist
     fs.writeFile(destinationFile, "require('@dadi/web')", function(err) {
       if (err) return console.log(err)
-      console.log("server.js was created!")
+      console.log('Web entry point created at', destinationFile)
     })
   }
 })
