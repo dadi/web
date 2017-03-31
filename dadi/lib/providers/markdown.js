@@ -20,6 +20,7 @@ const MarkdownProvider = function () {}
 MarkdownProvider.prototype.initialise = function initialise (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
+  this.extension = schema.datasource.source.extension ? schema.datasource.source.extension : 'md'
 }
 
 /**
@@ -52,9 +53,13 @@ MarkdownProvider.prototype.processSortParameter = function processSortParameter 
 MarkdownProvider.prototype.load = function load (requestUrl, done) {
   try {
     const sourcePath = path.normalize(this.schema.datasource.source.path)
-    const filenames = fs.readdirSync(sourcePath)
-    const filepaths = filenames.map(i => path.join(sourcePath, i)).filter(item => !/(^|\/)\.[^/.]/g.test(item))
 
+    // Only get files that match the extension provided, or the default set above
+    const extFilter = new RegExp('.' + this.extension + '$', 'g')
+    const filenames = fs.readdirSync(sourcePath).filter(i => extFilter.test(i))
+    const filepaths = filenames.map(i => path.join(sourcePath, i))
+
+    // Process each file
     async.map(filepaths, this.readFileAsync, (err, readResults) => {
       if (err) return done(err, null)
 
@@ -122,7 +127,9 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
 }
 
 MarkdownProvider.prototype.readFileAsync = function readFileAsync (filename, callback) {
-  fs.readFile(filename, 'utf8', callback)
+  fs.readFile(filename, 'utf8', function(err, data){
+    return callback(err, {_name: filename, _contents: data})
+  })
 }
 
 MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data, callback) {
@@ -130,14 +137,23 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
   const posts = []
 
   for (let i = 0; i < data.length; i++) {
-    const bits = yamlRegex.exec(data[i])
+    const bits = yamlRegex.exec(data[i]._contents)
     const attributes = yaml.safeLoad(bits[1] || '')
     const contentText = bits[2] || ''
     const contentHtml = marked(contentText)
+    const parsedPath = path.parse(data[i]._name)
+
+    // Some info about the file
+    const meta = {
+      location: data[i]._name,
+      extension: parsedPath.ext,
+      handle: parsedPath.name
+    }
 
     posts.push({
-      original: data[i],
+      meta,
       attributes,
+      original: data[i]._contents,
       contentText,
       contentHtml
     })

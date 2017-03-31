@@ -1,7 +1,6 @@
 ---
 date: 2016-04-05
 title: How to change the site name in the header
-handle: site-name
 author: The DADI Team
 ---
 

@@ -1,7 +1,6 @@
 ---
 date: 2016-02-17
 title: How to serve static assets
-handle: assets
 author: The DADI Team
 ---
 

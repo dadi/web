@@ -1,7 +1,6 @@
 ---
 date: 2014-04-17
 title: We can handle pagination too...
-handle: pagination
 author: The DADI Team
 ---
 

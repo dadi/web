@@ -1,7 +1,6 @@
 ---
 date: 2016-05-10
 title: Successfully installed and running!
-handle: welcome
 author: The DADI Team
 ---
 
