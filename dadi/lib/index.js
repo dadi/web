@@ -143,14 +143,31 @@ Server.prototype.start = function (done) {
   // serve static files (css,js,fonts)
   if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }))
 
-  if (options.publicPath) {
-    app.use(serveStatic(options.publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }))
+  // serve static files from "public" folders
+  var initPublic = (function (publicPath) {
+    this.app.use(serveStatic(publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }))
     try {
-      app.use(serveFavicon((options.publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico'))
+      this.app.use(serveFavicon((publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico'))
     } catch (err) {
-      // file not found
+      // no favicon found
     }
-  }
+  }).bind(this)
+
+  // init main public path
+  if (options.publicPath) initPublic(options.publicPath)
+
+  // init virtual host public paths
+  _.each(config.get('virtualHosts'), (virtualHost, key) => {
+    var hostConfigFile = './config/' + virtualHost.configFile
+
+    var stats = fs.statSync(hostConfigFile)
+    if (stats) {
+      var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
+      var hostOptions = this.loadPaths(hostConfig.paths)
+
+      initPublic(hostOptions.publicPath)
+    }
+  })
 
   // add debug files to static paths
   if (config.get('debug')) {
@@ -222,6 +239,7 @@ Server.prototype.start = function (done) {
   // load app specific routes
   this.loadApi(options)
 
+  // load virtual host routes
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
     var hostConfigFile = './config/' + virtualHost.configFile
 
@@ -229,16 +247,16 @@ Server.prototype.start = function (done) {
       if (err && err.code === 'ENOENT') {
         // No domain-specific configuration file
         console.error('Host config not found:', hostConfigFile)
+      } else {
+        var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
+        var hostOptions = this.loadPaths(hostConfig.paths)
+
+        hostOptions.host = key
+
+        this.loadApi(hostOptions, true, () => {
+          debug('routes loaded for domain "%s"', key)
+        })
       }
-
-      var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
-      var hostOptions = this.loadPaths(hostConfig.paths)
-
-      hostOptions.host = key
-
-      this.loadApi(hostOptions, true, () => {
-        debug('routes loaded for domain "%s"', key)
-      })
     })
   })
 
