@@ -144,17 +144,17 @@ Server.prototype.start = function (done) {
   if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }))
 
   // serve static files from "public" folders
-  var initPublic = (function (publicPath) {
-    this.app.use(serveStatic(publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }))
+  var initPublic = function (app, publicPath) {
+    app.use(serveStatic(publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }))
     try {
-      this.app.use(serveFavicon((publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico'))
+      app.use(serveFavicon((publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico'))
     } catch (err) {
       // no favicon found
     }
-  }).bind(this)
+  }
 
   // init main public path
-  if (options.publicPath) initPublic(options.publicPath)
+  if (options.publicPath) initPublic(app, options.publicPath)
 
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -165,7 +165,7 @@ Server.prototype.start = function (done) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
       var hostOptions = this.loadPaths(hostConfig.paths)
 
-      initPublic(hostOptions.publicPath)
+      initPublic(app, hostOptions.publicPath)
     }
   })
 
