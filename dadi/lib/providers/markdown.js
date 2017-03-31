@@ -127,7 +127,7 @@ MarkdownProvider.prototype.load = function load (requestUrl, done) {
 }
 
 MarkdownProvider.prototype.readFileAsync = function readFileAsync (filename, callback) {
-  fs.readFile(filename, 'utf8', function(err, data){
+  fs.readFile(filename, 'utf8', function (err, data) {
     return callback(err, {_name: filename, _contents: data})
   })
 }
@@ -144,8 +144,8 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
     const parsedPath = path.parse(data[i]._name)
 
     // Some info about the file
-    attributes._loc = data[i]._name,
-    attributes._ext = parsedPath.ext,
+    attributes._loc = data[i]._name
+    attributes._ext = parsedPath.ext
     attributes._id = parsedPath.name
 
     posts.push({
