@@ -13,7 +13,7 @@
     },
     "requestParams": [
       {
-        "param": "handle", "field": "handle"
+        "param": "handle", "field": "_id"
       }
     ]
   }

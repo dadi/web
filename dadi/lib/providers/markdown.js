@@ -144,14 +144,11 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
     const parsedPath = path.parse(data[i]._name)
 
     // Some info about the file
-    const meta = {
-      location: data[i]._name,
-      extension: parsedPath.ext,
-      handle: parsedPath.name
-    }
+    attributes._loc = data[i]._name,
+    attributes._ext = parsedPath.ext,
+    attributes._id = parsedPath.name
 
     posts.push({
-      meta,
       attributes,
       original: data[i]._contents,
       contentText,
