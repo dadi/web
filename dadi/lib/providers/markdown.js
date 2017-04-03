@@ -1,12 +1,13 @@
 'use strict'
 
 const _ = require('underscore')
+const async = require('async')
 const fs = require('fs')
 const path = require('path')
-const async = require('async')
-const yaml = require('js-yaml')
 const marked = require('marked')
 const meta = require('@dadi/metadata')
+const recursive = require('recursive-readdir')
+const yaml = require('js-yaml')
 
 const MarkdownProvider = function () {}
 
@@ -43,6 +44,13 @@ MarkdownProvider.prototype.processSortParameter = function processSortParameter 
   return sort
 }
 
+// Only get files that match the extension provided, or the default set above
+// `file` is the absolute path to the file
+MarkdownProvider.prototype.ignoreFunc = function (file, stats) {
+  console.log(this)
+  return path.extname(file) !== '.' + this.extension
+}
+
 /**
  * load - loads data form the datasource
  *
@@ -50,75 +58,74 @@ MarkdownProvider.prototype.processSortParameter = function processSortParameter 
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-MarkdownProvider.prototype.load = function load (requestUrl, done) {
+MarkdownProvider.prototype.load = function (requestUrl, done) {
   try {
     const sourcePath = path.normalize(this.schema.datasource.source.path)
 
-    // Only get files that match the extension provided, or the default set above
-    const extFilter = new RegExp('.' + this.extension + '$', 'g')
-    const filenames = fs.readdirSync(sourcePath).filter(i => extFilter.test(i))
-    const filepaths = filenames.map(i => path.join(sourcePath, i))
+    // Ignore files without the correct extension
+    recursive(sourcePath, [(file, stats) => { return path.extname(file) !== '.' + this.extension }], (err, filepaths) => {
+      if (err) return done(err)
 
-    // Process each file
-    async.map(filepaths, this.readFileAsync, (err, readResults) => {
-      if (err) return done(err, null)
+      // Process each file
+      async.map(filepaths, this.readFileAsync, (err, readResults) => {
+        if (err) return done(err, null)
 
-      this.parseRawDataAsync(readResults, (posts) => {
-        const sort = this.processSortParameter(this.schema.datasource.sort)
-        const search = this.schema.datasource.search
-        const count = this.schema.datasource.count
-        const fields = this.schema.datasource.fields || []
-        const filter = this.schema.datasource.filter
-        const page = this.schema.datasource.page || 1
+        this.parseRawDataAsync(readResults, (posts) => {
+          const sort = this.processSortParameter(this.schema.datasource.sort)
+          const search = this.schema.datasource.search
+          const count = this.schema.datasource.count
+          const fields = this.schema.datasource.fields || []
+          const filter = this.schema.datasource.filter
+          const page = this.schema.datasource.page || 1
 
-        let metadata = []
+          let metadata = []
+          let postCount = posts.length
 
-        if (search) {
-          posts = _.where(posts, search)
-        }
+          if (search) {
+            posts = _.where(posts, search)
+          }
 
-        if (filter) {
-          posts = _.filter(posts, (post) => {
-            return _.where([post.attributes], filter).length > 0
-          })
-        }
-
-        let postCount = posts.length
-
-        // Sort posts by attributes field (with date support)
-        if (sort && Object.keys(sort).length > 0) {
-          Object.keys(sort).forEach(field => {
-            posts = _.sortBy(posts, (post) => {
-              const value = post.attributes[field]
-              const valueAsDate = new Date(value)
-              return (valueAsDate.toString() !== 'Invalid Date')
-                ? +(valueAsDate)
-                : value
+          if (!_.isEmpty(filter)) {
+            posts = _.filter(posts, (post) => {
+              return _.findWhere([post.attributes], filter)
             })
-            if (sort[field] === -1) {
-              posts = posts.reverse()
-            }
-          })
-        }
+          }
 
-        // Paginate if required
-        if (page && count) {
-          const offset = (page - 1) * count
-          posts = posts.slice(offset, offset + count)
+          // Sort posts by attributes field (with date support)
+          if (sort && Object.keys(sort).length > 0) {
+            Object.keys(sort).forEach(field => {
+              posts = _.sortBy(posts, (post) => {
+                const value = post.attributes[field]
+                const valueAsDate = new Date(value)
+                return (valueAsDate.toString() !== 'Invalid Date')
+                  ? +(valueAsDate)
+                  : value
+              })
+              if (sort[field] === -1) {
+                posts = posts.reverse()
+              }
+            })
+          }
 
-          // Metadata for pagination
-          const options = []
-          options['page'] = parseInt(page)
-          options['limit'] = parseInt(count)
+          // Paginate if required
+          if (page && count) {
+            const offset = (page - 1) * count
+            posts = posts.slice(offset, offset + count)
 
-          metadata = meta(options, parseInt(postCount))
-        }
+            // Metadata for pagination
+            const options = []
+            options['page'] = parseInt(page)
+            options['limit'] = parseInt(count)
 
-        if (fields && !_.isEmpty(fields)) {
-          posts = _.chain(posts).selectFields(fields.join(',')).value()
-        }
+            metadata = meta(options, parseInt(postCount))
+          }
 
-        done(null, { results: posts, metadata: metadata || null })
+          if (!_.isEmpty(fields)) {
+            posts = _.chain(posts).selectFields(fields.join(',')).value()
+          }
+
+          done(null, { results: posts, metadata: metadata || null })
+        })
       })
     })
   } catch (ex) {

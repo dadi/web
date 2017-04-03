@@ -674,16 +674,12 @@ describe('Data Providers', function (done) {
               Datasource.Datasource.prototype.loadDatasource.restore()
 
               should.exist(res.body.markdown.results)
-              res.body.markdown.results.should.eql([{
-                  "original": "---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n",
-                  "attributes": {
-                    "title": "A Quick Brown Fox",
-                    "category": "guggenheim",
-                    "date": "2010-01-01T00:00:00.000Z"
-                  },
-                  "contentText": "# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n",
-                  "contentHtml": "<h1 id=\"basic-markdown\">Basic markdown</h1>\n<p>Markdown can have <a href=\"https://dadi.tech\">links</a>, <em>emphasis</em> and <strong>bold</strong> formatting.</p>\n"
-              }])
+              res.body.markdown.results.should.be.Array
+              res.body.markdown.results[0].original.should.eql("---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n"),
+              res.body.markdown.results[0].attributes.title.should.eql("A Quick Brown Fox")
+              res.body.markdown.results[0].attributes.category.should.eql("guggenheim")
+              res.body.markdown.results[0].attributes.date.should.eql("2010-01-01T00:00:00.000Z")
+
               done()
             })
           })
@@ -712,7 +708,7 @@ describe('Data Providers', function (done) {
 
               res.body.markdown.metadata.page.should.equal(1)
               res.body.markdown.metadata.limit.should.equal(1)
-              res.body.markdown.metadata.totalPages.should.be.above(1);
+              res.body.markdown.metadata.totalPages.should.be.above(1)
               res.body.markdown.metadata.nextPage.should.equal(2)
 
               done()
@@ -746,8 +742,7 @@ describe('Data Providers', function (done) {
               res.body.markdown.results[0].attributes.category.should.equal('sports')
               res.body.markdown.metadata.page.should.equal(1)
               res.body.markdown.metadata.limit.should.equal(1)
-              res.body.markdown.metadata.totalPages.should.equal(1);
-              should.not.exist(res.body.markdown.metadata.nextPage);
+              res.body.markdown.metadata.totalPages.should.be.above(1)
 
               done()
             })
