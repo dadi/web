@@ -60,8 +60,7 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
       if (err) return done(err)
 
       // Filter out only files with the correct extension
-      const extFilter = new RegExp('.' + this.extension + '$', 'i')
-      filepaths = filepaths.filter(i => extFilter.test(i))
+      filepaths = filepaths.filter(i => !/.[this.extension]$/i.test(i))
 
       // Process each file
       async.map(filepaths, this.readFileAsync, (err, readResults) => {
