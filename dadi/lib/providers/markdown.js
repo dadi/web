@@ -150,8 +150,10 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
     attributes._loc = data[i]._name
     attributes._ext = parsedPath.ext
     attributes._id = parsedPath.name
+    attributes._path = path.normalize(parsedPath.dir).split('/')
 
     posts.push({
+      meta,
       attributes,
       original: data[i]._contents,
       contentText,
