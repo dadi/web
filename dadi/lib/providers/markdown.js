@@ -44,13 +44,6 @@ MarkdownProvider.prototype.processSortParameter = function processSortParameter 
   return sort
 }
 
-// Only get files that match the extension provided, or the default set above
-// `file` is the absolute path to the file
-MarkdownProvider.prototype.ignoreFunc = function (file, stats) {
-  console.log(this)
-  return path.extname(file) !== '.' + this.extension
-}
-
 /**
  * load - loads data form the datasource
  *
@@ -63,8 +56,12 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
     const sourcePath = path.normalize(this.schema.datasource.source.path)
 
     // Ignore files without the correct extension
-    recursive(sourcePath, [(file, stats) => { return path.extname(file) !== '.' + this.extension }], (err, filepaths) => {
+    recursive(sourcePath, (err, filepaths) => {
       if (err) return done(err)
+
+      // Filter out only files with the correct extension
+      const extFilter = new RegExp('.' + this.extension + '$', 'i')
+      filepaths = filepaths.filter(i => extFilter.test(i))
 
       // Process each file
       async.map(filepaths, this.readFileAsync, (err, readResults) => {
