@@ -11,6 +11,10 @@
     "sort": {
       "date": -1
     },
+    "fields": [
+      "attributes",
+      "contentHtml"
+    ],
     "requestParams": [
       {
         "param": "handle", "field": "_id"
