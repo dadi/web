@@ -150,15 +150,8 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
     attributes._id = parsedPath.name
     attributes._ext = parsedPath.ext
     attributes._loc = data[i]._name
-
-    attributes._path = 
-      parsedPath.dir.
-      replace(path.normalize(this.schema.datasource.source.path), '').
-      replace(/^\/|\/$/g, '').
-      split('/')
-
-    if (attributes._path == '') attributes._path = null
-
+    attributes._path = parsedPath.dir.replace(path.normalize(this.schema.datasource.source.path), '').replace(/^\/|\/$/g, '').split('/')
+    attributes._path = attributes._path.includes('') ? null : attributes._path
 
     posts.push({
       attributes,
