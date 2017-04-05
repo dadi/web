@@ -14,14 +14,12 @@ var TestHelper = require(__dirname + '/../help')()
 var Server = require(__dirname + '/../../dadi/lib')
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
-var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port')
-var secureClientHost = 'https://' + config.get('server.host') + ':' + config.get('server.port')
-
-var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port')
-var credentials = { clientId: config.get('auth.clientId'), secret: config.get('auth.secret') }
-
-var client = request(clientHost)
-var secureClient = request(secureClientHost)
+var clientHost
+var secureClientHost
+var apiHost
+var credentials
+var client
+var secureClient
 var scope
 
 describe('Routing', function (done) {
@@ -40,6 +38,9 @@ describe('Routing', function (done) {
         port: 5111,
         redirectPort: 0,
         protocol: 'http'
+      },
+      rewrites: {
+        forceDomain: ''
       }
     }).then(() => {
       TestHelper.stopServer(done)
@@ -52,12 +53,24 @@ describe('Routing', function (done) {
       server: {
         enabled: true,
         host: '127.0.0.1',
-        port: 5000
+        port: 5000,
+        redirectPort: 0,
+        protocol: 'http'
       }
     }
 
     TestHelper.updateConfig(configUpdate).then(() => {
       TestHelper.disableApiConfig().then(() => {
+
+        clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+        secureClientHost = 'https://' + config.get('server.host') + ':' + config.get('server.port')
+
+        apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+        credentials = { clientId: config.get('auth.clientId'), secret: config.get('auth.secret') }
+
+        client = request(clientHost)
+        secureClient = request(secureClientHost)
+
         done()
       })
     })
@@ -602,6 +615,56 @@ describe('Routing', function (done) {
             .get('/test')
             .expect(301)
             .end(function (err, res) {
+              if (err) return done(err)
+              done()
+            })
+        })
+      })
+    })
+  })
+
+  describe('domain redirect', function() {
+    it('should redirect to specified domain when rewrites.forceDomain is configured', function(done) {
+      var pages = TestHelper.setUpPages()
+
+      var configUpdate = {
+        rewrites: {
+          forceDomain: 'example.com'
+        }
+      }
+
+      TestHelper.updateConfig(configUpdate).then(() => {
+        TestHelper.startServer(pages).then(() => {
+          client
+            .get('/test')
+            .end((err, res) => {
+              should.exist(res.headers.location)
+              res.headers.location.should.eql('http://example.com:80/test')
+              res.statusCode.should.eql(301)
+              if (err) return done(err)
+              done()
+            })
+        })
+      })
+    })
+
+    it('should redirect to specified domain and port when rewrites.forceDomain is configured', function(done) {
+      var pages = TestHelper.setUpPages()
+
+      var configUpdate = {
+        rewrites: {
+          forceDomain: 'example.com:81'
+        }
+      }
+
+      TestHelper.updateConfig(configUpdate).then(() => {
+        TestHelper.startServer(pages).then(() => {
+          client
+            .get('/test')
+            .end((err, res) => {
+              should.exist(res.headers.location)
+              res.headers.location.should.eql('http://example.com:81/test')
+              res.statusCode.should.eql(301)
               if (err) return done(err)
               done()
             })
