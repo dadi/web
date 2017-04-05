@@ -124,6 +124,7 @@ Server.prototype.start = function (done) {
     app.use(raven.middleware.express.requestHandler(config.get('logging.sentry.dsn')))
   }
 
+  // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
     app.use(forceDomain({
       hostname: config.get('rewrites.forceDomain'),

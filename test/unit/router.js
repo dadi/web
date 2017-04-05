@@ -1,5 +1,6 @@
 var _ = require('underscore')
 var fs = require('fs')
+var nock = require('nock')
 var request = require('supertest')
 var should = require('should')
 var sinon = require('sinon')
@@ -49,9 +50,11 @@ describe('Router', function (done) {
   })
 
   afterEach(function (done) {
-    TestHelper.stopServer(function() {
-      // remove temporary constraints file
-      cleanupPath(constraintsPath, done)
+    TestHelper.updateConfig({ rewrites: { path: '' } }).then(() => {
+      TestHelper.stopServer(function() {
+        // remove temporary constraints file
+        cleanupPath(constraintsPath, done)
+      })
     })
   })
 
@@ -85,6 +88,43 @@ describe('Router', function (done) {
     server.app.Router.handlers['getCategories'].should.exist
 
     done()
+  })
+
+  it('should load rewrite rules if found', function (done) {
+    var routerConfig = {
+      rewrites: {
+        forceLowerCase: true,
+        allowJsonView: true,
+        loadDatasourceAsFile: false,
+        path: 'test/app/routes/rewrites.txt'
+      }
+    }
+
+    TestHelper.disableApiConfig().then(() => {
+      TestHelper.updateConfig(routerConfig).then(() => {
+        Server.app = api()
+        var server = Server
+
+        Router(server, { routesPath: path.resolve(__dirname + '/../app/routes') })
+
+        server.app.Router.loadRewrites({}, () => {
+          server.app.Router.rules.length.should.be.above(0)
+
+          var routerConfig = {
+            rewrites: {
+              forceLowerCase: true,
+              allowJsonView: true,
+              loadDatasourceAsFile: false,
+              path: ''
+            }
+          }
+
+          TestHelper.updateConfig(routerConfig).then(() => {
+            done()
+          })
+        })
+      })
+    })
   })
 
   describe('Redirects/Rewrites', function (done) {
@@ -299,6 +339,142 @@ describe('Router', function (done) {
                   done()
                 })
             })
+          })
+        })
+      })
+    })
+
+    it('should redirect to new location if the current request URL is found in a rewrites file', function (done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
+          var pages = TestHelper.setUpPages()
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path)
+              .end(function (err, res) {
+                res.statusCode.should.eql(301)
+                res.headers.location.should.eql('http://www.example.com/new-site/test')
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it('should return 403 status if redirect rule specifies it', function (done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
+          var pages = TestHelper.setUpPages()
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get('/test/403')
+              .end(function (err, res) {
+                res.statusCode.should.eql(403)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it('should return 410 status if redirect rule specifies it', function (done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
+          var pages = TestHelper.setUpPages()
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get('/test/410')
+              .end(function (err, res) {
+                res.statusCode.should.eql(410)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it('should return content-type if redirect rule specifies it', function (done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
+          var pages = TestHelper.setUpPages()
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get('/test/type')
+              .end(function (err, res) {
+                res.statusCode.should.eql(301)
+                res.headers.location.should.eql('http://www.example.com/new-site/test')
+                res.headers['content-type'].should.eql('application/xml')
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it.skip('should invert redirect rule', function (done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
+          var pages = TestHelper.setUpPages()
+
+          var page1 = Page('page10', TestHelper.getPageSchema())
+          page1.template = 'test.dust'
+          page1.routes[0].path = '/test/assets/images/main'
+          page1.datasources = []
+          page1.events = []
+          page1.settings.cache = false
+          pages.push(page1)
+
+          var page2 = Page('page200', TestHelper.getPageSchema())
+          page2.template = 'test.dust'
+          page2.routes[0].path = '/index'
+          page2.datasources = []
+          page2.events = []
+          page2.settings.cache = false
+          pages.push(page2)
+
+          console.log(pages)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get('/test/assets/images/main')
+              .end(function (err, res) {
+                console.log(res)
+                res.statusCode.should.eql(301)
+                res.headers.location.should.eql('http://www.example.com/new-site/test')
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it('should proxy the request if rewrite rule specifies', function (done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].routes[0].path = '/test/proxy'
+
+          var scope = nock('http://cdn.example.com').get('/proxy').reply(200, 'PROXY!')
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get('/test/proxy')
+              .end(function (err, res) {
+                res.statusCode.should.eql(200)
+                should.exist(res.headers.via)
+                res.text.should.eql('PROXY!')
+                done()
+              })
           })
         })
       })

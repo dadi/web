@@ -322,7 +322,7 @@ module.exports = function (server, options) {
     server.app.use((req, res, next) => {
       if (!this.shouldCall) return next()
 
-      log.debug({module: 'router'}, '[Router] processing: ' + req.url)
+      debug('processing %s', req.url)
 
       if (!server.app.Router.rewritesDatasource || server.app.Router.loadDatasourceAsFile || server.app.Router.rewritesDatasource === '') return next()
 
