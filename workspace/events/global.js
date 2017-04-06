@@ -3,7 +3,7 @@ var Event = function (req, res, data, callback) {
   data.global.timestamp = new Date().getTime()
 
   // Fin
-  callback()
+  callback(null)
 }
 
 module.exports = function (req, res, data, callback) {

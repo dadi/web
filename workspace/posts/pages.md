@@ -4,9 +4,9 @@ title: How to create a new page
 author: The DADI Team
 ---
 
-Add a your-page-name.json and your-page-name.dust to the `workspace/pages` folder:
+Add files `your-page-name.json` and `your-page-name.dust` to the `workspace/pages` folder:
 
-```JSON
+```json
 {
   "page": {
     "name": "your_page_name",
@@ -20,7 +20,7 @@ Add a your-page-name.json and your-page-name.dust to the `workspace/pages` folde
 }
 ```
 
-In your dust file you can put any HTML or [Dust.js](http://www.dustjs.com/)
+In the dust file you can put any HTML or make use of the syntax provided by [Dust.js](http://www.dustjs.com/).
 
 ```
 {>"partials/header" /}
