@@ -59,6 +59,8 @@ describe('Routing', function (done) {
       }
     }
 
+    TestHelper.setupApiIntercepts()
+
     TestHelper.updateConfig(configUpdate).then(() => {
       TestHelper.disableApiConfig().then(() => {
 
