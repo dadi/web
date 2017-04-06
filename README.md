@@ -1,4 +1,4 @@
-<img src="https://dadi.tech/assets/products/dadi-web.png" alt="DADI Web" height="65"/>
+<img src="http://52.209.207.148/assets/products/dadi-web-full.png" alt="DADI Web" height="65"/>
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
 [![coverage](https://img.shields.io/badge/coverage-70%25-yellow.svg?style=flat?style=flat-square)](https://github.com/dadi/web)
@@ -9,7 +9,7 @@
 
 * [Overview](#overview)
 * [Requirements](#requirements)
-* [Getting started](#getting-started)
+* [Your First Web Project](#your-first-web-project)
 * [Links](#links)
 
 ## Overview
@@ -24,72 +24,40 @@ DADI Web is part of [DADI](https://github.com/dadi/), a suite of components cove
 
 ## Requirements
 
-* Node.js versions:
-  * 4.7.0
-  * 5.12.0
-  * 6.9.2
+* **[Node.js](https://www.nodejs.org/)** (supported versions: 4.7.0, 5.12.0, 6.9.2)
 
-## Getting started
+## Your first Web project
 
-### Initialise the project
-
-Running `npm init` adds a file called `package.json` to your project, allowing you to easily add dependencies to it:
-
-```bash
-$ npm init
-```
-
-### Install the module from NPM
+### Install Web
 
 All DADI platform microservices are available from [NPM](https://www.npmjs.com/). To add *Web* to your project as a dependency:
 
 ```bash
+$ cd my-app
 $ npm install --save @dadi/web
 ```
 
-### Add an entry point
+As part of the installation process of the `@dadi/web` package, several files and folders were added to your project:
 
-You'll need an entry point for your project. We'll create a file called `index.js` and later we will start the application with `node index.js`.
+* `config/config.development.json`
+* `workspace/`
+* `server.js`
 
-Add the following to the new file:
+### Start the server
 
-```js
-/**
- *  index.js
- */
-var app = require('@dadi/web')
+With the `server.js` in the root of your application, Web can be started from the command line simply by issuing the following command:
+
+```bash
+$ npm start
 ```
+
+With the default configuration, our Web server is available at http://localhost:3001. Visit this URL in your browser to see a welcome page.
 
 ### Configuration
 
 Web requires a configuration file specific to the application environment. For example in the production environment it will look for a file named `config.production.json`.
 
-Place configuration files in a `config` folder in your application root, for example `config/config.development.json`. Full configuration documentation can be found at http://docs.dadi.tech/web/getting-started/configuration/.
-
-**Sample configuration**
-
-```json
-{
-  "server": {
-    "host": "localhost",
-    "port": 3000
-  },
-  "api": {
-    "host": "localhost",
-    "port": 3001
-  }
-}
-```
-
-### Start the server
-
-Web can be started from the command line simply by issuing the following command:
-
-```bash
-node index.js
-```
-
-With the configuration above, our Web server is available at http://localhost:3000.
+Configuration files live in a `config` folder in your application root, for example `config/config.development.json`. Full configuration documentation can be found at http://docs.dadi.tech/web/getting-started/configuration/.
 
 #### Run Web as a service
 
@@ -98,7 +66,16 @@ To run your Web application in the background as a service, install Forever and 
 ```bash
 $ npm install forever forever-service -g
 
-$ forever-service install -s index.js -e NODE_ENV=production web --start
+$ forever-service install -s server.js -e NODE_ENV=production web --start
+```
+
+You can now interact with the `web` service using the following commands:
+
+```bash
+$ [sudo] service web start
+$ [sudo] service web stop
+$ [sudo] service web status
+$ [sudo] service web restart
 ```
 
 > Note: the environment variable `NODE_ENV=production` must be set to required the configuration version matching the configuration files available in the `config` directory.
