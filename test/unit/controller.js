@@ -12,6 +12,7 @@ var TestHelper = require(__dirname + '/../help')()
 var config = require(__dirname + '/../../config')
 var help = require(__dirname + '/../../dadi/lib/help')
 var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
+var apiProvider = require(__dirname + '/../../dadi/lib/providers/dadiapi')
 
 var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
 
@@ -264,7 +265,7 @@ describe('Controller', function (done) {
           .get(/cars\/makes/)
           .reply(200, results2)
 
-        var providerSpy = sinon.spy(remoteProvider.prototype, 'load')
+        var providerSpy = sinon.spy(apiProvider.prototype, 'load')
 
         TestHelper.startServer(pages).then(() => {
           var client = request(connectionString)
@@ -318,7 +319,7 @@ describe('Controller', function (done) {
           .get(endpoint2)
           .reply(200, results2)
 
-        var providerSpy = sinon.spy(remoteProvider.prototype, 'load')
+        var providerSpy = sinon.spy(apiProvider.prototype, 'load')
 
         TestHelper.startServer(pages).then(() => {
           var client = request(connectionString)

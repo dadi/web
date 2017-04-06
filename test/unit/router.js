@@ -11,7 +11,7 @@ var Controller = require(__dirname + '/../../dadi/lib/controller')
 var datasource = require(__dirname + '/../../dadi/lib/datasource')
 var libHelp = require(__dirname + '/../../dadi/lib/help')
 var Page = require(__dirname + '/../../dadi/lib/page')
-var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
+var apiProvider = require(__dirname + '/../../dadi/lib/providers/dadiapi')
 var Router = require(__dirname + '/../../dadi/lib/controller/router')
 var Server = require(__dirname + '/../../dadi/lib')
 var TestHelper = require(__dirname + '/../help')()
@@ -150,7 +150,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{'make': 'ford'}] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -185,7 +185,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{'make': 'ford'}] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -220,7 +220,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{'make': 'ford'}] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -255,7 +255,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{'make': 'ford'}] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -289,7 +289,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{'make': 'ford'}] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -324,7 +324,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{'make': 'ford'}] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -535,7 +535,7 @@ describe('Router', function (done) {
 
           // provide API response
           var redirectResults = { results: [{'rule': '/test', 'replacement': '/books', 'redirectType': 301}] }
-          var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+          var providerStub = sinon.stub(apiProvider.prototype, 'load')
           providerStub.yields(null, redirectResults)
 
           TestHelper.startServer(pages).then(() => {
@@ -579,7 +579,7 @@ describe('Router', function (done) {
 
           // provide API response
           var redirectResults = { results: [{'rule': '/test', 'replacement': '/books', 'redirectType': 301}] }
-          var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+          var providerStub = sinon.stub(apiProvider.prototype, 'load')
           providerStub.yields(null, redirectResults)
 
           TestHelper.startServer(pages).then(() => {
@@ -742,7 +742,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{ "make": "ford" }, { "make": "mazda" }, { "make": "toyota" }] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.onFirstCall().yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -767,7 +767,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{ "make": "ford" }, { "make": "mazda" }, { "make": "toyota" }] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.onFirstCall().yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -809,7 +809,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [{ "name": "ford" }, { "name": "mazda" }, { "name": "toyota" }] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.onFirstCall().yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
@@ -834,7 +834,7 @@ describe('Router', function (done) {
 
             // provide API response
             var results = { results: [] }
-            var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+            var providerStub = sinon.stub(apiProvider.prototype, 'load')
             providerStub.onFirstCall().yields(null, results)
 
             TestHelper.startServer(pages).then(() => {
