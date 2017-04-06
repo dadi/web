@@ -145,17 +145,40 @@ Server.prototype.start = function (done) {
   if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }))
 
   // serve static files from "public" folders
-  var initPublic = function (app, publicPath) {
-    app.use(serveStatic(publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl }))
-    try {
-      app.use(serveFavicon((publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico'))
-    } catch (err) {
-      // no favicon found
-    }
+  var initPublic = function (app, hosts, publicPath) {
+    // favicon middleware
+    app.use((req, res, next) => {
+      // attempts to serve a favicon if the current host header matches
+      // one of the host names specified when this middleware was added to the stack
+      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
+        try {
+          var fn = serveFavicon((publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico')
+          fn(req, res, next)
+        } catch (err) {
+          // no favicon found
+          next()
+        }
+      } else {
+        next()
+      }
+    })
+
+    // static file middleware, for "public" folder
+    app.use((req, res, next) => {
+      var fn = serveStatic(publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl })
+
+      // attempts to serve a static file if the current host header matches
+      // one of the host names specified when this middleware was added to the stack
+      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
+        fn(req, res, next)
+      } else {
+        next()
+      }
+    })
   }
 
   // init main public path
-  if (options.publicPath) initPublic(app, options.publicPath)
+  if (options.publicPath) initPublic(app, [], options.publicPath)
 
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -166,7 +189,7 @@ Server.prototype.start = function (done) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
       var hostOptions = this.loadPaths(hostConfig.paths)
 
-      initPublic(app, hostOptions.publicPath)
+      initPublic(app, virtualHost.hostnames, hostOptions.publicPath)
     }
   })
 
