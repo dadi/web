@@ -14,6 +14,7 @@ var Controller = require(__dirname + '/../../dadi/lib/controller')
 var Datasource = require(__dirname + '/../../dadi/lib/datasource')
 var help = require(__dirname + '/../../dadi/lib/help')
 var Page = require(__dirname + '/../../dadi/lib/page')
+var apiProvider = require(__dirname + '/../../dadi/lib/providers/dadiapi')
 var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
 var Server = require(__dirname + '/../../dadi/lib')
 var TestHelper = require(__dirname + '/../help')()
@@ -39,7 +40,7 @@ describe('Data Providers', function (done) {
     done()
   })
 
-  describe('Remote', function (done) {
+  describe('DADI API', function (done) {
     it('should use the datasource auth block when obtaining a token', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -93,7 +94,7 @@ describe('Data Providers', function (done) {
           .times(5)
           .reply(200, data)
 
-          var providerSpy = sinon.spy(remoteProvider.prototype, 'processOutput')
+          var providerSpy = sinon.spy(apiProvider.prototype, 'processOutput')
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
