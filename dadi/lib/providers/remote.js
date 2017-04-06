@@ -8,9 +8,7 @@ const https = require('https')
 const path = require('path')
 const zlib = require('zlib')
 
-const config = require(path.join(__dirname, '/../../../config.js'))
 const log = require('@dadi/logger')
-const help = require(path.join(__dirname, '/../help'))
 const BearerAuthStrategy = require(path.join(__dirname, '/../auth/bearer'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
