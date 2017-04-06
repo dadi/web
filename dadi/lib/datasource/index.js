@@ -32,7 +32,7 @@ Datasource.prototype.init = function (callback) {
     this.originalFilter = _.clone(this.schema.datasource.filter)
 
     if (!this.source.type) {
-      this.source.type = 'remote'
+      this.source.type = 'dadiapi'
     }
 
     if (!providers[this.source.type]) {
