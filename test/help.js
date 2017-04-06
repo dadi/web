@@ -189,6 +189,7 @@ TestHelper.prototype.startServer = function (pages) {
           var controller = Controller(page, options)
 
           Server.addComponent({
+            host: '',
             key: page.key,
             routes: page.routes,
             component: controller
