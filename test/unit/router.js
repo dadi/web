@@ -131,6 +131,7 @@ describe('Router', function (done) {
     describe('Configurable', function (done) {
       beforeEach(function (done) {
         TestHelper.resetConfig().then(() => {
+          TestHelper.setupApiIntercepts()
           done()
         })
       })
@@ -345,9 +346,16 @@ describe('Router', function (done) {
     })
 
     it('should redirect to new location if the current request URL is found in a rewrites file', function (done) {
+      TestHelper.setupApiIntercepts()
+
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
           var pages = TestHelper.setUpPages()
+
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+          var scope = nock(apiConnectionString)
+          .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D')
+          .reply(200, {})
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
@@ -364,9 +372,16 @@ describe('Router', function (done) {
     })
 
     it('should return 403 status if redirect rule specifies it', function (done) {
+      TestHelper.setupApiIntercepts()
+
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
           var pages = TestHelper.setUpPages()
+
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+          var scope = nock(apiConnectionString)
+          .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D')
+          .reply(200, {})
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
@@ -382,9 +397,16 @@ describe('Router', function (done) {
     })
 
     it('should return 410 status if redirect rule specifies it', function (done) {
+      TestHelper.setupApiIntercepts()
+
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
           var pages = TestHelper.setUpPages()
+
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+          var scope = nock(apiConnectionString)
+          .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D')
+          .reply(200, {})
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
@@ -400,9 +422,16 @@ describe('Router', function (done) {
     })
 
     it('should return content-type if redirect rule specifies it', function (done) {
+      TestHelper.setupApiIntercepts()
+
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
           var pages = TestHelper.setUpPages()
+
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+          var scope = nock(apiConnectionString)
+          .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D')
+          .reply(200, {})
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
@@ -442,6 +471,11 @@ describe('Router', function (done) {
 
           console.log(pages)
 
+          var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+          var scope = nock(apiConnectionString)
+          .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D')
+          .reply(200, {})
+
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
             client
@@ -458,6 +492,8 @@ describe('Router', function (done) {
     })
 
     it('should proxy the request if rewrite rule specifies', function (done) {
+      TestHelper.setupApiIntercepts()
+
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ rewrites: { path: 'test/app/routes/rewrites.txt' } }).then(() => {
           var pages = TestHelper.setUpPages()
@@ -489,6 +525,8 @@ describe('Router', function (done) {
           datasource: 'redirects'
         }
       }
+
+      TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig(routerConfig).then(() => {
@@ -531,6 +569,8 @@ describe('Router', function (done) {
           datasource: 'redirects'
         }
       }
+
+      TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig(configUpdate).then(() => {
