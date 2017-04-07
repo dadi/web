@@ -2,6 +2,7 @@
 
 const _ = require('underscore')
 const async = require('async')
+const formatError = require('@dadi/format-error')
 const fs = require('fs')
 const path = require('path')
 const marked = require('marked')
@@ -57,7 +58,16 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
 
     // Ignore files without the correct extension
     recursive(sourcePath, (err, filepaths) => {
-      if (err) return done(err)
+      if (err && err.code === 'ENOENT') {
+        var data = {
+          results: [],
+          errors: [
+            formatError.createWebError('0006', { sourcePath: sourcePath })
+          ]
+        }
+
+        return done(null, data)
+      }
 
       // Filter out only files with the correct extension
       filepaths = filepaths.filter(i => !/.[this.extension]$/i.test(i))

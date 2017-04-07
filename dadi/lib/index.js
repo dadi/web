@@ -83,7 +83,13 @@ Server.prototype.start = function (done) {
       return _.contains(virtualHost.hostnames, req.headers.host)
     })
 
-    var hostConfigFile = './config/' + virtualHosts[host].configFile
+    var hostConfigFile
+
+    if (!host) {
+      hostConfigFile = './config/' + req.headers.host + '.json'
+    } else {
+      hostConfigFile = './config/' + virtualHosts[host].configFile
+    }
 
     fs.stat(hostConfigFile, (err, stats) => {
       if (err && err.code === 'ENOENT') {
@@ -94,6 +100,7 @@ Server.prototype.start = function (done) {
 
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
 
+      // extend main config with "global" settings for host
       config.load({
         global: hostConfig.global
       })

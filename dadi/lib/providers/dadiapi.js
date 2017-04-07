@@ -2,10 +2,11 @@
 
 const _ = require('underscore')
 const debug = require('debug')('web:provider:dadi-api')
-const url = require('url')
+const formatError = require('@dadi/format-error')
 const http = require('http')
 const https = require('https')
 const path = require('path')
+const url = require('url')
 const zlib = require('zlib')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
@@ -265,21 +266,23 @@ DadiApiProvider.prototype.processOutput = function processOutput (res, data, don
   // return 5xx error as the datasource response
   if (res.statusCode && /^5/.exec(res.statusCode)) {
     data = {
-      'results': [],
-      'errors': [{
-        'code': 'WEB-0005',
-        'title': 'Datasource Timeout',
-        'details': "The datasource '" + this.datasource.name + "' timed out: " + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
-      }]
+      results: [],
+      errors: [
+        formatError.createWebError('0005', {
+          datasource: this.datasource,
+          response: res
+        })
+      ]
     }
   } else if (res.statusCode === 404) {
     data = {
-      'results': [],
-      'errors': [{
-        'code': 'WEB-0004',
-        'title': 'Datasource Not Found',
-        'details': 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
-      }]
+      results: [],
+      errors: [
+        formatError.createWebError('0004', {
+          datasource: this.datasource,
+          response: res
+        })
+      ]
     }
   } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     // if the error is anything other than Success or Bad Request, error
