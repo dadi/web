@@ -54,6 +54,10 @@ Cache.prototype.cachingEnabled = function (req) {
 
   var endpoint = this.getEndpointMatchingRequest(req)
 
+  if (!endpoint) {
+    endpoint = this.getEndpointMatchingLoadedPaths(req)
+  }
+
   // not found in the loaded routes, let's not bother caching
   if (!endpoint) return false
 
@@ -67,7 +71,7 @@ Cache.prototype.cachingEnabled = function (req) {
 }
 
 /**
- * Retrieves the page that the requested URL matches
+ * Retrieves the page component that the requested URL matches
  * @param {IncomingMessage} req - the current HTTP request
  * @returns {object}
  */
@@ -75,6 +79,7 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
   var endpoints = this.server.components
   var requestUrl = url.parse(req.url, true).pathname
 
+  // strip trailing slash before testing
   if (requestUrl !== '/' && requestUrl[requestUrl.length - 1] === '/') {
     requestUrl = requestUrl.substring(0, requestUrl.length - 1)
   }
@@ -88,19 +93,26 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
 
   // check if there is a match in the loaded routes for the current request URL
   var endpoint = _.find(endpoints, (endpoint) => {
-    var paths = _.pluck(endpoint.page.routes, 'path')[0]
+    var paths = _.pluck(endpoint.page.routes, 'path')
     return _.contains(paths, requestUrl) && (endpoint.options ? endpoint.options.host === host : true)
   })
 
-  // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
-  if (!endpoint) {
-    endpoint = _.find(endpoints, (endpoint) => {
+  return endpoint
+}
+/**
+ * Retrieves the page component that best matches the paths loaded in api/index.js
+ * @param {IncomingMessage} req - the current HTTP request
+ * @returns {object}
+ */
+Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
+  var endpoints = this.server.components
+
+  // check if there is a match in the loaded routes for the current pages `route:
+  // e.g. { paths: ['xx','yy'] }` property
+  return _.find(endpoints, (endpoint) => {
       return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths))
     })
   }
-
-  return endpoint
-}
 
 /**
  * Retrieves the content-type of the page that the requested URL matches
@@ -109,6 +121,11 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
  */
 Cache.prototype.getEndpointContentType = function (req) {
   var endpoint = this.getEndpointMatchingRequest(req)
+
+  if (!endpoint) {
+    endpoint = this.getEndpointMatchingLoadedPaths(req)
+  }
+
   return endpoint.page.contentType
 }
 
