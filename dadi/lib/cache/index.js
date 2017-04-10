@@ -54,6 +54,10 @@ Cache.prototype.cachingEnabled = function (req) {
 
   var endpoint = this.getEndpointMatchingRequest(req)
 
+  if (!endpoint) {
+    endpoint = this.getEndpointMatchingLoadedPaths(req)
+  }
+
   // not found in the loaded routes, let's not bother caching
   if (!endpoint) return false
 
@@ -67,7 +71,7 @@ Cache.prototype.cachingEnabled = function (req) {
 }
 
 /**
- * Retrieves the page that the requested URL matches
+ * Retrieves the page component that the requested URL matches
  * @param {IncomingMessage} req - the current HTTP request
  * @returns {object}
  */
@@ -76,18 +80,25 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
   var requestUrl = url.parse(req.url, true).pathname
 
   // check if there is a match in the loaded routes for the current request URL
-  var endpoint = _.find(endpoints, function (endpoint) {
-    return _.contains(_.pluck(endpoint.page.routes, 'path')[0], requestUrl)
+  var endpoint = _.find(endpoints, (endpoint) => {
+    return _.contains(_.pluck(endpoint.page.routes, 'path'), requestUrl)
   })
 
-  // check if there is a match in the loaded routes for the current pages `route: { paths: ['xx','yy'] }` property
-  if (!endpoint) {
-    endpoint = _.find(endpoints, function (endpoint) {
-      return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths))
-    })
-  }
-
   return endpoint
+}
+/**
+ * Retrieves the page component that best matches the paths loaded in api/index.js
+ * @param {IncomingMessage} req - the current HTTP request
+ * @returns {object}
+ */
+Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
+  var endpoints = this.server.components
+
+  // check if there is a match in the loaded routes for the current pages `route:
+  // e.g. { paths: ['xx','yy'] }` property
+  return _.find(endpoints, (endpoint) => {
+    return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths))
+  })
 }
 
 /**
@@ -97,6 +108,11 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
  */
 Cache.prototype.getEndpointContentType = function (req) {
   var endpoint = this.getEndpointMatchingRequest(req)
+
+  if (!endpoint) {
+    endpoint = this.getEndpointMatchingLoadedPaths(req)
+  }
+
   return endpoint.page.contentType
 }
 
