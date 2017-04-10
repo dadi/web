@@ -83,13 +83,18 @@ Server.prototype.start = function (done) {
       return _.contains(virtualHost.hostnames, req.headers.host)
     })
 
-    var hostConfigFile
+    // look for a default host
+    if (!host) {
+      host = _.findKey(virtualHosts, (virtualHost) => {
+        return virtualHost.default === true
+      })
+    }
 
     if (!host) {
-      hostConfigFile = './config/' + req.headers.host + '.json'
-    } else {
-      hostConfigFile = './config/' + virtualHosts[host].configFile
+      return next()
     }
+
+    var hostConfigFile = './config/' + virtualHosts[host].configFile
 
     fs.stat(hostConfigFile, (err, stats) => {
       if (err && err.code === 'ENOENT') {
