@@ -110,9 +110,9 @@ Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
   // check if there is a match in the loaded routes for the current pages `route:
   // e.g. { paths: ['xx','yy'] }` property
   return _.find(endpoints, (endpoint) => {
-      return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths))
-    })
-  }
+    return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths))
+  })
+}
 
 /**
  * Retrieves the content-type of the page that the requested URL matches
