@@ -342,7 +342,7 @@ function onError (api) {
       res.end(
         errorTemplate
           .replace(/%%headline%%/gmi, 'Something went wrong.')
-          .replace(/%%human%%/gmi, 'We apologise, but something is not working as it should. It is not something you did, but we can not complete this right now.')
+          .replace(/%%human%%/gmi, 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.')
           .replace(/%%developer%%/gmi, data.message)
           .replace(/%%stack%%/gmi, data.stack)
           .replace(/%%statusCode%%/gmi, data.statusCode)
