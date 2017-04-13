@@ -778,5 +778,151 @@ describe('Data Providers', function (done) {
         })
       })
     })
+
+    it('should process files of a specified extension', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.source.extension = 'txt'
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results.should.be.Array
+              res.body.markdown.results[0].attributes.title.should.eql("A txt file format")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return an error if the source folder does not exist', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.source.path = './foobar'
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.errors)
+              res.body.markdown.errors[0].title.should.eql("No markdown files found")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should ignore malformed dates in a source file', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.source.extension = 'txt'
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results[0].attributes.date.should.eql("madeupdate")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should sort by the specified field in reverse order if set to -1', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.sort.date = -1
+      dsSchema.datasource.count = 2
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results[0].attributes.title.should.eql("Another Quick Brown Fox")
+              res.body.markdown.results[1].attributes.title.should.eql("A Quick Brown Fox")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should only return the selected fields as specified by the datasource', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.fields = ["attributes.title", "attributes._id"]
+      dsSchema.datasource.count = 2
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              console.log(res.body.markdown.results)
+              //res.body.markdown.results[0].attributes.title.should.eql("Another Quick Brown Fox")
+              //res.body.markdown.results[1].attributes.title.should.eql("A Quick Brown Fox")
+              done()
+            })
+          })
+        })
+      })
+    })
   })
 })
