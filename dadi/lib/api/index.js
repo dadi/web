@@ -7,10 +7,11 @@ var path = require('path')
 var pathToRegexp = require('path-to-regexp')
 var raven = require('raven')
 var url = require('url')
-var errorView = require(path.join(__dirname, '/../view/errors'))
 
 var log = require('@dadi/logger')
 var config = require(path.join(__dirname, '/../../../config'))
+
+var errorView = require(path.join(__dirname, '/../view/errors'))
 
 /**
  * Represents the main server.
