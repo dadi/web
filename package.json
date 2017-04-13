@@ -79,7 +79,7 @@
     "nodeunit": ">=0.5.1",
     "proxyquire": "1.7.3",
     "should": "latest",
-    "sinon": "latest",
+    "sinon": "1.17.7",
     "standard": "8.x.x",
     "superagent": "^1.8.0-beta.2",
     "superagent-mock": "^1.10.0",
