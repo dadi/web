@@ -336,8 +336,8 @@ function onError (api) {
       res.statusCode = data.statusCode
       path[0].handler(req, res)
     } else {
-      // no user 500 error page found, use default error template
-      res.statusCode = 500
+      // no user error page found for this statusCode, use default error template
+      res.statusCode = data.statusCode
       res.setHeader('Content-Type', 'text/html')
       res.end(errorView({
         headline: 'Something went wrong.',
