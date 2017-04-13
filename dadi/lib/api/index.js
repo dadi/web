@@ -7,11 +7,10 @@ var path = require('path')
 var pathToRegexp = require('path-to-regexp')
 var raven = require('raven')
 var url = require('url')
+var errorView = require(path.join(__dirname, '/../view/errors'))
 
 var log = require('@dadi/logger')
 var config = require(path.join(__dirname, '/../../../config'))
-
-var errorTemplate = '<!DOCTYPE html><html lang="en"> <head> <meta charset="utf-8"> <title>%%statusCode%% Error</title> <style type="text/css"> *{padding: 0; margin: 0;}html{height: 100%;}body{background: #f4f4f4; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; text-align: center; font-size: 17px; line-height: 23px; height: 100%;}.box{max-width: 500px; padding: 20px; margin: 0 auto; text-align: left;position: absolute;top: 50%; left: 0; right: 0;-webkit-transform: translateY(-50%);-ms-transform: translateY(-50%);transform: translateY(-50%);}.error{background: #e0e0e0; display: none; font-size: 14px; margin: 1.2em 0; overflow: hidden; border-radius: 3px; line-height: normal;}h1{font-size: 24px; margin: 1em 0 0.6em;}h2{background: #000; color: #fff; padding: 15px; font-size: 14px;}p{margin: 0 0 1.2em 0;}.error .stack{padding: 15px; overflow: scroll; -webkit-overflow-scroll: touch;}.error,.message{font-family: "Lucida Sans Typewriter", "Lucida Console", monaco, "Bitstream Vera Sans Mono", monospace;}.message{color: #999; margin-top: 1.2em; font-size: 14px;}.message span{color:#555}.message a{color: inherit;}#toggle:checked + .error{display: block;}label{cursor: pointer;border-radius: 4px;background: #295def;color: #fff;padding: 4px 7px;user-select: none;}</style> </head> <body> <div class="box"> <svg width="90" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96.2 83.9"><style>.st0{fill:#f79800}</style><path class="st0" d="M94.2 83.9H2c-.7 0-1.4-.4-1.7-1-.4-.6-.4-1.4 0-2L46.4 1c.4-.6 1-1 1.7-1s1.4.4 1.7 1l46.1 79.9c.4.6.4 1.4 0 2-.3.6-1 1-1.7 1zm-88.7-4h85.3L48.1 6 5.5 79.9z"/><path class="st0" d="M48.1 59c-1.1 0-2-.9-2-2V30.8c0-1.1.9-2 2-2s2 .9 2 2V57c0 1.1-.9 2-2 2zM48.1 70.4c-1.1 0-2-.9-2-2v-2.8c0-1.1.9-2 2-2s2 .9 2 2v2.8c0 1.1-.9 2-2 2z"/></svg> <h1>%%headline%%</h1> <p>%%human%%</p><label for="toggle" class="show-error">Show me the technical details</label> <input type="checkbox" name="toggle" id="toggle"/> <div class="error"> <h2>%%developer%%</h2><pre class="stack">%%stack%%</div></pre><p class="message"><span><a target="_blank" href="https://httpstatuses.com/%%statusCode%%">%%statusCode%%</a> %%error%%</span><br>%%server%%</p></div></body></html>'
 
 /**
  * Represents the main server.
@@ -336,19 +335,18 @@ function onError (api) {
       res.statusCode = data.statusCode
       path[0].handler(req, res)
     } else {
-      // no page found to display the error, output raw data
+      // no user 500 error page found, use default error template
       res.statusCode = 500
       res.setHeader('Content-Type', 'text/html')
-      res.end(
-        errorTemplate
-          .replace(/%%headline%%/gmi, 'Something went wrong.')
-          .replace(/%%human%%/gmi, 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.')
-          .replace(/%%developer%%/gmi, data.message)
-          .replace(/%%stack%%/gmi, data.stack)
-          .replace(/%%statusCode%%/gmi, data.statusCode)
-          .replace(/%%error%%/gmi, data.code)
-          .replace(/%%server%%/gmi, req.headers.host)
-      )
+      res.end(errorView({
+        headline: 'Something went wrong.',
+        human: 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
+        developer: data.message,
+        stack: data.stack,
+        statusCode: data.statusCode,
+        error: data.code,
+        server: req.headers.host
+      }))
     }
   }
 }
@@ -366,16 +364,16 @@ function notFound (api, req, res) {
       path[0].handler(req, res)
     } else {
       // otherwise, respond with default message
-      res.end(
-        errorTemplate
-          .replace(/%%headline%%/gmi, 'Page not found.')
-          .replace(/%%human%%/gmi, 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.')
-          .replace(/%%developer%%/gmi, 'HTTP Headers')
-          .replace(/%%stack%%/gmi, JSON.stringify(req.headers, null, 2))
-          .replace(/%%statusCode%%/gmi, '404')
-          .replace(/%%error%%/gmi, 'Page not found')
-          .replace(/%%server%%/gmi, req.headers.host)
-      )
+      res.setHeader('Content-Type', 'text/html')
+      res.end(errorView({
+        headline: 'Page not found.',
+        human: 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
+        developer: 'HTTP Headers',
+        stack: JSON.stringify(req.headers, null, 2),
+        statusCode: '404',
+        error: 'Page not found',
+        server: req.headers.host
+      }))
     }
   }
 }
