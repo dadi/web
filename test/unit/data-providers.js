@@ -177,6 +177,40 @@ describe('Data Providers', function (done) {
   })
 
   describe('Static', function (done) {
+    it('should sort the results by the provided field', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
+      dsSchema.datasource.sort = []
+      dsSchema.datasource.sort.score = -1
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['static']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              should.exist(res.body.static)
+              res.body.static.results[0].title.should.eql("Interstellar")
+              res.body.static.results[1].title.should.eql("Dallas Buyers Club")
+              res.body.static.results[2].title.should.eql("Mud")
+              res.body.static.results[3].title.should.eql("Killer Joe")
+              
+              done()
+            })
+          })
+        })
+      })
+    })
+
     it('should wrap the data in a `results` node before returning', function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
       dsSchema.datasource.source.data = {
