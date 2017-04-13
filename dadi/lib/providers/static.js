@@ -24,44 +24,40 @@ StaticProvider.prototype.initialise = function initialise (datasource, schema) {
  * @return {void}
  */
 StaticProvider.prototype.load = function load (requestUrl, done) {
-  try {
-    let data = this.schema.datasource.source.data
+  let data = this.schema.datasource.source.data
 
-    if (_.isArray(data)) {
-      const sort = this.schema.datasource.sort
-      const search = this.schema.datasource.search
-      const count = this.schema.datasource.count
-      const fields = this.schema.datasource.fields || []
+  if (Array.isArray(data)) {
+    const sort = this.schema.datasource.sort
+    const search = this.schema.datasource.search
+    const count = this.schema.datasource.count
+    const fields = this.schema.datasource.fields || []
 
-      if (search) data = _.where(data, search)
+    if (search) data = _.where(data, search)
 
-      // apply a filter
-      data = _.where(data, this.schema.datasource.filter)
+    // apply a filter
+    data = _.where(data, this.schema.datasource.filter)
 
-      // Sort by field (with date support)
-      if (sort && Object.keys(sort).length > 0) {
-        Object.keys(sort).forEach(field => {
-          data = _.sortBy(data, (post) => {
-            const value = post[field]
-            const valueAsDate = new Date(value)
-            return (valueAsDate.toString() !== 'Invalid Date')
-              ? +(valueAsDate)
-              : value
-          })
-          if (sort[field] === -1) {
-            data = data.reverse()
-          }
+    // Sort by field (with date support)
+    if (sort && Object.keys(sort).length > 0) {
+      Object.keys(sort).forEach(field => {
+        data = _.sortBy(data, (post) => {
+          const value = post[field]
+          const valueAsDate = new Date(value)
+          return (valueAsDate.toString() !== 'Invalid Date')
+            ? +(valueAsDate)
+            : value
         })
-      }
-
-      if (count) data = _.first(data, count)
-      if (fields && !_.isEmpty(fields)) data = _.chain(data).selectFields(fields.join(',')).value()
+        if (sort[field] === -1) {
+          data = data.reverse()
+        }
+      })
     }
 
-    done(null, { results: _.isArray(data) ? data : [data] })
-  } catch (ex) {
-    done(ex, null)
+    if (count) data = _.first(data, count)
+    if (fields && !_.isEmpty(fields)) data = _.chain(data).selectFields(fields.join(',')).value()
   }
+
+  done(null, { results: Array.isArray(data) ? data : [data] })
 }
 
 module.exports = StaticProvider
