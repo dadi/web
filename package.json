@@ -105,10 +105,7 @@
   },
   "standard": {
     "ignore": [
-      "app",
-      "demo",
       "scripts",
-      "sample-workspace",
       "test",
       "workspace"
     ]
