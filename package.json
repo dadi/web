@@ -4,13 +4,19 @@
   "description": "Web frontend and template layer for @dadi/api",
   "main": "main.js",
   "scripts": {
-    "init": "validate-commit-msg",
     "start": "node ./main.js",
     "test": "snazzy && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test",
     "posttest": "node ./scripts/coverage.js",
     "postinstall": "node ./scripts/copy-config.js && node ./scripts/copy-workspace.js && node ./scripts/init-web.js",
     "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect"
+    "prepublish": "npm run snyk-protect",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --no-semi --write",
+      "standard --fix"
+    ]
   },
   "dependencies": {
     "@dadi/api-wrapper": "latest",
@@ -77,12 +83,15 @@
     "babel-register": "^6.18.0",
     "coveralls": "^2.11.4",
     "env-test": "^1.0.0",
+    "husky": "^0.13.3",
     "istanbul": "^1.1.0-alpha.1",
     "istanbul-cobertura-badger": "^1.1.0",
     "kinesalite": "^1.9.0",
+    "lint-staged": "^3.4.0",
     "mocha": "latest",
     "nock": "^7.7.2",
     "nodeunit": ">=0.5.1",
+    "prettier": "^1.1.0",
     "proxyquire": "1.7.3",
     "should": "latest",
     "sinon": "1.17.7",
