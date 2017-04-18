@@ -25,13 +25,22 @@ const Dust = function () {
     }
 
     if (!this.templates[name]) {
-      return callback({message: 'Template not found: ' + name}, null)
+      return callback({name: 'File missing', message: 'Template not found: ' + name}, null)
     }
 
-    var compiled = dust.compile(this.templates[name])
-    var tmpl = dust.loadSource(compiled)
+    var rendered = true
 
-    return callback(null, tmpl)
+    try {
+      var compiled = dust.compile(this.templates[name], name)
+    } catch (err) {
+      rendered = false
+      return callback({name: 'SyntaxError', message: 'Error compiling template: ' + name, stack: err.stack}, null)
+    }
+
+    if (rendered) {
+      var tmpl = dust.loadSource(compiled)
+      return callback(null, tmpl)
+    }
   }
 }
 

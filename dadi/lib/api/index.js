@@ -11,6 +11,8 @@ var url = require('url')
 var log = require('@dadi/logger')
 var config = require(path.join(__dirname, '/../../../config'))
 
+var errorView = require(path.join(__dirname, '/../view/errors'))
+
 /**
  * Represents the main server.
  * @constructor
@@ -318,9 +320,7 @@ function onError (api) {
       message: err.message
     }
 
-    if (err.stack) {
-      data.stack = err.stack.split('\n')
-    }
+    data.stack = err.stack ? err.stack : 'Nothing to see'
 
     // look for a page that has been loaded
     // that matches the error code and call its handler if it exists
@@ -336,10 +336,18 @@ function onError (api) {
       res.statusCode = data.statusCode
       path[0].handler(req, res)
     } else {
-      // no page found to display the error, output raw data
-      res.statusCode = 500
-      res.setHeader('Content-Type', 'application/json')
-      res.end(JSON.stringify(data, null, 2))
+      // no user error page found for this statusCode, use default error template
+      res.statusCode = data.statusCode
+      res.setHeader('Content-Type', 'text/html')
+      res.end(errorView({
+        headline: 'Something went wrong.',
+        human: 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
+        developer: data.message,
+        stack: data.stack,
+        statusCode: data.statusCode,
+        error: data.code,
+        server: req.headers.host
+      }))
     }
   }
 }
@@ -357,7 +365,16 @@ function notFound (api, req, res) {
       path[0].handler(req, res)
     } else {
       // otherwise, respond with default message
-      res.end('HTTP 404 Not Found')
+      res.setHeader('Content-Type', 'text/html')
+      res.end(errorView({
+        headline: 'Page not found.',
+        human: 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
+        developer: 'HTTP Headers',
+        stack: JSON.stringify(req.headers, null, 2),
+        statusCode: '404',
+        error: 'Page not found',
+        server: req.headers.host
+      }))
     }
   }
 }

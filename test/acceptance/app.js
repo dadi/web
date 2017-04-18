@@ -91,4 +91,35 @@ describe('Application', function () {
       })
     })
   })
+
+  describe('Error Pages', function () {
+    it('should return HTML error when no custom page exists', function (done) {
+      var clientHost = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+      var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+      var client = request(clientHost)
+
+      // create page 1
+      var page1 = page('page1', TestHelper.getPageSchema())
+      page1.datasources = []
+      page1.template = 'test.dust'
+      page1.routes[0].path = '/test'
+      page1.events = ['test_500_error']
+
+      var pages = []
+      pages.push(page1)
+
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.startServer(pages).then(() => {
+          client
+          .get('/test')
+          .end((err, res) => {
+            if (err) return done(err)
+            res.headers['content-type'].should.eql('text/html')
+            res.text.indexOf('<h1>Something went wrong.</h1>').should.be.above(0)
+            done()
+          })
+        })
+      })
+    })
+  })
 })

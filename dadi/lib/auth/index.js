@@ -19,6 +19,7 @@ module.exports = function (server) {
       return next()
     }).catch(function (errorData) {
       var err = new Error()
+      err.statusCode = 401
       err.name = errorData.title
       err.message = errorData.detail
       err.remoteIp = config.get('api.host')
