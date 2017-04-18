@@ -320,6 +320,8 @@ function onError (api) {
       message: err.message
     }
 
+    console.log(data)
+
     data.stack = err.stack ? err.stack : 'Nothing to see'
 
     // look for a page that has been loaded
@@ -338,7 +340,7 @@ function onError (api) {
     } else {
       // no user 500 error page found, use default error template
       res.statusCode = 500
-      res.setHeader('Content-Type', 'text/html')
+
       res.end(errorView({
         headline: 'Something went wrong.',
         human: 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
@@ -365,7 +367,6 @@ function notFound (api, req, res) {
       path[0].handler(req, res)
     } else {
       // otherwise, respond with default message
-      res.setHeader('Content-Type', 'text/html')
       res.end(errorView({
         headline: 'Page not found.',
         human: 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
