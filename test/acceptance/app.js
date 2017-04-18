@@ -114,6 +114,7 @@ describe('Application', function () {
           .get('/test')
           .end((err, res) => {
             if (err) return done(err)
+            res.headers['content-type'].should.eql('text/html')
             res.text.indexOf('<h1>Something went wrong.</h1>').should.be.above(0)
             done()
           })
