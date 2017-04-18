@@ -4,7 +4,7 @@ var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
 var _ = require('underscore')
 var bodyParser = require('body-parser')
-var colors = require('colors')  // eslint-disable-line
+var colors = require("colors") // eslint-disable-line
 var compress = require('compression')
 var debug = require('debug')('web:server')
 var dust = require('./dust')
@@ -23,7 +23,10 @@ var MongoStore = require('connect-mongo')(session)
 var RedisStore = require('connect-redis')(session)
 
 // let's ensure there's at least a dev config file here
-var devConfigPath = path.join(__dirname, '/../../config/config.development.json')
+var devConfigPath = path.join(
+  __dirname,
+  '/../../config/config.development.json'
+)
 fs.stat(devConfigPath, (err, stats) => {
   if (err && err.code && err.code === 'ENOENT') {
     fs.writeFileSync(devConfigPath, fs.readFileSync(devConfigPath + '.sample'))
@@ -64,7 +67,7 @@ Server.prototype.start = function (done) {
   var options = this.loadPaths()
 
   // create app
-  var app = this.app = api()
+  var app = (this.app = api())
 
   // override config
   if (options.configPath) {
@@ -79,13 +82,13 @@ Server.prototype.start = function (done) {
       return next()
     }
 
-    var host = _.findKey(virtualHosts, (virtualHost) => {
+    var host = _.findKey(virtualHosts, virtualHost => {
       return _.contains(virtualHost.hostnames, req.headers.host)
     })
 
     // look for a default host
     if (!host) {
-      host = _.findKey(virtualHosts, (virtualHost) => {
+      host = _.findKey(virtualHosts, virtualHost => {
         return virtualHost.default === true
       })
     }
@@ -115,14 +118,14 @@ Server.prototype.start = function (done) {
 
     // config.updateConfigDataForDomain(host).then(() => {
 
-      // options = this.loadPaths(config.get('paths'))
-      //
-      // options.host = req.headers.host
+    // options = this.loadPaths(config.get('paths'))
+    //
+    // options.host = req.headers.host
 
-      // this.loadApi(options, true, () => {
-      //   debug('config loaded for domain "%s"', req.headers.host)
-      // return next()
-      // })
+    // this.loadApi(options, true, () => {
+    //   debug('config loaded for domain "%s"', req.headers.host)
+    // return next()
+    // })
     // }).catch((err) => {
     //   if (err) {
     //     return next(err)
@@ -133,15 +136,19 @@ Server.prototype.start = function (done) {
   })
 
   if (config.get('logging.sentry.dsn') !== '') {
-    app.use(raven.middleware.express.requestHandler(config.get('logging.sentry.dsn')))
+    app.use(
+      raven.middleware.express.requestHandler(config.get('logging.sentry.dsn'))
+    )
   }
 
   // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
-    app.use(forceDomain({
-      hostname: config.get('rewrites.forceDomain'),
-      port: 80
-    }))
+    app.use(
+      forceDomain({
+        hostname: config.get('rewrites.forceDomain'),
+        port: 80
+      })
+    )
   }
 
   app.use(apiMiddleware.handleHostHeader())
@@ -154,7 +161,9 @@ Server.prototype.start = function (done) {
   }
 
   // serve static files (css,js,fonts)
-  if (options.mediaPath) app.use(serveStatic(options.mediaPath, { 'index': false }))
+  if (options.mediaPath) {
+    app.use(serveStatic(options.mediaPath, { index: false }))
+  }
 
   // serve static files from "public" folders
   var initPublic = function (app, hosts, publicPath) {
@@ -164,7 +173,10 @@ Server.prototype.start = function (done) {
       // one of the host names specified when this middleware was added to the stack
       if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
         try {
-          var fn = serveFavicon((publicPath || path.join(__dirname, '/../../public')) + '/favicon.ico')
+          var fn = serveFavicon(
+            (publicPath || path.join(__dirname, '/../../public')) +
+              '/favicon.ico'
+          )
           fn(req, res, next)
         } catch (err) {
           // no favicon found
@@ -177,7 +189,11 @@ Server.prototype.start = function (done) {
 
     // static file middleware, for "public" folder
     app.use((req, res, next) => {
-      var fn = serveStatic(publicPath, { 'index': false, maxAge: '1d', setHeaders: setCustomCacheControl })
+      var fn = serveStatic(publicPath, {
+        index: false,
+        maxAge: '1d',
+        setHeaders: setCustomCacheControl
+      })
 
       // attempts to serve a static file if the current host header matches
       // one of the host names specified when this middleware was added to the stack
@@ -207,7 +223,13 @@ Server.prototype.start = function (done) {
 
   // add debug files to static paths
   if (config.get('debug')) {
-    app.use(serveStatic(options.workspacePath + '/debug' || (path.join(__dirname, '/../../workspace/debug')), { 'index': false }))
+    app.use(
+      serveStatic(
+        options.workspacePath + '/debug' ||
+          path.join(__dirname, '/../../workspace/debug'),
+        { index: false }
+      )
+    )
   }
 
   // add parsers
@@ -256,7 +278,7 @@ Server.prototype.start = function (done) {
   cacheLayer.init()
 
   // start listening
-  var server = this.server = app.listen()
+  var server = (this.server = app.listen())
 
   server.on('connection', onConnection)
   server.on('listening', onListening)
@@ -301,7 +323,12 @@ Server.prototype.start = function (done) {
 
   // initialise virtualDirectories for serving static content
   _.each(config.get('virtualDirectories'), function (directory) {
-    app.use(serveStatic(path.resolve(directory.path), { index: directory.index, redirect: directory.forceTrailingSlash }))
+    app.use(
+      serveStatic(path.resolve(directory.path), {
+        index: directory.index,
+        redirect: directory.forceTrailingSlash
+      })
+    )
   })
 
   // dust configuration
@@ -314,13 +341,22 @@ Server.prototype.start = function (done) {
 
   if (config.get('env') !== 'test') {
     // do something when app is closing
-    process.on('exit', this.exitHandler.bind(null, {server: this, cleanup: true}))
+    process.on(
+      'exit',
+      this.exitHandler.bind(null, { server: this, cleanup: true })
+    )
 
     // catches ctrl+c event
-    process.on('SIGINT', this.exitHandler.bind(null, {server: this, exit: true}))
+    process.on(
+      'SIGINT',
+      this.exitHandler.bind(null, { server: this, exit: true })
+    )
 
     // catches uncaught exceptions
-    process.on('uncaughtException', this.exitHandler.bind(null, {server: this, exit: true}))
+    process.on(
+      'uncaughtException',
+      this.exitHandler.bind(null, { server: this, exit: true })
+    )
   }
 
   // this is all sync, so callback isn't really necessary.
@@ -344,7 +380,7 @@ Server.prototype.exitHandler = function (options, err) {
   if (options.exit) {
     console.log()
     console.log('Server stopped, process exiting...')
-    log.info({module: 'server'}, 'Server stopped, process exiting.')
+    log.info({ module: 'server' }, 'Server stopped, process exiting.')
     process.exit()
   }
 }
@@ -372,7 +408,7 @@ Server.prototype.stop = function (done) {
     delete this.app.redirectInstance
   }
 
-  this.server.close((err) => {
+  this.server.close(err => {
     this.readyState = 0
     return done && done(err)
   })
@@ -380,7 +416,7 @@ Server.prototype.stop = function (done) {
 
 Server.prototype.resolvePaths = function (paths) {
   if (Array.isArray(paths)) {
-    return _.map(paths, (p) => {
+    return _.map(paths, p => {
       return path.resolve(p)
     })
   } else {
@@ -414,8 +450,11 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
   if (!reload) {
     this.app.use('/api/flush', (req, res, next) => {
-      if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
-        return help.clearCache(req, (err) => {
+      if (
+        help.validateRequestMethod(req, res, 'POST') &&
+        help.validateRequestCredentials(req, res)
+      ) {
+        return help.clearCache(req, err => {
           help.sendBackJSON(200, res, next)(err, {
             result: 'success',
             message: 'Succeed to clear'
@@ -427,13 +466,19 @@ Server.prototype.loadApi = function (options, reload, callback) {
     })
 
     this.app.use('/api/status', (req, res, next) => {
-      if (help.validateRequestMethod(req, res, 'POST') && help.validateRequestCredentials(req, res)) {
+      if (
+        help.validateRequestMethod(req, res, 'POST') &&
+        help.validateRequestCredentials(req, res)
+      ) {
         var params = {
           site: site,
           package: '@dadi/web',
           version: version,
           healthCheck: {
-            baseUrl: 'http://' + config.get('server.host') + ':' + config.get('server.port'),
+            baseUrl: 'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port'),
             routes: config.get('status.routes')
           }
         }
@@ -467,26 +512,26 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
   // compile all dust templates
   this.compile(options).then(() => {
-    this.addMonitor(options.datasourcePath, (dsFile) => {
+    this.addMonitor(options.datasourcePath, dsFile => {
       this.updatePages(options.pagePath, options, true)
     })
 
-    this.addMonitor(options.eventPath, (eventFile) => {
+    this.addMonitor(options.eventPath, eventFile => {
       this.updatePages(options.pagePath, options, true)
     })
 
-    this.addMonitor(options.pagePath, (pageFile) => {
+    this.addMonitor(options.pagePath, pageFile => {
       this.updatePages(options.pagePath, options, true)
       this.compile(options)
     })
 
-    _.each(options.partialPaths, (partialPath) => {
-      this.addMonitor(partialPath, (partialFile) => {
+    _.each(options.partialPaths, partialPath => {
+      this.addMonitor(partialPath, partialFile => {
         this.compile(options)
       })
     })
 
-    this.addMonitor(options.routesPath, (file) => {
+    this.addMonitor(options.routesPath, file => {
       if (this.app.Router) {
         this.app.Router.loadRewrites(options, () => {
           this.app.Router.loadRewriteModule()
@@ -504,7 +549,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
   var middlewares = this.loadMiddleware(directoryPath, options)
-  _.each(middlewares, (middleware) => {
+  _.each(middlewares, middleware => {
     middleware.init(this.app)
   })
 }
@@ -516,7 +561,7 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
 
   var middlewares = []
 
-  files.forEach((file) => {
+  files.forEach(file => {
     if (path.extname(file) !== '.js') return
 
     var name = file.slice(0, file.indexOf('.'))
@@ -531,7 +576,7 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
   if (fs.existsSync(directoryPath)) {
     var pages = fs.readdirSync(directoryPath)
 
-    pages.forEach((page) => {
+    pages.forEach(page => {
       if (path.extname(page) !== '.json') return
 
       // get the full path to the page file
@@ -541,10 +586,14 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
       // to use as the page name
       var name = page.slice(0, page.indexOf('.'))
 
-      this.addRoute({
-        name: name,
-        filepath: pageFilepath
-      }, options, reload)
+      this.addRoute(
+        {
+          name: name,
+          filepath: pageFilepath
+        },
+        options,
+        reload
+      )
     })
   }
 }
@@ -556,7 +605,11 @@ Server.prototype.addRoute = function (obj, options, reload) {
   try {
     schema = require(obj.filepath)
   } catch (err) {
-    log.error({module: 'server'}, {err: err}, 'Error loading page schema "' + obj.filepath + '". Is it valid JSON?')
+    log.error(
+      { module: 'server' },
+      { err: err },
+      'Error loading page schema "' + obj.filepath + '". Is it valid JSON?'
+    )
     throw err
   }
 
@@ -569,26 +622,29 @@ Server.prototype.addRoute = function (obj, options, reload) {
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods
-  this.addComponent({
-    host: options.host || '',
-    key: page.key,
-    routes: page.routes,
-    component: controller,
-    filepath: obj.filepath
-  }, reload)
+  this.addComponent(
+    {
+      host: options.host || '',
+      key: page.key,
+      routes: page.routes,
+      component: controller,
+      filepath: obj.filepath
+    },
+    reload
+  )
 }
 
 Server.prototype.addComponent = function (options, reload) {
   if (!options.routes) return
 
   if (reload) {
-    _.each(options.routes, (route) => {
+    _.each(options.routes, route => {
       var hostWithPath = `${options.host}${route.path}`
       this.removeComponent(hostWithPath)
     })
   }
 
-  _.each(options.routes, (route) => {
+  _.each(options.routes, route => {
     // only add a route once
     var hostWithPath = `${options.host}${route.path}`
 
@@ -615,23 +671,32 @@ Server.prototype.addComponent = function (options, reload) {
       this.app.use(route.path, options.host, (req, res, next) => {
         if (options.component[req.method.toLowerCase()]) {
           // a matching route found, validate it
-          return this.app.Router.validate(route, options.component.options, req, res).then(() => {
-            return options.component[req.method.toLowerCase()](req, res, next)
-          }).catch((err) => {
-            if (err) return next(err)
-            // try next route
-            if (next) {
-              return next()
-            } else {
-              return help.sendBackJSON(404, res, next)(null, require(options.filepath))
-            }
-          })
+          return this.app.Router
+            .validate(route, options.component.options, req, res)
+            .then(() => {
+              return options.component[req.method.toLowerCase()](req, res, next)
+            })
+            .catch(err => {
+              if (err) return next(err)
+              // try next route
+              if (next) {
+                return next()
+              } else {
+                return help.sendBackJSON(404, res, next)(
+                  null,
+                  require(options.filepath)
+                )
+              }
+            })
         } else {
           // no matching HTTP method found, try the next matching route or 404
           if (next) {
             return next()
           } else {
-            return help.sendBackJSON(404, res, next)(null, require(options.filepath))
+            return help.sendBackJSON(404, res, next)(
+              null,
+              require(options.filepath)
+            )
           }
         }
       })
@@ -676,14 +741,17 @@ Server.prototype.compile = function (options) {
     dust.clearCache()
 
     // Get a list of templates to render based on the registered components
-    var componentTemplates = _.compact(Object.keys(this.components).map((route) => {
-      if (this.components[route].options.host === options.host) {
-        return path.join(templatePath, this.components[route].page.template)
-      }
-    }))
+    var componentTemplates = _.compact(
+      Object.keys(this.components).map(route => {
+        if (this.components[route].options.host === options.host) {
+          return path.join(templatePath, this.components[route].page.template)
+        }
+      })
+    )
 
     // Load component templates
-    dust.loadFiles(componentTemplates, '', false, options.host)
+    dust
+      .loadFiles(componentTemplates, '', false, options.host)
       .then(() => {
         debug('templates loaded')
         // Load templates in the template folder that haven't already been loaded
@@ -692,8 +760,13 @@ Server.prototype.compile = function (options) {
       .then(() => {
         debug('additional templates loaded %s', templatePath)
         // Load partials
-        return _.each(partialPaths, (partialPath) => {
-          return dust.loadDirectory(partialPath, path.basename(partialPath), true, options.host)
+        return _.each(partialPaths, partialPath => {
+          return dust.loadDirectory(
+            partialPath,
+            path.basename(partialPath),
+            true,
+            options.host
+          )
         })
       })
       .then(() => {
@@ -713,8 +786,8 @@ Server.prototype.compile = function (options) {
 
         return resolve()
       })
-      .catch((err) => {
-        log.error({module: 'server'}, err)
+      .catch(err => {
+        log.error({ module: 'server' }, err)
 
         throw err
       })
@@ -725,7 +798,10 @@ Server.prototype.getSessionStore = function (sessionConfig, env) {
   if (/development|test/.exec(env) === null) {
     if (sessionConfig.store === '') {
       var message = ''
-      message += 'It is not recommended to use an in-memory session store in the ' + env + ' environment. Please change the configuration to one of the following:\n\n'
+      message +=
+        'It is not recommended to use an in-memory session store in the ' +
+        env +
+        ' environment. Please change the configuration to one of the following:\n\n'
 
       sessionConfig.store = 'mongodb://username:password@host/databaseName'
       message += 'MongoDB:\n'.green
@@ -769,13 +845,13 @@ Server.prototype.ensureDirectories = function (options, done) {
   // create workspace directories if they don't exist; permissions default to 0777
   var idx = 0
 
-  _.each(options, (dir) => {
+  _.each(options, dir => {
     if (Array.isArray(dir)) {
       this.ensureDirectories(dir, () => {})
     } else {
       mkdirp(dir, {}, (err, made) => {
         if (err) {
-          log.error({module: 'server'}, err)
+          log.error({ module: 'server' }, err)
         }
 
         if (made) {
@@ -865,7 +941,7 @@ function onListening (e) {
     var env = config.get('env')
     var protocol = config.get('server.protocol') || 'http'
     var redirectPort = config.get('server.redirectPort')
-    var extraPadding = redirectPort > 0 && '          ' || ''
+    var extraPadding = (redirectPort > 0 && '          ') || ''
 
     var startText = '\n'
     startText += '  ----------------------------\n'
@@ -874,12 +950,32 @@ function onListening (e) {
     startText += '  ----------------------------\n'
 
     if (protocol === 'http') {
-      startText += '  Server:      '.green + extraPadding + 'http://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
+      startText +=
+        '  Server:      '.green +
+        extraPadding +
+        'http://' +
+        config.get('server.host') +
+        ':' +
+        config.get('server.port') +
+        '\n'
     } else if (protocol === 'https') {
       if (redirectPort > 0) {
-        startText += '  Server (http > https): '.green + 'http://' + config.get('server.host') + ':' + config.get('server.redirectPort') + '\n'
+        startText +=
+          '  Server (http > https): '.green +
+          'http://' +
+          config.get('server.host') +
+          ':' +
+          config.get('server.redirectPort') +
+          '\n'
       }
-      startText += '  Server:      '.green + extraPadding + 'https://' + config.get('server.host') + ':' + config.get('server.port') + '\n'
+      startText +=
+        '  Server:      '.green +
+        extraPadding +
+        'https://' +
+        config.get('server.host') +
+        ':' +
+        config.get('server.port') +
+        '\n'
     }
 
     startText += '  Version:     '.green + extraPadding + version + '\n'
@@ -887,14 +983,27 @@ function onListening (e) {
     startText += '  Environment: '.green + extraPadding + env + '\n'
 
     if (config.get('api.enabled') === true) {
-      startText += '  API:         '.green + extraPadding + config.get('api.host') + ':' + config.get('api.port') + '\n'
+      startText +=
+        '  API:         '.green +
+        extraPadding +
+        config.get('api.host') +
+        ':' +
+        config.get('api.port') +
+        '\n'
     } else {
-      startText += '  API:         '.green + extraPadding + 'Disabled'.red + '\n'
+      startText +=
+        '  API:         '.green + extraPadding + 'Disabled'.red + '\n'
       startText += '  ----------------------------\n'
     }
 
     if (env !== 'test') {
-      startText += '\n\n  Copyright ' + String.fromCharCode(169) + ' 2015-' + new Date().getFullYear() + ' DADI+ Limited (https://dadi.tech)'.white + '\n'
+      startText +=
+        '\n\n  Copyright ' +
+        String.fromCharCode(169) +
+        ' 2015-' +
+        new Date().getFullYear() +
+        ' DADI+ Limited (https://dadi.tech)'.white +
+        '\n'
       console.log(startText)
     }
   })
@@ -902,7 +1011,10 @@ function onListening (e) {
 
 function onError (err) {
   if (err.code === 'EADDRINUSE') {
-    var message = "Can't connect to local address, is something already listening on port " + config.get('server.port') + '?'
+    var message =
+      "Can't connect to local address, is something already listening on port " +
+      config.get('server.port') +
+      '?'
     err.localIp = config.get('server.host')
     err.localPort = config.get('server.port')
     err.message = message

@@ -28,20 +28,28 @@ BearerAuthStrategy.prototype.getToken = function (authStrategy, done) {
     credentials: strategy.credentials,
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallets') + '/' + help.generateTokenWalletFilename(strategy.host, strategy.port, strategy.credentials.clientId)
+      path: config.get('paths.tokenWallets') +
+        '/' +
+        help.generateTokenWalletFilename(
+          strategy.host,
+          strategy.port,
+          strategy.credentials.clientId
+        )
     }
-  }).then(function (bearerToken) {
-    return done(null, bearerToken)
-  }).catch(function (errorData) {
-    var err = new Error()
-    err.name = errorData.title
-    err.message = errorData.detail
-    err.remoteIp = self.config.host
-    err.remotePort = self.config.port
-    err.path = self.config.tokenUrl
-
-    return done(err)
   })
+    .then(function (bearerToken) {
+      return done(null, bearerToken)
+    })
+    .catch(function (errorData) {
+      var err = new Error()
+      err.name = errorData.title
+      err.message = errorData.detail
+      err.remoteIp = self.config.host
+      err.remotePort = self.config.port
+      err.path = self.config.tokenUrl
+
+      return done(err)
+    })
 }
 
 module.exports = function (options) {

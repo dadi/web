@@ -27,8 +27,8 @@ Middleware.prototype.init = function (app) {
   try {
     this.load()(app)
   } catch (err) {
-    log.error({module: 'middleware'}, err)
-    throw (err)
+    log.error({ module: 'middleware' }, err)
+    throw err
   }
 }
 

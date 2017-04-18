@@ -68,10 +68,13 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
     const context = this
     // const queryParams = this.buildQueryParams()
 
-    this.cacheKey = [this.endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
+    this.cacheKey = [
+      this.endpoint,
+      encodeURIComponent(JSON.stringify(this.schema.datasource))
+    ].join('+')
     this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache(this.datasource, (cachedData) => {
+    this.dataCache.getFromCache(this.datasource, cachedData => {
       if (cachedData) return done(null, cachedData)
 
       const items = []
@@ -81,14 +84,14 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
         pool: false,
         headers: {
           'user-agent': 'DADI/Web',
-          'accept': 'text/html,application/xhtml+xml'
+          accept: 'text/html,application/xhtml+xml'
         }
       })
 
       // request events
       req.on('error', done)
 
-      req.on('response', (res) => {
+      req.on('response', res => {
         if (res.statusCode !== 200) return done('Bad status code', null)
         res.pipe(feedparser)
       })
@@ -97,7 +100,11 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
       feedparser.on('error', done)
 
       feedparser.on('end', () => {
-        context.dataCache.cacheResponse(this.datasource, JSON.stringify(items), () => {})
+        context.dataCache.cacheResponse(
+          this.datasource,
+          JSON.stringify(items),
+          () => {}
+        )
         return done(null, items)
       })
 

@@ -11,7 +11,9 @@ var View = function (url, page, json) {
   this.json = json
   this.data = {}
 
-  this.pageTemplate = this.page.hostKey + this.page.template.slice(0, this.page.template.indexOf('.'))
+  this.pageTemplate =
+    this.page.hostKey +
+    this.page.template.slice(0, this.page.template.indexOf('.'))
 }
 
 View.prototype.setData = function (data) {

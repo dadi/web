@@ -44,8 +44,15 @@ DadiApiProvider.prototype.buildEndpoint = function buildEndpoint () {
   const host = source.host || apiConfig.host
   const port = source.port || apiConfig.port
 
-  const uri = [protocol, '://', host, (port !== '' ? ':' : ''),
-    port, '/', this.datasource.source.modifiedEndpoint || source.endpoint].join('')
+  const uri = [
+    protocol,
+    '://',
+    host,
+    port !== '' ? ':' : '',
+    port,
+    '/',
+    this.datasource.source.modifiedEndpoint || source.endpoint
+  ].join('')
 
   this.endpoint = this.processDatasourceParameters(this.schema, uri)
 }
@@ -78,26 +85,29 @@ DadiApiProvider.prototype.getHeaders = function getHeaders (done) {
     }
   } else {
     try {
-      help.getToken(this.datasource).then((bearerToken) => {
-        headers['Authorization'] = 'Bearer ' + bearerToken
+      help
+        .getToken(this.datasource)
+        .then(bearerToken => {
+          headers['Authorization'] = 'Bearer ' + bearerToken
 
-        help.timer.stop('auth')
-        return done(null, { headers: headers })
-      }).catch((errorData) => {
-        const err = new Error()
-        err.name = errorData.title
-        err.message = errorData.detail
-        err.remoteIp = config.get('api.host')
-        err.remotePort = config.get('api.port')
-        err.path = config.get('auth.tokenUrl')
+          help.timer.stop('auth')
+          return done(null, { headers: headers })
+        })
+        .catch(errorData => {
+          const err = new Error()
+          err.name = errorData.title
+          err.message = errorData.detail
+          err.remoteIp = config.get('api.host')
+          err.remotePort = config.get('api.port')
+          err.path = config.get('auth.tokenUrl')
 
-        if (errorData.stack) {
-          console.log(errorData.stack)
-        }
+          if (errorData.stack) {
+            console.log(errorData.stack)
+          }
 
-        help.timer.stop('auth')
-        return done(err)
-      })
+          help.timer.stop('auth')
+          return done(err)
+        })
     } catch (err) {
       console.log(err.stack)
     }
@@ -112,28 +122,33 @@ DadiApiProvider.prototype.getHeaders = function getHeaders (done) {
  * @return {void}
  */
 DadiApiProvider.prototype.handleResponse = function handleResponse (res, done) {
-  const encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : ''
+  const encoding = res.headers['content-encoding']
+    ? res.headers['content-encoding']
+    : ''
   let output = ''
 
   if (encoding === 'gzip') {
     const gunzip = zlib.createGunzip()
     const buffer = []
 
-    gunzip.on('data', (data) => {
-      buffer.push(data.toString())
-    }).on('end', () => {
-      output = buffer.join('')
-      this.processOutput(res, output, (err, data, res) => {
-        if (err) return done(err)
-        return done(null, data, res)
+    gunzip
+      .on('data', data => {
+        buffer.push(data.toString())
       })
-    }).on('error', (err) => {
-      done(err)
-    })
+      .on('end', () => {
+        output = buffer.join('')
+        this.processOutput(res, output, (err, data, res) => {
+          if (err) return done(err)
+          return done(null, data, res)
+        })
+      })
+      .on('error', err => {
+        done(err)
+      })
 
     res.pipe(gunzip)
   } else {
-    res.on('data', (chunk) => {
+    res.on('data', chunk => {
       output += chunk
     })
 
@@ -153,7 +168,7 @@ DadiApiProvider.prototype.handleResponse = function handleResponse (res, done) {
  * @return {module} http|https
  */
 DadiApiProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
-  return (protocol === 'https')
+  return protocol === 'https'
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
 }
@@ -180,7 +195,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
   this.options.agent = this.keepAliveAgent(this.options.protocol)
   this.options.protocol = this.options.protocol + ':'
 
-  this.dataCache.getFromCache(this.datasource, (cachedData) => {
+  this.dataCache.getFromCache(this.datasource, cachedData => {
     if (cachedData) return done(null, cachedData)
 
     debug('load %s', this.endpoint)
@@ -190,15 +205,24 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
 
       this.options = _.extend(this.options, headers)
 
-      log.info({module: 'helper'}, "GET datasource '" + this.datasource.schema.datasource.key + "': " + this.options.path)
+      log.info(
+        { module: 'helper' },
+        "GET datasource '" +
+          this.datasource.schema.datasource.key +
+          "': " +
+          this.options.path
+      )
 
-      const agent = (this.options.protocol === 'https') ? https : http
-      let request = agent.request(this.options, (res) => {
+      const agent = this.options.protocol === 'https' ? https : http
+      let request = agent.request(this.options, res => {
         this.handleResponse(res, done)
       })
 
-      request.on('error', (err) => {
-        const message = err.toString() + ". Couldn't request data from " + this.datasource.endpoint
+      request.on('error', err => {
+        const message =
+          err.toString() +
+          ". Couldn't request data from " +
+          this.datasource.endpoint
         err.name = 'GetData'
         err.message = message
         err.remoteIp = this.options.host
@@ -218,29 +242,37 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
  * @param  {type} uri - the original datasource endpoint
  * @returns {string} uri with query string appended
  */
-DadiApiProvider.prototype.processDatasourceParameters = function processDatasourceParameters (schema, uri) {
+DadiApiProvider.prototype.processDatasourceParameters = function processDatasourceParameters (
+  schema,
+  uri
+) {
   debug('processDatasourceParameters %s', uri)
   let query = '?'
 
   const params = [
-    { 'count': (schema.datasource.count || 0) },
-    { 'skip': (schema.datasource.skip) },
-    { 'page': (schema.datasource.page || 1) },
-    { 'referer': schema.datasource.referer },
-    { 'filter': schema.datasource.filter || {} },
-    { 'fields': schema.datasource.fields || {} },
-    { 'sort': this.processSortParameter(schema.datasource.sort) }
+    { count: schema.datasource.count || 0 },
+    { skip: schema.datasource.skip },
+    { page: schema.datasource.page || 1 },
+    { referer: schema.datasource.referer },
+    { filter: schema.datasource.filter || {} },
+    { fields: schema.datasource.fields || {} },
+    { sort: this.processSortParameter(schema.datasource.sort) }
   ]
 
   // pass cache flag to API endpoint
   if (schema.datasource.hasOwnProperty('cache')) {
-    params.push({ 'cache': schema.datasource.cache })
+    params.push({ cache: schema.datasource.cache })
   }
 
-  params.forEach((param) => {
+  params.forEach(param => {
     for (let key in param) {
-      if (param.hasOwnProperty(key) && (typeof param[key] !== 'undefined')) {
-        query = query + key + '=' + (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) + '&'
+      if (param.hasOwnProperty(key) && typeof param[key] !== 'undefined') {
+        query =
+          query +
+          key +
+          '=' +
+          (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) +
+          '&'
       }
     }
   })
@@ -256,7 +288,11 @@ DadiApiProvider.prototype.processDatasourceParameters = function processDatasour
  * @param  {fn} done
  * @return {void}
  */
-DadiApiProvider.prototype.processOutput = function processOutput (res, data, done) {
+DadiApiProvider.prototype.processOutput = function processOutput (
+  res,
+  data,
+  done
+) {
   // Return a 202 Accepted response immediately,
   // along with the datasource response
   if (res.statusCode === 202) {
@@ -287,16 +323,28 @@ DadiApiProvider.prototype.processOutput = function processOutput (res, data, don
   } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     // if the error is anything other than Success or Bad Request, error
     const err = new Error()
-    err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
+    err.message =
+      'Datasource "' +
+      this.datasource.name +
+      '" failed. ' +
+      res.statusMessage +
+      ' (' +
+      res.statusCode +
+      ')' +
+      ': ' +
+      this.endpoint
     if (data) err.message += '\n' + data
 
     err.remoteIp = this.options.host
     err.remotePort = this.options.port
 
-    log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint)
+    log.error(
+      { module: 'helper' },
+      res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
+    )
 
     // return done(err)
-    throw (err)
+    throw err
   }
 
   // Cache 200 responses
@@ -325,19 +373,25 @@ DadiApiProvider.prototype.processRequest = function processRequest (req) {
  * @param  {?} obj - sort parameter
  * @return {?}
  */
-DadiApiProvider.prototype.processSortParameter = function processSortParameter (obj) {
+DadiApiProvider.prototype.processSortParameter = function processSortParameter (
+  obj
+) {
   let sort = {}
 
   if (typeof obj !== 'object' || obj === null) return sort
 
   if (_.isArray(obj)) {
     _.each(obj, (value, key) => {
-      if (typeof value === 'object' && value.hasOwnProperty('field') && value.hasOwnProperty('order')) {
-        sort[value.field] = (value.order === 'asc') ? 1 : -1
+      if (
+        typeof value === 'object' &&
+        value.hasOwnProperty('field') &&
+        value.hasOwnProperty('order')
+      ) {
+        sort[value.field] = value.order === 'asc' ? 1 : -1
       }
     })
   } else if (obj.hasOwnProperty('field') && obj.hasOwnProperty('order')) {
-    sort[obj.field] = (obj.order === 'asc') ? 1 : -1
+    sort[obj.field] = obj.order === 'asc' ? 1 : -1
   } else {
     sort = obj
   }

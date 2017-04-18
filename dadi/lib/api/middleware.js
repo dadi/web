@@ -13,12 +13,16 @@ var compileTrust = function (val) {
 
   if (val === true) {
     // Support plain true/false
-    return function () { return true }
+    return function () {
+      return true
+    }
   }
 
   if (typeof val === 'number') {
     // Support trusting hop count
-    return function (a, i) { return i < val }
+    return function (a, i) {
+      return i < val
+    }
   }
 
   if (typeof val === 'string') {

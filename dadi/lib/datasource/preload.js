@@ -11,7 +11,7 @@ var Preload = function () {
 Preload.prototype.init = function (options) {
   this.sources = config.get('data.preload')
 
-  _.each(this.sources, (source) => {
+  _.each(this.sources, source => {
     new Datasource(null, source, options).init((err, datasource) => {
       if (err) {
         console.log(err)
@@ -21,7 +21,7 @@ Preload.prototype.init = function (options) {
       datasource.provider.load(null, (err, result) => {
         if (err) console.log(err)
         if (result) {
-          var results = (typeof result === 'object' ? result : JSON.parse(result))
+          var results = typeof result === 'object' ? result : JSON.parse(result)
           this.data[source] = results.results ? results.results : results
         }
       })

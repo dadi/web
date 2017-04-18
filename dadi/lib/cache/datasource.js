@@ -67,9 +67,19 @@ DatasourceCache.prototype.getFilename = function (datasource) {
   var filename = crypto.createHash('sha1').update(datasource.name).digest('hex')
 
   if (datasource.provider.cacheKey) {
-    filename += '_' + crypto.createHash('sha1').update(datasource.provider.cacheKey).digest('hex')
+    filename +=
+      '_' +
+      crypto
+        .createHash('sha1')
+        .update(datasource.provider.cacheKey)
+        .digest('hex')
   } else {
-    filename += '_' + crypto.createHash('sha1').update(datasource.provider.endpoint).digest('hex')
+    filename +=
+      '_' +
+      crypto
+        .createHash('sha1')
+        .update(datasource.provider.endpoint)
+        .digest('hex')
   }
 
   return filename
@@ -113,20 +123,23 @@ DatasourceCache.prototype.getFromCache = function (datasource, done) {
   var data = ''
 
   // attempt to get from the cache
-  this.cache.get(filename, options).then((stream) => {
-    debug('serving %s from cache (%s)', datasource.name, filename)
+  this.cache
+    .get(filename, options)
+    .then(stream => {
+      debug('serving %s from cache (%s)', datasource.name, filename)
 
-    stream.on('data', (chunk) => {
-      if (chunk) data += chunk
-    })
+      stream.on('data', chunk => {
+        if (chunk) data += chunk
+      })
 
-    stream.on('end', () => {
-      return done(data)
+      stream.on('end', () => {
+        return done(data)
+      })
     })
-  }).catch(() => {
-    // key doesn't exist in cache
-    return done(false)
-  })
+    .catch(() => {
+      // key doesn't exist in cache
+      return done(false)
+    })
 }
 
 /**

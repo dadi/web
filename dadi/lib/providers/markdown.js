@@ -19,10 +19,15 @@ const MarkdownProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-MarkdownProvider.prototype.initialise = function initialise (datasource, schema) {
+MarkdownProvider.prototype.initialise = function initialise (
+  datasource,
+  schema
+) {
   this.datasource = datasource
   this.schema = schema
-  this.extension = schema.datasource.source.extension ? schema.datasource.source.extension : 'md'
+  this.extension = schema.datasource.source.extension
+    ? schema.datasource.source.extension
+    : 'md'
 }
 
 /**
@@ -31,7 +36,9 @@ MarkdownProvider.prototype.initialise = function initialise (datasource, schema)
  * @param  {?} obj - sort parameter
  * @return {?}
  */
-MarkdownProvider.prototype.processSortParameter = function processSortParameter (obj) {
+MarkdownProvider.prototype.processSortParameter = function processSortParameter (
+  obj
+) {
   let sort = {}
 
   if (_.isObject(obj)) {
@@ -70,13 +77,15 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
       }
 
       // Filter out only files with the correct extension
-      filepaths = filepaths.filter(i => new RegExp('.' + this.extension + '$', 'i').test(i))
+      filepaths = filepaths.filter(i =>
+        new RegExp('.' + this.extension + '$', 'i').test(i)
+      )
 
       // Process each file
       async.map(filepaths, this.readFileAsync, (err, readResults) => {
         if (err) return done(err, null)
 
-        this.parseRawDataAsync(readResults, (posts) => {
+        this.parseRawDataAsync(readResults, posts => {
           const sort = this.processSortParameter(this.schema.datasource.sort)
           const search = this.schema.datasource.search
           const count = this.schema.datasource.count
@@ -92,7 +101,7 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
           }
 
           if (!_.isEmpty(filter)) {
-            posts = _.filter(posts, (post) => {
+            posts = _.filter(posts, post => {
               return _.findWhere([post.attributes], filter)
             })
           }
@@ -100,11 +109,11 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
           // Sort posts by attributes field (with date support)
           if (sort && Object.keys(sort).length > 0) {
             Object.keys(sort).forEach(field => {
-              posts = _.sortBy(posts, (post) => {
+              posts = _.sortBy(posts, post => {
                 const value = post.attributes[field]
                 const valueAsDate = new Date(value)
-                return (valueAsDate.toString() !== 'Invalid Date')
-                  ? +(valueAsDate)
+                return valueAsDate.toString() !== 'Invalid Date'
+                  ? +valueAsDate
                   : value
               })
               if (sort[field] === -1) {
@@ -139,13 +148,19 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
   }
 }
 
-MarkdownProvider.prototype.readFileAsync = function readFileAsync (filename, callback) {
+MarkdownProvider.prototype.readFileAsync = function readFileAsync (
+  filename,
+  callback
+) {
   fs.readFile(filename, 'utf8', function (err, data) {
-    return callback(err, {_name: filename, _contents: data})
+    return callback(err, { _name: filename, _contents: data })
   })
 }
 
-MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data, callback) {
+MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (
+  data,
+  callback
+) {
   const yamlRegex = /---[\n\r]+([\s\S]*)[\n\r]+---[\n\r]+([\s\S]*)/
   const posts = []
 
@@ -160,7 +175,10 @@ MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (data,
     attributes._id = parsedPath.name
     attributes._ext = parsedPath.ext
     attributes._loc = data[i]._name
-    attributes._path = parsedPath.dir.replace(path.normalize(this.schema.datasource.source.path), '').replace(/^\/|\/$/g, '').split('/')
+    attributes._path = parsedPath.dir
+      .replace(path.normalize(this.schema.datasource.source.path), '')
+      .replace(/^\/|\/$/g, '')
+      .split('/')
     attributes._path = _.isEmpty(attributes._path) ? null : attributes._path
 
     posts.push({

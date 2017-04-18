@@ -7,7 +7,7 @@ const dir = __dirname
 const entries = fs.readdirSync(dir)
 const modules = {}
 
-entries.forEach((entry) => {
+entries.forEach(entry => {
   const filename = path.join(dir, entry)
   const name = entry.replace(/\.[^/.]+$/, '')
   const stat = fs.statSync(filename)

@@ -40,7 +40,14 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint () {
   const protocol = source.protocol || 'http'
   const port = source.port || 80
 
-  const uri = [protocol, '://', source.host, (port !== '' ? ':' + port : ''), '/', this.datasource.source.modifiedEndpoint || source.endpoint].join('')
+  const uri = [
+    protocol,
+    '://',
+    source.host,
+    port !== '' ? ':' + port : '',
+    '/',
+    this.datasource.source.modifiedEndpoint || source.endpoint
+  ].join('')
 
   this.endpoint = this.processDatasourceParameters(this.schema, uri)
 }
@@ -84,28 +91,33 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
  * @return {void}
  */
 RemoteProvider.prototype.handleResponse = function handleResponse (res, done) {
-  const encoding = res.headers['content-encoding'] ? res.headers['content-encoding'] : ''
+  const encoding = res.headers['content-encoding']
+    ? res.headers['content-encoding']
+    : ''
   let output = ''
 
   if (encoding === 'gzip') {
     const gunzip = zlib.createGunzip()
     const buffer = []
 
-    gunzip.on('data', (data) => {
-      buffer.push(data.toString())
-    }).on('end', () => {
-      output = buffer.join('')
-      this.processOutput(res, output, (err, data, res) => {
-        if (err) return done(err)
-        return done(null, data, res)
+    gunzip
+      .on('data', data => {
+        buffer.push(data.toString())
       })
-    }).on('error', (err) => {
-      done(err)
-    })
+      .on('end', () => {
+        output = buffer.join('')
+        this.processOutput(res, output, (err, data, res) => {
+          if (err) return done(err)
+          return done(null, data, res)
+        })
+      })
+      .on('error', err => {
+        done(err)
+      })
 
     res.pipe(gunzip)
   } else {
-    res.on('data', (chunk) => {
+    res.on('data', chunk => {
       output += chunk
     })
 
@@ -125,7 +137,7 @@ RemoteProvider.prototype.handleResponse = function handleResponse (res, done) {
  * @return {module} http|https
  */
 RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
-  return (protocol.indexOf('https') > -1)
+  return protocol.indexOf('https') > -1
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
 }
@@ -151,7 +163,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 
   this.options.protocol = this.options.protocol + ':'
 
-  this.dataCache.getFromCache(this.datasource, (cachedData) => {
+  this.dataCache.getFromCache(this.datasource, cachedData => {
     if (cachedData) return done(null, cachedData)
 
     debug('load %s', this.endpoint)
@@ -167,14 +179,20 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 }
 
 RemoteProvider.prototype.makeRequest = function (done) {
-  debug('GET datasource "%s" %o', this.datasource.schema.datasource.key, _.omit(this.options, 'agent'))
+  debug(
+    'GET datasource "%s" %o',
+    this.datasource.schema.datasource.key,
+    _.omit(this.options, 'agent')
+  )
 
   this.options.agent = this.keepAliveAgent(this.options.protocol)
 
-  const agent = (this.options.protocol.indexOf('https') > -1) ? https : http
+  const agent = this.options.protocol.indexOf('https') > -1 ? https : http
 
-  let request = agent.request(this.options, (res) => {
-    if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307) {
+  let request = agent.request(this.options, res => {
+    if (
+      res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307
+    ) {
       this.redirects++
 
       if (this.redirects >= 10) {
@@ -194,8 +212,11 @@ RemoteProvider.prototype.makeRequest = function (done) {
     }
   })
 
-  request.on('error', (err) => {
-    const message = err.toString() + ". Couldn't request data from " + this.datasource.endpoint
+  request.on('error', err => {
+    const message =
+      err.toString() +
+      ". Couldn't request data from " +
+      this.datasource.endpoint
     err.name = 'GetData'
     err.message = message
     err.remoteIp = this.options.host
@@ -213,7 +234,10 @@ RemoteProvider.prototype.makeRequest = function (done) {
  * @param  {type} uri - the original datasource endpoint
  * @returns {string} the original uri
  */
-RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters (schema, uri) {
+RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters (
+  schema,
+  uri
+) {
   return uri
 }
 
@@ -225,7 +249,11 @@ RemoteProvider.prototype.processDatasourceParameters = function processDatasourc
  * @param  {fn} done
  * @return {void}
  */
-RemoteProvider.prototype.processOutput = function processOutput (res, data, done) {
+RemoteProvider.prototype.processOutput = function processOutput (
+  res,
+  data,
+  done
+) {
   // Return a 202 Accepted response immediately,
   // along with the datasource response
   if (res.statusCode === 202) {
@@ -235,35 +263,67 @@ RemoteProvider.prototype.processOutput = function processOutput (res, data, done
   // return 5xx error as the datasource response
   if (res.statusCode && /^5/.exec(res.statusCode)) {
     data = {
-      'results': [],
-      'errors': [{
-        'code': 'WEB-0005',
-        'title': 'Datasource Timeout',
-        'details': "The datasource '" + this.datasource.name + "' timed out: " + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
-      }]
+      results: [],
+      errors: [
+        {
+          code: 'WEB-0005',
+          title: 'Datasource Timeout',
+          details: "The datasource '" +
+            this.datasource.name +
+            "' timed out: " +
+            res.statusMessage +
+            ' (' +
+            res.statusCode +
+            ')' +
+            ': ' +
+            this.endpoint
+        }
+      ]
     }
   } else if (res.statusCode === 404) {
     data = {
-      'results': [],
-      'errors': [{
-        'code': 'WEB-0004',
-        'title': 'Datasource Not Found',
-        'details': 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
-      }]
+      results: [],
+      errors: [
+        {
+          code: 'WEB-0004',
+          title: 'Datasource Not Found',
+          details: 'Datasource "' +
+            this.datasource.name +
+            '" failed. ' +
+            res.statusMessage +
+            ' (' +
+            res.statusCode +
+            ')' +
+            ': ' +
+            this.endpoint
+        }
+      ]
     }
   } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     // if the error is anything other than Success or Bad Request, error
     const err = new Error()
-    err.message = 'Datasource "' + this.datasource.name + '" failed. ' + res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
+    err.message =
+      'Datasource "' +
+      this.datasource.name +
+      '" failed. ' +
+      res.statusMessage +
+      ' (' +
+      res.statusCode +
+      ')' +
+      ': ' +
+      this.endpoint
     if (data) err.message += '\n' + data
 
     err.remoteIp = this.options.host
     err.remotePort = this.options.port
 
-    log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint)
+    log.error(
+      { module: 'helper' },
+      res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint
+    )
 
     // return done(err)
-    throw (err)
+    throw err
   }
 
   // Cache 200 responses

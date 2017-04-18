@@ -40,11 +40,11 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
     // Sort by field (with date support)
     if (sort && Object.keys(sort).length > 0) {
       Object.keys(sort).forEach(field => {
-        data = _.sortBy(data, (post) => {
+        data = _.sortBy(data, post => {
           const value = post[field]
           const valueAsDate = new Date(value)
-          return (valueAsDate.toString() !== 'Invalid Date')
-            ? +(valueAsDate)
+          return valueAsDate.toString() !== 'Invalid Date'
+            ? +valueAsDate
             : value
         })
         if (sort[field] === -1) {
@@ -54,7 +54,9 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
     }
 
     if (count) data = _.first(data, count)
-    if (fields && !_.isEmpty(fields)) data = _.chain(data).selectFields(fields.join(',')).value()
+    if (fields && !_.isEmpty(fields)) {
+      data = _.chain(data).selectFields(fields.join(',')).value()
+    }
   }
 
   done(null, { results: Array.isArray(data) ? data : [data] })

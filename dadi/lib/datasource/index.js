@@ -36,7 +36,10 @@ Datasource.prototype.init = function (callback) {
     }
 
     if (!providers[this.source.type]) {
-      err = new Error(`no provider available for datasource type ${this.source.type}`, __filename)
+      err = new Error(
+        `no provider available for datasource type ${this.source.type}`,
+        __filename
+      )
       console.error(err.message)
       return callback(err)
     }
@@ -47,7 +50,11 @@ Datasource.prototype.init = function (callback) {
     this.chained = schema.datasource.chained || null
 
     if (schema.datasource.filterEvent) {
-      this.filterEvent = new Event(null, schema.datasource.filterEvent, this.options)
+      this.filterEvent = new Event(
+        null,
+        schema.datasource.filterEvent,
+        this.options
+      )
     }
 
     this.provider.initialise(this, schema)
@@ -74,12 +81,16 @@ Datasource.prototype.loadDatasource = function (done) {
   var schema
 
   try {
-    var body = fs.readFileSync(filepath, {encoding: 'utf-8'})
+    var body = fs.readFileSync(filepath, { encoding: 'utf-8' })
 
     schema = JSON.parse(body)
     done(null, schema)
   } catch (err) {
-    log.error({module: 'datasource'}, {'err': err}, 'Error loading datasource schema "' + filepath + '". Is it valid JSON?')
+    log.error(
+      { module: 'datasource' },
+      { err: err },
+      'Error loading datasource schema "' + filepath + '". Is it valid JSON?'
+    )
     done(err)
   }
 }
@@ -112,14 +123,18 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // if the current datasource matches the page name
   // add some params from the query string or request params
-  if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters) {
-    var requestParamsPage = this.requestParams.find((obj) => {
-      return (obj.queryParam === 'page') && obj.param
+  if (
+    (this.page.name && datasource.indexOf(this.page.name) >= 0) ||
+    this.page.passFilters
+  ) {
+    var requestParamsPage = this.requestParams.find(obj => {
+      return obj.queryParam === 'page' && obj.param
     })
 
     // handle pagination param
     if (this.schema.datasource.paginate) {
-      this.schema.datasource.page = query.page ||
+      this.schema.datasource.page =
+        query.page ||
         (requestParamsPage && req.params[requestParamsPage]) ||
         req.params.page ||
         1
@@ -143,33 +158,49 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
   var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gmi
 
-  this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (match, p1, p2, p3, p4, offset, string) {
-    if (req.params[p3]) {
-      return req.params[p3]
-    } else {
-      return match
-    }
-  }))
+  this.schema.datasource.filter = JSON.parse(
+    JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (
+      match,
+      p1,
+      p2,
+      p3,
+      p4,
+      offset,
+      string
+    ) {
+      if (req.params[p3]) {
+        return req.params[p3]
+      } else {
+        return match
+      }
+    })
+  )
 
   // Process each of the datasource's requestParams, testing for a matching
   // parameter in the querystring (and added to req.params e.g. `/car/:make/:model`) or a matching
   // placeholder in the datasource's endpoint (e.g. `/car/makes/{make}`)
 
   // NB don't replace filter properties that already exist
-  _.each(this.requestParams, (obj) => {
+  _.each(this.requestParams, obj => {
     // if the requestParam has no 'target' property, it's destined for the filter
     if (!obj.target) obj.target = 'filter'
 
-    var paramValue = req.params.hasOwnProperty(obj.param) && req.params[obj.param]
+    var paramValue =
+      req.params.hasOwnProperty(obj.param) && req.params[obj.param]
 
     if (obj.field && paramValue) {
-      paramValue = obj.type === 'Number' ? Number(paramValue) : encodeURIComponent(paramValue)
+      paramValue = obj.type === 'Number'
+        ? Number(paramValue)
+        : encodeURIComponent(paramValue)
 
       if (obj.target === 'filter') {
         this.schema.datasource.filter[obj.field] = paramValue
       } else if (obj.target === 'endpoint') {
         var placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
-        this.source.modifiedEndpoint = this.schema.datasource.source.endpoint.replace(placeholderRegex, paramValue)
+        this.source.modifiedEndpoint = this.schema.datasource.source.endpoint.replace(
+          placeholderRegex,
+          paramValue
+        )
       }
     } else {
       if (obj.target === 'filter') {
@@ -182,7 +213,10 @@ Datasource.prototype.processRequest = function (datasource, req) {
   })
 
   if (this.schema.datasource.filterEventResult) {
-    this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult)
+    this.schema.datasource.filter = _.extend(
+      this.schema.datasource.filter,
+      this.schema.datasource.filterEventResult
+    )
   }
 
   if (typeof this.provider.processRequest === 'function') {
