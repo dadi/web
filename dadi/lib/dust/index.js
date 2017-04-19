@@ -18,14 +18,22 @@ const Dust = function () {
 
   dust.onLoad = (templateName, opts, callback) => {
     var name
-    if (opts && opts.host && templateName.indexOf(opts.host) === -1 && this.templates[opts.host + templateName]) {
+    if (
+      opts &&
+      opts.host &&
+      templateName.indexOf(opts.host) === -1 &&
+      this.templates[opts.host + templateName]
+    ) {
       name = opts.host + templateName
     } else {
       name = templateName
     }
 
     if (!this.templates[name]) {
-      return callback({name: 'File missing', message: 'Template not found: ' + name}, null)
+      return callback(
+        { name: 'File missing', message: 'Template not found: ' + name },
+        null
+      )
     }
 
     var rendered = true
@@ -34,7 +42,14 @@ const Dust = function () {
       var compiled = dust.compile(this.templates[name], name)
     } catch (err) {
       rendered = false
-      return callback({name: 'SyntaxError', message: 'Error compiling template: ' + name, stack: err.stack}, null)
+      return callback(
+        {
+          name: 'SyntaxError',
+          message: 'Error compiling template: ' + name,
+          stack: err.stack
+        },
+        null
+      )
     }
 
     if (rendered) {
@@ -48,7 +63,12 @@ Dust.prototype._writeToFile = function (filePath, content, append) {
   return new Promise(function (resolve, reject) {
     mkdirp(path.dirname(filePath), function (err, made) {
       if (err) {
-        log.error({module: 'dust'}, {err: err}, "Error creating directory for file '%s'", filePath)
+        log.error(
+          { module: 'dust' },
+          { err: err },
+          "Error creating directory for file '%s'",
+          filePath
+        )
 
         return reject(err)
       }
@@ -57,7 +77,12 @@ Dust.prototype._writeToFile = function (filePath, content, append) {
 
       writeFunction.call(this, filePath, content, function (err) {
         if (err) {
-          log.error({module: 'dust'}, {err: err}, "Error writing to file '%s'", filePath)
+          log.error(
+            { module: 'dust' },
+            { err: err },
+            "Error writing to file '%s'",
+            filePath
+          )
 
           return reject(err)
         }
@@ -113,8 +138,10 @@ Dust.prototype.loadFiles = function (files, prefix, recursive, key) {
       const basename = path.basename(file, '.dust')
 
       if (stats.isDirectory() && recursive) {
-        queue.push(this.loadDirectory(file, path.join(prefix, basename), false, key))
-      } else if (stats.isFile() && (path.extname(file) === '.dust')) {
+        queue.push(
+          this.loadDirectory(file, path.join(prefix, basename), false, key)
+        )
+      } else if (stats.isFile() && path.extname(file) === '.dust') {
         const name = path.join(prefix, basename)
 
         const readFile = new Promise((resolve, reject) => {
@@ -166,7 +193,7 @@ Dust.prototype.requireDirectory = function (directory) {
                 reject(err)
               }
 
-              if (stats.isFile() && (path.extname(filepath) === '.js')) {
+              if (stats.isFile() && path.extname(filepath) === '.js') {
                 require(filepath)
               }
 
@@ -219,7 +246,10 @@ Dust.prototype.writeClientsideFiles = function () {
 
   // Write templates
   if (config.get('dust.clientRender.format') === 'combined') {
-    const templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'))
+    const templatesOutputFile = path.join(
+      config.get('paths.public'),
+      config.get('dust.clientRender.path')
+    )
     let templatesOutput = ''
 
     templates.forEach(name => {
@@ -229,9 +259,19 @@ Dust.prototype.writeClientsideFiles = function () {
     queue.push(this._writeToFile(templatesOutputFile, templatesOutput))
   } else {
     templates.forEach(name => {
-      const templatesOutputFile = path.join(config.get('paths.public'), config.get('dust.clientRender.path'), name) + '.js'
+      const templatesOutputFile =
+        path.join(
+          config.get('paths.public'),
+          config.get('dust.clientRender.path'),
+          name
+        ) + '.js'
 
-      queue.push(this._writeToFile(templatesOutputFile, dust.compile(this.templates[name], name)))
+      queue.push(
+        this._writeToFile(
+          templatesOutputFile,
+          dust.compile(this.templates[name], name)
+        )
+      )
     })
   }
 

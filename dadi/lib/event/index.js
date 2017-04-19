@@ -17,7 +17,15 @@ Event.prototype.loadEvent = function () {
   var filepath = path.join(this.options.eventPath, this.name + '.js')
 
   if (filepath && !fs.existsSync(filepath)) {
-    throw new Error('Page "' + this.page + '" references event "' + this.name + '" which can\'t be found in "' + this.options.eventPath + '"')
+    throw new Error(
+      'Page "' +
+        this.page +
+        '" references event "' +
+        this.name +
+        '" which can\'t be found in "' +
+        this.options.eventPath +
+        '"'
+    )
   }
 
   try {
@@ -31,7 +39,7 @@ Event.prototype.loadEvent = function () {
 Event.prototype.run = function (req, res, data, done) {
   this.loadEvent()(req, res, data, function (err, result) {
     if (err) {
-      log.error({module: 'event'}, err)
+      log.error({ module: 'event' }, err)
     }
 
     return done(err, result)

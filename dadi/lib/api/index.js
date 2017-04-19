@@ -24,7 +24,9 @@ var Api = function () {
 
   // Sentry error handler
   if (config.get('logging.sentry.dsn') !== '') {
-    this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')))
+    this.errors.push(
+      raven.middleware.express.errorHandler(config.get('logging.sentry.dsn'))
+    )
   }
 
   // Fallthrough error handler
@@ -44,8 +46,12 @@ var Api = function () {
       this.redirectInstance = http.createServer(this.redirectListener)
     }
 
-    var readFileSyncSafe = (path) => {
-      try { return fs.readFileSync(path) } catch (ex) { console.log('error loading ssl file:', ex) }
+    var readFileSyncSafe = path => {
+      try {
+        return fs.readFileSync(path)
+      } catch (ex) {
+        console.log('error loading ssl file:', ex)
+      }
       return null
     }
 
@@ -63,7 +69,7 @@ var Api = function () {
 
     if (caPaths && caPaths.length > 0) {
       serverOptions.ca = []
-      caPaths.forEach((path) => {
+      caPaths.forEach(path => {
         var data = readFileSyncSafe(path)
         data && serverOptions.ca.push(data)
       })
@@ -146,7 +152,7 @@ Api.prototype.unuse = function (path) {
     }
 
     var functionStr = path.toString()
-    _.each(this.all, (func) => {
+    _.each(this.all, func => {
       if (func.toString() === functionStr) {
         return this.all.splice(indx, 1)
       } else {
@@ -154,8 +160,8 @@ Api.prototype.unuse = function (path) {
       }
     })
 
-  // indx = this.all.indexOf(path)
-  // return !!~indx && this.all.splice(indx, 1)
+    // indx = this.all.indexOf(path)
+    // return !!~indx && this.all.splice(indx, 1)
   }
 
   var existing = _.findWhere(this.paths, { path: path })
@@ -274,11 +280,12 @@ Api.prototype._match = function (req) {
 
   // get the host key that matches the request's host header
   var virtualHosts = config.get('virtualHosts')
-  var host = _.findKey(virtualHosts, (virtualHost) => {
-    return _.contains(virtualHost.hostnames, req.headers.host)
-  }) || ''
+  var host =
+    _.findKey(virtualHosts, virtualHost => {
+      return _.contains(virtualHost.hostnames, req.headers.host)
+    }) || ''
 
-  var paths = _.filter(this.paths, (path) => {
+  var paths = _.filter(this.paths, path => {
     return path.path.indexOf(host) > -1
   })
 
@@ -288,7 +295,9 @@ Api.prototype._match = function (req) {
     var match = paths[idx].regex.exec(path)
 
     // move to the next route if no match
-    if (!match) { continue }
+    if (!match) {
+      continue
+    }
 
     req.paths.push(paths[idx].path)
 
@@ -309,10 +318,10 @@ function onError (api) {
 
     if (config.get('env') === 'development') {
       console.log()
-      console.log(err.stack && err.stack.toString() || err)
+      console.log((err.stack && err.stack.toString()) || err)
     }
 
-    log.error({module: 'api'}, err)
+    log.error({ module: 'api' }, err)
 
     var data = {
       statusCode: err.statusCode || 500,
@@ -339,15 +348,17 @@ function onError (api) {
       // no user error page found for this statusCode, use default error template
       res.statusCode = data.statusCode
       res.setHeader('Content-Type', 'text/html')
-      res.end(errorView({
-        headline: 'Something went wrong.',
-        human: 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
-        developer: data.message,
-        stack: data.stack,
-        statusCode: data.statusCode,
-        error: data.code,
-        server: req.headers.host
-      }))
+      res.end(
+        errorView({
+          headline: 'Something went wrong.',
+          human: 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
+          developer: data.message,
+          stack: data.stack,
+          statusCode: data.statusCode,
+          error: data.code,
+          server: req.headers.host
+        })
+      )
     }
   }
 }
@@ -366,15 +377,17 @@ function notFound (api, req, res) {
     } else {
       // otherwise, respond with default message
       res.setHeader('Content-Type', 'text/html')
-      res.end(errorView({
-        headline: 'Page not found.',
-        human: 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
-        developer: 'HTTP Headers',
-        stack: JSON.stringify(req.headers, null, 2),
-        statusCode: '404',
-        error: 'Page not found',
-        server: req.headers.host
-      }))
+      res.end(
+        errorView({
+          headline: 'Page not found.',
+          human: 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
+          developer: 'HTTP Headers',
+          stack: JSON.stringify(req.headers, null, 2),
+          statusCode: '404',
+          error: 'Page not found',
+          server: req.headers.host
+        })
+      )
     }
   }
 }
@@ -390,17 +403,18 @@ function findPath (req, paths, pathString) {
   // get the host key that matches the request's host header
   var virtualHosts = config.get('virtualHosts')
 
-  var host = _.findKey(virtualHosts, (virtualHost) => {
-    return _.contains(virtualHost.hostnames, req.headers.host)
-  }) || ''
+  var host =
+    _.findKey(virtualHosts, virtualHost => {
+      return _.contains(virtualHost.hostnames, req.headers.host)
+    }) || ''
 
-  var matchingPaths = _.filter(paths, (path) => {
+  var matchingPaths = _.filter(paths, path => {
     return path.path.indexOf(host) > -1
   })
 
   // look for a page matching the pathString that has been loaded
   // along with the rest of the API
-  return _.filter(matchingPaths, (path) => {
+  return _.filter(matchingPaths, path => {
     return path.path.indexOf(pathString) > -1
   })
 }
@@ -422,9 +436,15 @@ function routePriority (path, keys) {
   }).length
 
   // if there is a "page" parameter in the route, give it a slightly higher priority
-  var paginationParam = _.find(keys, (key) => { return key.name && key.name === 'page' })
+  var paginationParam = _.find(keys, key => {
+    return key.name && key.name === 'page'
+  })
 
-  var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength) + (typeof paginationParam === 'undefined' ? 0 : 1)
+  var order =
+    staticRouteLength * 5 +
+    requiredParamLength * 2 +
+    optionalParamLength +
+    (typeof paginationParam === 'undefined' ? 0 : 1)
 
   // make internal routes less important...
   if (path.indexOf('/config') > 0) order = -100

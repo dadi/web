@@ -11,7 +11,7 @@ var forceDomain = function (options) {
       return next()
     }
 
-    statusCode = (newRoute.type === 'temporary') ? 307 : 301
+    statusCode = newRoute.type === 'temporary' ? 307 : 301
 
     res.writeHead(statusCode, {
       Location: newRoute.url
@@ -39,7 +39,7 @@ var domainRedirect = function (protocol, hostHeader, url, options) {
 
   var hostHeaderParts = (hostHeader || '').split(':')
   var hostname = hostHeaderParts[0] || ''
-  var port = (hostHeaderParts[1] - 0) || 80
+  var port = hostHeaderParts[1] - 0 || 80
 
   if (options.hostname.split(':').length > 1) {
     var hostnameParts = options.hostname.split(':')
@@ -48,8 +48,10 @@ var domainRedirect = function (protocol, hostHeader, url, options) {
   }
 
   if (
-    (hostname === 'localhost') ||
-    (hostname === options.hostname && port === options.port && protocol === options.protocol)
+    hostname === 'localhost' ||
+    (hostname === options.hostname &&
+      port === options.port &&
+      protocol === options.protocol)
   ) {
     return null
   }
@@ -62,17 +64,20 @@ var domainRedirect = function (protocol, hostHeader, url, options) {
     type: options.type,
     url: rewrittenRoute
   }
-/* eslint-enable consistent-return */
+  /* eslint-enable consistent-return */
 }
 
 /**
  *
  */
 var domainRewrite = function (route, options) {
-  options = _.extend({
-    protocol: undefined,
-    hostname: undefined
-  }, options)
+  options = _.extend(
+    {
+      protocol: undefined,
+      hostname: undefined
+    },
+    options
+  )
 
   var parsedRoute = url.parse(route)
   parsedRoute.host = undefined

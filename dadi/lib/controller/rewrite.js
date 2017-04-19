@@ -34,7 +34,10 @@ module.exports = function (rules) {
   rules = _parse(rules)
 
   return function (req, res, next) {
-    var protocol = req.connection.encrypted || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'
+    var protocol = req.connection.encrypted ||
+      req.headers['x-forwarded-proto'] === 'https'
+      ? 'https'
+      : 'http'
     var callNext = true
 
     rules.some(function (rule) {
@@ -48,7 +51,11 @@ module.exports = function (rules) {
       if (/:\/\//.test(rule.replace)) {
         location = req.url.replace(rule.regexp, rule.replace)
       } else {
-        location = protocol + '://' + req.headers.host + req.url.replace(rule.regexp, rule.replace)
+        location =
+          protocol +
+          '://' +
+          req.headers.host +
+          req.url.replace(rule.regexp, rule.replace)
       }
 
       var match = rule.regexp.test(req.url)
@@ -173,15 +180,21 @@ function _parse (rules) {
     var hostValue = hostSyntax.exec(flags)
 
     return {
-      regexp: typeof parts[2] !== 'undefined' && noCaseSyntax.test(flags) ? new RegExp(parts[0], 'i') : new RegExp(parts[0]),
+      regexp: typeof parts[2] !== 'undefined' && noCaseSyntax.test(flags)
+        ? new RegExp(parts[0], 'i')
+        : new RegExp(parts[0]),
       replace: parts[1],
       inverted: inverted,
       last: lastSyntax.test(flags),
       proxy: proxySyntax.test(flags),
-      redirect: redirectValue ? (typeof redirectValue[1] !== 'undefined' ? redirectValue[1] : 301) : false,
+      redirect: redirectValue
+        ? typeof redirectValue[1] !== 'undefined' ? redirectValue[1] : 301
+        : false,
       forbidden: forbiddenSyntax.test(flags),
       gone: goneSyntax.test(flags),
-      type: typeValue ? (typeof typeValue[1] !== 'undefined' ? typeValue[1] : 'text/plain') : false,
+      type: typeValue
+        ? typeof typeValue[1] !== 'undefined' ? typeValue[1] : 'text/plain'
+        : false,
       host: hostValue ? new RegExp(hostValue[1]) : false
     }
   })
@@ -231,7 +244,7 @@ function _proxy (rule, metas) {
 
 function _getRequestOpts (req, rule) {
   var opts = url.parse(req.url.replace(rule.regexp, rule.replace), true)
-  var query = (opts.search != null) ? opts.search : ''
+  var query = opts.search != null ? opts.search : ''
 
   if (query) {
     opts.path = opts.pathname + query

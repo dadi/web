@@ -22,9 +22,13 @@ var Page = function (name, schema, hostKey) {
   this.requiredDatasources = schema.requiredDatasources || []
 
   this.settings = schema.settings
-  this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false
+  this.beautify = this.settings.hasOwnProperty('beautify')
+    ? this.settings.beautify
+    : false
   this.keepWhitespace = getWhitespaceSetting(this.settings)
-  this.passFilters = this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false
+  this.passFilters = this.settings.hasOwnProperty('passFilters')
+    ? this.settings.passFilters
+    : false
 
   checkCacheSetting(schema, this.name)
   checkRouteSetting(schema, this.name)
@@ -42,20 +46,24 @@ var Page = function (name, schema, hostKey) {
  * @api public
  */
 Page.prototype.constructRoutes = function (schema) {
-  var routes = schema.routes || [{ 'path': '/' + this.name }]
+  var routes = schema.routes || [{ path: '/' + this.name }]
 
   if (schema.route) {
     if (schema.route.path && typeof schema.route.path === 'string') {
-      routes = [{ 'path': schema.route.path }]
-      if (schema.route.constraint) routes[0].constraint = schema.route.constraint
+      routes = [{ path: schema.route.path }]
+      if (schema.route.constraint) {
+        routes[0].constraint = schema.route.constraint
+      }
     } else if (schema.route.paths && typeof schema.route.paths === 'string') {
-      routes = [{ 'path': schema.route.paths }]
-      if (schema.route.constraint) routes[0].constraint = schema.route.constraint
+      routes = [{ path: schema.route.paths }]
+      if (schema.route.constraint) {
+        routes[0].constraint = schema.route.constraint
+      }
     }
   }
 
   // add default params to each route
-  _.each(routes, (route) => {
+  _.each(routes, route => {
     route.params = route.params || []
   })
 
@@ -73,7 +81,7 @@ Page.prototype.toPath = function (params) {
   var error
   var url
 
-  this.routes.forEach((route) => {
+  this.routes.forEach(route => {
     var keys = pathToRegexp(route.path).keys
 
     // only attempt this if the route's parameters match those passed to toPath
@@ -88,7 +96,11 @@ Page.prototype.toPath = function (params) {
   })
 
   if (!url) {
-    error = new Error('No routes for page "' + this.name + '" match the supplied number of parameters')
+    error = new Error(
+      'No routes for page "' +
+        this.name +
+        '" match the supplied number of parameters'
+    )
   }
 
   if (!url && error) throw error
@@ -120,10 +132,14 @@ function getWhitespaceSetting (settings) {
 function checkRouteSetting (schema, name) {
   if (!schema.routes && schema.route && typeof schema.route !== 'object') {
     var newSchema = schema
-    newSchema.routes = [{ 'path': schema.route }]
+    newSchema.routes = [{ path: schema.route }]
     delete newSchema.route
-    var message = '\nThe `route` property for pages has been extended to provide better routing functionality.\n'
-    message += "Please modify the route property for page '" + name + "'. The schema should change to the below:\n\n"
+    var message =
+      '\nThe `route` property for pages has been extended to provide better routing functionality.\n'
+    message +=
+      "Please modify the route property for page '" +
+      name +
+      "'. The schema should change to the below:\n\n"
     message += JSON.stringify(newSchema, null, 2) + '\n\n'
     throw new Error(message)
   }
@@ -141,7 +157,10 @@ function checkCacheSetting (schema, name) {
     delete schema.page.cache
 
     var message = '\nThe `cache` property should be nested under `settings`.\n'
-    message += "Please modify the descriptor file for page '" + name + "'. The schema should change to the below:\n\n"
+    message +=
+      "Please modify the descriptor file for page '" +
+      name +
+      "'. The schema should change to the below:\n\n"
     message += JSON.stringify(schema, null, 2) + '\n\n'
 
     throw new Error(message)
