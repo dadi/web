@@ -11,7 +11,7 @@
     "snyk-protect": "snyk protect",
     "prepublish": "npm run snyk-protect",
     "precommit": "lint-staged",
-    "commitmsg": "node ./scripts/commitmsg.js"
+    "commitmsg": "validate-commit-msg"
   },
   "lint-staged": {
     "*.js": [
@@ -99,7 +99,8 @@
     "standard": "8.x.x",
     "superagent": "^1.8.0-beta.2",
     "superagent-mock": "^1.10.0",
-    "supertest": "latest"
+    "supertest": "latest",
+    "validate-commit-msg": "^2.12.1"
   },
   "repository": {
     "type": "git",
