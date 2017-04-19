@@ -10,7 +10,8 @@
     "postinstall": "node ./scripts/copy-config.js && node ./scripts/copy-workspace.js && node ./scripts/init-web.js",
     "snyk-protect": "snyk protect",
     "prepublish": "npm run snyk-protect",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "commitmsg": "node ./scripts/commitmsg.js"
   },
   "lint-staged": {
     "*.js": [
@@ -76,7 +77,6 @@
     "uglify-js": "^2.6.2",
     "underscore": "^1.8.0",
     "underscore.string": "^3.2.2",
-    "validate-commit-message": "^3.0.1",
     "wildcard": "^1.1.2"
   },
   "devDependencies": {
