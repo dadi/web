@@ -58,7 +58,6 @@
     "node-uuid": "latest",
     "path-to-regexp": "^1.2.1",
     "perfy": "^1.1.0",
-    "pluralist": "^1.0.3",
     "proxy-addr": "^1.1.2",
     "purest": "^2.0.1",
     "q": "^1.4.1",
@@ -74,7 +73,6 @@
     "snyk": "^1.25.0",
     "stack-trace": "latest",
     "toobusy-js": "^0.4.2",
-    "uglify-js": "^2.6.2",
     "underscore": "^1.8.0",
     "underscore.string": "^3.2.2",
     "wildcard": "^1.1.2"
