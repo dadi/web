@@ -61,7 +61,6 @@
     "perfy": "^1.1.0",
     "proxy-addr": "^1.1.2",
     "purest": "^2.0.1",
-    "q": "^1.4.1",
     "qs": "6.4.0",
     "raven": "^0.9.0",
     "recursive-readdir": "^2.1.1",
