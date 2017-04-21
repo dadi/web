@@ -543,7 +543,7 @@ conf.updateConfigDataForDomain = function (domain) {
 }
 
 // Perform validation
-conf.validate({strict: false})
+conf.validate()
 
 module.exports = conf
 module.exports.configPath = function () {
