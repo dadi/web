@@ -78,7 +78,7 @@ $ [sudo] service web status
 $ [sudo] service web restart
 ```
 
-> Note: the environment variable `NODE_ENV=production` must be set to required the configuration version matching the configuration files available in the `config` directory.
+> Note: the environment variable `NODE_ENV=production` must be set to the required configuration version matching the configuration files available in the `config` directory.
 
 
 ## Links
