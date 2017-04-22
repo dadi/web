@@ -212,6 +212,8 @@ Server.prototype.start = function (done) {
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
     var hostConfigFile = './config/' + virtualHost.configFile
 
+    // TODO catch err
+
     var stats = fs.statSync(hostConfigFile)
     if (stats) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())

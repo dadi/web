@@ -1,7 +1,3 @@
-/*
-REWRITE INFO:
-https://github.com/tinganho/connect-modrewrite
-*/
 var _ = require('underscore')
 var debug = require('debug')('web:router')
 var es = require('event-stream')
@@ -14,7 +10,7 @@ var url = require('url')
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
 var help = require(path.join(__dirname, '/../help'))
 var log = require('@dadi/logger')
-var rewrite = require(path.join(__dirname, '/rewrite'))
+var rewrite = require('connect-modrewrite')
 
 var Datasource = require(path.join(__dirname, '/../datasource'))
 var Preload = require(path.join(__dirname, '../datasource/preload'))
@@ -75,23 +71,10 @@ Router.prototype.loadRewrites = function (options, done) {
         log.error({ module: 'router' }, err)
       }
 
-      // var endpointParts = ds.source.endpoint.split('/')
-      //
-      // var api = new DadiAPI({
-      //   uri: config.get('api.protocol') + '://' + config.get('api.host'),
-      //   port: config.get('api.port'),
-      //   credentials: {
-      //     clientId: config.get('auth.clientId'),
-      //     secret: config.get('auth.secret')
-      //   },
-      //   version: endpointParts[0],
-      //   database: endpointParts[1]
-      // })
-
       function refreshRewrites (cb) {
         // Get redirects from API collection
         var freshRules = []
-        ds.provider.load(null, function (err, response) {
+        ds.provider.load(null, (err, response) => {
           if (err) {
             console.log('Error loading data in Router Rewrite module')
             console.log(err)
@@ -103,7 +86,6 @@ Router.prototype.loadRewrites = function (options, done) {
           }
 
           if (response.results) {
-            // api.in(self.rewritesDatasource).find().then(function (response)
             var idx = 0
 
             _.each(response.results, function (rule) {
@@ -146,7 +128,7 @@ Router.prototype.loadRewrites = function (options, done) {
       })
     )
 
-    stream.on('error', function (err) {
+    stream.on('error', err => {
       log.error(
         { module: 'router' },
         'No rewrites loaded, file not found (' + self.rewritesFile + ')'
@@ -154,7 +136,7 @@ Router.prototype.loadRewrites = function (options, done) {
       done(err)
     })
 
-    stream.on('end', function () {
+    stream.on('end', () => {
       self.rules = rules.slice(0)
       done(null)
     })
@@ -379,19 +361,15 @@ module.exports = function (server, options) {
   server.app.Router.loadRewrites(options, function (err) {
     if (err) console.log(err)
 
-    this.shouldCall = true
     rewriteFunction = rewrite(server.app.Router.rules)
 
-    // determine if we need to even call
-    server.app.use(function (req, res, next) {
-      this.shouldCall = rewriteFunction.call(server.app.Router, req, res, next)
-      if (!res.finished) next()
+    // process rewrite rules first
+    server.app.use((req, res, next) => {
+      rewriteFunction(req, res, next)
     })
 
     // load rewrites from our DS and handle them
     server.app.use((req, res, next) => {
-      if (!this.shouldCall) return next()
-
       debug('processing %s', req.url)
 
       if (

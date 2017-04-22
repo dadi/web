@@ -257,9 +257,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
     return done(null, data)
   }
 
-  var eventIdx = 0
-
-  _.each(events, function (event) {
+  _.each(events, (event, idx) => {
     help.timer.start('event: ' + event.name)
 
     // add a random value to the data obj so we can check if an
@@ -269,11 +267,12 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
       .createHash('md5')
       .update(new Date().toString())
       .digest('hex')
+
     data.checkValue = checkValue
 
     // run the event
     try {
-      event.run(req, res, data, function (err, result) {
+      event.run(req, res, data, (err, result) => {
         help.timer.stop('event: ' + event.name)
 
         if (err) {
@@ -289,11 +288,9 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
           data[event.name] = result
         }
 
-        eventIdx++
-
         // return the data if we're at the end of the events
         // array, we have all the responses to render the page
-        if (eventIdx === events.length) {
+        if (idx === events.length - 1) {
           return done(null, data)
         }
       })
@@ -341,14 +338,17 @@ Controller.prototype.loadData = function (req, res, data, done) {
       // Run PreLoad Events
       function (callback) {
         help.timer.start('preload data')
-        self.loadEventData(self.preloadEvents, req, res, data, function (
-          err,
-          result
-        ) {
-          if (err) return done(err)
-          help.timer.stop('preload data')
-          callback(null)
-        })
+        self.loadEventData(
+          self.preloadEvents,
+          req,
+          res,
+          data,
+          (err, result) => {
+            if (err) return done(err)
+            help.timer.stop('preload data')
+            callback(null)
+          }
+        )
       },
 
       // Run datasources
@@ -357,9 +357,9 @@ Controller.prototype.loadData = function (req, res, data, done) {
           callback(null)
         }
 
-        var queue = async.queue(function (ds, cb) {
+        var queue = async.queue((ds, cb) => {
           if (ds.filterEvent) {
-            ds.filterEvent.run(req, res, data, function (err, filter) {
+            ds.filterEvent.run(req, res, data, (err, filter) => {
               if (err) return done(err)
               ds.schema.datasource.filterEventResult = filter
             })
@@ -369,7 +369,7 @@ Controller.prototype.loadData = function (req, res, data, done) {
 
           help.timer.start('datasource: ' + ds.name)
 
-          ds.provider.load(req.url, function (err, result, dsResponse) {
+          ds.provider.load(req.url, (err, result, dsResponse) => {
             help.timer.stop('datasource: ' + ds.name)
             if (err) return done(err)
 
@@ -397,17 +397,14 @@ Controller.prototype.loadData = function (req, res, data, done) {
         }
 
         // add each primary datasource to the queue for processing
-        _.each(primaryDatasources, function (datasource) {
+        _.each(primaryDatasources, datasource => {
           queue.push(datasource)
         })
       },
 
       // Run chained datasources
       function (callback) {
-        self.processChained(chainedDatasources, data, req, function (
-          err,
-          result
-        ) {
+        self.processChained(chainedDatasources, data, req, (err, result) => {
           if (err) return done(err)
           callback(null)
         })
@@ -415,7 +412,7 @@ Controller.prototype.loadData = function (req, res, data, done) {
 
       // Run events
       function (callback) {
-        self.loadEventData(self.events, req, res, data, function (err, result) {
+        self.loadEventData(self.events, req, res, data, (err, result) => {
           if (err) return done(err)
           callback(null)
         })
@@ -442,7 +439,7 @@ Controller.prototype.processChained = function (
     return done(null, data)
   }
 
-  _.each(chainedDatasources, function (chainedDatasource, chainedKey) {
+  _.each(chainedDatasources, (chainedDatasource, chainedKey) => {
     debug(
       'datasource (chained): %s > %s',
       chainedDatasource.chained.datasource,
@@ -532,7 +529,7 @@ Controller.prototype.processChained = function (
       chainedDatasource.name,
       chainedDatasource.schema.datasource.filter
     )
-    chainedDatasource.provider.load(req.url, function (err, result) {
+    chainedDatasource.provider.load(req.url, (err, result) => {
       if (err) log.error({ module: 'controller' }, err)
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)')
