@@ -35,24 +35,25 @@ var Controller = function (page, options, meta) {
   this.events = []
   this.preloadEvents = []
 
-  this.attachDatasources((err) => {
+  this.attachDatasources(err => {
     if (err) {
-      log.error({module: 'controller'}, err)
+      log.error({ module: 'controller' }, err)
       throw err
     }
   })
 
-  this.attachEvents(() => {
-  })
+  this.attachEvents(() => {})
 }
 
 /**
  *
  */
 Controller.prototype.attachDatasources = function (done) {
+  if (this.page.datasources.length === 0) return done(null)
+
   var i = 0
 
-  this.page.datasources.forEach((datasource) => {
+  this.page.datasources.forEach(datasource => {
     new Datasource(this.page, datasource, this.options).init((err, ds) => {
       if (err) return done(err)
 
@@ -70,17 +71,17 @@ Controller.prototype.attachDatasources = function (done) {
  */
 Controller.prototype.attachEvents = function (done) {
   // add global events first
-  config.get('globalEvents').forEach((eventName) => {
+  config.get('globalEvents').forEach(eventName => {
     var e = new Event(this.page.name, eventName, this.options)
     this.preloadEvents.push(e)
   })
 
-  this.page.preloadEvents.forEach((eventName) => {
+  this.page.preloadEvents.forEach(eventName => {
     var e = new Event(this.page.name, eventName, this.options)
     this.preloadEvents.push(e)
   })
 
-  this.page.events.forEach((eventName) => {
+  this.page.events.forEach(eventName => {
     var e = new Event(this.page.name, eventName, this.options)
     this.events.push(e)
   })
@@ -95,7 +96,11 @@ Controller.prototype.requiredDataPresent = function (data) {
   if (_.isEmpty(this.page.requiredDatasources)) return true
 
   return _.every(this.page.requiredDatasources, function (datasource) {
-    return data.hasOwnProperty(datasource) && data[datasource].hasOwnProperty('results') && data[datasource].results.length !== 0
+    return (
+      data.hasOwnProperty(datasource) &&
+      data[datasource].hasOwnProperty('results') &&
+      data[datasource].results.length !== 0
+    )
   })
 }
 
@@ -111,7 +116,11 @@ Controller.prototype.buildInitialViewData = function (req) {
   }
 
   data.hasResults = function (node) {
-    return this.has(node) && this[node].results !== undefined && !_.isEmpty(this[node].results)
+    return (
+      this.has(node) &&
+      this[node].results !== undefined &&
+      !_.isEmpty(this[node].results)
+    )
   }
 
   var urlData = url.parse(req.url, true)
@@ -136,7 +145,10 @@ Controller.prototype.buildInitialViewData = function (req) {
   if (req.params.id) data.id = decodeURIComponent(req.params.id)
 
   // allow JSON view using ?json=true
-  var json = config.get('allowJsonView') && urlData.query.json && urlData.query.json.toString() === 'true'
+  var json =
+    config.get('allowJsonView') &&
+    urlData.query.json &&
+    urlData.query.json.toString() === 'true'
 
   data.title = this.page.name
   data.global = config.has('global') ? config.get('global') : {} // global values from config
@@ -156,23 +168,29 @@ Controller.prototype.process = function process (req, res, next) {
   debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
-  var self = this
   var done
 
   var statusCode = res.statusCode || 200
 
   var data = this.buildInitialViewData(req)
-  var view = new View(req.url, self.page, data.json)
+
+  var view = new View(req.url, this.page, data.json)
 
   if (data.json) {
     done = sendBackJSON(statusCode, res, next)
   } else {
-    done = sendBackHTML(req.method, statusCode, this.page.contentType, res, next)
+    done = sendBackHTML(
+      req.method,
+      statusCode,
+      this.page.contentType,
+      res,
+      next
+    )
   }
 
-  self.loadData(req, res, data, function (err, data, dsResponse) {
+  this.loadData(req, res, data, (err, data, dsResponse) => {
     // return 404 if requiredDatasources contain no data
-    if (!self.requiredDataPresent(data)) {
+    if (!this.requiredDataPresent(data)) {
       return next()
     }
 
@@ -193,13 +211,15 @@ Controller.prototype.process = function process (req, res, next) {
     help.timer.stop(req.method.toLowerCase())
     if (data) data.stats = help.timer.getStats()
 
+    if (data) data.version = help.getVersion()
+
+    view.setData(data)
+
     if (data.json) {
       return done(null, data)
     }
 
-    view.setData(data)
-
-    view.render(function (err, result) {
+    view.render((err, result) => {
       if (err) return next(err)
       return done(null, result)
     })
@@ -207,7 +227,7 @@ Controller.prototype.process = function process (req, res, next) {
 }
 
 function hasAttachedDatasources (datasources) {
-  return (typeof datasources === 'object' && Object.keys(datasources).length > 0)
+  return typeof datasources === 'object' && Object.keys(datasources).length > 0
 }
 
 /**
@@ -237,20 +257,22 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
     return done(null, data)
   }
 
-  var eventIdx = 0
-
-  _.each(events, function (event) {
+  _.each(events, (event, idx) => {
     help.timer.start('event: ' + event.name)
 
     // add a random value to the data obj so we can check if an
     // event has sent back the obj - in which case we assign it back
     // to itself
-    var checkValue = crypto.createHash('md5').update(new Date().toString()).digest('hex')
+    var checkValue = crypto
+      .createHash('md5')
+      .update(new Date().toString())
+      .digest('hex')
+
     data.checkValue = checkValue
 
     // run the event
     try {
-      event.run(req, res, data, function (err, result) {
+      event.run(req, res, data, (err, result) => {
         help.timer.stop('event: ' + event.name)
 
         if (err) {
@@ -266,11 +288,9 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
           data[event.name] = result
         }
 
-        eventIdx++
-
         // return the data if we're at the end of the events
         // array, we have all the responses to render the page
-        if (eventIdx === events.length) {
+        if (idx === events.length - 1) {
           return done(null, data)
         }
       })
@@ -286,7 +306,12 @@ Controller.prototype.loadData = function (req, res, data, done) {
   var primaryDatasources = {}
   var chainedDatasources = {}
 
-  debug('datasources %o %o', _.map(self.datasources, (ds) => { return ds.name }))
+  debug(
+    'datasources %o %o',
+    _.map(self.datasources, ds => {
+      return ds.name
+    })
+  )
 
   _.each(self.datasources, function (ds, key) {
     if (ds.chained) {
@@ -296,95 +321,117 @@ Controller.prototype.loadData = function (req, res, data, done) {
     }
   })
 
-  debug('loadData %o %o', _.map(primaryDatasources, (ds) => { return ds.name }), _.map(chainedDatasources, (ds) => { return ds.name }))
+  debug(
+    'loadData %o %o',
+    _.map(primaryDatasources, ds => {
+      return ds.name
+    }),
+    _.map(chainedDatasources, ds => {
+      return ds.name
+    })
+  )
 
   help.timer.start('load data')
 
-  async.waterfall([
-    // Run PreLoad Events
-    function (callback) {
-      help.timer.start('preload data')
-      self.loadEventData(self.preloadEvents, req, res, data, function (err, result) {
-        if (err) return done(err)
-        help.timer.stop('preload data')
-        callback(null)
-      })
-    },
-
-    // Run datasources
-    function (callback) {
-      if (!hasAttachedDatasources(self.datasources)) {
-        callback(null)
-      }
-
-      var queue = async.queue(function (ds, cb) {
-        if (ds.filterEvent) {
-          ds.filterEvent.run(req, res, data, function (err, filter) {
+  async.waterfall(
+    [
+      // Run PreLoad Events
+      function (callback) {
+        help.timer.start('preload data')
+        self.loadEventData(
+          self.preloadEvents,
+          req,
+          res,
+          data,
+          (err, result) => {
             if (err) return done(err)
-            ds.schema.datasource.filterEventResult = filter
-          })
+            help.timer.stop('preload data')
+            callback(null)
+          }
+        )
+      },
+
+      // Run datasources
+      function (callback) {
+        if (!hasAttachedDatasources(self.datasources)) {
+          callback(null)
         }
 
-        processSearchParameters(ds.schema.datasource.key, ds, req)
-
-        help.timer.start('datasource: ' + ds.name)
-
-        ds.provider.load(req.url, function (err, result, dsResponse) {
-          help.timer.stop('datasource: ' + ds.name)
-          if (err) return done(err)
-
-          if (dsResponse) {
-            return done(null, result, dsResponse)
+        var queue = async.queue((ds, cb) => {
+          if (ds.filterEvent) {
+            ds.filterEvent.run(req, res, data, (err, filter) => {
+              if (err) return done(err)
+              ds.schema.datasource.filterEventResult = filter
+            })
           }
 
-          if (result) {
-            try {
-              data[ds.schema.datasource.key] = (typeof result === 'object' ? result : JSON.parse(result))
-            } catch (e) {
-              console.log(e)
+          processSearchParameters(ds.schema.datasource.key, ds, req)
+
+          help.timer.start('datasource: ' + ds.name)
+
+          ds.provider.load(req.url, (err, result, dsResponse) => {
+            help.timer.stop('datasource: ' + ds.name)
+            if (err) return done(err)
+
+            if (dsResponse) {
+              return done(null, result, dsResponse)
             }
-          }
 
-          cb()
+            if (result) {
+              try {
+                data[ds.schema.datasource.key] = typeof result === 'object'
+                  ? result
+                  : JSON.parse(result)
+              } catch (e) {
+                console.log(e)
+              }
+            }
+
+            cb()
+          })
+        }, 1)
+
+        // queue finished
+        queue.drain = function () {
+          callback(null)
+        }
+
+        // add each primary datasource to the queue for processing
+        _.each(primaryDatasources, datasource => {
+          queue.push(datasource)
         })
-      }, 1)
+      },
 
-      // queue finished
-      queue.drain = function () {
-        callback(null)
+      // Run chained datasources
+      function (callback) {
+        self.processChained(chainedDatasources, data, req, (err, result) => {
+          if (err) return done(err)
+          callback(null)
+        })
+      },
+
+      // Run events
+      function (callback) {
+        self.loadEventData(self.events, req, res, data, (err, result) => {
+          if (err) return done(err)
+          callback(null)
+        })
       }
-
-      // add each primary datasource to the queue for processing
-      _.each(primaryDatasources, function (datasource) {
-        queue.push(datasource)
-      })
-    },
-
-    // Run chained datasources
-    function (callback) {
-      self.processChained(chainedDatasources, data, req, function (err, result) {
-        if (err) return done(err)
-        callback(null)
-      })
-    },
-
-    // Run events
-    function (callback) {
-      self.loadEventData(self.events, req, res, data, function (err, result) {
-        if (err) return done(err)
-        callback(null)
-      })
-    }
-  ],
-
+    ],
     // final results
     function (err) {
       help.timer.stop('load data')
       done(err, data)
-    })
+    }
+  )
 }
 
-Controller.prototype.processChained = function (chainedDatasources, data, req, done) {
+Controller.prototype.processChained = function (
+  chainedDatasources,
+  data,
+  req,
+  done
+) {
   var idx = 0
   var self = this
 
@@ -392,15 +439,24 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     return done(null, data)
   }
 
-  _.each(chainedDatasources, function (chainedDatasource, chainedKey) {
-    debug('datasource (chained): %s > %s', chainedDatasource.chained.datasource, chainedKey)
+  _.each(chainedDatasources, (chainedDatasource, chainedKey) => {
+    debug(
+      'datasource (chained): %s > %s',
+      chainedDatasource.chained.datasource,
+      chainedKey
+    )
     help.timer.start('datasource: ' + chainedDatasource.name + ' (chained)')
 
     if (!data[chainedDatasource.chained.datasource]) {
-      var message = "Chained datasource '" + chainedDatasource.name + "' expected to find data from datasource '" + chainedDatasource.chained.datasource + "'."
+      var message =
+        "Chained datasource '" +
+        chainedDatasource.name +
+        "' expected to find data from datasource '" +
+        chainedDatasource.chained.datasource +
+        "'."
       var err = new Error()
       err.message = message
-      log.warn({module: 'controller'}, message)
+      log.warn({ module: 'controller' }, message)
       return done(err)
     }
 
@@ -409,8 +465,9 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     var param = ''
 
     try {
-      param =
-        chainedDatasource.chained.outputParam.param.split('.').reduce(function (o, x) {
+      param = chainedDatasource.chained.outputParam.param
+        .split('.')
+        .reduce(function (o, x) {
           return o ? o[x] : ''
         }, data[chainedDatasource.chained.datasource])
     } catch (e) {
@@ -418,7 +475,10 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     }
 
     // cast the param value if needed
-    if (chainedDatasource.chained.outputParam.type && chainedDatasource.chained.outputParam.type === 'Number') {
+    if (
+      chainedDatasource.chained.outputParam.type &&
+      chainedDatasource.chained.outputParam.type === 'Number'
+    ) {
       param = parseInt(param)
     } else {
       param = encodeURIComponent(param)
@@ -430,12 +490,15 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     }
 
     if (self.page.passFilters && chainedDatasource.schema.datasource.paginate) {
-      chainedDatasource.schema.datasource.page = data.query.page || req.params.page || 1
+      chainedDatasource.schema.datasource.page =
+        data.query.page || req.params.page || 1
     }
 
     // if there is a field to filter on, add the new parameter value to the filters
     if (chainedDatasource.chained.outputParam.field) {
-      chainedDatasource.schema.datasource.filter[chainedDatasource.chained.outputParam.field] = param
+      chainedDatasource.schema.datasource.filter[ // eslint-disable-line
+        chainedDatasource.chained.outputParam.field
+      ] = param
     }
 
     // if the datasource specified a query, add it to the existing filter
@@ -445,7 +508,7 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
       var filter = JSON.stringify(chainedDatasource.schema.datasource.filter)
       var q = JSON.stringify(chainedDatasource.chained.outputParam.query)
 
-      if (typeof (param) !== 'number') {
+      if (typeof param !== 'number') {
         param = '"' + param + '"'
       }
 
@@ -456,19 +519,28 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
       chainedDatasource.schema.datasource.filter = JSON.parse(filter)
     }
 
-    chainedDatasource.provider.buildEndpoint(chainedDatasource.schema, function () {})
+    chainedDatasource.provider.buildEndpoint(
+      chainedDatasource.schema,
+      function () {}
+    )
 
-    debug('datasource (load): %s %o', chainedDatasource.name, chainedDatasource.schema.datasource.filter)
-    chainedDatasource.provider.load(req.url, function (err, result) {
-      if (err) log.error({module: 'controller'}, err)
+    debug(
+      'datasource (load): %s %o',
+      chainedDatasource.name,
+      chainedDatasource.schema.datasource.filter
+    )
+    chainedDatasource.provider.load(req.url, (err, result) => {
+      if (err) log.error({ module: 'controller' }, err)
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)')
 
       if (result) {
         try {
-          data[chainedKey] = (typeof result === 'object' ? result : JSON.parse(result))
+          data[chainedKey] = typeof result === 'object'
+            ? result
+            : JSON.parse(result)
         } catch (e) {
-          log.error({module: 'controller'}, e)
+          log.error({ module: 'controller' }, e)
         }
       }
 

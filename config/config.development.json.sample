@@ -1,29 +1,35 @@
 {
-  "app": {
-    "name": "Project Name Here"
+  "global": {
+    "site": "Your site name",
+    "description": "An exciting beginning."
   },
+  "globalEvents": [
+    "global"
+  ],
   "server": {
     "host": "127.0.0.1",
     "port": 3001
   },
   "cluster": false,
-  "api": {
-    "host": "127.0.0.1",
-    "port": 3000
+  "paths": {
+    "workspace": "workspace",
+    "datasources": "workspace/datasources",
+    "pages": "workspace/pages",
+    "partials": "workspace/partials",
+    "events": "workspace/events",
+    "middleware": "workspace/middleware",
+    "media": "workspace/media",
+    "public": "workspace/public",
+    "routes": "workspace/routes",
+    "filters": "workspace/utils/filters",
+    "helpers": "workspace/utils/helpers"
   },
-  "auth": {
-    "tokenUrl":"/token",
-    "clientId":"your-client-id",
-    "secret":"your-secret"
-  },
-  "global" : {
-    "baseUrl": "http://www.example.com"
-  },
-  "virtualDirectories": [
-    {
-      "path": "/data/legacy_features",
-      "index": "default.html",
-      "forceTrailingSlash": false
-    }
-  ]
+  "allowJsonView": true,
+  "debug": true,
+  "dust": {
+    "cache": true,
+    "debug": true,
+    "debugLevel": "DEBUG",
+    "whitespace": true
+  }
 }

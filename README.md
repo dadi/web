@@ -1,10 +1,16 @@
 <img src="http://52.209.207.148/assets/products/dadi-web-full.png" alt="DADI Web" height="65"/>
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
-[![coverage](https://img.shields.io/badge/coverage-69%25-yellow.svg?style=flat?style=flat-square)](https://github.com/dadi/web)
+[![coverage](https://img.shields.io/badge/coverage-74%25-yellow.svg?style=flat?style=flat-square)](https://github.com/dadi/web)
 [![Build Status](https://travis-ci.org/dadi/web.svg?branch=master)](https://travis-ci.org/dadi/web)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)
+
+## DADI Web
+
+* [Overview](#overview)
+* [Requirements](#requirements)
+* [Your First Web Project](#your-first-web-project)
+* [Links](#links)
 
 ## Overview
 
@@ -16,39 +22,81 @@ DADI Web uses LinkedIn's Dust templating language which provides a simple yet po
 
 DADI Web is part of [DADI](https://github.com/dadi/), a suite of components covering the full development stack, built for performance and scale.
 
-## Getting Started
+## Requirements
 
-### Install via NPM
+* **[Node.js](https://www.nodejs.org/)** (supported versions: 4.7.0, 5.12.0, 6.9.2)
 
-```shell
-npm install @dadi/web
+## Your first Web project
+
+### Install Web
+
+All DADI platform microservices are available from [NPM](https://www.npmjs.com/). To add *Web* to your project as a dependency:
+
+```bash
+$ cd my-app
+$ npm install --save @dadi/web
 ```
 
-### Install via DADI Generator
+As part of the installation process of the `@dadi/web` package, several files and folders were added to your project:
 
+* `config/config.development.json`
+* `workspace/`
+* `server.js`
+
+This enables Web to boot straight out of the box with a default ‘blog’ style configuration and some suggestions of next steps. Start the server and open a browser to begin.
+
+### Start the server
+
+With the `server.js` in the root of your application, Web can be started from the command line simply by issuing the following command:
+
+```bash
+$ npm start
 ```
-npm install -g @dadi/generator
-dadi-generator web /path/to/your_new_app
-cd /path/to/your_new_app
-npm install
-npm start
+
+With the default configuration, our Web server is available at http://localhost:3001. Visit this URL in your browser to see a 'Welcome' page.
+
+### Configuration
+
+Web requires a configuration file specific to the application environment. For example in the production environment it will look for a file named `config.production.json`.
+
+Configuration files live in a `config` folder in your application root, for example `config/config.development.json`. Web starts with a sensible default configuration, but you can find full configuration documentation at http://docs.dadi.tech/web/getting-started/configuration/.
+
+#### Run Web as a service
+
+To run your Web application in the background as a service, install Forever and Forever Service:
+
+```bash
+$ npm install forever forever-service -g
+
+$ forever-service install -s server.js -e NODE_ENV=production web --start
 ```
 
-## Documentation
+You can now interact with the `web` service using the following commands:
 
-Documentation can be found at the [DADI Docs site](http://docs.dadi.tech/web/).
+```bash
+$ [sudo] service web start
+$ [sudo] service web stop
+$ [sudo] service web status
+$ [sudo] service web restart
+```
+
+> Note: the environment variable `NODE_ENV=production` must be set to the required configuration version matching the configuration files available in the `config` directory.
+
+
+## Links
+* [Web Documentation](http://docs.dadi.tech/web/)
 
 ## Licence
 
 DADI is a data centric development and delivery stack, built specifically in support of the principles of API first and COPE.
 
-Copyright notice
-(C) 2016 DADI+ Limited <support@dadi.tech>
+Copyright notice<br />
+(C) 2017 DADI+ Limited <support@dadi.tech><br />
 All rights reserved
 
 This product is part of DADI.<br />
 DADI is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
+it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version ("the GPL").
 
@@ -64,12 +112,11 @@ them, to determine what licences are applicable.**
 DADI is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+GNU General Public License for more details.
 
-The GNU Affero General Public License (GPL) is available at
+The GNU General Public License (GPL) is available at
 http://www.gnu.org/licenses/gpl-3.0.en.html.<br />
 A copy can be found in the file GPL.md distributed with
 these files.
 
 This copyright notice MUST APPEAR in all copies of the product!
-

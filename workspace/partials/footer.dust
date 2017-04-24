@@ -1,0 +1,6 @@
+<footer>
+  &#x26A1; Powered by <a href="https://dadi.tech/platform/web">DADI Web {version}</a><br>© {@formatDate unix=global.timestamp format="YYYY" /}
+</footer>
+
+</body>
+</html>

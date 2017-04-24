@@ -1,0 +1,11 @@
+<div class="pagination">
+  {@paginate page=currentPage totalPages=totalPages path="?page={n}"}
+    <a class="pagination--page" href="{@eq key=n value=1}./{:else}{path}{/eq}">{n}</a>
+  {:current}
+    <a class="pagination--active pagination--page" href="{@eq key=n value=1}./{:else}{path}{/eq}">{n}</a>
+  {:prev}
+    <a class="pagination--prev" href="{@eq key=n value=1}./{:else}{path}{/eq}">&larr; Prev</a>
+  {:next}
+    <a class="pagination--next" href="{path}">Next &rarr;</a>
+  {/paginate}
+</div>

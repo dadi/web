@@ -1,0 +1,12 @@
+{>"partials/header" /}
+
+{#posts.results}
+	{>"partials/post" /}
+{/posts.results}
+
+{>"partials/pagination" 
+	currentPage=posts.metadata.page
+	totalPages=posts.metadata.totalPages
+/}
+
+{>"partials/footer" /}

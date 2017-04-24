@@ -3,17 +3,23 @@
  */
 var _ = require('underscore')
 var crypto = require('crypto')
+var debug = require('debug')('web:timer')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
 var path = require('path')
 var perfy = require('perfy')
 
-var cache = require(path.join(__dirname, '/cache'))
+var version = require('../../package.json').version
+var Cache = require(path.join(__dirname, '/cache'))
 var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
 
 var self = this
+
+module.exports.getVersion = function () {
+  if (config.get('debug')) return version
+}
 
 module.exports.htmlEncode = function (input) {
   var encodedStr = input.replace(/[\u00A0-\u9999<>&]/gim, function (i) {
@@ -29,13 +35,13 @@ module.exports.timer = {
 
   start: function start (key) {
     if (!this.isDebugEnabled()) return
-    console.log('Start timer: ' + key)
+    debug('start: %s', key)
     perfy.start(key, false)
   },
 
   stop: function stop (key) {
     if (!this.isDebugEnabled()) return
-    console.log('Stop timer: ' + key)
+    debug('stop: %s', key)
     if (perfy.exists(key)) perfy.end(key)
   },
 
@@ -43,12 +49,13 @@ module.exports.timer = {
     if (!this.isDebugEnabled()) return
     var stats = []
     _.each(perfy.names(), function (key) {
-      if (perfy.result(key)) stats.push({ key: key, value: perfy.result(key).summary })
+      if (perfy.result(key)) {
+        stats.push({ key: key, value: perfy.result(key).summary })
+      }
     })
     perfy.destroyAll()
     return stats
   }
-
 }
 
 module.exports.isApiAvailable = function (done) {
@@ -81,7 +88,12 @@ module.exports.isApiAvailable = function (done) {
   }
 
   request.on('error', function (e) {
-    e.message = 'Error connecting to API: ' + e.message + ". Check the 'api' settings in config file 'config/config." + config.get('env') + '.json'
+    e.message =
+      'Error connecting to API: ' +
+      e.message +
+      ". Check the 'api' settings in config file 'config/config." +
+      config.get('env') +
+      '.json'
     e.remoteIp = options.hostname
     e.remotePort = options.port
     return done(e)
@@ -124,7 +136,13 @@ module.exports.sendBackJSONP = function (callbackName, res, next) {
 }
 
 // helper that sends html response
-module.exports.sendBackHTML = function (method, successCode, contentType, res, next) {
+module.exports.sendBackHTML = function (
+  method,
+  successCode,
+  contentType,
+  res,
+  next
+) {
   return function (err, results) {
     if (err) {
       console.log(err)
@@ -155,10 +173,17 @@ module.exports.sendBackHTML = function (method, successCode, contentType, res, n
  * @param {res} res - the HTTP response
  */
 module.exports.validateRequestCredentials = function (req, res) {
+  var authConfig = config.get('auth')
   var clientId = req.body.clientId
   var secret = req.body.secret
 
-  if (!clientId || !secret || (clientId !== config.get('auth.clientId') && secret !== config.get('auth.secret'))) {
+  if (!clientId || !secret) {
+    res.statusCode = 401
+    res.end()
+    return false
+  }
+
+  if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
     res.statusCode = 401
     res.end()
     return false
@@ -217,95 +242,69 @@ module.exports.parseQuery = function (queryStr) {
 module.exports.clearCache = function (req, callback) {
   var pathname = req.body.path
   var modelDir = crypto.createHash('sha1').update(pathname).digest('hex')
-  var cachePath = path.join(config.get('caching.directory.path'), modelDir + '.' + config.get('caching.directory.extension'))
+  var cacheDir = config.get('caching.directory.path')
+
   var datasourceCachePaths = []
-  var files = fs.readdirSync(config.get('caching.directory.path'))
+  var files = fs.readdirSync(cacheDir)
 
   if (pathname === '*') {
-    modelDir = ''
-    cachePath = path.join(config.get('caching.directory.path'), modelDir)
+    modelDir = '.*'
 
-    files.filter(function (file) {
+    files = files.filter(file => {
       return file.substr(-5) === '.json'
-    }).forEach(function (file) {
-      datasourceCachePaths.push(path.join(config.get('caching.directory.path'), file))
+    })
+
+    files.forEach(file => {
+      datasourceCachePaths.push(path.join(cacheDir, file))
     })
   } else {
     var endpointRequest = {
       url: req.headers['host'] + pathname
     }
 
-    var endpoint = cache().getEndpointMatchingRequest(endpointRequest)
+    var endpoint = Cache().getEndpointMatchingRequest(endpointRequest)
 
-    _.each(endpoint.page.datasources, function (datasource) {
-      var cachePrefix = crypto.createHash('sha1').update(datasource).digest('hex')
-      datasourceCachePaths = _.extend(datasourceCachePaths, _.filter(files, function (file) { return file.indexOf(cachePrefix) > -1 }))
-      datasourceCachePaths = _.map(datasourceCachePaths, function (file) { return path.join(config.get('caching.directory.path'), file) })
+    _.each(endpoint.page.datasources, datasource => {
+      var cachePrefix = crypto
+        .createHash('sha1')
+        .update(datasource)
+        .digest('hex')
+
+      datasourceCachePaths = _.extend(
+        datasourceCachePaths,
+        _.filter(files, file => {
+          return file.indexOf(cachePrefix) > -1
+        })
+      )
+
+      datasourceCachePaths = _.map(datasourceCachePaths, file => {
+        return file
+      })
     })
-  }
-
-  var walkSync = function (dir, filelist) {
-    var files = fs.readdirSync(dir)
-    filelist = filelist || []
-
-    files.forEach(function (file) {
-      if (fs.statSync(dir + file).isDirectory()) {
-        filelist = walkSync(dir + file + '/', filelist)
-      } else {
-        filelist.push(dir + file)
-      }
-    })
-    return filelist
   }
 
   // delete using Redis client
-  if (cache.client()) {
-    setTimeout(function () {
-      cache.delete(modelDir, function (err) {
-        if (err) console.log(err)
-        return callback(null)
-      })
-    }, 200)
-  } else {
-    var i = 0
-    var exists = fs.existsSync(cachePath)
-
-    if (!exists) {
-      return callback(null)
-    } else {
-      if (fs.statSync(cachePath).isDirectory()) {
-        var cacheFiles = fs.readdirSync(cachePath)
-        if (pathname === '*') {
-          cacheFiles = walkSync(cachePath + '/')
+  if (Cache().cache) {
+    Cache().cache
+      .flush(modelDir)
+      .then(() => {
+        if (datasourceCachePaths.length === 0) {
+          return callback(null)
         }
 
-        cacheFiles.forEach(function (filename) {
-          var file = path.join(cachePath, filename)
-          if (pathname === '*') file = filename
-
-          fs.unlinkSync(file)
-
-          i++
-
-          // finished, all files processed
-          if (i === cacheFiles.length) {
-            return callback(null)
-          }
+        _.each(datasourceCachePaths, (dsFile, idx) => {
+          Cache().cache.flush(dsFile).then(() => {
+            if (idx === datasourceCachePaths.length - 1) {
+              return callback(null)
+            }
+          })
         })
-      } else {
-        fs.unlinkSync(cachePath)
-
-        datasourceCachePaths.forEach(function (filename) {
-          fs.unlinkSync(filename)
-          i++
-
-          // finished, all files processed
-          if (i === datasourceCachePaths.length) {
-            return callback(null)
-          }
-        })
-      }
-    }
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  } else {
+    return callback(null)
   }
 }
 
@@ -324,7 +323,13 @@ module.exports.slugify = function (input) {
  * @param {String} clientId - Client ID
  */
 module.exports.generateTokenWalletFilename = function (host, port, clientId) {
-  return 'token.' + self.slugify(host + port) + '.' + self.slugify(clientId) + '.json'
+  return (
+    'token.' +
+    self.slugify(host + port) +
+    '.' +
+    self.slugify(clientId) +
+    '.json'
+  )
 }
 
 module.exports.getToken = function () {
@@ -340,7 +345,13 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallets') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+      path: config.get('paths.tokenWallets') +
+        '/' +
+        this.generateTokenWalletFilename(
+          config.get('api.host'),
+          config.get('api.port'),
+          config.get('auth.clientId')
+        )
     }
   })
 }

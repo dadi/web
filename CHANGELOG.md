@@ -4,6 +4,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [2.0.0] - 2017-04-06
+
+## Added
+
+* [#120](https://github.com/dadi/web/issues/120): add post install scripts to copy configuration and workspace files
+* [#135](https://github.com/dadi/web/issues/135): allow requestParams to replace placeholders in datasource endpoints by specifying an additional property: `"target": "endpoint"`
+* [#137](https://github.com/dadi/web/issues/137): allow configuration of virtual hosts which can specify overriding `workspace` and `global` properties. configuration details at https://github.com/dadi/web/pull/138
+* add new remote data provider, using the original as a dedicated DADI API data provider
+
+## Changed
+
+* [#128](https://github.com/dadi/web/issues/128): attach compression middleware prior to static middleware
+* [#130](https://github.com/dadi/web/issues/130): leave url params unmodified when lowercasing urls
+* [#139](https://github.com/dadi/web/issues/139) remove datasource path from attributes
+* [#144](https://github.com/dadi/web/issues/144): check host header against specified hosts before serving static files
+* don’t modify original schema endpoint ([4901ecc](https://github.com/dadi/web/commit/4901ecc))
+* rename sample-workspace to workspace ([c307b8e](https://github.com/dadi/web/commit/c307b8e))
+
+# [1.10.0] - 2017-02-25
+
+## Added
+
+* [#117](https://github.com/dadi/web/issues/117): allow an array of partial paths
+* add metadata for pagination ([e34be99](https://github.com/dadi/web/commit/e34be99))
+* add pagination to Markdown provider ([09618e7](https://github.com/dadi/web/commit/09618e7))
+* add transportSecurity configuration option ([03fd4e8](https://github.com/dadi/web/commit/03fd4e8))
+* API connection disabled by default ([1199527](https://github.com/dadi/web/commit/1199527))
+* start in cluster mode by default ([5987dd2](https://github.com/dadi/web/commit/5987dd2))
+
+## Changed
+
+* [#123](https://github.com/dadi/web/issues/123): xxx
+* [#110](https://github.com/dadi/web/issues/110): filter hidden files for xx
+* use debug statements instead of log statements ([e425040](https://github.com/dadi/web/commit/e425040))
+* implement transportSecurity properly ([f18764c](https://github.com/dadi/web/commit/f18764c))
+* pass authstrategy to Bearer module ([3a6bacc](https://github.com/dadi/web/commit/3a6bacc))
+* rebuild chained datasource endpoints after applying results from chainee
+
+## [1.8.0] - 2017-01-23
+
+## Added
+
+* add example https config file ([d069b2b](https://github.com/dadi/web/commit/d069b2b))
+* add http/http+https/https support ([05cee15](https://github.com/dadi/web/commit/05cee15))
+* add markdown provider ([71070a0](https://github.com/dadi/web/commit/71070a0))
+* add search/filter/sort/count/fields methods ([a8e88ce](https://github.com/dadi/web/commit/a8e88ce))
+
+## Changed
+
+* allow a 404 route to skip validation ([9ba36b6](https://github.com/dadi/web/commit/9ba36b6))
+* extend ds cache options using main config options ([c0e9a12](https://github.com/dadi/web/commit/c0e9a12))
+* make hard-coded protocol redirect dynamic ([52f7fe8](https://github.com/dadi/web/commit/52f7fe8))
+* make tests run cross platform ([2f3f708](https://github.com/dadi/web/commit/2f3f708))
+* redirect http to https with 301 instead of 302 ([ae6c13a](https://github.com/dadi/web/commit/ae6c13a))
+* remove call to hasOwnProperty for node >= 6 ([cfa48ad](https://github.com/dadi/web/commit/cfa48ad))
+
 ## [1.7.3] - 2017-01-11
 
 ### Changed

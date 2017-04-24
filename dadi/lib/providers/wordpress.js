@@ -16,7 +16,10 @@ const WordPressProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-WordPressProvider.prototype.initialise = function initialise (datasource, schema) {
+WordPressProvider.prototype.initialise = function initialise (
+  datasource,
+  schema
+) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
@@ -42,7 +45,10 @@ WordPressProvider.prototype.buildEndpoint = function buildEndpoint (req) {
   if (endpointParams.length > 0) {
     endpointParams.forEach((element, index, array) => {
       if (element.param && req.params[element.param]) {
-        this.endpoint = this.endpoint.replace(`$${element.field}`, req.params[element.param])
+        this.endpoint = this.endpoint.replace(
+          `$${element.field}`,
+          req.params[element.param]
+        )
       }
     })
   }
@@ -84,13 +90,17 @@ WordPressProvider.prototype.load = function load (requestUrl, done) {
   try {
     const queryParams = this.buildQueryParams()
 
-    this.cacheKey = [this.endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
+    this.cacheKey = [
+      this.endpoint,
+      encodeURIComponent(JSON.stringify(this.schema.datasource))
+    ].join('+')
     this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache(this.datasource, (cachedData) => {
+    this.dataCache.getFromCache(this.datasource, cachedData => {
       if (cachedData) return done(null, cachedData)
 
-      this.wordpressApi.query()
+      this.wordpressApi
+        .query()
         .select(this.endpoint)
         .where(queryParams)
         .auth(this.bearerToken || null)
@@ -112,7 +122,11 @@ WordPressProvider.prototype.load = function load (requestUrl, done) {
  * @param  {fn} done
  * @return {void}
  */
-WordPressProvider.prototype.processOutput = function processOutput (res, data, done) {
+WordPressProvider.prototype.processOutput = function processOutput (
+  res,
+  data,
+  done
+) {
   // if the error is anything other than Success or Bad Request, error
   if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     const err = new Error()
@@ -152,7 +166,8 @@ WordPressProvider.prototype.processRequest = function processRequest (req) {
 WordPressProvider.prototype.setAuthStrategy = function setAuthStrategy () {
   const auth = this.schema.datasource.auth
 
-  this.bearerToken = auth && auth.bearerToken || config.get('wordpress.bearerToken')
+  this.bearerToken =
+    (auth && auth.bearerToken) || config.get('wordpress.bearerToken')
 }
 
 module.exports = WordPressProvider

@@ -1,0 +1,6 @@
+---
+title: A txt file format
+date: madeupdate
+---
+
+Hello world

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{+metaTitle}{global.site}{/metaTitle}</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="copyright" content="{@formatDate unix=global.timestamp format="YYYY" /}">
+    <meta name="description" content="{global.description}">
+
+    <link href="https://fonts.googleapis.com/css?family=Muli:400,400i,900" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/styles.css">
+    <link rel="icon" type="image/png" href="/logo.png">
+  </head>
+  <body>
+
+  <header>
+    <a href="/">
+      <img src="/logo.png" alt="Site logo" width="60">
+      <h1>{global.site}</h1>
+    </a>
+    <p>{global.description}</p>
+  </header>

@@ -1,0 +1,24 @@
+{
+  "page": {
+    "name": "post",
+    "description": "An individual post view.",
+    "language": "en"
+  },
+  "routes": [
+    {
+      "path": "/post/:handle",
+      "params": [
+        {
+          "param": "handle",
+          "fetch": "posts"
+        }
+      ]
+    }
+  ],
+  "requiredDatasources": [
+    "posts"
+  ],
+  "datasources": [
+    "posts"
+  ]
+}

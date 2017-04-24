@@ -3,11 +3,11 @@
  */
 var _ = require('underscore')
 var crypto = require('crypto')
+var debug = require('debug')('web:cache')
 var path = require('path')
 var url = require('url')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
-var log = require('@dadi/logger')
 
 var DadiCache = require('@dadi/cache')
 
@@ -67,7 +67,7 @@ Cache.prototype.cachingEnabled = function (req) {
     this.options.cache = false
   }
 
-  return (this.enabled && (this.options.cache || false))
+  return this.enabled && (this.options.cache || false)
 }
 
 /**
@@ -79,9 +79,28 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
   var endpoints = this.server.components
   var requestUrl = url.parse(req.url, true).pathname
 
+  // strip trailing slash before testing
+  if (requestUrl !== '/' && requestUrl[requestUrl.length - 1] === '/') {
+    requestUrl = requestUrl.substring(0, requestUrl.length - 1)
+  }
+
+  // get the host key that matches the request's host header
+  var virtualHosts = config.get('virtualHosts')
+
+  var host =
+    _.findKey(virtualHosts, virtualHost => {
+      return _.contains(virtualHost.hostnames, req.headers.host)
+    }) || ''
+
   // check if there is a match in the loaded routes for the current request URL
-  var endpoint = _.find(endpoints, (endpoint) => {
-    return _.contains(_.pluck(endpoint.page.routes, 'path'), requestUrl)
+  var endpoint = _.find(endpoints, endpoint => {
+    var paths = _.pluck(endpoint.page.routes, 'path')
+    return (
+      _.contains(paths, requestUrl) &&
+      (endpoint.options && endpoint.options.host
+        ? endpoint.options.host === host
+        : true)
+    )
   })
 
   return endpoint
@@ -96,8 +115,10 @@ Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
 
   // check if there is a match in the loaded routes for the current pages `route:
   // e.g. { paths: ['xx','yy'] }` property
-  return _.find(endpoints, (endpoint) => {
-    return !_.isEmpty(_.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths))
+  return _.find(endpoints, endpoint => {
+    return !_.isEmpty(
+      _.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths)
+    )
   })
 }
 
@@ -129,6 +150,9 @@ Cache.prototype.init = function () {
    */
   this.server.app.use(function (req, res, next) {
     var enabled = self.cachingEnabled(req)
+
+    debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
+
     if (!enabled) return next()
 
     // only cache GET requests
@@ -137,40 +161,56 @@ Cache.prototype.init = function () {
     // we build the filename with a hashed hex string so we can be unique
     // and avoid using file system reserved characters in the name
     var requestUrl = url.parse(req.url, true).path
-    var filename = crypto.createHash('sha1').update(requestUrl).digest('hex')
+
+    // get the host key that matches the request's host header
+    var virtualHosts = config.get('virtualHosts')
+
+    var host =
+      _.findKey(virtualHosts, virtualHost => {
+        return _.contains(virtualHost.hostnames, req.headers.host)
+      }) || ''
+
+    var filename = crypto
+      .createHash('sha1')
+      .update(`${host}${requestUrl}`)
+      .digest('hex')
 
     // allow query string param to bypass cache
     var query = url.parse(req.url, true).query
-    var noCache = query.cache && query.cache.toString().toLowerCase() === 'false'
+    var noCache =
+      query.cache && query.cache.toString().toLowerCase() === 'false'
 
     // get contentType that current endpoint requires
     var contentType = self.getEndpointContentType(req)
 
     // attempt to get from the cache
-    self.cache.get(filename).then((stream) => {
-      log.info({module: 'cache'}, 'Serving ' + req.url + ' from cache')
+    self.cache
+      .get(filename)
+      .then(stream => {
+        debug('serving %s%s from cache', req.headers.host, req.url)
 
-      res.setHeader('X-Cache-Lookup', 'HIT')
+        res.setHeader('X-Cache-Lookup', 'HIT')
 
-      if (noCache) {
+        if (noCache) {
+          res.setHeader('X-Cache', 'MISS')
+          return next()
+        }
+
+        res.statusCode = 200
+        res.setHeader('X-Cache', 'HIT')
+        res.setHeader('Server', config.get('server.name'))
+        res.setHeader('Content-Type', contentType)
+        //   res.setHeader('Content-Length', stat.size)
+
+        // send cached content back
+        stream.pipe(res)
+      })
+      .catch(() => {
+        // not found in cache
         res.setHeader('X-Cache', 'MISS')
-        return next()
-      }
-
-      res.statusCode = 200
-      res.setHeader('X-Cache', 'HIT')
-      res.setHeader('Server', config.get('server.name'))
-      res.setHeader('Content-Type', contentType)
-      //   res.setHeader('Content-Length', stat.size)
-
-      // send cached content back
-      stream.pipe(res)
-    }).catch(() => {
-      // not found in cache
-      res.setHeader('X-Cache', 'MISS')
-      res.setHeader('X-Cache-Lookup', 'MISS')
-      return cacheResponse()
-    })
+        res.setHeader('X-Cache-Lookup', 'MISS')
+        return cacheResponse()
+      })
 
     /**
      * Writes the current response body to either the filesystem or a Redis server,
@@ -197,9 +237,7 @@ Cache.prototype.init = function () {
         if (res.statusCode !== 200) return
 
         // cache the content
-        self.cache.set(filename, data).then(() => {
-
-        })
+        self.cache.set(filename, data).then(() => {})
       }
       return next()
     }
@@ -233,7 +271,8 @@ module.exports.delete = function (pattern, callback) {
         } else {
           // update the iterator
           iter = result[0]
-          async.each(result[1],
+          async.each(
+            result[1],
             // for each key
             function (key, ecb) {
               cacheKeys.push(key)
@@ -248,7 +287,9 @@ module.exports.delete = function (pattern, callback) {
       })
     },
     // test to see if iterator is done
-    function () { return iter !== '0' },
+    function () {
+      return iter !== '0'
+    },
     // done
     function (err) {
       if (err) {
