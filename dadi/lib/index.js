@@ -671,6 +671,7 @@ Server.prototype.addComponent = function (options, reload) {
 
       // attach route handler to middleware stack
       this.app.use(route.path, options.host, (req, res, next) => {
+        debug('use %s', route.path)
         if (options.component[req.method.toLowerCase()]) {
           // a matching route found, validate it
           return this.app.Router

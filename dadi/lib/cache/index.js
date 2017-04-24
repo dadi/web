@@ -97,7 +97,9 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
     var paths = _.pluck(endpoint.page.routes, 'path')
     return (
       _.contains(paths, requestUrl) &&
-      (endpoint.options ? endpoint.options.host === host : true)
+      (endpoint.options && endpoint.options.host
+        ? endpoint.options.host === host
+        : true)
     )
   })
 
@@ -170,7 +172,7 @@ Cache.prototype.init = function () {
 
     var filename = crypto
       .createHash('sha1')
-      .update(`${host}_${requestUrl}`)
+      .update(`${host}${requestUrl}`)
       .digest('hex')
 
     // allow query string param to bypass cache

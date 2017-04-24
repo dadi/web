@@ -377,14 +377,17 @@ module.exports = function (server, options) {
         server.app.Router.loadDatasourceAsFile ||
         server.app.Router.rewritesDatasource === ''
       ) {
+        debug('no rewrites loaded')
         return next()
       }
+
+      debug('processing rewrites', req.url)
 
       new Datasource(
         'rewrites',
         server.app.Router.rewritesDatasource,
         options
-      ).init(function (err, ds) {
+      ).init((err, ds) => {
         if (err) {
           console.log(err)
           throw err
@@ -394,7 +397,9 @@ module.exports = function (server, options) {
 
         ds.provider.processRequest(ds.page.name, req)
 
-        ds.provider.load(req.url, function (err, result) {
+        debug('load rewrites', req.url)
+
+        ds.provider.load(req.url, (err, result) => {
           if (err) {
             console.log('Error loading data in Router Rewrite module')
             return next(err)
@@ -447,6 +452,8 @@ module.exports = function (server, options) {
 
     // handle generic url rewrite rules
     server.app.use((req, res, next) => {
+      debug('processing configurable rewrites %s', req.url)
+
       var redirect = false
       var location = req.url
       var parsed = url.parse(location, true)
@@ -483,11 +490,17 @@ module.exports = function (server, options) {
       }
 
       if (redirect) {
+        debug(
+          'redirecting %s to %s',
+          req.url,
+          protocol + '://' + req.headers.host + location
+        )
         res.writeHead(301, {
           Location: protocol + '://' + req.headers.host + location
         })
         res.end()
       } else {
+        debug('no rewrites matched %s', req.url)
         return next()
       }
     })
