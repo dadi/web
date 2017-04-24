@@ -43,6 +43,8 @@ As part of the installation process of the `@dadi/web` package, several files an
 * `workspace/`
 * `server.js`
 
+This enables Web to boot straight out of the box with a default ‘blog’ style configuration and some suggestions of next steps. Start the server and open a browser to begin.
+
 ### Start the server
 
 With the `server.js` in the root of your application, Web can be started from the command line simply by issuing the following command:
@@ -51,13 +53,13 @@ With the `server.js` in the root of your application, Web can be started from th
 $ npm start
 ```
 
-With the default configuration, our Web server is available at http://localhost:3001. Visit this URL in your browser to see a welcome page.
+With the default configuration, our Web server is available at http://localhost:3001. Visit this URL in your browser to see a 'Welcome' page.
 
 ### Configuration
 
 Web requires a configuration file specific to the application environment. For example in the production environment it will look for a file named `config.production.json`.
 
-Configuration files live in a `config` folder in your application root, for example `config/config.development.json`. Full configuration documentation can be found at http://docs.dadi.tech/web/getting-started/configuration/.
+Configuration files live in a `config` folder in your application root, for example `config/config.development.json`. Web starts with a sensible default configuration, but you can find full configuration documentation at http://docs.dadi.tech/web/getting-started/configuration/.
 
 #### Run Web as a service
 
