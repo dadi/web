@@ -14,11 +14,13 @@ var Controller = require(__dirname + '/../../dadi/lib/controller')
 var Datasource = require(__dirname + '/../../dadi/lib/datasource')
 var help = require(__dirname + '/../../dadi/lib/help')
 var Page = require(__dirname + '/../../dadi/lib/page')
+var apiProvider = require(__dirname + '/../../dadi/lib/providers/dadiapi')
 var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
 var Server = require(__dirname + '/../../dadi/lib')
 var TestHelper = require(__dirname + '/../help')()
 var twitterProvider = require(__dirname + '/../../dadi/lib/providers/twitter')
 var wordpressProvider = require(__dirname + '/../../dadi/lib/providers/wordpress')
+var markdownProvider = require(__dirname + '/../../dadi/lib/providers/markdown')
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var controller
@@ -38,7 +40,7 @@ describe('Data Providers', function (done) {
     done()
   })
 
-  describe('Remote', function (done) {
+  describe('DADI API', function (done) {
     it('should use the datasource auth block when obtaining a token', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -92,7 +94,7 @@ describe('Data Providers', function (done) {
           .times(5)
           .reply(200, data)
 
-          var providerSpy = sinon.spy(remoteProvider.prototype, 'processOutput')
+          var providerSpy = sinon.spy(apiProvider.prototype, 'processOutput')
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
@@ -175,6 +177,40 @@ describe('Data Providers', function (done) {
   })
 
   describe('Static', function (done) {
+    it('should sort the results by the provided field', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
+      dsSchema.datasource.sort = []
+      dsSchema.datasource.sort.score = -1
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['static']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              should.exist(res.body.static)
+              res.body.static.results[0].title.should.eql("Interstellar")
+              res.body.static.results[1].title.should.eql("Dallas Buyers Club")
+              res.body.static.results[2].title.should.eql("Mud")
+              res.body.static.results[3].title.should.eql("Killer Joe")
+              
+              done()
+            })
+          })
+        })
+      })
+    })
+
     it('should wrap the data in a `results` node before returning', function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'static')
       dsSchema.datasource.source.data = {
@@ -624,10 +660,11 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it.skip('should return data when no error is encountered', function(done) {
+    it('should return data when no error is encountered', function(done) {
       var host = 'http://www.feedforall.com'
       var path = '/sample.xml'
-      var scope = nock(host).get(path).reply(200, { x: 'y' })
+
+      var scope = nock(host).get(path).replyWithFile(200, __dirname + '/../rss.xml')
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
@@ -641,8 +678,280 @@ describe('Data Providers', function (done) {
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {
-              should.exist(res.body['rss'])
-              res.body['rss'].should.eql({x:'y'})
+              should.exist(res.body.rss)
+              should.exist(res.body.rss[0].title)
+              done()
+            })
+          })
+        })
+      })
+    })
+  })
+
+  describe('Markdown', function (done) {
+    it('should process frontmatter from the files in the datasource path', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results.should.be.Array
+              res.body.markdown.results[0].original.should.eql("---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n"),
+              res.body.markdown.results[0].attributes.title.should.eql("A Quick Brown Fox")
+              res.body.markdown.results[0].attributes.category.should.eql("guggenheim")
+              res.body.markdown.results[0].attributes.date.should.eql("2010-01-01T00:00:00.000Z")
+
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return correct pagination metadata', function (done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              res.body.markdown.metadata.page.should.equal(1)
+              res.body.markdown.metadata.limit.should.equal(1)
+              res.body.markdown.metadata.totalPages.should.be.above(1)
+              res.body.markdown.metadata.nextPage.should.equal(2)
+
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should use the datasource requestParams to filter the results', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+          pages[0].routes[0].path = '/test/:category?'
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get('/test/sports?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+
+              res.body.params['category'].should.equal('sports');
+              res.body.markdown.results[0].attributes.category.should.equal('sports')
+              res.body.markdown.metadata.page.should.equal(1)
+              res.body.markdown.metadata.limit.should.equal(1)
+              res.body.markdown.metadata.totalPages.should.be.above(1)
+
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return the number of records specified by the count property', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results.length.should.eql(1)
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should process files of a specified extension', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.source.extension = 'txt'
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results.should.be.Array
+              res.body.markdown.results[0].attributes.title.should.eql("A txt file format")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should return an error if the source folder does not exist', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.source.path = './foobar'
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.errors)
+              res.body.markdown.errors[0].title.should.eql("No markdown files found")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should ignore malformed dates in a source file', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.source.extension = 'txt'
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results[0].attributes.date.should.eql("madeupdate")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should sort by the specified field in reverse order if set to -1', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.sort.date = -1
+      dsSchema.datasource.count = 2
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              res.body.markdown.results[0].attributes.title.should.eql("Another Quick Brown Fox")
+              res.body.markdown.results[1].attributes.title.should.eql("A Quick Brown Fox")
+              done()
+            })
+          })
+        })
+      })
+    })
+
+    it('should only return the selected fields as specified by the datasource', function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(TestHelper.getPathOptions().datasourcePath, 'markdown')
+      dsSchema.datasource.fields = ["attributes.title", "attributes._id"]
+      dsSchema.datasource.count = 2
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({'allowJsonView': true}).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ['markdown']
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+            var client = request(connectionString)
+
+            client
+            .get(pages[0].routes[0].path + '?json=true')
+            .end((err, res) => {
+              Datasource.Datasource.prototype.loadDatasource.restore()
+              should.exist(res.body.markdown.results)
+              console.log(res.body.markdown.results)
+              //res.body.markdown.results[0].attributes.title.should.eql("Another Quick Brown Fox")
+              //res.body.markdown.results[1].attributes.title.should.eql("A Quick Brown Fox")
               done()
             })
           })

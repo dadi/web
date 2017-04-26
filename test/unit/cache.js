@@ -101,6 +101,61 @@ describe('Cache', function (done) {
     done()
   }))
 
+  it('should locate the component that matches the current request URL', sinon.test(function (done) {
+    var server = sinon.mock(Server)
+    server.object.app = api()
+
+    server.object.components['/:anotherURL'] = {
+      page: {
+        routes: [{
+          path: '/:anotherURL'
+        }],
+        settings: {
+          cache: true
+        }
+      }
+    }
+
+    server.object.components['/actualUrl'] = {
+      page: {
+        routes: [{
+          path: '/actualUrl'
+        }],
+        settings: {
+          cache: true
+        }
+      }
+    }
+
+    var req = {
+      paths: ['/:anotherURL', '/actualUrl'],
+      url: 'http://www.example.com/actualUrl'
+    }
+
+    var cacheConfig = {
+      caching: {
+        directory: {
+          enabled: true
+        }
+      }
+    }
+
+    cache.reset()
+    var c = cache(server.object)
+    var spy = sinon.spy(c, 'getEndpointMatchingRequest')
+
+    TestHelper.updateConfig(cacheConfig).then(() => {
+
+      c.cachingEnabled(req)
+
+      spy.calledOnce.should.eql(true)
+      should.exist(spy.lastCall.returnValue)
+
+      spy.lastCall.returnValue.should.eql(server.object.components['/actualUrl'])
+      done()
+    })
+  }))
+
   it('should cache if the url key can be found in the loaded keys and it allows caching', sinon.test(function (done) {
     var server = sinon.mock(Server)
     server.object.app = api()
@@ -170,7 +225,7 @@ describe('Cache', function (done) {
     server.object.components['/actualUrl'] = {
       page: {
         routes: [{
-          path: ['/actualUrl']
+          path: '/actualUrl'
         }],
         xxx: {
           cache: false
@@ -196,7 +251,7 @@ describe('Cache', function (done) {
     server.object.components['/actualUrl'] = {
       page: {
         routes: [{
-          path: ['/actualUrl']
+          path: '/actualUrl'
         }],
         settings: {
           cache: true
@@ -232,7 +287,7 @@ describe('Cache', function (done) {
     server.object.components['/actualUrl'] = {
       page: {
         routes: [{
-          path: ['/actualUrl']
+          path: '/actualUrl'
         }],
         settings: {
           cache: false

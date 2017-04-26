@@ -1,0 +1,24 @@
+{
+  "datasource": {
+    "key": "posts",
+    "name": "Blog posts as markdown files.",
+    "source": {
+      "type": "markdown",
+      "path": "./workspace/posts"
+    },
+    "paginate": true,
+    "count": 5,
+    "sort": {
+      "date": -1
+    },
+    "fields": [
+      "attributes",
+      "contentHtml"
+    ],
+    "requestParams": [
+      {
+        "param": "handle", "field": "_id"
+      }
+    ]
+  }
+}

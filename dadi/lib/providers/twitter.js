@@ -56,13 +56,17 @@ TwitterProvider.prototype.load = function load (requestUrl, done) {
     const endpoint = this.schema.datasource.source.endpoint
     const queryParams = this.buildQueryParams()
 
-    this.cacheKey = [endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
-    this.dataCache = new DatasourceCache(this.datasource)
+    this.cacheKey = [
+      endpoint,
+      encodeURIComponent(JSON.stringify(this.schema.datasource))
+    ].join('+')
+    this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache((cachedData) => {
+    this.dataCache.getFromCache(this.datasource, cachedData => {
       if (cachedData) return done(null, cachedData)
 
-      this.twitterApi.query()
+      this.twitterApi
+        .query()
         .select(endpoint)
         .where(queryParams)
         .auth(this.accessTokenKey, this.accessTokenSecret)
@@ -84,7 +88,11 @@ TwitterProvider.prototype.load = function load (requestUrl, done) {
  * @param  {fn} done
  * @return {void}
  */
-TwitterProvider.prototype.processOutput = function processOutput (res, data, done) {
+TwitterProvider.prototype.processOutput = function processOutput (
+  res,
+  data,
+  done
+) {
   // if the error is anything other than Success or Bad Request, error
   if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     const err = new Error()
@@ -100,7 +108,8 @@ TwitterProvider.prototype.processOutput = function processOutput (res, data, don
 
   if (res.statusCode === 200) {
     data = this.processFields(data)
-    this.dataCache.cacheResponse(JSON.stringify(data), () => {
+    this.dataCache.cacheResponse(this.datasource, JSON.stringify(data), () => {
+      //
     })
   }
 
@@ -116,13 +125,13 @@ TwitterProvider.prototype.processOutput = function processOutput (res, data, don
 TwitterProvider.prototype.processFields = function processFields (data) {
   const fields = this.schema.datasource.fields
 
-  console.log('**fields'.red, fields)
+  // console.log('**fields'.red, fields)
 
   if (fields && Object.keys(fields).length) {
     const keys = Object.keys(fields)
-    console.log('**keys'.red, keys)
+    // console.log('**keys'.red, keys)
 
-    console.log(data)
+    // console.log(data)
 
     if (_.isArray(data)) {
       for (let i = 0; i < data.length; i++) {
@@ -132,7 +141,7 @@ TwitterProvider.prototype.processFields = function processFields (data) {
       data = _.pick(data, keys)
     }
 
-    console.log('data', data)
+    // console.log('data', data)
   }
 
   return data
@@ -156,10 +165,15 @@ TwitterProvider.prototype.processRequest = function processRequest (req) {
 TwitterProvider.prototype.setAuthStrategy = function setAuthStrategy () {
   const auth = this.schema.datasource.auth
 
-  this.consumerKey = auth && auth.consumer_key || config.get('twitter.consumerKey')
-  this.consumerSecret = auth && auth.consumer_secret || config.get('twitter.consumerSecret')
-  this.accessTokenKey = auth && auth.access_token_key || config.get('twitter.accessTokenKey')
-  this.accessTokenSecret = auth && auth.access_token_secret || config.get('twitter.accessTokenSecret')
+  this.consumerKey =
+    (auth && auth.consumer_key) || config.get('twitter.consumerKey')
+  this.consumerSecret =
+    (auth && auth.consumer_secret) || config.get('twitter.consumerSecret')
+  this.accessTokenKey =
+    (auth && auth.access_token_key) || config.get('twitter.accessTokenKey')
+  this.accessTokenSecret =
+    (auth && auth.access_token_secret) ||
+    config.get('twitter.accessTokenSecret')
 }
 
 module.exports = TwitterProvider

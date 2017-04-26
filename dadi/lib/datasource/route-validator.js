@@ -10,10 +10,12 @@ var RouteValidator = function (route, param, options) {
 
 RouteValidator.prototype.get = function (req) {
   return new Promise((resolve, reject) => {
-    new Datasource(this.route.path, this.param.fetch, this.options).init((err, datasource) => {
-      if (err) {
-        if (err) return reject(err)
-      }
+    new Datasource(
+      this.route.path,
+      this.param.fetch,
+      this.options
+    ).init((err, datasource) => {
+      if (err) return reject(err)
 
       datasource.processRequest(this.route.path, req)
 
@@ -21,7 +23,7 @@ RouteValidator.prototype.get = function (req) {
         if (err) return reject(err)
 
         if (result) {
-          var results = (typeof result === 'object' ? result : JSON.parse(result))
+          var results = typeof result === 'object' ? result : JSON.parse(result)
           if (results.results && results.results.length > 0) {
             return resolve('')
           } else {

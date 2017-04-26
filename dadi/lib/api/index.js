@@ -3,13 +3,15 @@ var debug = require('debug')('web:api')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
-var nodePath = require('path')
-var raven = require('raven')
+var path = require('path')
 var pathToRegexp = require('path-to-regexp')
+var raven = require('raven')
 var url = require('url')
 
 var log = require('@dadi/logger')
-var config = require(nodePath.join(__dirname, '/../../../config'))
+var config = require(path.join(__dirname, '/../../../config'))
+
+var errorView = require(path.join(__dirname, '/../view/errors'))
 
 /**
  * Represents the main server.
@@ -22,7 +24,9 @@ var Api = function () {
 
   // Sentry error handler
   if (config.get('logging.sentry.dsn') !== '') {
-    this.errors.push(raven.middleware.express.errorHandler(config.get('logging.sentry.dsn')))
+    this.errors.push(
+      raven.middleware.express.errorHandler(config.get('logging.sentry.dsn'))
+    )
   }
 
   // Fallthrough error handler
@@ -42,8 +46,12 @@ var Api = function () {
       this.redirectInstance = http.createServer(this.redirectListener)
     }
 
-    var readFileSyncSafe = (path) => {
-      try { return fs.readFileSync(path) } catch (ex) { console.log('error loading ssl file:', ex) }
+    var readFileSyncSafe = path => {
+      try {
+        return fs.readFileSync(path)
+      } catch (ex) {
+        console.log('error loading ssl file:', ex)
+      }
       return null
     }
 
@@ -61,7 +69,7 @@ var Api = function () {
 
     if (caPaths && caPaths.length > 0) {
       serverOptions.ca = []
-      caPaths.forEach((path) => {
+      caPaths.forEach(path => {
         var data = readFileSyncSafe(path)
         data && serverOptions.ca.push(data)
       })
@@ -90,26 +98,37 @@ var Api = function () {
 /**
  *  Connects a handler to a specific path
  *  @param {String} path
+ *  @param {String} host
  *  @param {Controller} handler
  *  @return undefined
  *  @api public
  */
-Api.prototype.use = function (path, handler) {
+Api.prototype.use = function (path, host, handler) {
   if (typeof path === 'function') {
     if (path.length === 4) return this.errors.push(path)
     return this.all.push(path)
   }
 
+  if (typeof host === 'function') {
+    handler = host
+    host = ''
+  } else if (typeof host === 'undefined') {
+    host = ''
+  }
+
+  debug('use %s%s', host, path)
+
   var regex = pathToRegexp(path)
+  var hostWithPath = `${host}${path}`
 
   this.paths.push({
-    path: path,
+    path: hostWithPath,
     order: routePriority(path, regex.keys),
     handler: handler,
     regex: regex
   })
 
-  debug('loaded %s', path)
+  debug('loaded %s%s', host, path)
 
   this.paths.sort((a, b) => {
     return b.order - a.order
@@ -123,6 +142,7 @@ Api.prototype.use = function (path, handler) {
  *  @api public
  */
 Api.prototype.unuse = function (path) {
+  debug('unuse %s', path)
   var indx = 0
 
   if (typeof path === 'function') {
@@ -132,16 +152,16 @@ Api.prototype.unuse = function (path) {
     }
 
     var functionStr = path.toString()
-    _.each(this.all, function (func) {
+    _.each(this.all, func => {
       if (func.toString() === functionStr) {
         return this.all.splice(indx, 1)
       } else {
         indx++
       }
-    }, this)
+    })
 
-  // indx = this.all.indexOf(path)
-  // return !!~indx && this.all.splice(indx, 1)
+    // indx = this.all.indexOf(path)
+    // return !!~indx && this.all.splice(indx, 1)
   }
 
   var existing = _.findWhere(this.paths, { path: path })
@@ -184,8 +204,10 @@ Api.prototype.listen = function (backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
+  debug('request %s%s', req.headers.host, req.url)
+
   // clone the middleware stack
-  var stack = this.all.slice(0)
+  this.stack = this.all.slice(0)
 
   req.params = {}
   req.paths = []
@@ -204,7 +226,7 @@ Api.prototype.listener = function (req, res) {
       _.extend(req.params, originalReqParams)
 
       try {
-        stack[i](req, res, doStack(++i))
+        self.stack[i](req, res, doStack(++i))
       } catch (e) {
         return errStack(0)(e)
       }
@@ -220,10 +242,10 @@ Api.prototype.listener = function (req, res) {
   }
 
   // add path specific handlers
-  stack = stack.concat(matches)
+  this.stack = this.stack.concat(matches)
 
   // add 404 handler
-  stack.push(notFound(this, req, res))
+  this.stack.push(notFound(this, req, res))
 
   // start going through the middleware/routes
   doStack(0)()
@@ -254,8 +276,18 @@ Api.prototype.redirectListener = function (req, res) {
  */
 Api.prototype._match = function (req) {
   var path = url.parse(req.url).pathname
-  var paths = this.paths
   var handlers = []
+
+  // get the host key that matches the request's host header
+  var virtualHosts = config.get('virtualHosts')
+  var host =
+    _.findKey(virtualHosts, virtualHost => {
+      return _.contains(virtualHost.hostnames, req.headers.host)
+    }) || ''
+
+  var paths = _.filter(this.paths, path => {
+    return path.path.indexOf(host) > -1
+  })
 
   for (var idx = 0; idx < paths.length; idx++) {
     // test the supplied url against each loaded route.
@@ -263,7 +295,9 @@ Api.prototype._match = function (req) {
     var match = paths[idx].regex.exec(path)
 
     // move to the next route if no match
-    if (!match) { continue }
+    if (!match) {
+      continue
+    }
 
     req.paths.push(paths[idx].path)
 
@@ -284,10 +318,10 @@ function onError (api) {
 
     if (config.get('env') === 'development') {
       console.log()
-      console.log(err.stack && err.stack.toString() || err)
+      console.log((err.stack && err.stack.toString()) || err)
     }
 
-    log.error({module: 'api'}, err)
+    log.error({ module: 'api' }, err)
 
     var data = {
       statusCode: err.statusCode || 500,
@@ -295,24 +329,36 @@ function onError (api) {
       message: err.message
     }
 
-    if (err.stack) {
-      data.stack = err.stack.split('\n')
+    data.stack = err.stack ? err.stack : 'Nothing to see'
+
+    // look for a page that has been loaded
+    // that matches the error code and call its handler if it exists
+    var path = findPath(req, api.paths, data.statusCode)
+
+    // fallback to a generic /error path
+    if (!path) {
+      path = findPath(req, api.paths, '/error')
     }
 
-    // look for a loaded path that matches the error code
-    var path = _.findWhere(api.paths, { path: '/' + data.statusCode })
-    // fallback to a generic /error path
-    if (!path) path = _.findWhere(api.paths, { path: '/error' })
-
-    if (path) {
+    if (path && Array.isArray(path) && path[0]) {
       req.error = data
       res.statusCode = data.statusCode
-      path.handler(req, res)
+      path[0].handler(req, res)
     } else {
-      // no page found to display the error, output raw data
-      res.statusCode = 500
-      res.setHeader('Content-Type', 'application/json')
-      res.end(JSON.stringify(data, null, 2))
+      // no user error page found for this statusCode, use default error template
+      res.statusCode = data.statusCode
+      res.setHeader('Content-Type', 'text/html')
+      res.end(
+        errorView({
+          headline: 'Something went wrong.',
+          human: 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
+          developer: data.message,
+          stack: data.stack,
+          statusCode: data.statusCode,
+          error: data.code,
+          server: req.headers.host
+        })
+      )
     }
   }
 }
@@ -323,17 +369,54 @@ function notFound (api, req, res) {
     res.statusCode = 404
 
     // look for a 404 page that has been loaded
-    // along with the rest of the API, and call its
-    // handler if it exists
-    var path = _.findWhere(api.paths, { path: '/404' })
+    // and call its handler if it exists
+    var path = findPath(req, api.paths, '404')
 
-    if (path) {
-      path.handler(req, res)
+    if (path && Array.isArray(path) && path[0]) {
+      path[0].handler(req, res)
     } else {
       // otherwise, respond with default message
-      res.end('HTTP 404 Not Found')
+      res.setHeader('Content-Type', 'text/html')
+      res.end(
+        errorView({
+          headline: 'Page not found.',
+          human: 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
+          developer: 'HTTP Headers',
+          stack: JSON.stringify(req.headers, null, 2),
+          statusCode: '404',
+          error: 'Page not found',
+          server: req.headers.host
+        })
+      )
     }
   }
+}
+
+/**
+ *
+ * @param {Object} req -
+ * @param {Array} paths -
+ * @param {string} pathString -
+ * @returns {Object} -
+ */
+function findPath (req, paths, pathString) {
+  // get the host key that matches the request's host header
+  var virtualHosts = config.get('virtualHosts')
+
+  var host =
+    _.findKey(virtualHosts, virtualHost => {
+      return _.contains(virtualHost.hostnames, req.headers.host)
+    }) || ''
+
+  var matchingPaths = _.filter(paths, path => {
+    return path.path.indexOf(host) > -1
+  })
+
+  // look for a page matching the pathString that has been loaded
+  // along with the rest of the API
+  return _.filter(matchingPaths, path => {
+    return path.path.indexOf(pathString) > -1
+  })
 }
 
 function routePriority (path, keys) {
@@ -353,9 +436,15 @@ function routePriority (path, keys) {
   }).length
 
   // if there is a "page" parameter in the route, give it a slightly higher priority
-  var paginationParam = _.find(keys, (key) => { return key.name && key.name === 'page' })
+  var paginationParam = _.find(keys, key => {
+    return key.name && key.name === 'page'
+  })
 
-  var order = (staticRouteLength * 5) + (requiredParamLength * 2) + (optionalParamLength) + (typeof paginationParam === 'undefined' ? 0 : 1)
+  var order =
+    staticRouteLength * 5 +
+    requiredParamLength * 2 +
+    optionalParamLength +
+    (typeof paginationParam === 'undefined' ? 0 : 1)
 
   // make internal routes less important...
   if (path.indexOf('/config') > 0) order = -100

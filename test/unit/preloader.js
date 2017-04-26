@@ -11,7 +11,7 @@ var Controller = require(__dirname + '/../../dadi/lib/controller')
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var Page = require(__dirname + '/../../dadi/lib/page')
 var Preload = require(path.resolve(path.join(__dirname, '/../../dadi/lib/datasource/preload')))
-var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
+var apiProvider = require(__dirname + '/../../dadi/lib/providers/dadiapi')
 var TestHelper = require(__dirname + '/../help')()
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
@@ -39,13 +39,13 @@ describe('Preloader', function (done) {
 
         // provide API response
         var results = { results: [{ "make": "ford" }, { "make": "mazda" }, { "make": "toyota" }] }
-        var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+        var providerStub = sinon.stub(apiProvider.prototype, 'load')
         providerStub.onFirstCall().yields(null, results)
 
         var preloadSpy = sinon.spy(Preload.Preload.prototype, 'init')
 
         TestHelper.startServer(pages).then(() => {
-          remoteProvider.prototype.load.restore()
+          apiProvider.prototype.load.restore()
           preloadSpy.restore()
 
           preloadSpy.called.should.eql(true)

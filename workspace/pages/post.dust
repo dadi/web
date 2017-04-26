@@ -1,0 +1,11 @@
+{>"partials/header" /}
+
+{<metaTitle}
+	{posts.results[0].attributes.title} – {global.site}
+{/metaTitle}
+
+{#posts.results}
+	{>"partials/post" /}
+{/posts.results}
+
+{>"partials/footer" /}

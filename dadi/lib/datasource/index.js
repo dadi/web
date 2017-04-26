@@ -21,44 +21,45 @@ var Datasource = function (page, datasource, options) {
 }
 
 Datasource.prototype.init = function (callback) {
-  var self = this
-
-  this.loadDatasource(function (err, schema) {
+  this.loadDatasource((err, schema) => {
     if (err) {
       return callback(err)
     }
 
-    self.schema = schema
-    self.source = schema.datasource.source
-    self.schema.datasource.filter = self.schema.datasource.filter || {}
-    self.originalFilter = _.clone(self.schema.datasource.filter)
+    this.schema = schema
+    this.source = schema.datasource.source
+    this.schema.datasource.filter = this.schema.datasource.filter || {}
+    this.originalFilter = _.clone(this.schema.datasource.filter)
 
-    if (!self.source.type) {
-      self.source.type = 'remote'
+    if (!this.source.type) {
+      this.source.type = 'dadiapi'
     }
 
-    // if (self.source.type === 'static') {
-    //   callback(null, self)
-    // }
-
-    if (!providers[self.source.type]) {
-      err = new Error(`no provider available for datasource type ${self.source.type}`, __filename)
+    if (!providers[this.source.type]) {
+      err = new Error(
+        `no provider available for datasource type ${this.source.type}`,
+        __filename
+      )
       console.error(err.message)
       return callback(err)
     }
 
-    self.provider = new providers[self.source.type]()
-    self.filterEvent = null
-    self.requestParams = schema.datasource.requestParams || []
-    self.chained = schema.datasource.chained || null
+    this.provider = new providers[this.source.type]()
+    this.filterEvent = null
+    this.requestParams = schema.datasource.requestParams || []
+    this.chained = schema.datasource.chained || null
 
     if (schema.datasource.filterEvent) {
-      self.filterEvent = new Event(null, schema.datasource.filterEvent, self.options)
+      this.filterEvent = new Event(
+        null,
+        schema.datasource.filterEvent,
+        this.options
+      )
     }
 
-    self.provider.initialise(self, schema)
+    this.provider.initialise(this, schema)
 
-    callback(null, self)
+    callback(null, this)
   })
 }
 
@@ -80,24 +81,31 @@ Datasource.prototype.loadDatasource = function (done) {
   var schema
 
   try {
-    var body = fs.readFileSync(filepath, {encoding: 'utf-8'})
+    var body = fs.readFileSync(filepath, { encoding: 'utf-8' })
 
     schema = JSON.parse(body)
     done(null, schema)
   } catch (err) {
-    log.error({module: 'datasource'}, {'err': err}, 'Error loading datasource schema "' + filepath + '". Is it valid JSON?')
+    log.error(
+      { module: 'datasource' },
+      { err: err },
+      'Error loading datasource schema "' + filepath + '". Is it valid JSON?'
+    )
     done(err)
   }
 }
 
 /**
+ * Process each of the datasource's requestParams, testing for a matching
+ * parameter in the querystring (and added to req.params e.g. `/car/:make/:model`) or a matching
+ * placeholder in the datasource's endpoint (e.g. `/car/makes/{make}`)
+ *
+ * Called from lib/controller/index.js:processSearchParameters
+ *
  * @param  {string} datasource - datasource key
+ * @param  {IncomingMessage} req - the original HTTP request
  */
 Datasource.prototype.processRequest = function (datasource, req) {
-  // called from lib/controller:processSearchParameters for reason:
-  // | process each of the datasource's requestParams, testing for their existence
-  // | in the querystring's request params e.g. /car-reviews/:make/:model
-
   this.schema.datasource.filter = this.originalFilter
 
   var query = url.parse(req.url, true).query
@@ -115,14 +123,18 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // if the current datasource matches the page name
   // add some params from the query string or request params
-  if ((this.page.name && datasource.indexOf(this.page.name) >= 0) || this.page.passFilters) {
-    var requestParamsPage = this.requestParams.find((obj) => {
-      return (obj.queryParam === 'page') && obj.param
+  if (
+    (this.page.name && datasource.indexOf(this.page.name) >= 0) ||
+    this.page.passFilters
+  ) {
+    var requestParamsPage = this.requestParams.find(obj => {
+      return obj.queryParam === 'page' && obj.param
     })
 
     // handle pagination param
     if (this.schema.datasource.paginate) {
-      this.schema.datasource.page = query.page ||
+      this.schema.datasource.page =
+        query.page ||
         (requestParamsPage && req.params[requestParamsPage]) ||
         req.params.page ||
         1
@@ -136,43 +148,75 @@ Datasource.prototype.processRequest = function (datasource, req) {
     }
 
     // URI encode each querystring value
-    _.each(query, function (value, key) {
+    _.each(query, (value, key) => {
       if (key === 'filter') {
         _.extend(this.schema.datasource.filter, JSON.parse(value))
       }
-    }, this)
+    })
   }
 
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
   var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gmi
-  this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (match, p1, p2, p3, p4, offset, string) {
-    if (req.params[p3]) {
-      return req.params[p3]
-    } else {
-      return match
-    }
-  }))
 
-  // add the datasource's requestParams, testing for their existence
-  // in the querystring's request params e.g. /car-reviews/:make/:model
-  // NB don't replace a property that already exists
-  _.each(this.requestParams, (obj) => {
-    if (obj.field && req.params.hasOwnProperty(obj.param)) {
-      if (obj.type === 'Number') {
-        this.schema.datasource.filter[obj.field] = Number(req.params[obj.param])
+  this.schema.datasource.filter = JSON.parse(
+    JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (
+      match,
+      p1,
+      p2,
+      p3,
+      p4,
+      offset,
+      string
+    ) {
+      if (req.params[p3]) {
+        return req.params[p3]
       } else {
-        this.schema.datasource.filter[obj.field] = encodeURIComponent(req.params[obj.param])
+        return match
+      }
+    })
+  )
+
+  // Process each of the datasource's requestParams, testing for a matching
+  // parameter in the querystring (and added to req.params e.g. `/car/:make/:model`) or a matching
+  // placeholder in the datasource's endpoint (e.g. `/car/makes/{make}`)
+
+  // NB don't replace filter properties that already exist
+  _.each(this.requestParams, obj => {
+    // if the requestParam has no 'target' property, it's destined for the filter
+    if (!obj.target) obj.target = 'filter'
+
+    var paramValue =
+      req.params.hasOwnProperty(obj.param) && req.params[obj.param]
+
+    if (obj.field && paramValue) {
+      paramValue = obj.type === 'Number'
+        ? Number(paramValue)
+        : encodeURIComponent(paramValue)
+
+      if (obj.target === 'filter') {
+        this.schema.datasource.filter[obj.field] = paramValue
+      } else if (obj.target === 'endpoint') {
+        var placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
+        this.source.modifiedEndpoint = this.schema.datasource.source.endpoint.replace(
+          placeholderRegex,
+          paramValue
+        )
       }
     } else {
-      // param not found in request, remove it from DS filter
-      if (this.schema.datasource.filter[obj.field]) {
-        delete this.schema.datasource.filter[obj.field]
+      if (obj.target === 'filter') {
+        // param not found in request, remove it from the datasource filter
+        if (this.schema.datasource.filter[obj.field]) {
+          delete this.schema.datasource.filter[obj.field]
+        }
       }
     }
   })
 
   if (this.schema.datasource.filterEventResult) {
-    this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult)
+    this.schema.datasource.filter = _.extend(
+      this.schema.datasource.filter,
+      this.schema.datasource.filterEventResult
+    )
   }
 
   if (typeof this.provider.processRequest === 'function') {

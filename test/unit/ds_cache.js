@@ -1,3 +1,5 @@
+var _ = require('underscore')
+var exec = require('child_process').exec
 var fs = require('fs')
 var path = require('path')
 var url = require('url')
@@ -22,6 +24,8 @@ var cachepath
 
 describe('Datasource Cache', function (done) {
   beforeEach(function (done) {
+    datasourceCache._reset()
+
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
         new Datasource(page('test', TestHelper.getPageSchema()), 'car-makes', TestHelper.getPathOptions()).init(function (err, datasource) {
@@ -37,13 +41,19 @@ describe('Datasource Cache', function (done) {
     })
   })
 
+  const cleanup = (dir, done) => {
+    exec('rm -rf ' + dir, (err, stdout, stderr) => {
+      exec('mkdir ' + dir)
+      done()
+    })
+  }
+
   afterEach(function (done) {
     try {
-      if (cachepath) fs.unlinkSync(cachepath)
-    } catch (err) {}
-
-    cache.reset()
-    done()
+      cleanup(path.resolve(__dirname + '/../../cache/web'), done)
+    } catch (err) {
+      done(err)
+    }
   })
 
   describe('Module', function (done) {
@@ -52,12 +62,23 @@ describe('Datasource Cache', function (done) {
       done()
     })
 
-    it('should reference the main cache module', function (done) {
-      var c = cache(server.object)
-      var dsCache = new datasourceCache(ds)
-      dsCache.mainCache.should.eql(c)
+    it("should not cache if the app's config settings don't allow", function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: false
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
 
-      done()
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var dsCache = datasourceCache()
+        dsCache.enabled.should.eql(false)
+        done()
+      })
     })
 
     it("should cache if the app's config settings allow", function (done) {
@@ -73,38 +94,18 @@ describe('Datasource Cache', function (done) {
       }
 
       TestHelper.updateConfig(cacheConfig).then(() => {
-        var c = cache(server.object)
-        var dsCache = new datasourceCache(ds)
-        dsCache.mainCache.enabled.should.eql(true)
+        var dsCache = datasourceCache()
+        dsCache.enabled.should.eql(true)
         done()
       })
     })
 
-    it("should not cache if the app's config settings don't allow", function () {
-      var cacheConfig = {
-        caching: {
-          directory: {
-            enabled: false
-          },
-          redis: {
-            enabled: false
-          }
-        }
-      }
-
-      return TestHelper.updateConfig(cacheConfig).then(() => {
-        var c = cache(server.object)
-        var dsCache = new datasourceCache(ds)
-        dsCache.mainCache.enabled.should.eql(false)
-      })
-    })
-
-    it("should use main cache settings if the datasource doesn't provide any directory options", function () {
+    it("should use main cache settings if the datasource doesn't provide any directory options", function (done) {
       var cacheConfig = {
         caching: {
           directory: {
             enabled: true,
-            path: '/Users',
+            path: 'cache/web',
             extension: 'cache'
           },
           redis: {
@@ -113,20 +114,21 @@ describe('Datasource Cache', function (done) {
         }
       }
 
-      return TestHelper.updateConfig(cacheConfig).then(() => {
+      TestHelper.updateConfig(cacheConfig).then(() => {
         delete ds.schema.datasource.caching.directory.path
         var c = cache(server.object)
-        var dsCache = new datasourceCache(ds)
-        dsCache.options.directory.path.indexOf('/Users').should.be.above(-1)
+        var dsCache = datasourceCache()
+        dsCache.getOptions(ds).directory.path.indexOf('cache/web').should.be.above(-1)
+        done()
       })
     })
 
-    it("should use .json for extension if the datasource doesn't provide any options", function () {
+    it("should use .json for extension if the datasource doesn't provide any options", function (done) {
       var cacheConfig = {
         caching: {
           directory: {
             enabled: true,
-            path: '/Users',
+            path: 'cache/web',
             extension: 'cache'
           },
           redis: {
@@ -135,11 +137,13 @@ describe('Datasource Cache', function (done) {
         }
       }
 
-      return TestHelper.updateConfig(cacheConfig).then(() => {
+      TestHelper.updateConfig(cacheConfig).then(() => {
         delete ds.schema.datasource.caching.directory.extension
         var c = cache(server.object)
-        var dsCache = new datasourceCache(ds)
-        dsCache.options.directory.extension.should.eql('.json')
+        var dsCache = datasourceCache()
+        dsCache.getOptions(ds).directory.extension.should.eql('json')
+
+        done()
       })
     })
 
@@ -159,8 +163,60 @@ describe('Datasource Cache', function (done) {
         var c = cache(server.object)
         var dsCache = new datasourceCache(ds)
         var expectToFind = crypto.createHash('sha1').update(ds.schema.datasource.key).digest('hex')
-        dsCache.filename.indexOf(expectToFind).should.be.above(-1)
+        var dsCache = datasourceCache()
+        dsCache.getFilename(ds).indexOf(expectToFind).should.be.above(-1)
         done()
+      })
+    })
+
+    it('should use different cache filenames when datasource endpoints use placeholders', function (done) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
+
+      var name = 'test'
+      var schema = TestHelper.getPageSchema()
+      var p = page(name, schema)
+      var dsName = 'car-makes'
+      var options = TestHelper.getPathOptions()
+      var dsSchema = _.clone(TestHelper.getSchemaFromFile(options.datasourcePath, dsName))
+
+      dsSchema.datasource.source.endpoint = '1.0/makes/{make}'
+      dsSchema.datasource.requestParams = [
+        {
+          param: 'make',
+          field: 'make',
+          target: 'endpoint'
+        }
+      ]
+
+      sinon.stub(Datasource.Datasource.prototype, 'loadDatasource').yields(null, dsSchema)
+
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+
+        new Datasource(p, dsName, options).init((err, datasource) => {
+
+          Datasource.Datasource.prototype.loadDatasource.restore()
+          var dsCache = datasourceCache()
+
+          // process the http request so parameters are injected
+          datasource.processRequest(datasource.schema.datasource.key, { url: '/1.0/makes/ford' , params: { 'make': 'ford' } })
+          var filename1 = dsCache.getFilename(datasource)
+          datasource.processRequest(datasource.schema.datasource.key, { url: '/1.0/makes/mazda' , params: { 'make': 'mazda' } })
+          var filename2 = dsCache.getFilename(datasource)
+
+          filename1.should.not.eql(filename2)
+
+        done()
+        })
       })
     })
   })
@@ -182,8 +238,8 @@ describe('Datasource Cache', function (done) {
       TestHelper.updateConfig(cacheConfig).then(() => {
         ds.schema.datasource.caching.directory.enabled = false
         var c = cache(server.object)
-        var dsCache = new datasourceCache(ds)
-        dsCache.cachingEnabled().should.eql(false)
+        var dsCache = datasourceCache()
+        dsCache.cachingEnabled(ds).should.eql(false)
         done()
       })
     })
@@ -204,8 +260,8 @@ describe('Datasource Cache', function (done) {
         ds.schema.datasource.caching.enabled = true
         ds.provider.endpoint += '&cache=false'
         var c = cache(server.object)
-        var dsCache = new datasourceCache(ds)
-        dsCache.cachingEnabled().should.eql(false)
+        var dsCache = datasourceCache()
+        dsCache.cachingEnabled(ds).should.eql(false)
         done()
       })
     })
@@ -225,8 +281,8 @@ describe('Datasource Cache', function (done) {
       TestHelper.updateConfig(cacheConfig).then(() => {
         ds.schema.datasource.caching.directory.enabled = true
         var c = cache(server.object)
-        var dsCache = new datasourceCache(ds)
-        dsCache.cachingEnabled().should.eql(true)
+        var dsCache = datasourceCache()
+        dsCache.cachingEnabled(ds).should.eql(true)
         done()
       })
     })
@@ -258,12 +314,12 @@ describe('Datasource Cache', function (done) {
         var expected = 'ds content from filesystem'
 
         fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function (err) {
-          if (err) console.log(err.toString())
+          if (err) done(err)
 
           setTimeout(function() {
-            var dsCache = new datasourceCache(ds)
+            var dsCache = datasourceCache()
 
-            dsCache.getFromCache(function (data) {
+            dsCache.getFromCache(ds, function (data) {
               data.should.eql(expected)
               done()
             })
@@ -297,9 +353,8 @@ describe('Datasource Cache', function (done) {
         fs.writeFile(cachepath, expected, {encoding: 'utf-8'}, function (err) {
           if (err) console.log(err.toString())
 
-          var dsCache = new datasourceCache(ds)
-
-          dsCache.getFromCache(function (data) {
+          var dsCache = datasourceCache()
+          dsCache.getFromCache(ds, function (data) {
             data.should.eql(false)
             done()
           })
@@ -324,9 +379,9 @@ describe('Datasource Cache', function (done) {
 
         var c = cache(server.object)
         var data = 'ds content from filesystem'
-        var dsCache = new datasourceCache(ds)
 
-        dsCache.getFromCache(function (data) {
+        var dsCache = datasourceCache()
+        dsCache.getFromCache(ds, function (data) {
           data.should.eql(false)
           done()
         })
@@ -362,9 +417,8 @@ describe('Datasource Cache', function (done) {
           if (err) console.log(err.toString())
 
           setTimeout(function () {
-            var dsCache = new datasourceCache(ds)
-
-            dsCache.getFromCache(function (data) {
+            var dsCache = datasourceCache()
+            dsCache.getFromCache(ds, function (data) {
               data.should.eql(false)
               done()
             })
@@ -396,9 +450,9 @@ describe('Datasource Cache', function (done) {
         cachepath = path.join(ds.schema.datasource.caching.directory.path, filename + '.' + ds.schema.datasource.caching.directory.extension)
 
         var data = 'ds content from filesystem'
-        var dsCache = new datasourceCache(ds)
 
-        dsCache.cacheResponse(data, function () {
+        var dsCache = datasourceCache()
+        dsCache.cacheResponse(ds, data, function () {
           fs.readFile(cachepath, function (err, content) {
             content.toString().should.eql(data)
             done()
@@ -407,7 +461,7 @@ describe('Datasource Cache', function (done) {
       })
     })
 
-    it.skip('should write to a redis client if configured', function (done) {
+    it('should write to a redis client if configured', function (done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -435,9 +489,8 @@ describe('Datasource Cache', function (done) {
 
         c.redisClient = redisClient
 
-        var dsCache = new datasourceCache(ds)
-
-        dsCache.cacheResponse(data, function () {
+        var dsCache = datasourceCache()
+        dsCache.cacheResponse(ds, data, function () {
           done()
         })
       })

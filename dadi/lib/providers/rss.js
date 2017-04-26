@@ -68,35 +68,46 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
     const context = this
     // const queryParams = this.buildQueryParams()
 
-    this.cacheKey = [this.endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
-    this.dataCache = new DatasourceCache(this.datasource)
+    this.cacheKey = [
+      this.endpoint,
+      encodeURIComponent(JSON.stringify(this.schema.datasource))
+    ].join('+')
+    this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache((cachedData) => {
+    this.dataCache.getFromCache(this.datasource, cachedData => {
       if (cachedData) return done(null, cachedData)
 
       const items = []
       const feedparser = new FeedParser()
+
       const req = request(this.endpoint, {
         pool: false,
         headers: {
           'user-agent': 'DADI/Web',
-          'accept': 'text/html,application/xhtml+xml'
+          accept: 'text/html,application/xhtml+xml'
         }
       })
 
       // request events
       req.on('error', done)
-      req.on('response', (res) => {
+
+      req.on('response', res => {
         if (res.statusCode !== 200) return done('Bad status code', null)
         res.pipe(feedparser)
       })
 
       // feedparser events
       feedparser.on('error', done)
+
       feedparser.on('end', () => {
-        context.dataCache.cacheResponse(JSON.stringify(items), () => {})
-        done(null, items)
+        context.dataCache.cacheResponse(
+          this.datasource,
+          JSON.stringify(items),
+          () => {}
+        )
+        return done(null, items)
       })
+
       feedparser.on('readable', function () {
         let item
         while ((item = this.read())) {

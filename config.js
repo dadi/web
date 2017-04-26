@@ -247,12 +247,12 @@ var conf = convict({
       default: false
     },
     debugLevel: {
-      doc: '',
+      doc: 'One of [ DEBUG | INFO | WARN | ERROR ]',
       format: String,
       default: 'WARN'
     },
     whitespace: {
-      doc: '',
+      doc: 'Minify the HTML output',
       format: Boolean,
       default: false
     },
@@ -342,24 +342,29 @@ var conf = convict({
     }
   },
   globalEvents: {
-    doc: '',
+    doc: 'Events to be loaded on every request.',
     format: Array,
     default: []
+  },
+  global: {
+    doc: '',
+    format: Object,
+    default: {}
   },
   paths: {
     doc: '',
     format: Object,
     default: {
-      datasources: path.join(__dirname, '/app/datasources'),
-      events: path.join(__dirname, '/app/events'),
-      filters: path.join(__dirname, '/app/utils/filters'),
-      helpers: path.join(__dirname, '/app/utils/helpers'),
-      media: path.join(__dirname, '/app/media'),
-      middleware: path.join(__dirname, '/app/middleware'),
-      pages: path.join(__dirname, '/app/pages'),
-      partials: path.join(__dirname, '/app/partials'),
-      public: path.join(__dirname, '/app/public'),
-      routes: path.join(__dirname, '/app/routes'),
+      datasources: path.join(__dirname, '/workspace/datasources'),
+      events: path.join(__dirname, '/workspace/events'),
+      filters: path.join(__dirname, '/workspace/utils/filters'),
+      helpers: path.join(__dirname, '/workspace/utils/helpers'),
+      media: path.join(__dirname, '/workspace/media'),
+      middleware: path.join(__dirname, '/workspace/middleware'),
+      pages: path.join(__dirname, '/workspace/pages'),
+      partials: path.join(__dirname, '/workspace/partials'),
+      public: path.join(__dirname, '/workspace/public'),
+      routes: path.join(__dirname, '/workspace/routes'),
       tokenWallets: path.join(__dirname, '/.wallet')
     }
   },
@@ -455,6 +460,11 @@ var conf = convict({
       doc: 'If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address',
       format: '*',
       default: true
+    },
+    transportSecurity: {
+      doc: 'If true, requires requests to be secure. Overridden if server.protocol is set to https.',
+      format: '*',
+      default: false
     }
   },
   env: {
@@ -464,8 +474,13 @@ var conf = convict({
     env: 'NODE_ENV',
     arg: 'node_env'
   },
+  virtualHosts: {
+    doc: 'Allows serving multiple domains from a single instance of DADI Web',
+    format: Object,
+    default: {}
+  },
   virtualDirectories: {
-    doc: "Allows specifying folders where additional static content may reside. An array entry should like look { path: 'data/legacy_features', index: 'default.html', forceTrailingSlash: false } ",
+    doc: 'Allows specifying folders where additional static content may reside. An array entry should like look { "path": "data/legacy_features", "index": "default.html", "forceTrailingSlash": false }',
     format: Array,
     default: []
   },
@@ -516,20 +531,24 @@ conf.loadFile('./config/config.' + env + '.json')
 
 // Load domain-specific configuration
 conf.updateConfigDataForDomain = function (domain) {
-  var domainConfig = './config/' + domain + '.json'
-  fs.stat(domainConfig, (err, stats) => {
-    if (err && err.code === 'ENOENT') {
-      // No domain-specific configuration file
-      return
-    }
+  return new Promise((resolve, reject) => {
+    var domainConfig = './config/' + domain + '.json'
+    fs.stat(domainConfig, (err, stats) => {
+      if (err && err.code === 'ENOENT') {
+        // No domain-specific configuration file
+        return reject()
+      }
 
-    // no error, file exists
-    conf.loadFile(domainConfig)
+      // no error, file exists
+      conf.loadFile(domainConfig)
+
+      return resolve()
+    })
   })
 }
 
 // Perform validation
-conf.validate({strict: false})
+conf.validate()
 
 module.exports = conf
 module.exports.configPath = function () {

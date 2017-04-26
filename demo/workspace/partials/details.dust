@@ -1,8 +1,0 @@
-<dl class="t">
-	<dt>Score</dt>
-	<dd>{score}</dd>
-	<dt>Director</dt>
-	<dd>{director}</dd>
-	<dt>Length</dt>
-	<dd>{length}</dd>
-</dl>

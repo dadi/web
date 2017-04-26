@@ -3,7 +3,7 @@
 		"key": "filters",
 		"name": "Filter test datasource",
 		"source": {
-			"type": "remote",
+			"type": "dadiapi",
 			"protocol": "http",
 			"host": "127.0.0.1",
 			"port": "3000",

@@ -1,0 +1,6 @@
+\/test\/proxy\/?$ http://cdn.example.com/proxy [P]
+\/test\/?$ http://www.example.com/new-site/test [R=301,L]
+\/test\/403\/?$ [F]
+\/test\/410\/?$ [G]
+\/test\/type\/?$ http://www.example.com/new-site/test [R=301, T=application/xml]
+!\/test\/assets\/js|css/.*$ /index [R=301,L]

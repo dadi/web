@@ -3,7 +3,7 @@
 		"key": "car-makes",
 		"name": "Makes datasource",
 		"source": {
-			"type": "remote",
+			"type": "dadiapi",
 			"protocol": "http",
 			"host": "127.0.0.1",
 			"port": "3000",
@@ -39,8 +39,8 @@
     "chained": {
       "datasource": "global",
       "outputParam": {
-      "param": "results.0.id",
-      "field": "makeId"
+        "param": "results.0.id",
+        "field": "_id"
       }
     },
     "requestParams": [
