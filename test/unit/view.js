@@ -314,4 +314,51 @@ describe('View', function (done) {
       })
     })
   })
+
+  it('should beautify the HTML output of a page when set at page level', function(done) {
+    var name = 'test'
+    var schema = TestHelper.getPageSchema()
+    schema.template = 'test.dust'
+    schema.settings.beautify = true
+
+    // load a template
+    var template = '<h1>This is testing beautify</h1><ul><li>Foo</li><li>Bar</li></ul>'
+    var expected = '<h1>This is testing beautify</h1>\n<ul>\n    <li>Foo</li>\n    <li>Bar</li>\n</ul>'
+
+    var compiled = dust.compile(template, 'test', true)
+    dust.loadSource(compiled)
+
+    var req = { url: '/test' }
+    var p = page(name, schema)
+    var v = view(req.url, p, false)
+
+    v.render(function (err, result) {
+      result.should.eql(expected)
+      done()
+    })
+  })
+
+  it('should beautify the JS output of a page when set at page level and contentType is `application/javascript`', function(done) {
+    var name = 'test'
+    var schema = TestHelper.getPageSchema()
+    schema.contentType = 'application/javascript'
+    schema.template = 'test.dust'
+    schema.settings.beautify = true
+
+    // load a template
+    var template = 'var testing = function(){return true;}'
+    var expected = 'var testing = function() {\n    return true;\n}'
+
+    var compiled = dust.compile(template, 'test', true)
+    dust.loadSource(compiled)
+
+    var req = { url: '/test' }
+    var p = page(name, schema)
+    var v = view(req.url, p, false)
+
+    v.render(function (err, result) {
+      result.should.eql(expected)
+      done()
+    })
+  })
 })

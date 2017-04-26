@@ -484,4 +484,13 @@ describe('Page', function (done) {
 
     done()
   }))
+
+  it('should attach `beautify` to page', function (done) {
+    var name = 'test'
+    var schema = TestHelper.getPageSchema()
+    schema.settings.beautify = true
+    var p = page(name, schema)
+    p.beautify.should.eql(true)
+    done()
+  })
 })
