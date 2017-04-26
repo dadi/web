@@ -156,7 +156,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   }
 
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
-  var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gmi
+  var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gim
 
   this.schema.datasource.filter = JSON.parse(
     JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (

@@ -43,12 +43,17 @@ View.prototype.render = function (done) {
       }
 
       if (config.get('dust.beautify') || this.page.beautify) {
-        var options = typeof config.get('dust.beautify') === 'object' ? config.get('dust.beautify') : null
+        var options = typeof config.get('dust.beautify') === 'object'
+          ? config.get('dust.beautify')
+          : null
 
         try {
           if (!this.page.contentType || this.page.contentType === 'text/html') {
             result = beautify.html(result, options)
-          } else if (~this.page.contentType.indexOf('javascript') || ~this.page.contentType.indexOf('json')) {
+          } else if (
+            ~this.page.contentType.indexOf('javascript') ||
+            ~this.page.contentType.indexOf('json')
+          ) {
             result = beautify(result, options)
           }
         } catch (e) {
