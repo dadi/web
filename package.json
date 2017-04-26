@@ -11,7 +11,8 @@
     "snyk-protect": "snyk protect",
     "prepublish": "npm run snyk-protect",
     "precommit": "lint-staged",
-    "commitmsg": "validate-commit-msg"
+    "commitmsg": "validate-commit-msg",
+    "format": "prettier --write 'dadi/**/*.js' && standard --fix 'dadi/**/*.js'" 
   },
   "lint-staged": {
     "*.js": [
