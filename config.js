@@ -272,6 +272,14 @@ var conf = convict({
         format: Array,
         default: []
       }
+    },
+    paths: {
+      doc: 'Paths required by Dust',
+      format: Object,
+      default: {
+        filters: path.join(__dirname, '/workspace/utils/filters'),
+        helpers: path.join(__dirname, '/workspace/utils/helpers')
+      }
     }
   },
   headers: {
@@ -352,8 +360,6 @@ var conf = convict({
     default: {
       datasources: path.join(__dirname, '/workspace/datasources'),
       events: path.join(__dirname, '/workspace/events'),
-      filters: path.join(__dirname, '/workspace/utils/filters'),
-      helpers: path.join(__dirname, '/workspace/utils/helpers'),
       media: path.join(__dirname, '/workspace/media'),
       middleware: path.join(__dirname, '/workspace/middleware'),
       pages: path.join(__dirname, '/workspace/pages'),
