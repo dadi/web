@@ -2,19 +2,17 @@
  * @module Page
  */
 var _ = require('underscore')
-var path = require('path')
 var pathToRegexp = require('path-to-regexp')
-var config = require(path.join(__dirname, '/../../../config'))
 
 var _pages = {}
 
-var Page = function (name, schema, hostKey) {
+var Page = function (name, schema, hostKey, templateCandidate) {
   schema.settings = schema.settings || {}
 
   this.name = name // schema.page.name || name
   this.key = schema.page.key || name
   this.hostKey = hostKey || ''
-  this.template = schema.template || name + '.dust'
+  this.template = schema.template || templateCandidate
   this.contentType = schema.contentType || 'text/html'
   this.datasources = schema.datasources || []
   this.events = schema.events || []
@@ -25,7 +23,7 @@ var Page = function (name, schema, hostKey) {
   this.beautify = this.settings.hasOwnProperty('beautify')
     ? this.settings.beautify
     : false
-  this.keepWhitespace = getWhitespaceSetting(this.settings)
+  this.keepWhitespace = this.settings.keepWhitespace
   this.passFilters = this.settings.hasOwnProperty('passFilters')
     ? this.settings.passFilters
     : false
@@ -108,21 +106,6 @@ Page.prototype.toPath = function (params) {
   return url
 }
 
-function getWhitespaceSetting (settings) {
-  var dustConfig = config.get('dust')
-  var whitespace = true
-
-  if (dustConfig && dustConfig.hasOwnProperty('whitespace')) {
-    whitespace = dustConfig.whitespace
-  }
-
-  if (settings.hasOwnProperty('keepWhitespace')) {
-    whitespace = settings.keepWhitespace
-  }
-
-  return whitespace
-}
-
 /**
  * Checks the page schema contains a valid route setting, otherwise throws an error
  * @param {Object} schema - the page specification
@@ -168,8 +151,8 @@ function checkCacheSetting (schema, name) {
 }
 
 // exports
-module.exports = function (name, schema, hostKey) {
-  if (name && schema) return new Page(name, schema, hostKey)
+module.exports = function (name, schema, hostKey, templateCandidate) {
+  if (name && schema) return new Page(name, schema, hostKey, templateCandidate)
   return _pages[hostKey + name]
 }
 

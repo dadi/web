@@ -40,7 +40,6 @@
     "convict": "3.0.0",
     "debug": "^2.6.1",
     "dustjs-helpers": "^1.7.3",
-    "dustjs-linkedin": "^2.7.2",
     "event-stream": "^3.3.1",
     "express-session": "1.15.2",
     "feedparser": "^2.2.0",

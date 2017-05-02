@@ -1,26 +1,26 @@
 /**
  * @module View
  */
-var beautifyHtml = require('js-beautify').html
-var path = require('path')
-var dust = require(path.join(__dirname, '/../dust'))
+const _ = require('underscore')
+const beautifyHtml = require('js-beautify').html
+const path = require('path')
+const templateStore = require(path.join(__dirname, '/../templates/store'))
 
-var View = function (url, page, json) {
+const View = function (url, page, json) {
   this.url = url
   this.page = page
   this.json = json
   this.data = {}
 
-  this.pageTemplate =
+  this.templateName =
     this.page.hostKey +
     this.page.template.slice(0, this.page.template.indexOf('.'))
+
+  this.template = templateStore.get(this.templateName)
 }
 
 View.prototype.setData = function (data) {
-  data.templatingEngine = {
-    engine: 'dust',
-    version: dust.getEngine().version
-  }
+  data.templatingEngine = this.template.getEngineInfo()
 
   this.data = data
 }
@@ -30,27 +30,35 @@ View.prototype.render = function (done) {
     // Return the raw data
     return done(null, this.data)
   } else {
-    dust.setConfig('whitespace', this.page.keepWhitespace)
+    let templateData = _.extend(
+      {
+        host: this.page.hostKey
+      },
+      this.data
+    )
 
-    var ctx = dust.getEngine().context(null, { host: this.page.hostKey })
+    this.template
+      .render(templateData, {
+        keepWhitespace: this.page.keepWhitespace
+      })
+      .then(output => {
+        let err = null
 
-    // Render the compiled template
-    dust.render(this.pageTemplate, ctx.push(this.data), (err, result) => {
-      if (err) {
-        err.statusCode = 500
-        return done(err, null)
-      }
-
-      if (this.page.beautify) {
-        try {
-          result = beautifyHtml(result)
-        } catch (e) {
-          err = e
+        if (this.page.beautify) {
+          try {
+            output = beautifyHtml(output)
+          } catch (error) {
+            err = error
+          }
         }
-      }
 
-      return done(err, result)
-    })
+        return done(err, output)
+      })
+      .catch(err => {
+        err.statusCode = 500
+
+        return done(err, null)
+      })
   }
 }
 
