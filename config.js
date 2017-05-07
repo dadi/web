@@ -76,7 +76,7 @@ var conf = convict({
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
     },
     http2: {
-      doc: 'Use http2. Only works is SSL is enabled.',
+      doc: 'Use http2. Only works if SSL is enabled.',
       format: Boolean,
       default: false
     }
