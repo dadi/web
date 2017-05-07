@@ -74,6 +74,11 @@ var conf = convict({
       format: Array,
       default: [],
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
+    },
+    http2: {
+      doc: 'Use http2. Only works is SSL is enabled.',
+      format: Boolean,
+      default: false
     }
   },
   api: {
@@ -517,6 +522,11 @@ var conf = convict({
       format: Array,
       default: []
     }
+  },
+  globalPushManifest: {
+    doc: 'A list of assets to push when server.http2 is true.',
+    format: Object,
+    default: {}
   }
 })
 

@@ -45,6 +45,7 @@
     "express-session": "1.15.2",
     "feedparser": "^2.2.0",
     "fs-extra": "^2.1.2",
+    "http2": "^3.3.6",
     "js-beautify": "^1.5.10",
     "js-yaml": "^3.7.0",
     "kinesis": "^1.2.2",

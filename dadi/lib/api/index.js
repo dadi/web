@@ -3,6 +3,7 @@ var debug = require('debug')('web:api')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
+var http2 = require('http2')
 var path = require('path')
 var pathToRegexp = require('path-to-regexp')
 var raven = require('raven')
@@ -80,7 +81,12 @@ var Api = function () {
     // we need to catch any errors resulting from bad parameters
     // such as incorrect passphrase or no passphrase provided
     try {
-      this.httpsInstance = https.createServer(serverOptions, this.listener)
+      if (config.get('server.http2')) {
+        debug('Server initianted with HTTP2.')
+        this.httpsInstance = http2.createServer(serverOptions, this.listener)
+      } else {
+        this.httpsInstance = https.createServer(serverOptions, this.listener)
+      }
     } catch (ex) {
       var exPrefix = 'error starting https server: '
       switch (ex.message) {
