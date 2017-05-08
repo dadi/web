@@ -363,7 +363,6 @@ var conf = convict({
       media: path.join(__dirname, '/workspace/media'),
       middleware: path.join(__dirname, '/workspace/middleware'),
       pages: path.join(__dirname, '/workspace/pages'),
-      partials: path.join(__dirname, '/workspace/partials'),
       public: path.join(__dirname, '/workspace/public'),
       routes: path.join(__dirname, '/workspace/routes'),
       tokenWallets: path.join(__dirname, '/.wallet')
