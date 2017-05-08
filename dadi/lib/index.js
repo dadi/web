@@ -1,3 +1,5 @@
+'use strict'
+
 var version = require('../../package.json').version
 var site = require('../../package.json').name
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])

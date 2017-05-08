@@ -1,3 +1,5 @@
+'use strict'
+
 const _ = require('underscore')
 const debug = require('debug')('web:templates')
 const fs = require('fs')
