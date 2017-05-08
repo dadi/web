@@ -74,11 +74,6 @@ var conf = convict({
       format: Array,
       default: [],
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
-    },
-    http2: {
-      doc: 'Use http2. Only works if SSL is enabled.',
-      format: Boolean,
-      default: false
     }
   },
   api: {

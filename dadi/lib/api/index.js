@@ -41,7 +41,7 @@ var Api = function () {
 
   if (this.protocol === 'http') {
     this.httpInstance = http.createServer(this.listener)
-  } else if (this.protocol === 'https') {
+  } else if (this.protocol === 'https' || this.protocol === 'http2') {
     // Redirect http to https
     if (this.redirectPort > 0) {
       this.redirectInstance = http.createServer(this.redirectListener)
@@ -81,7 +81,7 @@ var Api = function () {
     // we need to catch any errors resulting from bad parameters
     // such as incorrect passphrase or no passphrase provided
     try {
-      if (config.get('server.http2')) {
+      if (this.protocol === 'http2') {
         debug('Server initianted with HTTP2.')
         this.httpsInstance = http2.createServer(serverOptions, this.listener)
       } else {
