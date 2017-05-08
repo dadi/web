@@ -5,8 +5,8 @@ const log = require('@dadi/logger')
 const path = require('path')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
-const helpers = require(path.resolve(__dirname, '/../help'))
-const Template = require(path.resolve(__dirname, 'template'))
+const helpers = require(path.join(__dirname, '/../help'))
+const Template = require(path.join(__dirname, 'template'))
 
 /**
   * Builds a template store.
