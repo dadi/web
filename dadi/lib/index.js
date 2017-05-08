@@ -54,8 +54,9 @@ log.init(config.get('logging'), config.get('aws'), process.env.NODE_ENV)
  * Creates a new Server instance.
  * @constructor
  */
-var Server = function () {
+var Server = function (appOptions) {
   this.components = {}
+  this.appOptions = appOptions
   this.monitors = {}
 }
 
@@ -73,6 +74,9 @@ Server.prototype.start = function (done) {
   if (options.configPath) {
     config.loadFile(options.configPath)
   }
+
+  // Load templating engines
+  templateStore.loadEngines(this.appOptions && this.appOptions.engines)
 
   // override configuration variables based on request's host header
   app.use((req, res, next) => {
@@ -429,7 +433,6 @@ Server.prototype.loadPaths = function (paths) {
   options.mediaPath = path.resolve(paths.media)
   options.middlewarePath = path.resolve(paths.middleware)
   options.pagePath = path.resolve(paths.pages)
-  options.partialPaths = this.resolvePaths(paths.partials)
   options.publicPath = path.resolve(paths.public)
   options.routesPath = path.resolve(paths.routes)
   options.tokenWalletsPath = path.resolve(paths.tokenWallets)
@@ -498,16 +501,13 @@ Server.prototype.loadApi = function (options, reload, callback) {
     })
   }
 
-  // load routes
-  this.updatePages(options.pagePath, options, reload || false)
-
   // Load middleware
   this.initMiddleware(options.middlewarePath, options)
 
-  // Load all templating engines
-  templateStore
-    .loadEngines()
+  // Load routes
+  return this.updatePages(options.pagePath, options, reload || false)
     .then(() => {
+      // Load templates
       return this.compile(options)
     })
     .then(() => {
@@ -524,12 +524,6 @@ Server.prototype.loadApi = function (options, reload, callback) {
         this.compile(options)
       })
 
-      _.each(options.partialPaths, partialPath => {
-        this.addMonitor(partialPath, partialFile => {
-          this.compile(options)
-        })
-      })
-
       this.addMonitor(options.routesPath, file => {
         if (this.app.Router) {
           this.app.Router.loadRewrites(options, () => {
@@ -540,7 +534,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
       debug('load complete')
 
-      if (callback && typeof callback === 'function') {
+      if (typeof callback === 'function') {
         callback()
       }
     })
@@ -572,39 +566,55 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
 }
 
 Server.prototype.updatePages = function (directoryPath, options, reload) {
-  if (fs.existsSync(directoryPath)) {
-    const pages = fs.readdirSync(directoryPath)
-
-    pages.forEach(page => {
-      if (path.extname(page) !== '.json') return
-
-      // get the full path to the page file
-      const pageFilepath = path.join(directoryPath, page)
-
-      // strip the filename minus the extension
-      // to use as the page name
-      const name = page.slice(0, page.indexOf('.'))
-
-      // Find a file with the same base name as the JSON file, which will be
-      // a candidate to page template.
-      const templateCandidate = pages.find(page => {
-        const extension = path.extname(page)
-
-        return path.basename(page, extension) === name
-      })
-
-      this.addRoute(
-        {
-          name: name,
-          filepath: pageFilepath
-        },
-        _.extend({}, options, {
-          templateCandidate: templateCandidate
-        }),
-        reload
-      )
+  return help
+    .readDirectory(directoryPath, {
+      recursive: true
     })
-  }
+    .then(pages => {
+      pages.forEach(page => {
+        // Ignore files that aren't a JSON schema
+        if (path.extname(page) !== '.json') return
+
+        const relativePath = path.relative(directoryPath, page)
+
+        // strip the filename minus the extension
+        // to use as the page name
+        const name = relativePath.slice(0, -'.json'.length)
+
+        // Find a file with the same base name as the JSON file, which will be
+        // a candidate to page template.
+        let templateCandidate
+
+        pages.some(page => {
+          const candidateExtension = path.extname(page)
+
+          if (candidateExtension === '.json') return
+
+          const relativePath = path.relative(directoryPath, page)
+          const candidateName = relativePath.slice(
+            0,
+            -candidateExtension.length
+          )
+
+          if (candidateName === name) {
+            templateCandidate = candidateName + candidateExtension
+
+            return true
+          }
+        })
+
+        this.addRoute(
+          {
+            name: name,
+            filepath: page
+          },
+          _.extend({}, options, {
+            templateCandidate: templateCandidate
+          }),
+          reload
+        )
+      })
+    })
 }
 
 Server.prototype.addRoute = function (obj, options, reload) {
@@ -745,7 +755,6 @@ Server.prototype.removeMonitor = function (filepath) {
 Server.prototype.compile = function (options) {
   return new Promise((resolve, reject) => {
     const templatePath = options.pagePath
-    const partialPaths = options.partialPaths
 
     // Get a list of templates to render based on the registered components
     const componentTemplates = _.compact(
@@ -756,26 +765,12 @@ Server.prototype.compile = function (options) {
       })
     )
 
-    // Setting the partials directories
-    templateStore.setPartialsDirectories(partialPaths)
-
     // Loading engines and templates
     templateStore
-      .loadFiles(componentTemplates, {
+      .loadPages(componentTemplates, {
         namespace: options.host
       })
-      .then(loadedTemplates => {
-        debug('Templates loaded: %o', loadedTemplates)
-
-        return templateStore.loadDirectory(templatePath, {
-          namespace: options.host
-        })
-      })
-      .then(loadedTemplates => {
-        debug('Additional templates loaded: %o', loadedTemplates)
-
-        return templateStore.finishLoading()
-      })
+      .then(templates => templateStore.finishLoading())
   })
 }
 
@@ -868,7 +863,7 @@ Server.prototype.delete = buildVerbMethod('delete')
 Server.prototype.trace = buildVerbMethod('trace')
 
 // singleton
-module.exports = new Server()
+module.exports = options => new Server(options)
 
 // generate a method for http request methods matching `verb`
 // if a route is passed, the node module `path-to-regexp` is
