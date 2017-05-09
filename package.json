@@ -86,7 +86,8 @@
     "superagent": "^3.5.2",
     "superagent-mock": "^3.3.0",
     "supertest": "latest",
-    "validate-commit-msg": "^2.12.1"
+    "validate-commit-msg": "^2.12.1",
+    "@dadi/web-dustjs": "dadi/web-dustjs"
   },
   "repository": {
     "type": "git",
