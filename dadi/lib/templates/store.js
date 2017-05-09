@@ -125,17 +125,19 @@ TemplateStore.prototype.loadDirectory = function (directory, options) {
   */
 TemplateStore.prototype.loadEngines = function (engines) {
   const globalEngineConfig = config.get('engines')
-
   const enginesLoaded = engines.map(engine => {
     try {
       const engineConfigBlock = engine.metadata.config
       const extensions = engine.metadata.extensions
       const handle = engine.metadata.handle
 
-      if (config && globalEngineConfig[handle]) {
+      if (engineConfigBlock) {
         const engineConfig = convict(engineConfigBlock)
 
-        engineConfig.load(globalEngineConfig[handle])
+        if (globalEngineConfig[handle]) {
+          engineConfig.load(globalEngineConfig[handle])
+        }
+
         engineConfig.validate({
           allowed: 'strict'
         })

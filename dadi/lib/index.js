@@ -403,7 +403,9 @@ Server.prototype.stop = function (done) {
 
   Object.keys(this.components).forEach(this.removeComponent.bind(this))
 
-  this.server.destroy()
+  if (this.server) {
+    this.server.destroy()
+  }
 
   if (this.app.redirectInstance) {
     this.app.redirectInstance.destroy()

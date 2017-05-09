@@ -470,6 +470,11 @@ var conf = convict({
       format: Array,
       default: []
     }
+  },
+  engines: {
+    doc: 'Engine-specific configuration parameters',
+    format: Object,
+    default: {}
   }
 })
 
