@@ -284,6 +284,8 @@ var conf = convict({
       doc: "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
       format: Object,
       default: {
+        'image/png': 'public, max-age=86400',
+        'image/jpeg': 'public, max-age=86400',
         'text/css': 'public, max-age=86400',
         'text/javascript': 'public, max-age=86400',
         'application/javascript': 'public, max-age=86400'
