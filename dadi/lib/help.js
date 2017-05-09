@@ -11,7 +11,6 @@ var path = require('path')
 var perfy = require('perfy')
 var serveStatic = require('serve-static')
 var zlib = require('zlib')
-var StreamCache = require('stream-cache')
 
 var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
@@ -180,8 +179,6 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
         config.get('headers.useGzipCompression') &&
         !file.match(/.(jpg|jpeg|png|gif)$/i)
 
-      var cache = new StreamCache()
-
       var fileOptions = {
         status: 200,
         method: 'GET',
@@ -199,21 +196,23 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
 
       var push = res.push(file, fileOptions)
 
-      var rs = fs.createReadStream(filePath).pipe(cache)
+      var rs = fs.createReadStream(filePath)
 
-      // Should we gzip this file?
-      if (shouldGzip) {
-        rs.pipe(zlib.createGzip()).pipe(push)
-      } else {
-        rs.pipe(push)
-      }
+      rs.on('open', () => {
+        // Should we gzip this file?
+        if (shouldGzip) {
+          rs.pipe(zlib.createGzip()).pipe(push)
+        } else {
+          rs.pipe(push)
+        }
+      })
 
       // Catch errors
       rs.on('error', error => {
-        return error
+        console.log('Error reading a file: ' + error)
       })
-      push.on('error', () => {
-        console.log('error with res.push')
+      push.on('error', error => {
+        console.log('Error pushing static file. ' + error)
       })
     })
   }
