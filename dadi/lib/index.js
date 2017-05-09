@@ -755,25 +755,23 @@ Server.prototype.removeMonitor = function (filepath) {
 }
 
 Server.prototype.compile = function (options) {
-  return new Promise((resolve, reject) => {
-    const templatePath = options.pagePath
+  const templatePath = options.pagePath
 
-    // Get a list of templates to render based on the registered components
-    const componentTemplates = _.compact(
-      Object.keys(this.components).map(route => {
-        if (this.components[route].options.host === options.host) {
-          return path.join(templatePath, this.components[route].page.template)
-        }
-      })
-    )
+  // Get a list of templates to render based on the registered components
+  const componentTemplates = _.compact(
+    Object.keys(this.components).map(route => {
+      if (this.components[route].options.host === options.host) {
+        return path.join(templatePath, this.components[route].page.template)
+      }
+    })
+  )
 
-    // Loading engines and templates
-    templateStore
-      .loadPages(componentTemplates, {
-        namespace: options.host
-      })
-      .then(templates => templateStore.finishLoading())
-  })
+  // Loading engines and templates
+  return templateStore
+    .loadPages(componentTemplates, {
+      namespace: options.host
+    })
+    .then(templates => templateStore.finishLoading())
 }
 
 Server.prototype.getSessionStore = function (sessionConfig, env) {
