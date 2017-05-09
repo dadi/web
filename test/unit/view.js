@@ -51,19 +51,6 @@ describe("View", function(done) {
     done()
   })
 
-  it("should attach specified `template`", function(done) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-    schema.template = "test.dust"
-
-    var req = { url: "/test" }
-    var p = page(name, schema)
-    var v = view(req.url, p, false)
-
-    v.pageTemplate.should.eql("test")
-    done()
-  })
-
   it("should accept data via `setData()`", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
