@@ -230,58 +230,6 @@ var conf = convict({
       }
     }
   },
-  dust: {
-    cache: {
-      doc: 'If true, compiled templates are saved to the Dust cache. Recommended setting: true',
-      format: Boolean,
-      default: true
-    },
-    debug: {
-      doc: '',
-      format: Boolean,
-      default: false
-    },
-    debugLevel: {
-      doc: 'One of [ DEBUG | INFO | WARN | ERROR ]',
-      format: String,
-      default: 'WARN'
-    },
-    whitespace: {
-      doc: 'Minify the HTML output',
-      format: Boolean,
-      default: false
-    },
-    clientRender: {
-      enabled: {
-        doc: 'If true, compiled templates are made available to the client-side',
-        format: Boolean,
-        default: false
-      },
-      format: {
-        doc: "Defines whether compiled templates are written to individual JS files ('separate') or combined into a single one ('combined')",
-        format: ['separate', 'combined'],
-        default: 'separate'
-      },
-      path: {
-        doc: "The location where compiled templates should be written to, relative to 'public'. This should be a folder when 'format' is 'separate' and a file when 'combined'",
-        format: String,
-        default: 'templates'
-      },
-      whitelist: {
-        doc: 'When defined, only templates with names matching an entry in whitelist will be made available to the client. Wildcards supported.',
-        format: Array,
-        default: []
-      }
-    },
-    paths: {
-      doc: 'Paths required by Dust',
-      format: Object,
-      default: {
-        filters: path.join(__dirname, '/workspace/utils/filters'),
-        helpers: path.join(__dirname, '/workspace/utils/helpers')
-      }
-    }
-  },
   headers: {
     useGzipCompression: {
       doc: "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",

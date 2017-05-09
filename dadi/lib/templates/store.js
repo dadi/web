@@ -1,12 +1,13 @@
 'use strict'
 
 const _ = require('underscore')
+const convict = require('convict')
 const debug = require('debug')('web:templates')
 const fs = require('fs')
 const log = require('@dadi/logger')
 const path = require('path')
 
-const config = require(path.join(__dirname, '/../../../config.js'))
+let config = require(path.join(__dirname, '/../../../config.js'))
 const helpers = require(path.join(__dirname, '/../help'))
 const Template = require(path.join(__dirname, 'template'))
 
@@ -123,10 +124,24 @@ TemplateStore.prototype.loadDirectory = function (directory, options) {
   * Loads all templating engines.
   */
 TemplateStore.prototype.loadEngines = function (engines) {
+  const globalEngineConfig = config.get('engines')
+
   const enginesLoaded = engines.map(engine => {
     try {
-      const handle = engine.metadata.handle
+      const engineConfigBlock = engine.metadata.config
       const extensions = engine.metadata.extensions
+      const handle = engine.metadata.handle
+
+      if (config && globalEngineConfig[handle]) {
+        const engineConfig = convict(engineConfigBlock)
+
+        engineConfig.load(globalEngineConfig[handle])
+        engineConfig.validate({
+          allowed: 'strict'
+        })
+
+        config.set(`engines.${handle}`, engineConfig.getProperties())
+      }
 
       if (
         typeof handle === 'string' &&
