@@ -210,7 +210,7 @@ TestHelper.prototype.startServer = function(pages) {
           )
 
           if (++idx === pages.length) {
-            return resolve("")
+            return resolve(Server.compile(options).then(() => Server))
           }
         })
       }, 200)
@@ -318,3 +318,4 @@ module.exports = function() {
 }
 
 module.exports.TestHelper = TestHelper
+module.exports.Server = Server
