@@ -356,7 +356,6 @@ var conf = convict({
       events: path.join(__dirname, '/workspace/events'),
       filters: path.join(__dirname, '/workspace/utils/filters'),
       helpers: path.join(__dirname, '/workspace/utils/helpers'),
-      media: path.join(__dirname, '/workspace/media'),
       middleware: path.join(__dirname, '/workspace/middleware'),
       pages: path.join(__dirname, '/workspace/pages'),
       partials: path.join(__dirname, '/workspace/partials'),

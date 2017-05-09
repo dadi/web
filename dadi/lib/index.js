@@ -160,11 +160,6 @@ Server.prototype.start = function (done) {
     app.use(compress())
   }
 
-  // serve static files (css,js,fonts)
-  if (options.mediaPath) {
-    app.use(serveStatic(options.mediaPath, { index: false }))
-  }
-
   // serve static files from "public" folders
   var initPublic = function (app, hosts, publicPath) {
     // favicon middleware
@@ -434,7 +429,6 @@ Server.prototype.loadPaths = function (paths) {
   options.eventPath = path.resolve(paths.events)
   options.filtersPath = path.resolve(paths.filters)
   options.helpersPath = path.resolve(paths.helpers)
-  options.mediaPath = path.resolve(paths.media)
   options.middlewarePath = path.resolve(paths.middleware)
   options.pagePath = path.resolve(paths.pages)
   options.partialPaths = this.resolvePaths(paths.partials)
