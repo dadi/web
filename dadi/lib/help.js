@@ -175,10 +175,13 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
   if (config.get('server.protocol') === 'http2' && res.push) {
     _.each(manifest, file => {
       var filePath = path.join(publicPath, file)
+
       var shouldGzip =
         config.get('headers.useGzipCompression') &&
         !file.match(/.(jpg|jpeg|png|gif)$/i)
+
       var cache = new StreamCache()
+
       var fileOptions = {
         status: 200,
         method: 'GET',
@@ -193,9 +196,12 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
           'Content-Encoding': shouldGzip ? 'gzip' : ''
         }
       }
+
       var push = res.push(file, fileOptions)
+
       var rs = fs.createReadStream(filePath).pipe(cache)
 
+      // Should we gzip this file?
       if (shouldGzip) {
         rs.pipe(zlib.createGzip()).pipe(push)
       } else {
