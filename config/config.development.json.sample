@@ -15,21 +15,12 @@
     "workspace": "workspace",
     "datasources": "workspace/datasources",
     "pages": "workspace/pages",
-    "partials": "workspace/partials",
     "events": "workspace/events",
     "middleware": "workspace/middleware",
     "media": "workspace/media",
     "public": "workspace/public",
-    "routes": "workspace/routes",
-    "filters": "workspace/utils/filters",
-    "helpers": "workspace/utils/helpers"
+    "routes": "workspace/routes"
   },
   "allowJsonView": true,
-  "debug": true,
-  "dust": {
-    "cache": true,
-    "debug": true,
-    "debugLevel": "DEBUG",
-    "whitespace": true
-  }
+  "debug": true
 }
