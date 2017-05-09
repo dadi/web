@@ -519,9 +519,9 @@ var conf = convict({
     }
   },
   globalPushManifest: {
-    doc: 'A list of assets to push when server.http2 is true.',
-    format: Object,
-    default: {}
+    doc: 'A list of assets to push when sever.protocol is http2.',
+    format: Array,
+    default: []
   }
 })
 
