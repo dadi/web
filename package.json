@@ -67,6 +67,7 @@
     "serve-static": "^1.10.0",
     "server-destroy": "1.0.1",
     "spdy": "^3.4.4",
+    "stream-cache": "0.0.2",
     "toobusy-js": "^0.5.1",
     "underscore": "~1.8.3",
     "underscore.string": "^3.2.2",

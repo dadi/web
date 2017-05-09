@@ -9,6 +9,9 @@ var http = require('http')
 var https = require('https')
 var path = require('path')
 var perfy = require('perfy')
+var serveStatic = require('serve-static')
+var zlib = require('zlib')
+var StreamCache = require('stream-cache')
 
 var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
@@ -164,6 +167,49 @@ module.exports.sendBackHTML = function (
     } else {
       return res.end(resBody)
     }
+  }
+}
+
+// helper that pushes assets
+module.exports.pushAssets = function (req, res, manifest, publicPath) {
+  if (config.get('server.protocol') === 'http2' && res.push) {
+    _.each(manifest, file => {
+      var filePath = path.join(publicPath, file)
+      var shouldGzip =
+        config.get('headers.useGzipCompression') &&
+        !file.match(/.(jpg|jpeg|png|gif)$/i)
+      var cache = new StreamCache()
+      var fileOptions = {
+        status: 200,
+        method: 'GET',
+        request: {
+          accept: '*/*'
+        },
+        response: {
+          "Cache-Control": config.get("headers.cacheControl")[ // eslint-disable-line
+            serveStatic.mime.lookup(file)
+          ] || '',
+          'Content-Type': serveStatic.mime.lookup(file) || '',
+          'Content-Encoding': shouldGzip ? 'gzip' : ''
+        }
+      }
+      var push = res.push(file, fileOptions)
+      var rs = fs.createReadStream(filePath).pipe(cache)
+
+      if (shouldGzip) {
+        rs.pipe(zlib.createGzip()).pipe(push)
+      } else {
+        rs.pipe(push)
+      }
+
+      // Catch errors
+      rs.on('error', error => {
+        return error
+      })
+      push.on('error', () => {
+        console.log('error with res.push')
+      })
+    })
   }
 }
 

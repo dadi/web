@@ -19,6 +19,7 @@ var View = require(path.join(__dirname, '/../view'))
 // helpers
 var sendBackHTML = help.sendBackHTML
 var sendBackJSON = help.sendBackJSON
+var pushAssets = help.pushAssets
 
 /**
  *
@@ -34,6 +35,9 @@ var Controller = function (page, options, meta) {
   this.datasources = {}
   this.events = []
   this.preloadEvents = []
+  this.pushManifest = this.pushManifest = config
+    .get('globalPushManifest')
+    .concat(this.page.pushManifest) || []
 
   this.attachDatasources(err => {
     if (err) {
@@ -179,6 +183,8 @@ Controller.prototype.process = function process (req, res, next) {
   if (data.json) {
     done = sendBackJSON(statusCode, res, next)
   } else {
+    pushAssets(req, res, this.pushManifest, this.options.publicPath)
+
     done = sendBackHTML(
       req.method,
       statusCode,
