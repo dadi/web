@@ -23,7 +23,7 @@ var Page = function (name, schema, hostKey, templateCandidate) {
   this.beautify = this.settings.hasOwnProperty('beautify')
     ? this.settings.beautify
     : false
-  this.keepWhitespace = this.settings.keepWhitespace
+  this.keepWhitespace = Boolean(this.settings.keepWhitespace)
   this.passFilters = this.settings.hasOwnProperty('passFilters')
     ? this.settings.passFilters
     : false
