@@ -134,69 +134,69 @@ describe("View", function(done) {
     })
   })
 
-  it.skip(
-    "should throw an error if the configured helper path cannot be found",
-    function(done) {
-      // set a helper path in config
-      var pathConfig = {
-        paths: {
-          helpers: "test/app/utils/not/here/helpers"
-        }
-      }
+  // it.skip(
+  //   "should throw an error if the configured helper path cannot be found",
+  //   function(done) {
+  //     // set a helper path in config
+  //     var pathConfig = {
+  //       paths: {
+  //         helpers: "test/app/utils/not/here/helpers"
+  //       }
+  //     }
 
-      TestHelper.updateConfig(pathConfig).then(() => {
-        var name = "test"
-        var schema = TestHelper.getPageSchema()
-        schema.template = "test.dust"
+  //     TestHelper.updateConfig(pathConfig).then(() => {
+  //       var name = "test"
+  //       var schema = TestHelper.getPageSchema()
+  //       schema.template = "test.dust"
 
-        // load a template
-        var template = "<h1>Code Helper Example</h1>"
-        template += "{@code}"
-        template += "alert('Hello World')"
-        template += "{/code}"
+  //       // load a template
+  //       var template = "<h1>Code Helper Example</h1>"
+  //       template += "{@code}"
+  //       template += "alert('Hello World')"
+  //       template += "{/code}"
 
-        var compiled = dust.compile(template, "test", true)
-        dust.loadSource(compiled)
+  //       var compiled = dust.compile(template, "test", true)
+  //       dust.loadSource(compiled)
 
-        var req = { url: "/test" }
-        var p = page(name, schema)
+  //       var req = { url: "/test" }
+  //       var p = page(name, schema)
 
-        should.throws(function() {
-          view(req.url, p, false)
-        }, Error)
+  //       should.throws(function() {
+  //         view(req.url, p, false)
+  //       }, Error)
 
-        done()
-      })
-    }
-  )
+  //       done()
+  //     })
+  //   }
+  // )
 
-  it("should still render if custom dust helper cannot be found when calling `render()`", function(
-    done
-  ) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-    schema.template = "test.dust"
+  // it("should still render if custom dust helper cannot be found when calling `render()`", function(
+  //   done
+  // ) {
+  //   var name = "test"
+  //   var schema = TestHelper.getPageSchema()
+  //   schema.template = "test.dust"
 
-    // load a template
-    var template = "<h1>Code Helper Example</h1>"
-    template += "{@code}"
-    template += "alert('Hello World')"
-    template += "{/code}"
+  //   // load a template
+  //   var template = "<h1>Code Helper Example</h1>"
+  //   template += "{@code}"
+  //   template += "alert('Hello World')"
+  //   template += "{/code}"
 
-    var expected = "<h1>Code Helper Example</h1>"
+  //   var expected = "<h1>Code Helper Example</h1>"
 
-    var compiled = dust.compile(template, "test", true)
-    dust.loadSource(compiled)
+  //   var compiled = dust.compile(template, "test", true)
+  //   dust.loadSource(compiled)
 
-    var req = { url: "/test" }
-    var p = page(name, schema)
-    var v = view(req.url, p, false)
+  //   var req = { url: "/test" }
+  //   var p = page(name, schema)
+  //   var v = view(req.url, p, false)
 
-    v.render(function(err, result) {
-      result.should.eql(expected)
-      done()
-    })
-  })
+  //   v.render(function(err, result) {
+  //     result.should.eql(expected)
+  //     done()
+  //   })
+  // })
 
   // it('should have access to custom dust helpers when calling `render()`', function (done) {
   //   // set a helper path in config
