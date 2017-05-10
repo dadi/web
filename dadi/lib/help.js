@@ -12,7 +12,7 @@ var perfy = require('perfy')
 var zlib = require('zlib')
 var destroy = require('destroy')
 var mime = require('mime-types')
-var compressible = require('compressible')
+// var compressible = require('compressible')
 
 var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
@@ -188,8 +188,9 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
 
       var mimeType = mime.lookup(file)
 
-      var shouldGzip =
-        config.get('headers.useGzipCompression') && compressible(file)
+      // There's a bug in http2 that's preventing Content-Type headers when gzip enabled
+      // var shouldGzip = config.get('headers.useGzipCompression') && compressible(mimeType)
+      var shouldGzip = false
 
       var fileOptions = {
         status: 200,
@@ -200,7 +201,7 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
         response: {
           "Cache-Control": config.get("headers.cacheControl")[mimeType] || "", // eslint-disable-line
           'Content-Type': mimeType || '',
-          'Content-Encoding': shouldGzip ? 'gzip' : ''
+          'Content-Encoding': 'gzip'
         }
       }
 
@@ -221,8 +222,6 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
           break
       }
 
-      var rs = fs.createReadStream(filePath)
-
       var push = res.push(
         file,
         fileOptions,
@@ -233,7 +232,6 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
             push.removeListener('finish', cleanup)
 
             destroy(push)
-            destroy(rs)
 
             if (error) err = error
           }
@@ -243,31 +241,25 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
             stream.on('close', cleanup)
             stream.on('finish', cleanup)
           }
-
-          if (rs) {
-            rs.on('error', cleanup)
-            rs.on('close', cleanup)
-            rs.on('finish', cleanup)
-          }
         },
         priority
       )
 
+      var rs = fs.createReadStream(filePath)
+
       rs.on('open', () => {
         if (shouldGzip) {
-          rs.pipe(zlib.createGzip()).pipe(push)
+          fs.createReadStream(filePath).pipe(zlib.createGzip()).pipe(push)
         } else {
-          rs.pipe(push)
+          fs.createReadStream(filePath).pipe(push)
         }
       })
 
-      // Errors
       if (err) {
         if (err.code === 'RST_STREAM') {
           debug('got RST_STREAM %s', err.status)
         } else {
           log.error({ module: 'pushAssets' }, err)
-          throw err
         }
       }
     })
