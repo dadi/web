@@ -7,8 +7,6 @@ notifications:
   email: false
 node_js:
   - '6'
-  - '5'
-  - '4'
 before_script:
   - npm prune
 branches:
