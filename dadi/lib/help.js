@@ -12,6 +12,7 @@ var perfy = require('perfy')
 var zlib = require('zlib')
 var destroy = require('destroy')
 var mime = require('mime-types')
+var compressible = require('compressible')
 
 var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
@@ -185,9 +186,10 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
 
       var filePath = path.join(publicPath, file)
 
+      var mimeType = mime.lookup(file)
+
       var shouldGzip =
-        config.get('headers.useGzipCompression') &&
-        !file.match(/.(jpg|jpeg|png|gif)$/i)
+        config.get('headers.useGzipCompression') && compressible(file)
 
       var fileOptions = {
         status: 200,
@@ -196,15 +198,13 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
           accept: '*/*'
         },
         response: {
-          "Cache-Control": config.get("headers.cacheControl")[ // eslint-disable-line
-            mime.lookup(file)
-          ] || '',
-          'Content-Type': mime.lookup(file) || '',
+          "Cache-Control": config.get("headers.cacheControl")[mimeType] || "", // eslint-disable-line
+          'Content-Type': mimeType || '',
           'Content-Encoding': shouldGzip ? 'gzip' : ''
         }
       }
 
-      var priority = 7
+      var priority
 
       switch (mime.lookup(file)) {
         default:
@@ -228,11 +228,12 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
         fileOptions,
         (_, stream) => {
           function cleanup (error) {
-            destroy(rs)
-
             push.removeListener('error', cleanup)
             push.removeListener('close', cleanup)
             push.removeListener('finish', cleanup)
+
+            destroy(push)
+            destroy(rs)
 
             if (error) err = error
           }
@@ -243,9 +244,11 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
             stream.on('finish', cleanup)
           }
 
-          rs.on('error', cleanup)
-          rs.on('close', cleanup)
-          rs.on('finish', cleanup)
+          if (rs) {
+            rs.on('error', cleanup)
+            rs.on('close', cleanup)
+            rs.on('finish', cleanup)
+          }
         },
         priority
       )
