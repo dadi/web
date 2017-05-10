@@ -955,7 +955,7 @@ function onListening (e) {
         ':' +
         config.get('server.port') +
         '\n'
-    } else if (protocol === 'https') {
+    } else if (protocol === 'https' || protocol === 'http2') {
       if (redirectPort > 0) {
         startText +=
           '  Server (http > https): '.green +
