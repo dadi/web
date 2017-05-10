@@ -82,7 +82,7 @@ var Api = function () {
     // such as incorrect passphrase or no passphrase provided
     try {
       if (this.protocol === 'http2') {
-        debug('Server initianted with HTTP2.')
+        debug('createServer initiated with HTTP2.')
         this.httpsInstance = http2.createServer(serverOptions, this.listener)
       } else {
         this.httpsInstance = https.createServer(serverOptions, this.listener)
