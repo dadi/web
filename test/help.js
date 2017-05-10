@@ -10,9 +10,12 @@ var api = require(__dirname + "/../dadi/lib/api")
 var Controller = require(__dirname + "/../dadi/lib/controller")
 var Datasource = require(__dirname + "/../dadi/lib/datasource")
 var Page = require(__dirname + "/../dadi/lib/page")
-var Server = require(__dirname + "/../dadi/lib")({
+
+var serverOptions = {
   engines: [require("@dadi/web-dustjs")]
-})
+}
+
+var Server = require(__dirname + "/../dadi/lib")(serverOptions)
 
 var config
 var testConfigString
@@ -319,3 +322,8 @@ module.exports = function() {
 
 module.exports.TestHelper = TestHelper
 module.exports.Server = Server
+module.exports.getNewServer = options => {
+  options = options || serverOptions
+
+  return require(__dirname + "/../dadi/lib")(options)
+}

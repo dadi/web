@@ -618,6 +618,8 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
           reload
         )
       })
+
+      return this
     })
 }
 

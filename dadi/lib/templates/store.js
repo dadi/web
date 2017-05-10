@@ -7,7 +7,7 @@ const fs = require('fs')
 const log = require('@dadi/logger')
 const path = require('path')
 
-let config = require(path.join(__dirname, '/../../../config.js'))
+const config = require(path.join(__dirname, '/../../../config.js'))
 const helpers = require(path.join(__dirname, '/../help'))
 const Template = require(path.join(__dirname, 'template'))
 
