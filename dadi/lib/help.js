@@ -9,13 +9,15 @@ var http = require('http')
 var https = require('https')
 var path = require('path')
 var perfy = require('perfy')
-var serveStatic = require('serve-static')
 var zlib = require('zlib')
+var destroy = require('destroy')
+var mime = require('mime-types')
 
 var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
 var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
+var log = require('@dadi/logger')
 
 var self = this
 
@@ -169,10 +171,18 @@ module.exports.sendBackHTML = function (
   }
 }
 
-// helper that pushes assets
+/**
+ * Pushes assets defined by config.globalPushManifest and page.pushManifest
+ * @param {req} req - the HTTP request
+ * @param {res} res - the HTTP response
+ * @param {Array} manifest - the concatinated array of the global and page mainifests
+ * @param {String} publicPath - the location of the public folder
+ */
 module.exports.pushAssets = function (req, res, manifest, publicPath) {
   if (config.get('server.protocol') === 'http2' && res.push) {
-    _.each(manifest, file => {
+    manifest.forEach(file => {
+      var err
+
       var filePath = path.join(publicPath, file)
 
       var shouldGzip =
@@ -187,19 +197,59 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
         },
         response: {
           "Cache-Control": config.get("headers.cacheControl")[ // eslint-disable-line
-            serveStatic.mime.lookup(file)
+            mime.lookup(file)
           ] || '',
-          'Content-Type': serveStatic.mime.lookup(file) || '',
+          'Content-Type': mime.lookup(file) || '',
           'Content-Encoding': shouldGzip ? 'gzip' : ''
         }
       }
 
-      var push = res.push(file, fileOptions)
+      var priority = 7
+
+      switch (mime.lookup(file)) {
+        default:
+          priority = 7
+          break
+        case 'text/css':
+          priority = 1
+          break
+        case 'application/javascript':
+          priority = 2
+          break
+        case 'image/jpeg' || 'image/png':
+          priority = 3
+          break
+      }
 
       var rs = fs.createReadStream(filePath)
 
+      var push = res.push(
+        file,
+        fileOptions,
+        (_, stream) => {
+          function cleanup (error) {
+            destroy(push)
+            destroy(rs)
+
+            push.removeListener('error', cleanup)
+            push.removeListener('close', cleanup)
+            push.removeListener('finish', cleanup)
+
+            if (error) err = error
+          }
+
+          stream.on('error', cleanup)
+          stream.on('close', cleanup)
+          stream.on('finish', cleanup)
+
+          rs.on('error', cleanup)
+          rs.on('close', cleanup)
+          rs.on('finish', cleanup)
+        },
+        priority
+      )
+
       rs.on('open', () => {
-        // Should we gzip this file?
         if (shouldGzip) {
           rs.pipe(zlib.createGzip()).pipe(push)
         } else {
@@ -207,13 +257,15 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
         }
       })
 
-      // Catch errors
-      rs.on('error', error => {
-        console.log('Error reading a file: ' + error)
-      })
-      push.on('error', error => {
-        console.log('Error pushing static file. ' + error)
-      })
+      // Errors
+      if (err) {
+        if (err.code === 'RST_STREAM') {
+          debug('got RST_STREAM %s', err.status)
+        } else {
+          log.error({ module: 'pushAssets' }, err)
+          throw err
+        }
+      }
     })
   }
 }
