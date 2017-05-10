@@ -238,9 +238,11 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
             if (error) err = error
           }
 
-          stream.on('error', cleanup)
-          stream.on('close', cleanup)
-          stream.on('finish', cleanup)
+          if (stream) {
+            stream.on('error', cleanup)
+            stream.on('close', cleanup)
+            stream.on('finish', cleanup)
+          }
 
           rs.on('error', cleanup)
           rs.on('close', cleanup)
