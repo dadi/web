@@ -228,7 +228,6 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
         fileOptions,
         (_, stream) => {
           function cleanup (error) {
-            destroy(push)
             destroy(rs)
 
             push.removeListener('error', cleanup)
