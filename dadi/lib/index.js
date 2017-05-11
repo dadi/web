@@ -39,7 +39,7 @@ var Controller = require(path.join(__dirname, '/controller'))
 var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
 var help = require(path.join(__dirname, '/help'))
 var Middleware = require(path.join(__dirname, '/middleware'))
-var ServePublic = require(path.join(__dirname, '/middleware/ServePublic'))
+var servePublic = require(path.join(__dirname, '/middleware/servePublic'))
 var monitor = require(path.join(__dirname, '/monitor'))
 var Page = require(path.join(__dirname, '/page'))
 var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
@@ -158,7 +158,7 @@ Server.prototype.start = function (done) {
   if (config.get('headers.useGzipCompression')) app.use(compress())
 
   // init main public path for static files
-  if (options.publicPath) ServePublic(app, options.publicPath, [])
+  if (options.publicPath) servePublic(app, options.publicPath, [])
 
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -171,13 +171,13 @@ Server.prototype.start = function (done) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
       var hostOptions = this.loadPaths(hostConfig.paths)
 
-      ServePublic(app, hostOptions.publicPath, virtualHost.hostnames)
+      servePublic(app, hostOptions.publicPath, virtualHost.hostnames)
     }
   })
 
   // add debug files to static paths
   if (config.get('debug')) {
-    ServePublic(
+    servePublic(
       app,
       options.workspacePath + '/debug' ||
         path.join(__dirname, '/../../workspace/debug'),
@@ -276,7 +276,7 @@ Server.prototype.start = function (done) {
 
   // initialise virtualDirectories for serving static content
   _.each(config.get('virtualDirectories'), function (directory) {
-    ServePublic(app, path.resolve(directory.path), [])
+    servePublic(app, path.resolve(directory.path), [])
   })
 
   // dust configuration
