@@ -509,39 +509,38 @@ Server.prototype.loadApi = function (options, reload, callback) {
   this.initMiddleware(options.middlewarePath, options)
 
   // Load routes
-  return this.updatePages(options.pagePath, options, reload || false)
-    .then(() => {
-      // Load templates
-      return this.compile(options)
+  return this.updatePages(
+    options.pagePath,
+    options,
+    reload || false
+  ).then(() => {
+    this.addMonitor(options.datasourcePath, dsFile => {
+      this.updatePages(options.pagePath, options, true)
     })
-    .then(() => {
-      this.addMonitor(options.datasourcePath, dsFile => {
-        this.updatePages(options.pagePath, options, true)
-      })
 
-      this.addMonitor(options.eventPath, eventFile => {
-        this.updatePages(options.pagePath, options, true)
-      })
+    this.addMonitor(options.eventPath, eventFile => {
+      this.updatePages(options.pagePath, options, true)
+    })
 
-      this.addMonitor(options.pagePath, pageFile => {
-        this.updatePages(options.pagePath, options, true)
-        this.compile(options)
-      })
+    this.addMonitor(options.pagePath, pageFile => {
+      this.updatePages(options.pagePath, options, true)
+      this.compile(options)
+    })
 
-      this.addMonitor(options.routesPath, file => {
-        if (this.app.Router) {
-          this.app.Router.loadRewrites(options, () => {
-            this.app.Router.loadRewriteModule()
-          })
-        }
-      })
-
-      debug('load complete')
-
-      if (typeof callback === 'function') {
-        callback()
+    this.addMonitor(options.routesPath, file => {
+      if (this.app.Router) {
+        this.app.Router.loadRewrites(options, () => {
+          this.app.Router.loadRewriteModule()
+        })
       }
     })
+
+    debug('load complete')
+
+    if (typeof callback === 'function') {
+      callback()
+    }
+  })
 }
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
@@ -620,6 +619,9 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
       })
 
       return this
+    })
+    .then(pages => {
+      return this.compile(options)
     })
 }
 

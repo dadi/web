@@ -275,10 +275,6 @@ TemplateStore.prototype.loadTemplate = function (parameters) {
   const name = parameters.name
   const namespace = parameters.namespace || ''
 
-  if (this.templates[name + namespace]) {
-    return Promise.resolve(false)
-  }
-
   let startQueue = []
 
   // If this engine hasn't been started yet, we start it now.
