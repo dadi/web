@@ -26,10 +26,12 @@ var ServePublic = function (app, publicPath, hosts) {
       }
 
       // Construct file information
-      var acceptsEncoding = req.headers['accept-encoding']
       var file = req.url
       var filePath = path.join(publicPath, file)
       var mimeType = mime.lookup(file)
+
+      // Compress settings
+      var acceptsEncoding = req.headers['accept-encoding']
       var shouldCompress =
         config.get('headers.useGzipCompression') &&
         compressible(mimeType) &&
