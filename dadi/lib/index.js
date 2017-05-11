@@ -13,8 +13,6 @@ var fs = require('fs')
 var mkdirp = require('mkdirp')
 var path = require('path')
 var raven = require('raven')
-var serveFavicon = require('serve-favicon')
-var serveStatic = require('serve-static')
 var session = require('express-session')
 var toobusy = require('toobusy-js')
 var dadiStatus = require('@dadi/status')
@@ -41,6 +39,7 @@ var Controller = require(path.join(__dirname, '/controller'))
 var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
 var help = require(path.join(__dirname, '/help'))
 var Middleware = require(path.join(__dirname, '/middleware'))
+var ServePublic = require(path.join(__dirname, '/middleware/ServePublic'))
 var monitor = require(path.join(__dirname, '/monitor'))
 var Page = require(path.join(__dirname, '/page'))
 var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
@@ -156,52 +155,10 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.transportSecurity())
 
   // add gzip compression
-  if (config.get('headers.useGzipCompression')) {
-    app.use(compress())
-  }
+  if (config.get('headers.useGzipCompression')) app.use(compress())
 
-  // serve static files from "public" folders
-  var initPublic = function (app, hosts, publicPath) {
-    // favicon middleware
-    app.use((req, res, next) => {
-      // attempts to serve a favicon if the current host header matches
-      // one of the host names specified when this middleware was added to the stack
-      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-        try {
-          var fn = serveFavicon(
-            (publicPath || path.join(__dirname, '/../../public')) +
-              '/favicon.ico'
-          )
-          fn(req, res, next)
-        } catch (err) {
-          // no favicon found
-          next()
-        }
-      } else {
-        next()
-      }
-    })
-
-    // static file middleware, for "public" folder
-    app.use((req, res, next) => {
-      var fn = serveStatic(publicPath, {
-        index: false,
-        maxAge: '1d',
-        setHeaders: setCustomCacheControl
-      })
-
-      // attempts to serve a static file if the current host header matches
-      // one of the host names specified when this middleware was added to the stack
-      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-        fn(req, res, next)
-      } else {
-        next()
-      }
-    })
-  }
-
-  // init main public path
-  if (options.publicPath) initPublic(app, [], options.publicPath)
+  // init main public path for static files
+  if (options.publicPath) ServePublic(app, options.publicPath, [])
 
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -214,18 +171,17 @@ Server.prototype.start = function (done) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
       var hostOptions = this.loadPaths(hostConfig.paths)
 
-      initPublic(app, virtualHost.hostnames, hostOptions.publicPath)
+      ServePublic(app, hostOptions.publicPath, virtualHost.hostnames)
     }
   })
 
   // add debug files to static paths
   if (config.get('debug')) {
-    app.use(
-      serveStatic(
-        options.workspacePath + '/debug' ||
-          path.join(__dirname, '/../../workspace/debug'),
-        { index: false }
-      )
+    ServePublic(
+      app,
+      options.workspacePath + '/debug' ||
+        path.join(__dirname, '/../../workspace/debug'),
+      []
     )
   }
 
@@ -320,12 +276,7 @@ Server.prototype.start = function (done) {
 
   // initialise virtualDirectories for serving static content
   _.each(config.get('virtualDirectories'), function (directory) {
-    app.use(
-      serveStatic(path.resolve(directory.path), {
-        index: directory.index,
-        redirect: directory.forceTrailingSlash
-      })
-    )
+    ServePublic(app, path.resolve(directory.path), [])
   })
 
   // dust configuration
@@ -380,14 +331,6 @@ Server.prototype.exitHandler = function (options, err) {
     log.info({ module: 'server' }, 'Server stopped, process exiting.')
     process.exit()
   }
-}
-
-function setCustomCacheControl (res, path) {
-  _.each(config.get('headers.cacheControl'), (value, key) => {
-    if (serveStatic.mime.lookup(path) === key && value !== '') {
-      res.setHeader('Cache-Control', value)
-    }
-  })
 }
 
 // this is mostly needed for tests
