@@ -12,7 +12,9 @@ var perfy = require('perfy')
 var zlib = require('zlib')
 var destroy = require('destroy')
 var mime = require('mime-types')
-// var compressible = require('compressible')
+var compressible = require('compressible')
+var etag = require('etag')
+var brotli = require('iltorb')
 
 var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
@@ -185,23 +187,27 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
       var err
 
       var filePath = path.join(publicPath, file)
-
       var mimeType = mime.lookup(file)
 
-      // There's a bug in http2 that's preventing Content-Type headers when gzip enabled
-      // var shouldGzip = config.get('headers.useGzipCompression') && compressible(mimeType)
-      var shouldGzip = false
+      // Compress settings
+      var acceptsEncoding = req.headers['accept-encoding']
+      var shouldCompress =
+        config.get('headers.useGzipCompression') &&
+        compressible(mimeType) &&
+        ~acceptsEncoding.indexOf('gzip')
+      var acceptsBrotli = ~acceptsEncoding.indexOf('br')
+
+      // 1 year cache for favicon
+      var cacheControl = mimeType === 'image/x-icon'
+        ? config.get('headers.cacheControl')[mimeType] ||
+            'public, max-age=31536000000'
+        : 'public, max-age=86400'
 
       var fileOptions = {
         status: 200,
         method: 'GET',
         request: {
           accept: '*/*'
-        },
-        response: {
-          "Cache-Control": config.get("headers.cacheControl")[mimeType] || "", // eslint-disable-line
-          'Content-Type': mimeType || '',
-          'Content-Encoding': 'gzip'
         }
       }
 
@@ -247,12 +253,25 @@ module.exports.pushAssets = function (req, res, manifest, publicPath) {
 
       var rs = fs.createReadStream(filePath)
 
+      // Pipe if the file opens & handle compression
       rs.on('open', () => {
-        if (shouldGzip) {
-          fs.createReadStream(filePath).pipe(zlib.createGzip()).pipe(push)
+        if (shouldCompress && acceptsBrotli) {
+          rs.pipe(brotli.compressStream()).pipe(push)
+        } else if (shouldCompress) {
+          rs.pipe(zlib.createGzip()).pipe(push)
         } else {
-          fs.createReadStream(filePath).pipe(push)
+          rs.pipe(push)
         }
+      })
+
+      // Set headers once we see data
+      rs.on('data', data => {
+        push.setHeader('Cache-Control', cacheControl)
+        if (mimeType) push.setHeader('Content-Type', mimeType)
+        if (shouldCompress) {
+          push.setHeader('Content-Encoding', acceptsBrotli ? 'br' : 'gzip')
+        }
+        push.setHeader('ETag', etag(data))
       })
 
       if (err) {
