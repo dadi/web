@@ -9,15 +9,12 @@ var etag = require('etag')
 var _ = require('underscore')
 
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
-var log = require('@dadi/logger')
-
-log.init(config.get('logging'), process.env.NODE_ENV)
 
 var ServePublic = function (app, publicPath, hosts) {
-  // attempts to serve a static file if the current host header matches
-  // one of the host names specified when this middleware was added to the stack
-
   app.use((req, res, next) => {
+    // attempts to serve a static file if the current host header matches
+    // one of the host names specified when this middleware was added to the stack
+
     if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
       // Only allow GET and HEAD
       if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -70,7 +67,7 @@ var ServePublic = function (app, publicPath, hosts) {
         res.setHeader('ETag', etag(data))
       })
 
-      // Handle errors
+      // Move on if something goes wrong
       rs.on('error', () => {
         next()
       })
