@@ -160,6 +160,9 @@ Server.prototype.start = function (done) {
     app.use(compress())
   }
 
+  // request logging middleware
+  app.use(log.requestLogger)
+
   // serve static files (css,js,fonts)
   if (options.mediaPath) {
     app.use(serveStatic(options.mediaPath, { index: false }))
@@ -239,9 +242,6 @@ Server.prototype.start = function (done) {
   app.use(bodyParser.text())
   // parse application/x-www-form-urlencoded
   app.use(bodyParser.urlencoded({ extended: true }))
-
-  // request logging middleware
-  app.use(log.requestLogger)
 
   // session manager
   var sessionConfig = config.get('sessions')
