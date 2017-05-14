@@ -213,6 +213,7 @@ Api.prototype.listener = function (req, res) {
   req.paths = []
 
   var originalReqParams = req.params
+  var pathsLoaded = false
 
   var doStack = stackIdx => {
     return err => {
@@ -225,15 +226,30 @@ Api.prototype.listener = function (req, res) {
       try {
         // if end of the stack, no middleware could handle the current
         // request, so get matching routes from the loaded page components and
-        // add them to the stack, then continue the loop
-        if (stackIdx === this.stack.length - 1) {
-          // add path specific handlers
-          var matches = this._match(req)
-          this.stack = this.stack.concat(matches)
+        // add them to the stack after the cache handler but just before the
+        // 404 handler, then continue the loop
+        if (this.stack[stackIdx].name === 'cache' && !pathsLoaded) {
+          // find path specific handlers
+          var hrstart = process.hrtime()
 
-          // also push the 404 handler
-          this.stack.push(notFound(this, req, res))
-          stackIdx++
+          var matches = this.getMatchingRoutes(req)
+
+          var hrend = process.hrtime(hrstart)
+          debug(
+            'getMatchingRoutes execution %ds %dms',
+            hrend[0],
+            hrend[1] / 1000000
+          )
+
+          if (!_.isEmpty(matches)) {
+            // add the matches after the cache middleware and before the final 404 handler
+            _.each(matches, match => {
+              this.stack.splice(-1, 0, match)
+            })
+          } else {
+          }
+
+          pathsLoaded = true
         }
 
         this.stack[stackIdx](req, res, doStack(++stackIdx))
@@ -248,6 +264,9 @@ Api.prototype.listener = function (req, res) {
       this.errors[stackIdx](err, req, res, errStack(++stackIdx))
     }
   }
+
+  // push the 404 handler
+  this.stack.push(notFound(this, req, res))
 
   // start going through the middleware
   doStack(0)()
@@ -276,7 +295,7 @@ Api.prototype.redirectListener = function (req, res) {
  *  @return {Array} handlers - the handlers that best matched the current URL
  *  @api private
  */
-Api.prototype._match = function (req) {
+Api.prototype.getMatchingRoutes = function (req) {
   var path = url.parse(req.url).pathname
   var handlers = []
 
