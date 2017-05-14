@@ -9,7 +9,7 @@ var log = require('@dadi/logger')
 
 // This attaches middleware to the passed in app instance
 module.exports = function (server) {
-  server.app.use(function (req, res, next) {
+  server.app.use(function authentication (req, res, next) {
     log.info(
       { module: 'auth' },
       'Retrieving access token for "' + req.url + '"'
