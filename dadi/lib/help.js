@@ -9,18 +9,11 @@ var http = require('http')
 var https = require('https')
 var path = require('path')
 var perfy = require('perfy')
-var zlib = require('zlib')
-var destroy = require('destroy')
-var mime = require('mime-types')
-var compressible = require('compressible')
-var etag = require('etag')
-var brotli = require('iltorb')
 
 var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
 var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
-var log = require('@dadi/logger')
 
 var self = this
 
@@ -171,117 +164,6 @@ module.exports.sendBackHTML = function (
     } else {
       return res.end(resBody)
     }
-  }
-}
-
-/**
- * Pushes assets defined by config.globalPushManifest and page.pushManifest
- * @param {req} req - the HTTP request
- * @param {res} res - the HTTP response
- * @param {Array} manifest - the concatinated array of the global and page mainifests
- * @param {String} publicPath - the location of the public folder
- */
-module.exports.pushAssets = function (req, res, manifest, publicPath) {
-  if (config.get('server.protocol') === 'http2' && res.push) {
-    manifest.forEach(file => {
-      var err
-
-      var filePath = path.join(publicPath, file)
-      var mimeType = mime.lookup(file)
-
-      // Compress settings
-      var acceptsEncoding = req.headers['accept-encoding']
-      var shouldCompress =
-        config.get('headers.useGzipCompression') &&
-        compressible(mimeType) &&
-        ~acceptsEncoding.indexOf('gzip')
-      var acceptsBrotli = ~acceptsEncoding.indexOf('br')
-
-      // 1 year cache for favicon
-      var cacheControl = mimeType === 'image/x-icon'
-        ? config.get('headers.cacheControl')[mimeType] ||
-            'public, max-age=31536000000'
-        : 'public, max-age=86400'
-
-      var fileOptions = {
-        status: 200,
-        method: 'GET',
-        request: {
-          accept: '*/*'
-        }
-      }
-
-      var priority
-
-      switch (mime.lookup(file)) {
-        default:
-          priority = 7
-          break
-        case 'text/css':
-          priority = 1
-          break
-        case 'application/javascript':
-          priority = 2
-          break
-        case 'image/jpeg' || 'image/png':
-          priority = 3
-          break
-      }
-
-      var push = res.push(
-        file,
-        fileOptions,
-        (_, stream) => {
-          function cleanup (error) {
-            push.removeListener('error', cleanup)
-            push.removeListener('close', cleanup)
-            push.removeListener('finish', cleanup)
-
-            destroy(push)
-
-            if (error) err = error
-          }
-
-          if (stream) {
-            stream.on('error', cleanup)
-            stream.on('close', cleanup)
-            stream.on('finish', cleanup)
-          }
-        },
-        priority
-      )
-
-      var rs = fs.createReadStream(filePath)
-
-      // Pipe if the file opens & handle compression
-      rs.on('open', () => {
-        if (shouldCompress && acceptsBrotli) {
-          rs.pipe(brotli.compressStream()).pipe(push)
-        } else if (shouldCompress) {
-          rs.pipe(zlib.createGzip()).pipe(push)
-        } else {
-          rs.pipe(push)
-        }
-      })
-
-      // Set headers once we see data
-      rs.on('data', data => {
-        push.setHeader('Cache-Control', cacheControl)
-        if (mimeType) push.setHeader('Content-Type', mimeType)
-        if (shouldCompress) {
-          push.setHeader('Content-Encoding', acceptsBrotli ? 'br' : 'gzip')
-        }
-        push.setHeader('ETag', etag(data))
-      })
-
-      if (err) {
-        if (err.code === 'RST_STREAM') {
-          debug('got RST_STREAM %s', err.status)
-        } else {
-          log.error({ module: 'pushAssets' }, err)
-        }
-      }
-    })
   }
 }
 

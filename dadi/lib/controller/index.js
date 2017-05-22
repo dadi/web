@@ -16,10 +16,11 @@ var Datasource = require(path.join(__dirname, '/../datasource'))
 var Event = require(path.join(__dirname, '/../event'))
 var View = require(path.join(__dirname, '/../view'))
 
+var servePublic = require(path.join(__dirname, '/../view/public'))
+
 // helpers
 var sendBackHTML = help.sendBackHTML
 var sendBackJSON = help.sendBackJSON
-var pushAssets = help.pushAssets
 
 /**
  *
@@ -183,7 +184,15 @@ Controller.prototype.process = function process (req, res, next) {
   if (data.json) {
     done = sendBackJSON(statusCode, res, next)
   } else {
-    pushAssets(req, res, this.pushManifest, this.options.publicPath)
+    if (config.get('server.protocol') === 'http2' && res.push) {
+      servePublic.process(
+        req,
+        res,
+        next,
+        this.pushManifest,
+        this.options.publicPath
+      )
+    }
 
     done = sendBackHTML(
       req.method,
