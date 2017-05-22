@@ -14,6 +14,15 @@ var log = require('@dadi/logger')
 
 var ServePublic = function (publicPath, hosts) {
   return (req, res, next) => {
+    // Only allow GET and HEAD
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      res.statusCode = 405
+      res.setHeader('Allow', 'GET, HEAD')
+      res.setHeader('Content-Length', '0')
+      res.end()
+      next()
+    }
+
     if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
       process(req, res, next, [req.url], publicPath, hosts)
     }
