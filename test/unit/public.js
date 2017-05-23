@@ -88,9 +88,7 @@ describe("Public folder", function(done) {
     })
   })
 
-  it("should gzip appropiate files served from the public folder by default", function(
-    done
-  ) {
+  it("should have a longer cache life for a favicon", function(done) {
     TestHelper.disableApiConfig().then(() => {
       TestHelper.updateConfig({ allowJsonView: true }).then(() => {
         var pages = TestHelper.setUpPages()
@@ -103,9 +101,10 @@ describe("Public folder", function(done) {
             config.get("server.port")
           var client = request(connectionString)
 
-          client.get("/gzipme.css").end((err, res) => {
-            res.headers["content-encoding"].should.eql("gzip")
-            res.text.should.eql("hello world!")
+          client.get("/favicon.ico").end((err, res) => {
+            res.headers["cache-control"].should.eql(
+              "public, max-age=31536000000"
+            )
             done()
           })
         })
@@ -135,11 +134,7 @@ describe("Public folder", function(done) {
 
         request.on("push", function(promise) {
           promise.url.should.equal("/image.png")
-          promise.on("response", function(pushStream) {
-            pushStream.on("data", function(data) {
-              done()
-            })
-          })
+          done()
         })
       })
     })
