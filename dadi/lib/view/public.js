@@ -23,7 +23,7 @@ var ServePublic = function (publicPath, hosts) {
 var process = function (req, res, next, files, publicPath, isMiddleware) {
   files.forEach(file => {
     var err
-    var filePath = path.join(publicPath || '', file)
+    var filePath = path.join(publicPath, file)
     var mimeType = mime.lookup(file)
 
     // Compress settings
@@ -38,7 +38,7 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
     var cacheControl = mimeType === 'image/x-icon'
       ? config.get('headers.cacheControl')[mimeType] ||
           'public, max-age=31536000000'
-      : 'public, max-age=86400'
+      : config.get('headers.cacheControl')[mimeType] || 'public, max-age=86400'
 
     var response
 
@@ -64,11 +64,9 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
             if (error) err = error
           }
 
-          if (stream) {
-            stream.on('error', cleanup)
-            stream.on('close', cleanup)
-            stream.on('finish', cleanup)
-          }
+          stream.on('error', cleanup)
+          stream.on('close', cleanup)
+          stream.on('finish', cleanup)
         },
         1
       )
@@ -106,12 +104,6 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
       next()
     })
 
-    // Wrap up
-    rs.on('finish', () => {
-      destroy(rs)
-      next()
-    })
-
     // Catch http2 errors
     if (err) {
       if (err.code === 'RST_STREAM') {
@@ -121,10 +113,6 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
       }
     }
   })
-}
-
-module.exports = function (app, publicPath) {
-  return new ServePublic(app, publicPath)
 }
 
 module.exports = {
