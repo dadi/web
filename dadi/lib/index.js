@@ -927,6 +927,7 @@ function onListening (e) {
     var env = config.get('env')
     var protocol = config.get('server.protocol') || 'http'
     var redirectPort = config.get('server.redirectPort')
+    var engine = Object.keys(config.get('engines')) || 'Not found!'.red
     var extraPadding = (redirectPort > 0 && '          ') || ''
 
     var startText = '\n'
@@ -967,6 +968,7 @@ function onListening (e) {
     startText += '  Version:     '.green + extraPadding + version + '\n'
     startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
     startText += '  Environment: '.green + extraPadding + env + '\n'
+    startText += '  Engine:      '.green + extraPadding + engine + '\n'
 
     if (config.get('api.enabled') === true) {
       startText +=
