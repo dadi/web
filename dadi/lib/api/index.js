@@ -2,8 +2,7 @@ var _ = require('underscore')
 var debug = require('debug')('web:api')
 var fs = require('fs')
 var http = require('http')
-var https = require('https')
-var http2 = require('http2')
+var https = require('http2')
 var path = require('path')
 var pathToRegexp = require('path-to-regexp')
 var raven = require('raven')
@@ -41,7 +40,7 @@ var Api = function () {
 
   if (this.protocol === 'http') {
     this.httpInstance = http.createServer(this.listener)
-  } else if (this.protocol === 'https' || this.protocol === 'http2') {
+  } else if (this.protocol === 'https') {
     // Redirect http to https
     if (this.redirectPort > 0) {
       this.redirectInstance = http.createServer(this.redirectListener)
@@ -81,12 +80,7 @@ var Api = function () {
     // we need to catch any errors resulting from bad parameters
     // such as incorrect passphrase or no passphrase provided
     try {
-      if (this.protocol === 'http2') {
-        debug('createServer initiated with HTTP2.')
-        this.httpsInstance = http2.createServer(serverOptions, this.listener)
-      } else {
-        this.httpsInstance = https.createServer(serverOptions, this.listener)
-      }
+      this.httpsInstance = https.createServer(serverOptions, this.listener)
     } catch (ex) {
       var exPrefix = 'error starting https server: '
       switch (ex.message) {

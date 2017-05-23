@@ -184,7 +184,7 @@ Controller.prototype.process = function process (req, res, next) {
   if (data.json) {
     done = sendBackJSON(statusCode, res, next)
   } else {
-    if (config.get('server.protocol') === 'http2' && res.push) {
+    if (config.get('server.protocol') === 'https' && res.push) {
       servePublic.process(
         req,
         res,
