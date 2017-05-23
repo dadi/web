@@ -15,12 +15,12 @@ var log = require('@dadi/logger')
 var ServePublic = function (publicPath, hosts) {
   return (req, res, next) => {
     if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-      process(req, res, next, [req.url], publicPath, hosts)
+      process(req, res, next, [req.url], publicPath, true)
     }
   }
 }
 
-var process = function (req, res, next, files, publicPath) {
+var process = function (req, res, next, files, publicPath, isMiddleware) {
   files.forEach(file => {
     var err
     var filePath = path.join(publicPath || '', file)
@@ -42,7 +42,9 @@ var process = function (req, res, next, files, publicPath) {
 
     var response
 
-    if (files.length > 1) {
+    if (isMiddleware) {
+      response = res
+    } else {
       response = res.push(
         file,
         {
@@ -70,8 +72,6 @@ var process = function (req, res, next, files, publicPath) {
         },
         1
       )
-    } else {
-      response = res
     }
 
     // Read and serve
@@ -95,6 +95,8 @@ var process = function (req, res, next, files, publicPath) {
       if (mimeType) response.setHeader('Content-Type', mimeType)
       if (shouldCompress) {
         response.setHeader('Content-Encoding', acceptsBrotli ? 'br' : 'gzip')
+      } else {
+        response.setHeader('Content-Length', Buffer.byteLength(data))
       }
       response.setHeader('ETag', etag(data))
     })
