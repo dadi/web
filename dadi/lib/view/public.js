@@ -23,11 +23,11 @@ var ServePublic = function (publicPath, hosts) {
 var process = function (req, res, next, files, publicPath) {
   files.forEach(file => {
     var err
-    var filePath = path.join(publicPath, file)
+    var filePath = path.join(publicPath || '', file)
     var mimeType = mime.lookup(file)
 
     // Compress settings
-    var acceptsEncoding = req.headers['accept-encoding']
+    var acceptsEncoding = req.headers['accept-encoding'] || ''
     var shouldCompress =
       config.get('headers.useGzipCompression') &&
       compressible(mimeType) &&
