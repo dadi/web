@@ -1,12 +1,12 @@
 var _ = require("underscore")
 var fs = require("fs")
-var nock = require("nock")
 var path = require("path")
 var sinon = require("sinon")
 var should = require("should")
 var Readable = require("stream").Readable
 var request = require("supertest")
 var zlib = require("zlib")
+var http2 = require("http2")
 
 var api = require(__dirname + "/../../dadi/lib/api")
 var Bearer = require(__dirname + "/../../dadi/lib/auth/bearer")
@@ -26,6 +26,9 @@ var markdownProvider = require(__dirname + "/../../dadi/lib/providers/markdown")
 var config = require(path.resolve(path.join(__dirname, "/../../config")))
 var controller
 
+// Ignore errors around self-assigned SSL certs
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+
 describe("Public folder", function(done) {
   beforeEach(function(done) {
     TestHelper.resetConfig().then(() => {
@@ -36,9 +39,7 @@ describe("Public folder", function(done) {
   })
 
   afterEach(function(done) {
-    nock.cleanAll()
-    TestHelper.stopServer(function() {})
-    done()
+    TestHelper.stopServer(done)
   })
 
   it("should return files from the public folder", function(done) {
@@ -106,6 +107,38 @@ describe("Public folder", function(done) {
             res.headers["content-encoding"].should.eql("gzip")
             res.text.should.eql("hello world!")
             done()
+          })
+        })
+      })
+    })
+  })
+
+  it("should push assets over http2 when supported and defined in the globalPushManifest", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+    var secureClientHost =
+      "https://" + config.get("server.host") + ":" + config.get("server.port")
+
+    var configUpdate = {
+      server: {
+        protocol: "https",
+        sslPrivateKeyPath: "test/ssl/unprotected/key.pem",
+        sslCertificatePath: "test/ssl/unprotected/cert.pem"
+      },
+      globalPushManifest: ["/image.png"]
+    }
+
+    TestHelper.updateConfig(configUpdate).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var request = http2.get(secureClientHost + "/test")
+
+        request.on("push", function(promise) {
+          promise.url.should.equal("/image.png")
+          promise.on("response", function(pushStream) {
+            pushStream.on("data", function(data) {
+              done()
+            })
           })
         })
       })
