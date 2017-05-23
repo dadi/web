@@ -132,9 +132,13 @@ describe("Public folder", function(done) {
       TestHelper.startServer(pages).then(() => {
         var request = http2.get(secureClientHost + "/test")
 
-        request.on("push", function(promise) {
+        request.on("push", promise => {
           promise.url.should.equal("/image.png")
           done()
+        })
+
+        request.on("error", err => {
+          done(err)
         })
       })
     })
