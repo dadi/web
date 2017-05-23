@@ -7,6 +7,7 @@ var Readable = require("stream").Readable
 var request = require("supertest")
 var zlib = require("zlib")
 var http2 = require("http2")
+var destroy = require("destroy")
 
 var api = require(__dirname + "/../../dadi/lib/api")
 var Bearer = require(__dirname + "/../../dadi/lib/auth/bearer")
@@ -132,13 +133,14 @@ describe("Public folder", function(done) {
       TestHelper.startServer(pages).then(() => {
         var request = http2.get(secureClientHost + "/test")
 
-        request.on("push", promise => {
+        request.on("push", function(promise) {
           promise.url.should.equal("/image.png")
-          done()
-        })
-
-        request.on("error", err => {
-          done(err)
+          promise.on("response", function(pushStream) {
+            pushStream.on("data", function(data) {
+              destroy(pushStream)
+              done()
+            })
+          })
         })
       })
     })
