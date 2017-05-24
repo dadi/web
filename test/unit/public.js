@@ -40,7 +40,9 @@ describe("Public folder", function(done) {
   })
 
   afterEach(function(done) {
-    TestHelper.stopServer(done)
+    setTimeout(() => {
+      TestHelper.stopServer(done)
+    }, 500)
   })
 
   it("should return files from the public folder", function(done) {
@@ -129,38 +131,17 @@ describe("Public folder", function(done) {
       globalPushManifest: ["/image.png"]
     }
 
-    var callNTimes = function(limit, done) {
-      if (limit === 0) {
-        done()
-      } else {
-        var i = 0
-        return function() {
-          i += 1
-          if (i === limit) {
-            done()
-          }
-        }
-      }
-    }
-
     TestHelper.updateConfig(configUpdate).then(() => {
       TestHelper.startServer(pages).then(() => {
         var request = http2.get(secureClientHost + "/test")
 
-        request.on("response", response => {
-          response.on("data", data => {
-            done()
-          })
-          response.on("end", done)
-        })
-
         request.on("push", promise => {
           promise.url.should.equal("/image.png")
           promise.on("response", pushStream => {
-            pushStream.on("data", data => {
+            pushStream.on("data", data => {})
+            pushStream.on("end", () => {
               done()
             })
-            pushStream.on("end", done)
           })
         })
       })
