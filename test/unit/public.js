@@ -40,9 +40,7 @@ describe("Public folder", function(done) {
   })
 
   afterEach(function(done) {
-    setTimeout(() => {
-      TestHelper.stopServer(done)
-    }, 500)
+    TestHelper.stopServer(done)
   })
 
   it("should return files from the public folder", function(done) {
@@ -115,36 +113,44 @@ describe("Public folder", function(done) {
     })
   })
 
-  it("should push assets over http2 when supported and defined in the globalPushManifest", function(
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
-    var secureClientHost =
-      "https://" + config.get("server.host") + ":" + config.get("server.port")
+  it.skip(
+    "should push assets over http2 when supported and defined in the globalPushManifest",
+    function(done) {
+      var pages = TestHelper.setUpPages()
+      var secureClientHost =
+        "https://" + config.get("server.host") + ":" + config.get("server.port")
 
-    var configUpdate = {
-      server: {
-        protocol: "https",
-        sslPrivateKeyPath: "test/ssl/unprotected/key.pem",
-        sslCertificatePath: "test/ssl/unprotected/cert.pem"
-      },
-      globalPushManifest: ["/image.png"]
-    }
+      var configUpdate = {
+        server: {
+          protocol: "https",
+          sslPrivateKeyPath: "test/ssl/unprotected/key.pem",
+          sslCertificatePath: "test/ssl/unprotected/cert.pem"
+        },
+        globalPushManifest: ["/image.png"]
+      }
 
-    TestHelper.updateConfig(configUpdate).then(() => {
-      TestHelper.startServer(pages).then(() => {
-        var request = http2.get(secureClientHost + "/test")
+      TestHelper.updateConfig(configUpdate).then(() => {
+        TestHelper.startServer(pages).then(() => {
+          var request = http2.get(secureClientHost + "/test")
 
-        request.on("push", promise => {
-          promise.url.should.equal("/image.png")
-          promise.on("response", pushStream => {
-            pushStream.on("data", data => {})
-            pushStream.on("end", () => {
+          request.on("push", promise => {
+            promise.url.should.equal("/image.png")
+            promise.on("response", pushStream => {
+              pushStream.on("data", data => {})
+              pushStream.on("end", () => {})
+              pushStream.on("finish", () => {})
+            })
+          })
+
+          request.on("response", response => {
+            response.on("data", data => {})
+            response.on("end", () => {})
+            response.on("finish", () => {
               done()
             })
           })
         })
       })
-    })
-  })
+    }
+  )
 })
