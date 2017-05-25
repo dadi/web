@@ -8,6 +8,7 @@ var mime = require('mime-types')
 var compressible = require('compressible')
 var etag = require('etag')
 var _ = require('underscore')
+var url = require('url')
 
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
 var log = require('@dadi/logger')
@@ -22,6 +23,9 @@ var ServePublic = function (publicPath, hosts) {
 
 var process = function (req, res, next, files, publicPath, isMiddleware) {
   files.forEach(file => {
+    // Sterilize the path
+    file = url.parse(file).pathname
+
     var err
     var filePath = path.join(publicPath, file)
     var mimeType = mime.lookup(file)
@@ -48,6 +52,7 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
       response = res.push(
         file,
         {
+          status: 200,
           method: 'GET',
           request: {
             accept: '*/*'
@@ -72,6 +77,14 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
       )
     }
 
+    // Set headers
+    response.setHeader('Cache-Control', cacheControl)
+    response.setHeader('ETag', etag(filePath))
+    if (mimeType) response.setHeader('Content-Type', mimeType)
+    if (shouldCompress) {
+      response.setHeader('Content-Encoding', acceptsBrotli ? 'br' : 'gzip')
+    }
+
     // Read and serve
     var rs = fs.createReadStream(filePath)
 
@@ -84,19 +97,6 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
       } else {
         rs.pipe(response)
       }
-    })
-
-    // Set headers once we see data
-    rs.on('data', data => {
-      response.statusCode = 200
-      response.setHeader('Cache-Control', cacheControl)
-      if (mimeType) response.setHeader('Content-Type', mimeType)
-      if (shouldCompress) {
-        response.setHeader('Content-Encoding', acceptsBrotli ? 'br' : 'gzip')
-      } else {
-        response.setHeader('Content-Length', Buffer.byteLength(data))
-      }
-      response.setHeader('ETag', etag(data))
     })
 
     // Move on if something goes wrong
