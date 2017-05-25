@@ -78,8 +78,8 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
     }
 
     // Set headers
+    response.setHeader('X-Content-Type-Options', 'nosniff')
     response.setHeader('Cache-Control', cacheControl)
-    response.setHeader('ETag', etag(filePath))
     if (mimeType) response.setHeader('Content-Type', mimeType)
     if (shouldCompress) {
       response.setHeader('Content-Encoding', acceptsBrotli ? 'br' : 'gzip')
@@ -90,6 +90,11 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
 
     // Pipe if the file opens & handle compression
     rs.on('open', () => {
+      // Set additional headers
+      var stats = fs.statSync(filePath)
+      response.setHeader('ETag', etag(stats))
+      if (!shouldCompress) response.setHeader('Content-Length', stats.size)
+
       if (shouldCompress && acceptsBrotli) {
         rs.pipe(brotli.compressStream()).pipe(response)
       } else if (shouldCompress) {
