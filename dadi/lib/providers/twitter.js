@@ -2,10 +2,12 @@
 
 const _ = require('underscore')
 const path = require('path')
-const Purest = require('purest')
+const request = require('request')
+const promise = Promise
+const purest = require('purest')({ request, promise })
+const purestConfig = require('@purest/providers')
 const config = require(path.join(__dirname, '/../../../config.js'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
-
 const TwitterProvider = function () {}
 
 /**
@@ -19,8 +21,9 @@ TwitterProvider.prototype.initialise = function initialise (datasource, schema) 
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
-  this.twitterApi = new Purest({
+  this.twitterApi = purest({
     provider: 'twitter',
+    config: purestConfig,
     key: this.consumerKey,
     secret: this.consumerSecret
   })
@@ -66,14 +69,12 @@ TwitterProvider.prototype.load = function load (requestUrl, done) {
       if (cachedData) return done(null, cachedData)
 
       this.twitterApi
-        .query()
         .select(endpoint)
         .where(queryParams)
         .auth(this.accessTokenKey, this.accessTokenSecret)
-        .request((err, res, body) => {
-          if (err) return done(err, null)
-          this.processOutput(res, body, done)
-        })
+        .request()
+        .catch(err => done(err, null))
+        .then(result => this.processOutput(result[0], result[1], done))
     })
   } catch (ex) {
     done(ex, null)

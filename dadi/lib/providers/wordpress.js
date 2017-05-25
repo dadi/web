@@ -2,7 +2,10 @@
 
 const _ = require('underscore')
 const path = require('path')
-const Purest = require('purest')
+const request = require('request')
+const promise = Promise
+const purest = require('purest')({ request, promise })
+const purestConfig = require('@purest/providers')
 const log = require('@dadi/logger')
 const config = require(path.join(__dirname, '/../../../config.js'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
@@ -23,9 +26,10 @@ WordPressProvider.prototype.initialise = function initialise (
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
-  this.wordpressApi = new Purest({
+  this.wordpressApi = purest({
     provider: 'wordpress',
-    version: 'v1.1'
+    version: 'v1.1',
+    config: purestConfig
   })
 }
 
@@ -100,14 +104,12 @@ WordPressProvider.prototype.load = function load (requestUrl, done) {
       if (cachedData) return done(null, cachedData)
 
       this.wordpressApi
-        .query()
         .select(this.endpoint)
         .where(queryParams)
         .auth(this.bearerToken || null)
-        .request((err, res, body) => {
-          if (err) return done(err, null)
-          this.processOutput(res, body, done)
-        })
+        .request()
+        .catch(err => done(err, null))
+        .then(result => this.processOutput(result[0], result[1], done))
     })
   } catch (ex) {
     done(ex, null)
