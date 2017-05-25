@@ -159,7 +159,7 @@ Server.prototype.start = function (done) {
 
   // init main public path for static files
   if (options.publicPath) {
-    app.use(servePublic.middleware(options.publicPath, []))
+    app.use(servePublic.middleware(options.publicPath))
   }
 
   // init virtual host public paths
@@ -173,17 +173,19 @@ Server.prototype.start = function (done) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
       var hostOptions = this.loadPaths(hostConfig.paths)
 
-      servePublic.middleware(app, hostOptions.publicPath, virtualHost.hostnames)
+      app.use(
+        servePublic.middleware(hostOptions.publicPath, virtualHost.hostnames)
+      )
     }
   })
 
   // add debug files to static paths
   if (config.get('debug')) {
-    servePublic.middleware(
-      app,
-      options.workspacePath + '/debug' ||
-        path.join(__dirname, '/../../workspace/debug'),
-      []
+    app.use(
+      servePublic.middleware(
+        options.workspacePath + '/debug' ||
+          path.join(__dirname, '/../../workspace/debug')
+      )
     )
   }
 
