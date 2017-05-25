@@ -280,7 +280,7 @@ Server.prototype.start = function (done) {
 
   // initialise virtualDirectories for serving static content
   _.each(config.get('virtualDirectories'), function (directory) {
-    servePublic(app, path.resolve(directory.path), [])
+    app.use(servePublic(path.resolve(directory.path)))
   })
 
   // dust configuration
