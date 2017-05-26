@@ -40,6 +40,7 @@
     "console-stamp": "^0.2.2",
     "convict": "3.0.0",
     "debug": "^2.6.1",
+    "destroy": "^1.0.4",
     "dustjs-helpers": "^1.7.3",
     "dustjs-linkedin": "^2.7.2",
     "etag": "^1.8.0",
