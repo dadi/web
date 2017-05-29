@@ -51,14 +51,15 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
     // Pipe if the file opens & handle compression
     rs.on('open', fd => {
       fs.fstat(fd, (err, stats) => {
+        if (err) next()
+
         // Set headers
         let headers = {
-          'X-Content-Type-Options': 'nosniff',
           'Cache-Control': cacheControl,
           'Content-Type': mimeType,
           'Content-Encoding': acceptsBrotli ? 'br' : 'gzip',
-          ETag: etag(stats),
-          'Last-Modified': stats.mtime.toUTCString()
+          'Last-Modified': stats.mtime.toUTCString(),
+          ETag: etag(stats)
         }
         if (!shouldCompress) {
           delete headers['Content-Encoding']
