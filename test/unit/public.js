@@ -6,7 +6,7 @@ var should = require("should")
 var Readable = require("stream").Readable
 var request = require("supertest")
 var zlib = require("zlib")
-var http2 = require("http2")
+var http2 = require("spdy")
 var destroy = require("destroy")
 
 var api = require(__dirname + "/../../dadi/lib/api")

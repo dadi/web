@@ -27,6 +27,7 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
     file = url.parse(file).pathname
 
     var err
+    var response
     var filePath = path.join(publicPath, file)
     var mimeType = mime.lookup(file)
 
@@ -44,64 +45,73 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
           'public, max-age=31536000000'
       : config.get('headers.cacheControl')[mimeType] || 'public, max-age=86400'
 
-    var response
-
-    if (isMiddleware) {
-      response = res
-    } else {
-      response = res.push(
-        file,
-        {
-          status: 200,
-          method: 'GET',
-          request: {
-            accept: '*/*'
-          }
-        },
-        (_, stream) => {
-          function cleanup (error) {
-            response.removeListener('error', cleanup)
-            response.removeListener('close', cleanup)
-            response.removeListener('finish', cleanup)
-
-            destroy(response)
-
-            if (error) err = error
-          }
-
-          stream.on('error', cleanup)
-          stream.on('close', cleanup)
-          stream.on('finish', cleanup)
-        },
-        1
-      )
-    }
-
-    // Set headers
-    response.setHeader('X-Content-Type-Options', 'nosniff')
-    response.setHeader('Cache-Control', cacheControl)
-    if (mimeType) response.setHeader('Content-Type', mimeType)
-    if (shouldCompress) {
-      response.setHeader('Content-Encoding', acceptsBrotli ? 'br' : 'gzip')
-    }
-
     // Read and serve
     var rs = fs.createReadStream(filePath)
 
     // Pipe if the file opens & handle compression
-    rs.on('open', () => {
-      // Set additional headers
-      var stats = fs.statSync(filePath)
-      response.setHeader('ETag', etag(stats))
-      if (!shouldCompress) response.setHeader('Content-Length', stats.size)
+    rs.on('open', fd => {
+      fs.fstat(fd, (err, stats) => {
+        // Set headers
+        let headers = {
+          'X-Content-Type-Options': 'nosniff',
+          'Cache-Control': cacheControl,
+          'Content-Type': mimeType,
+          'Content-Encoding': acceptsBrotli ? 'br' : 'gzip',
+          ETag: etag(stats),
+          'Last-Modified': stats.mtime.toUTCString()
+        }
+        if (!shouldCompress) {
+          delete headers['Content-Encoding']
+          headers['Content-Length'] = stats.size
+        }
 
-      if (shouldCompress && acceptsBrotli) {
-        rs.pipe(brotli.compressStream()).pipe(response)
-      } else if (shouldCompress) {
-        rs.pipe(zlib.createGzip()).pipe(response)
-      } else {
-        rs.pipe(response)
-      }
+        // Build response
+        if (isMiddleware) {
+          response = res
+        } else {
+          response = res.push(
+            file,
+            {
+              status: 200,
+              method: 'GET',
+              request: {
+                accept: '*/*'
+              },
+              response: headers
+            },
+            (_, stream) => {
+              function cleanup (error) {
+                response.removeListener('error', cleanup)
+                response.removeListener('close', cleanup)
+                response.removeListener('finish', cleanup)
+
+                destroy(response)
+
+                if (error) err = error
+              }
+
+              stream.on('error', cleanup)
+              stream.on('close', cleanup)
+              stream.on('finish', cleanup)
+            },
+            1
+          )
+        }
+
+        // Middleware way of setting headers from our object
+        if (isMiddleware) {
+          Object.keys(headers).map(i => response.setHeader(i, headers[i]))
+        }
+
+        // Pipe the file response
+        if (shouldCompress && acceptsBrotli) {
+          rs.pipe(brotli.compressStream()).pipe(response)
+        } else if (shouldCompress) {
+          rs.pipe(zlib.createGzip()).pipe(response)
+        } else {
+          rs.pipe(response)
+        }
+      })
     })
 
     // Move on if something goes wrong

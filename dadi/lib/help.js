@@ -6,7 +6,7 @@ var crypto = require('crypto')
 var debug = require('debug')('web:timer')
 var fs = require('fs')
 var http = require('http')
-var https = require('https')
+var https = require('spdy')
 var path = require('path')
 var perfy = require('perfy')
 
