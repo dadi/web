@@ -54,7 +54,7 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
         if (err) next()
 
         // Set headers
-        let headers = {
+        var headers = {
           'Cache-Control': cacheControl,
           'Content-Type': mimeType,
           'Content-Encoding': acceptsBrotli ? 'br' : 'gzip',
@@ -81,8 +81,22 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
               response: headers
             },
             (_, stream) => {
-              destroy(response)
-              destroy(stream)
+              function cleanup (error) {
+                response.removeListener('error', cleanup)
+                response.removeListener('close', cleanup)
+                response.removeListener('finish', cleanup)
+
+                destroy(response)
+                destroy(stream)
+
+                if (error) err = error
+              }
+
+              if (stream) {
+                stream.on('error', cleanup)
+                stream.on('close', cleanup)
+                stream.on('finish', cleanup)
+              }
             },
             1
           )
@@ -93,7 +107,7 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
           Object.keys(headers).map(i => response.setHeader(i, headers[i]))
         }
 
-        // Try to pipe the file response
+        // Pipe the file response
         try {
           if (shouldCompress && acceptsBrotli) {
             rs.pipe(brotli.compressStream()).pipe(response)
