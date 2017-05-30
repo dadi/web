@@ -33,7 +33,6 @@
     "colors": "latest",
     "common-dustjs-helpers": "^1.4.1",
     "compressible": "^2.0.10",
-    "compression": "^1.6.0",
     "connect-modrewrite": "^0.10.1",
     "connect-mongo": "latest",
     "connect-redis": "3.2.0",

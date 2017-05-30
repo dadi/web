@@ -5,7 +5,6 @@ var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 var _ = require('underscore')
 var bodyParser = require('body-parser')
 var colors = require("colors") // eslint-disable-line
-var compress = require('compression')
 var debug = require('debug')('web:server')
 var dust = require('./dust')
 var enableDestroy = require('server-destroy')
@@ -38,6 +37,7 @@ var cache = require(path.join(__dirname, '/cache'))
 var Controller = require(path.join(__dirname, '/controller'))
 var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
 var help = require(path.join(__dirname, '/help'))
+var Send = require(path.join(__dirname, '/view/send'))
 var Middleware = require(path.join(__dirname, '/middleware'))
 var servePublic = require(path.join(__dirname, '/view/public'))
 var monitor = require(path.join(__dirname, '/monitor'))
@@ -153,9 +153,6 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.handleHostHeader())
   app.use(apiMiddleware.setUpRequest())
   app.use(apiMiddleware.transportSecurity())
-
-  // add gzip compression
-  if (config.get('headers.useGzipCompression')) app.use(compress())
 
   // init main public path for static files
   if (options.publicPath) {
@@ -407,7 +404,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
         help.validateRequestCredentials(req, res)
       ) {
         return help.clearCache(req, err => {
-          help.sendBackJSON(200, res, next)(err, {
+          Send.json(200, res, next)(err, {
             result: 'success',
             message: 'Succeed to clear'
           })
@@ -635,7 +632,7 @@ Server.prototype.addComponent = function (options, reload) {
               if (next) {
                 return next()
               } else {
-                return help.sendBackJSON(404, res, next)(
+                return Send.json(404, res, next)(
                   null,
                   require(options.filepath)
                 )
@@ -646,10 +643,7 @@ Server.prototype.addComponent = function (options, reload) {
           if (next) {
             return next()
           } else {
-            return help.sendBackJSON(404, res, next)(
-              null,
-              require(options.filepath)
-            )
+            return Send.json(404, res, next)(null, require(options.filepath))
           }
         }
       })

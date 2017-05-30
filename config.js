@@ -275,8 +275,8 @@ var conf = convict({
     }
   },
   headers: {
-    useGzipCompression: {
-      doc: "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
+    useCompression: {
+      doc: "If true, uses br or gzip compression where available and adds a 'Content-Encoding: [br|gzip]' header to the response.",
       format: Boolean,
       default: true
     },

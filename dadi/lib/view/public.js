@@ -24,7 +24,7 @@ var ServePublic = function (publicPath, hosts) {
 var process = function (req, res, next, files, publicPath, isMiddleware) {
   files.forEach(file => {
     // Sterilize the path
-    file = url.parse(file).pathname
+    file = url.parse(file).pathname.replace(/\/+$/, '')
 
     var err
     var response
@@ -32,12 +32,12 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
     var mimeType = mime.lookup(file)
 
     // Compress settings
-    var acceptsEncoding = req.headers['accept-encoding'] || ''
+    var acceptEncoding = req.headers['accept-encoding'] || ''
     var shouldCompress =
-      config.get('headers.useGzipCompression') &&
+      config.get('headers.useCompression') &&
       compressible(mimeType) &&
-      ~acceptsEncoding.indexOf('gzip')
-    var acceptsBrotli = ~acceptsEncoding.indexOf('br')
+      ~acceptEncoding.indexOf('gzip')
+    var acceptsBrotli = ~acceptEncoding.indexOf('br')
 
     // 1 year cache for favicon
     var cacheControl = mimeType === 'image/x-icon'
@@ -46,94 +46,98 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
       : config.get('headers.cacheControl')[mimeType] || 'public, max-age=86400'
 
     // Read and serve
-    var rs = fs.createReadStream(filePath)
+    if (file.length > 0) {
+      var rs = fs.createReadStream(filePath)
 
-    // Pipe if the file opens & handle compression
-    rs.on('open', fd => {
-      fs.fstat(fd, (err, stats) => {
-        if (err) next()
+      // Pipe if the file opens & handle compression
+      rs.on('open', fd => {
+        fs.fstat(fd, (err, stats) => {
+          if (err) next()
 
-        // Set headers
-        var headers = {
-          'Cache-Control': cacheControl,
-          'Content-Type': mimeType,
-          'Content-Encoding': acceptsBrotli ? 'br' : 'gzip',
-          'Last-Modified': stats.mtime.toUTCString(),
-          ETag: etag(stats)
-        }
-        if (!shouldCompress) {
-          delete headers['Content-Encoding']
-          headers['Content-Length'] = stats.size
-        }
-
-        // Build response
-        if (isMiddleware) {
-          response = res
-        } else {
-          response = res.push(
-            file,
-            {
-              status: 200,
-              method: 'GET',
-              request: {
-                accept: '*/*'
-              },
-              response: headers
-            },
-            (_, stream) => {
-              function cleanup (error) {
-                response.removeListener('error', cleanup)
-                response.removeListener('close', cleanup)
-                response.removeListener('finish', cleanup)
-
-                destroy(response)
-                destroy(stream)
-
-                if (error) err = error
-              }
-
-              if (stream) {
-                stream.on('error', cleanup)
-                stream.on('close', cleanup)
-                stream.on('finish', cleanup)
-              }
-            },
-            1
-          )
-        }
-
-        // Middleware way of setting headers from our object
-        if (isMiddleware) {
-          Object.keys(headers).map(i => response.setHeader(i, headers[i]))
-        }
-
-        // Pipe the file response
-        try {
-          if (shouldCompress && acceptsBrotli) {
-            rs.pipe(brotli.compressStream()).pipe(response)
-          } else if (shouldCompress) {
-            rs.pipe(zlib.createGzip()).pipe(response)
-          } else {
-            rs.pipe(response)
+          // Set headers
+          var headers = {
+            'Cache-Control': cacheControl,
+            'Content-Type': mimeType,
+            'Content-Encoding': acceptsBrotli ? 'br' : 'gzip',
+            'Last-Modified': stats.mtime.toUTCString(),
+            ETag: etag(stats)
           }
-        } catch (e) {
-          // Slience
-        }
+          if (!shouldCompress) {
+            delete headers['Content-Encoding']
+            headers['Content-Length'] = stats.size
+          }
+
+          // Build response
+          if (isMiddleware) {
+            response = res
+          } else {
+            response = res.push(
+              file,
+              {
+                status: 200,
+                method: 'GET',
+                request: {
+                  accept: '*/*'
+                },
+                response: headers
+              },
+              (_, stream) => {
+                function cleanup (error) {
+                  response.removeListener('error', cleanup)
+                  response.removeListener('close', cleanup)
+                  response.removeListener('finish', cleanup)
+
+                  destroy(response)
+                  destroy(stream)
+
+                  if (error) err = error
+                }
+
+                if (stream) {
+                  stream.on('error', cleanup)
+                  stream.on('close', cleanup)
+                  stream.on('finish', cleanup)
+                }
+              },
+              1
+            )
+          }
+
+          // Middleware way of setting headers from our object
+          if (isMiddleware) {
+            Object.keys(headers).map(i => response.setHeader(i, headers[i]))
+          }
+
+          // Pipe the file response
+          try {
+            if (shouldCompress && acceptsBrotli) {
+              rs.pipe(brotli.compressStream()).pipe(response)
+            } else if (shouldCompress) {
+              rs.pipe(zlib.createGzip()).pipe(response)
+            } else {
+              rs.pipe(response)
+            }
+          } catch (e) {
+            // Slience
+          }
+        })
       })
-    })
 
-    // Move on if something goes wrong
-    rs.on('error', () => {
-      next()
-    })
+      // Move on if something goes wrong
+      rs.on('error', () => {
+        next()
+      })
 
-    // Catch http2 errors
-    if (err) {
-      if (err.code === 'RST_STREAM') {
-        debug('got RST_STREAM %s', err.status)
-      } else {
-        log.error({ module: 'public' }, err)
+      // Catch http2 errors
+      if (err) {
+        if (err.code === 'RST_STREAM') {
+          debug('got RST_STREAM %s', err.status)
+        } else {
+          log.error({ module: 'public' }, err)
+        }
       }
+    } else {
+      next()
     }
   })
 }

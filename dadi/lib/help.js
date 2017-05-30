@@ -102,71 +102,6 @@ module.exports.isApiAvailable = function (done) {
   request.end()
 }
 
-// helper that sends json response
-module.exports.sendBackJSON = function (successCode, res, next) {
-  return function (err, results) {
-    if (err) return next(err)
-
-    var resBody = JSON.stringify(results, null, 2)
-
-    res.setHeader('Server', config.get('server.name'))
-
-    res.statusCode = successCode
-    res.setHeader('Content-Type', 'application/json')
-    res.setHeader('content-length', Buffer.byteLength(resBody))
-    res.end(resBody)
-  }
-}
-
-module.exports.sendBackJSONP = function (callbackName, res, next) {
-  return function (err, results) {
-    if (err) console.log(err)
-
-    // callback MUST be made up of letters only
-    if (!callbackName.match(/^[a-zA-Z]+$/)) return res.send(400)
-
-    res.statusCode = 200
-
-    var resBody = JSON.stringify(results)
-    resBody = callbackName + '(' + resBody + ');'
-    res.setHeader('Content-Type', 'text/javascript')
-    res.setHeader('content-length', resBody.length)
-    res.end(resBody)
-  }
-}
-
-// helper that sends html response
-module.exports.sendBackHTML = function (
-  method,
-  successCode,
-  contentType,
-  res,
-  next
-) {
-  return function (err, results) {
-    if (err) {
-      console.log(err)
-      return next(err)
-    }
-
-    var resBody = results
-
-    res.statusCode = successCode
-    res.setHeader('Server', config.get('server.name'))
-    res.setHeader('Content-Type', contentType)
-    res.setHeader('Content-Length', Buffer.byteLength(resBody))
-
-    self.addHeaders(res)
-
-    if (method.toLowerCase() === 'head') {
-      res.setHeader('Connection', 'close')
-      return res.end('')
-    } else {
-      return res.end(resBody)
-    }
-  }
-}
-
 /**
  * Checks for valid client credentials in the request body
  * @param {req} req - the HTTP request
@@ -207,21 +142,6 @@ module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   }
 
   return true
-}
-
-/**
- * Adds headers defined in the configuration file to the response
- * @param {res} res - the HTTP response
- */
-module.exports.addHeaders = function (res) {
-  var headers = config.get('headers')
-
-  _.each(headers.cors, function (value, header) {
-    res.setHeader(header, value)
-    if (header === 'Access-Control-Allow-Origin' && value !== '*') {
-      res.setHeader('Vary', 'Origin')
-    }
-  })
 }
 
 // function to wrap try - catch for JSON.parse to mitigate pref losses
