@@ -81,19 +81,8 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
               response: headers
             },
             (_, stream) => {
-              function cleanup (error) {
-                response.removeListener('error', cleanup)
-                response.removeListener('close', cleanup)
-                response.removeListener('finish', cleanup)
-
-                destroy(response)
-
-                if (error) err = error
-              }
-
-              stream.on('error', cleanup)
-              stream.on('close', cleanup)
-              stream.on('finish', cleanup)
+              destroy(response)
+              destroy(stream)
             },
             1
           )
@@ -104,13 +93,17 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
           Object.keys(headers).map(i => response.setHeader(i, headers[i]))
         }
 
-        // Pipe the file response
-        if (shouldCompress && acceptsBrotli) {
-          rs.pipe(brotli.compressStream()).pipe(response)
-        } else if (shouldCompress) {
-          rs.pipe(zlib.createGzip()).pipe(response)
-        } else {
-          rs.pipe(response)
+        // Try to pipe the file response
+        try {
+          if (shouldCompress && acceptsBrotli) {
+            rs.pipe(brotli.compressStream()).pipe(response)
+          } else if (shouldCompress) {
+            rs.pipe(zlib.createGzip()).pipe(response)
+          } else {
+            rs.pipe(response)
+          }
+        } catch (e) {
+          // Slience
         }
       })
     })
