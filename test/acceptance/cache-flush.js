@@ -76,98 +76,102 @@ describe("Cache Flush", function(done) {
   beforeEach(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.enableApiConfig().then(() => {
-        TestHelper.setupApiIntercepts()
-        TestHelper.clearCache()
+        TestHelper.updateConfig({
+          headers: { useCompression: false }
+        }).then(() => {
+          TestHelper.setupApiIntercepts()
+          TestHelper.clearCache()
 
-        // fake token post
-        // var scope = nock('http://127.0.0.1:3000')
-        //   .post('/token')
-        //   .times(5)
-        //   .reply(200, {
-        //     accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
-        //   })
+          // fake token post
+          // var scope = nock('http://127.0.0.1:3000')
+          //   .post('/token')
+          //   .times(5)
+          //   .reply(200, {
+          //     accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
+          //   })
 
-        // fake api data request
-        var dsEndpoint =
-          'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
-        var dsPath = url.parse(dsEndpoint).path
-        carscope = nock("http://127.0.0.1:3000")
-          .get(dsPath)
-          .times(2)
-          .reply(200, fordResult)
+          // fake api data request
+          var dsEndpoint =
+            'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+          var dsPath = url.parse(dsEndpoint).path
+          carscope = nock("http://127.0.0.1:3000")
+            .get(dsPath)
+            .times(2)
+            .reply(200, fordResult)
 
-        dsEndpoint =
-          'http://127.0.0.1:3000/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}'
-        dsPath = url.parse(dsEndpoint).path
-        catscope = nock("http://127.0.0.1:3000")
-          .get(dsPath)
-          .times(2)
-          .reply(200, categoriesResult1)
+          dsEndpoint =
+            'http://127.0.0.1:3000/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}'
+          dsPath = url.parse(dsEndpoint).path
+          catscope = nock("http://127.0.0.1:3000")
+            .get(dsPath)
+            .times(2)
+            .reply(200, categoriesResult1)
 
-        // create a page
-        var name = "test"
-        var schema = TestHelper.getPageSchema()
-        var page = Page(name, schema)
-        var dsName = "car-makes-unchained"
-        var options = TestHelper.getPathOptions()
+          // create a page
+          var name = "test"
+          var schema = TestHelper.getPageSchema()
+          var page = Page(name, schema)
+          var dsName = "car-makes-unchained"
+          var options = TestHelper.getPathOptions()
 
-        page.datasources = ["car-makes-unchained"]
-        page.template = "test_cache_flush.dust"
+          page.datasources = ["car-makes-unchained"]
+          page.template = "test_cache_flush.dust"
 
-        // add two routes to the page for testing specific path cache clearing
-        page.routes[0].path = "/test"
-        page.routes.push({ path: "/extra_test" })
+          // add two routes to the page for testing specific path cache clearing
+          page.routes[0].path = "/test"
+          page.routes.push({ path: "/extra_test" })
 
-        page.events = []
+          page.events = []
 
-        // create a second page
-        var page2 = Page("page2", TestHelper.getPageSchema())
-        page2.datasources = ["categories"]
-        page2.template = "test.dust"
+          // create a second page
+          var page2 = Page("page2", TestHelper.getPageSchema())
+          page2.datasources = ["categories"]
+          page2.template = "test.dust"
 
-        // add two routes to the page for testing specific path cache clearing
-        page2.routes[0].path = "/page2"
-        page2.events = []
-        //delete page2.route.constraint
+          // add two routes to the page for testing specific path cache clearing
+          page2.routes[0].path = "/page2"
+          page2.events = []
+          //delete page2.route.constraint
 
-        var pages = []
-        pages.push(page)
-        pages.push(page2)
+          var pages = []
+          pages.push(page)
+          pages.push(page2)
 
-        TestHelper.startServer(pages).then(() => {
-          var client = request(clientHost)
+          TestHelper.startServer(pages).then(() => {
+            var client = request(clientHost)
 
-          client
-            .get("/test")
-            // .expect('content-type', 'text/html')
-            // .expect(200)
-            .end(function(err, res) {
-              if (err) return done(err)
-              res.headers["x-cache"].should.exist
-              res.headers["x-cache"].should.eql("MISS")
+            client
+              .get("/test")
+              // .expect('content-type', 'text/html')
+              // .expect(200)
+              .end(function(err, res) {
+                if (err) return done(err)
+                res.headers["x-cache"].should.exist
+                res.headers["x-cache"].should.eql("MISS")
 
-              client
-                .get("/extra_test")
-                // .expect('content-type', 'text/html')
-                // .expect(200)
-                .end(function(err, res) {
-                  if (err) return done(err)
-                  res.headers["x-cache"].should.exist
-                  res.headers["x-cache"].should.eql("MISS")
+                client
+                  .get("/extra_test")
+                  // .expect('content-type', 'text/html')
+                  // .expect(200)
+                  .end(function(err, res) {
+                    if (err) return done(err)
+                    res.headers["x-cache"].should.exist
+                    res.headers["x-cache"].should.eql("MISS")
 
-                  client
-                    .get("/page2")
-                    // .expect('content-type', 'text/html')
-                    // .expect(200)
-                    .end(function(err, res) {
-                      if (err) return done(err)
+                    client
+                      .get("/page2")
+                      // .expect('content-type', 'text/html')
+                      // .expect(200)
+                      .end(function(err, res) {
+                        if (err) return done(err)
 
-                      res.headers["x-cache"].should.exist
-                      res.headers["x-cache"].should.eql("MISS")
-                      done()
-                    })
-                })
-            })
+                        res.headers["x-cache"].should.exist
+                        res.headers["x-cache"].should.eql("MISS")
+                        done()
+                      })
+                  })
+              })
+          })
         })
       })
     })
