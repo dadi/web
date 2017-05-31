@@ -222,14 +222,14 @@ Cache.prototype.init = function () {
         // not found in cache
         res.setHeader('X-Cache', 'MISS')
         res.setHeader('X-Cache-Lookup', 'MISS')
-        return cacheResponse(contentType)
+        return cacheResponse()
       })
 
     /**
      * Writes the current response body to either the filesystem or a Redis server,
      * depending on the configuration settings
      */
-    function cacheResponse (contentType) {
+    function cacheResponse () {
       // file is expired or does not exist, wrap res.end and res.write to save to cache
       var _end = res.end
       var _write = res.write
