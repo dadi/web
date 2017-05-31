@@ -82,12 +82,7 @@ Cache.prototype.cachingEnabled = function (req) {
  */
 Cache.prototype.getEndpointMatchingRequest = function (req) {
   var endpoints = this.server.components
-  var requestUrl = url.parse(req.url, true).pathname
-
-  // strip trailing slash before testing
-  if (requestUrl !== '/' && requestUrl[requestUrl.length - 1] === '/') {
-    requestUrl = requestUrl.substring(0, requestUrl.length - 1)
-  }
+  var requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
 
   // get the host key that matches the request's host header
   var virtualHosts = config.get('virtualHosts')
@@ -98,7 +93,7 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
     }) || ''
 
   // check if there is a match in the loaded routes for the current request URL
-  var endpoint = _.find(endpoints, endpoint => {
+  return _.find(endpoints, endpoint => {
     var paths = _.pluck(endpoint.page.routes, 'path')
     return (
       _.contains(paths, requestUrl) &&
@@ -107,9 +102,8 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
         : true)
     )
   })
-
-  return endpoint
 }
+
 /**
  * Retrieves the page component that best matches the paths loaded in api/index.js
  * @param {IncomingMessage} req - the current HTTP request
