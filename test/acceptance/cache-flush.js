@@ -76,9 +76,7 @@ describe("Cache Flush", function(done) {
   beforeEach(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.enableApiConfig().then(() => {
-        TestHelper.updateConfig({
-          headers: { useCompression: false }
-        }).then(() => {
+        TestHelper.updateConfig({}).then(() => {
           TestHelper.setupApiIntercepts()
           TestHelper.clearCache()
 
