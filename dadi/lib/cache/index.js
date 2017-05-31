@@ -9,6 +9,7 @@ var url = require('url')
 
 var compressible = require('compressible')
 var mime = require('mime-types')
+var etag = require('etag')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
 var help = require(path.join(__dirname, '/../help'))
@@ -211,6 +212,12 @@ Cache.prototype.init = function () {
         res.statusCode = 200
         res.setHeader('X-Cache', 'HIT')
         res.setHeader('Content-Type', contentType)
+        res.setHeader(
+          'Cache-Control',
+          config.get('headers.cacheControl')[contentType] ||
+            'public, max-age=86400'
+        )
+        res.setHeader('ETag', etag(filename))
 
         // Add compression headers
         if (shouldCompress) res.setHeader('Content-Encoding', shouldCompress)
