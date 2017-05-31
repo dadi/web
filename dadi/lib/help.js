@@ -277,7 +277,7 @@ module.exports.getToken = function () {
 }
 
 /**
- * Determins if we should add compression and what type
+ * Decides if we should add compression and what type
  * @param {Object} reqHeaders - Request headers
  */
 module.exports.canCompress = function (reqHeaders) {
