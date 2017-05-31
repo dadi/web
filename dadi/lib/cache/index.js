@@ -7,6 +7,8 @@ var debug = require('debug')('web:cache')
 var path = require('path')
 var url = require('url')
 
+var compressible = require('compressible')
+
 var config = require(path.join(__dirname, '/../../../config.js'))
 
 var DadiCache = require('@dadi/cache')
@@ -175,6 +177,12 @@ Cache.prototype.init = function () {
       .update(`${host}${requestUrl}`)
       .digest('hex')
 
+    // Compression settings
+    var acceptEncoding = req.headers['accept-encoding'] || ''
+    var compressType = null
+    if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'
+    if (~acceptEncoding.indexOf('br')) compressType = 'br'
+
     // allow query string param to bypass cache
     var query = url.parse(req.url, true).query
     var noCache =
@@ -198,9 +206,15 @@ Cache.prototype.init = function () {
 
         res.statusCode = 200
         res.setHeader('X-Cache', 'HIT')
-        res.setHeader('Server', config.get('server.name'))
         res.setHeader('Content-Type', contentType)
-        //   res.setHeader('Content-Length', stat.size)
+
+        if (
+          config.get('headers.useCompression') &&
+          compressible(contentType) &&
+          compressType
+        ) {
+          res.setHeader('Content-Encoding', compressType)
+        }
 
         // send cached content back
         stream.pipe(res)
@@ -221,7 +235,7 @@ Cache.prototype.init = function () {
       var _end = res.end
       var _write = res.write
 
-      var data = ''
+      var data = []
 
       res.write = function (chunk) {
         _write.apply(res, arguments)
@@ -231,13 +245,13 @@ Cache.prototype.init = function () {
         // respond before attempting to cache
         _end.apply(res, arguments)
 
-        if (chunk) data += chunk
+        if (chunk) data.push(chunk)
 
         // if response is not 200 don't cache
         if (res.statusCode !== 200) return
 
         // cache the content
-        self.cache.set(filename, data).then(() => {})
+        self.cache.set(filename, Buffer.concat(data)).then(() => {})
       }
       return next()
     }

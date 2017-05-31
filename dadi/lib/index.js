@@ -154,10 +154,11 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.setUpRequest())
   app.use(apiMiddleware.transportSecurity())
 
+  // set up cache
+  var cacheLayer = cache(this)
+
   // init main public path for static files
-  if (options.publicPath) {
-    app.use(servePublic.middleware(options.publicPath))
-  }
+  if (options.publicPath) app.use(servePublic.middleware(options.publicPath))
 
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -216,9 +217,6 @@ Server.prototype.start = function (done) {
     // add the session middleware
     app.use(session(sessionOptions))
   }
-
-  // set up cache
-  var cacheLayer = cache(this)
 
   // handle routing & redirects
   router(this, options)
