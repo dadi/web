@@ -246,7 +246,6 @@ Api.prototype.listener = function (req, res) {
             _.each(matches, match => {
               this.stack.splice(-1, 0, match)
             })
-          } else {
           }
 
           pathsLoaded = true
