@@ -199,7 +199,6 @@ Cache.prototype.init = function () {
         res.statusCode = 200
         res.setHeader('X-Cache', 'HIT')
         res.setHeader('Content-Type', contentType)
-        //   res.setHeader('Content-Length', stat.size)
 
         // send cached content back
         stream.pipe(res)
