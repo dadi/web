@@ -157,6 +157,9 @@ Server.prototype.start = function (done) {
   // set up cache
   var cacheLayer = cache(this)
 
+  // initialise the cache
+  cacheLayer.init()
+
   // init main public path for static files
   if (options.publicPath) app.use(servePublic.middleware(options.publicPath))
 
@@ -225,9 +228,6 @@ Server.prototype.start = function (done) {
     // authentication layer
     auth(this)
   }
-
-  // initialise the cache
-  cacheLayer.init()
 
   // start listening
   var server = (this.server = app.listen())
