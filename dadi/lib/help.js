@@ -182,29 +182,33 @@ module.exports.clearCache = function (req, callback) {
       url: req.headers['host'] + pathname
     }
 
-    var endpoint = Cache().getEndpointMatchingRequest(endpointRequest)
+    if (typeof Cache === 'function') {
+      var endpoint = Cache().getEndpointMatchingRequest(endpointRequest)
+    }
 
-    _.each(endpoint.page.datasources, datasource => {
-      var cachePrefix = crypto
-        .createHash('sha1')
-        .update(datasource)
-        .digest('hex')
+    if (endpoint && endpoint.page && endpoint.page.datasources) {
+      _.each(endpoint.page.datasources, datasource => {
+        var cachePrefix = crypto
+          .createHash('sha1')
+          .update(datasource)
+          .digest('hex')
 
-      datasourceCachePaths = _.extend(
-        datasourceCachePaths,
-        _.filter(files, file => {
-          return file.indexOf(cachePrefix) > -1
+        datasourceCachePaths = _.extend(
+          datasourceCachePaths,
+          _.filter(files, file => {
+            return file.indexOf(cachePrefix) > -1
+          })
+        )
+
+        datasourceCachePaths = _.map(datasourceCachePaths, file => {
+          return file
         })
-      )
-
-      datasourceCachePaths = _.map(datasourceCachePaths, file => {
-        return file
       })
-    })
+    }
   }
 
   // delete using Redis client
-  if (Cache().cache) {
+  if (typeof Cache === 'function' && Cache().cache) {
     Cache().cache
       .flush(modelDir)
       .then(() => {
