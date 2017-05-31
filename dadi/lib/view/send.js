@@ -4,6 +4,7 @@ var brotli = require('iltorb')
 var compressible = require('compressible')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
+var help = require(path.join(__dirname, '/../help'))
 
 var self = this
 
@@ -36,22 +37,21 @@ module.exports.html = function (res, req, next, statusCode, contentType) {
     self.addHeaders(res)
 
     // Compression
-    var acceptEncoding = req.headers['accept-encoding'] || ''
-    var compressType = null
-    if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'
-    if (~acceptEncoding.indexOf('br')) compressType = 'br'
+    var shouldCompress = compressible(contentType)
+      ? help.canCompress(req.headers)
+      : false
 
-    if (
-      config.get('headers.useCompression') &&
-      compressible(contentType) &&
-      compressType
-    ) {
-      res.setHeader('Content-Encoding', compressType)
-      resBody = compressType === 'br'
-        ? brotli.compressSync(Buffer.from(resBody, 'utf-8'))
-        : zlib.gzipSync(resBody)
-    } else {
-      res.setHeader('Content-Length', Buffer.byteLength(resBody))
+    if (shouldCompress) res.setHeader('Content-Encoding', shouldCompress)
+
+    switch (shouldCompress) {
+      case 'br':
+        resBody = brotli.compressSync(Buffer.from(resBody, 'utf-8'))
+        break
+      case 'gzip':
+        resBody = zlib.gzipSync(resBody)
+        break
+      default:
+        res.setHeader('Content-Length', Buffer.byteLength(resBody))
     }
 
     if (req.method.toLowerCase() === 'head') {

@@ -276,6 +276,22 @@ module.exports.getToken = function () {
   })
 }
 
+/**
+ * Determins if we should add compression and what type
+ * @param {Object} reqHeaders - Request headers
+ */
+module.exports.canCompress = function (reqHeaders) {
+  var compressType = false
+
+  if (config.get('headers.useCompression')) {
+    var acceptEncoding = reqHeaders['accept-encoding'] || ''
+    if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'
+    if (~acceptEncoding.indexOf('br')) compressType = 'br'
+  }
+
+  return compressType
+}
+
 // creates a new function in the underscore.js namespace
 // allowing us to pluck multiple properties - used to return only the
 // fields we require from an array of objects

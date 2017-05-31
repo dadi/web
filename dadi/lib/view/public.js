@@ -11,6 +11,7 @@ var _ = require('underscore')
 var url = require('url')
 
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
+var help = require(path.join(__dirname, '/../help'))
 var log = require('@dadi/logger')
 
 var ServePublic = function (publicPath, hosts) {
@@ -30,14 +31,9 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
     var response
     var filePath = path.join(publicPath, file)
     var mimeType = mime.lookup(file)
-
-    // Compress settings
-    var acceptEncoding = req.headers['accept-encoding'] || ''
-    var shouldCompress =
-      config.get('headers.useCompression') &&
-      compressible(mimeType) &&
-      ~acceptEncoding.indexOf('gzip')
-    var acceptsBrotli = ~acceptEncoding.indexOf('br')
+    var shouldCompress = compressible(mimeType)
+      ? help.canCompress(req.headers)
+      : false
 
     // 1 year cache for favicon
     var cacheControl = mimeType === 'image/x-icon'
@@ -58,12 +54,13 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
           var headers = {
             'Cache-Control': cacheControl,
             'Content-Type': mimeType,
-            'Content-Encoding': acceptsBrotli ? 'br' : 'gzip',
             'Last-Modified': stats.mtime.toUTCString(),
             ETag: etag(stats)
           }
-          if (!shouldCompress) {
-            delete headers['Content-Encoding']
+
+          if (shouldCompress) {
+            headers['Content-Encoding'] = shouldCompress
+          } else {
             headers['Content-Length'] = stats.size
           }
 
@@ -110,12 +107,15 @@ var process = function (req, res, next, files, publicPath, isMiddleware) {
 
           // Pipe the file response
           try {
-            if (shouldCompress && acceptsBrotli) {
-              rs.pipe(brotli.compressStream()).pipe(response)
-            } else if (shouldCompress) {
-              rs.pipe(zlib.createGzip()).pipe(response)
-            } else {
-              rs.pipe(response)
+            switch (shouldCompress) {
+              case 'br':
+                rs.pipe(brotli.compressStream()).pipe(response)
+                break
+              case 'gzip':
+                rs.pipe(zlib.createGzip()).pipe(response)
+                break
+              default:
+                rs.pipe(response)
             }
           } catch (e) {
             // Slience

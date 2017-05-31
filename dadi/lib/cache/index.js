@@ -10,6 +10,7 @@ var url = require('url')
 var compressible = require('compressible')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
+var help = require(path.join(__dirname, '/../help'))
 
 var DadiCache = require('@dadi/cache')
 
@@ -177,12 +178,6 @@ Cache.prototype.init = function () {
       .update(`${host}${requestUrl}`)
       .digest('hex')
 
-    // Compression settings
-    var acceptEncoding = req.headers['accept-encoding'] || ''
-    var compressType = null
-    if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'
-    if (~acceptEncoding.indexOf('br')) compressType = 'br'
-
     // allow query string param to bypass cache
     var query = url.parse(req.url, true).query
     var noCache =
@@ -190,6 +185,11 @@ Cache.prototype.init = function () {
 
     // get contentType that current endpoint requires
     var contentType = self.getEndpointContentType(req)
+
+    // Compression settings
+    var shouldCompress = compressible(contentType)
+      ? help.canCompress(req.headers)
+      : false
 
     // attempt to get from the cache
     self.cache
@@ -208,13 +208,8 @@ Cache.prototype.init = function () {
         res.setHeader('X-Cache', 'HIT')
         res.setHeader('Content-Type', contentType)
 
-        if (
-          config.get('headers.useCompression') &&
-          compressible(contentType) &&
-          compressType
-        ) {
-          res.setHeader('Content-Encoding', compressType)
-        }
+        // Add compression headers
+        if (shouldCompress) res.setHeader('Content-Encoding', shouldCompress)
 
         // send cached content back
         stream.pipe(res)
