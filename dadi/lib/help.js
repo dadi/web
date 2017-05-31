@@ -109,8 +109,6 @@ module.exports.sendBackJSON = function (successCode, res, next) {
 
     var resBody = JSON.stringify(results, null, 2)
 
-    res.setHeader('Server', config.get('server.name'))
-
     res.statusCode = successCode
     res.setHeader('Content-Type', 'application/json')
     res.setHeader('content-length', Buffer.byteLength(resBody))
@@ -152,7 +150,6 @@ module.exports.sendBackHTML = function (
     var resBody = results
 
     res.statusCode = successCode
-    res.setHeader('Server', config.get('server.name'))
     res.setHeader('Content-Type', contentType)
     res.setHeader('Content-Length', Buffer.byteLength(resBody))
 

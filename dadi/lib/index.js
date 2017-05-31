@@ -115,24 +115,6 @@ Server.prototype.start = function (done) {
 
       return next()
     })
-
-    // config.updateConfigDataForDomain(host).then(() => {
-
-    // options = this.loadPaths(config.get('paths'))
-    //
-    // options.host = req.headers.host
-
-    // this.loadApi(options, true, () => {
-    //   debug('config loaded for domain "%s"', req.headers.host)
-    // return next()
-    // })
-    // }).catch((err) => {
-    //   if (err) {
-    //     return next(err)
-    //   } else {
-    //     return next()
-    //   }
-    // })
   })
 
   if (config.get('logging.sentry.dsn') !== '') {
