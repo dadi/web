@@ -8,6 +8,7 @@ var path = require('path')
 var url = require('url')
 
 var compressible = require('compressible')
+var mime = require('mime-types')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
 var help = require(path.join(__dirname, '/../help'))
@@ -46,31 +47,31 @@ module.exports = function (server) {
  * @returns {Boolean}
  */
 Cache.prototype.cachingEnabled = function (req) {
+  // Check it is not a json view
   var query = url.parse(req.url, true).query
-  if (query.json && query.json !== 'false') {
-    return false
-  }
+  if (query.json && query.json !== 'false') return false
 
-  if (config.get('debug')) {
-    return false
-  }
+  // Disable cache for debug mode
+  if (config.get('debug')) return false
 
+  // if it's in the endpoint and caching is enabled
   var endpoint = this.getEndpointMatchingRequest(req)
+  if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
 
-  if (!endpoint) {
-    endpoint = this.getEndpointMatchingLoadedPaths(req)
-  }
+  if (endpoint) {
+    if (endpoint.page && endpoint.page.settings) {
+      this.options = endpoint.page.settings
+    } else {
+      this.options.cache = false
+    }
 
-  // not found in the loaded routes, let's not bother caching
-  if (!endpoint) return false
-
-  if (endpoint.page && endpoint.page.settings) {
-    this.options = endpoint.page.settings
+    return this.enabled && (this.options.cache || false)
   } else {
-    this.options.cache = false
-  }
+    // Otherwise it might be in the public folder
+    var file = url.parse(req.url).pathname
 
-  return this.enabled && (this.options.cache || false)
+    return compressible(mime.lookup(file))
+  }
 }
 
 /**
@@ -130,14 +131,14 @@ Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
  * @param {IncomingMessage} req - the current HTTP request
  * @returns {string}
  */
-Cache.prototype.getEndpointContentType = function (req) {
+Cache.prototype.getReqContentType = function (req) {
+  // Check for content-type in the page json
   var endpoint = this.getEndpointMatchingRequest(req)
+  if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
 
-  if (!endpoint) {
-    endpoint = this.getEndpointMatchingLoadedPaths(req)
-  }
-
-  return endpoint.page.contentType
+  return endpoint && endpoint.page && endpoint.page.contentType
+    ? endpoint.page.contentType
+    : mime.lookup(path.extname(req.url))
 }
 
 /**
@@ -184,7 +185,10 @@ Cache.prototype.init = function () {
       query.cache && query.cache.toString().toLowerCase() === 'false'
 
     // get contentType that current endpoint requires
-    var contentType = self.getEndpointContentType(req)
+    var contentType = self.getReqContentType(req)
+
+    // File extension for cache file
+    var opts = { directory: { extension: mime.extension(contentType) } }
 
     // Compression settings
     var shouldCompress = compressible(contentType)
@@ -193,7 +197,7 @@ Cache.prototype.init = function () {
 
     // attempt to get from the cache
     self.cache
-      .get(filename)
+      .get(filename, opts)
       .then(stream => {
         debug('serving %s%s from cache', req.headers.host, req.url)
 
@@ -218,14 +222,14 @@ Cache.prototype.init = function () {
         // not found in cache
         res.setHeader('X-Cache', 'MISS')
         res.setHeader('X-Cache-Lookup', 'MISS')
-        return cacheResponse()
+        return cacheResponse(contentType)
       })
 
     /**
      * Writes the current response body to either the filesystem or a Redis server,
      * depending on the configuration settings
      */
-    function cacheResponse () {
+    function cacheResponse (contentType) {
       // file is expired or does not exist, wrap res.end and res.write to save to cache
       var _end = res.end
       var _write = res.write
@@ -233,6 +237,8 @@ Cache.prototype.init = function () {
       var data = []
 
       res.write = function (chunk) {
+        if (chunk) data.push(chunk)
+
         _write.apply(res, arguments)
       }
 
@@ -240,13 +246,13 @@ Cache.prototype.init = function () {
         // respond before attempting to cache
         _end.apply(res, arguments)
 
-        if (chunk) data.push(chunk)
+        if (chunk && !data.length) data.push(chunk)
 
         // if response is not 200 don't cache
         if (res.statusCode !== 200) return
 
-        // cache the content
-        self.cache.set(filename, Buffer.concat(data)).then(() => {})
+        // cache the content, with applicable file extension
+        self.cache.set(filename, Buffer.concat(data), opts).then(() => {})
       }
       return next()
     }
