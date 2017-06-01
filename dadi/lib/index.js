@@ -155,10 +155,10 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.transportSecurity())
 
   // set up cache
-  var cacheLayer = cache(this)
+  this.cacheLayer = cache(this)
 
   // initialise the cache
-  cacheLayer.init()
+  this.cacheLayer.init()
 
   // init main public path for static files
   if (options.publicPath) app.use(servePublic.middleware(options.publicPath))
@@ -401,7 +401,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
         help.validateRequestMethod(req, res, 'POST') &&
         help.validateRequestCredentials(req, res)
       ) {
-        return help.clearCache(req, err => {
+        return help.clearCache(req, this.cacheLayer, err => {
           Send.json(200, res, next)(err, {
             result: 'success',
             message: 'Succeed to clear'

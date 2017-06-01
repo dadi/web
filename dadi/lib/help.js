@@ -14,6 +14,7 @@ var version = require('../../package.json').version
 var Cache = require(path.join(__dirname, '/cache'))
 var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
+var errorView = require(path.join(__dirname, '/view/errors'))
 
 var self = this
 
@@ -137,7 +138,19 @@ module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   var method = req.method && req.method.toLowerCase()
   if (method !== allowedMethod.toLowerCase()) {
     res.statusCode = 405
-    res.end()
+    res.setHeader('Content-Type', 'text/html')
+    res.end(
+      errorView({
+        headline: 'Method not allowed.',
+        human: 'The method used for this request is not supported.',
+        developer: 'Did you mean to POST?',
+        stack: 'Nothing to see',
+        statusCode: 405,
+        error: 'Method not allowed',
+        server: req.headers.host
+      })
+    )
+
     return false
   }
 
@@ -159,7 +172,7 @@ module.exports.parseQuery = function (queryStr) {
   return ret
 }
 
-module.exports.clearCache = function (req, callback) {
+module.exports.clearCache = function (req, cache, callback) {
   var pathname = req.body.path
   var modelDir = crypto.createHash('sha1').update(pathname).digest('hex')
   var cacheDir = config.get('caching.directory.path')
@@ -182,9 +195,7 @@ module.exports.clearCache = function (req, callback) {
       url: req.headers['host'] + pathname
     }
 
-    if (typeof Cache === 'function') {
-      var endpoint = Cache().getEndpointMatchingRequest(endpointRequest)
-    }
+    var endpoint = cache.getEndpointMatchingRequest(endpointRequest)
 
     if (endpoint && endpoint.page && endpoint.page.datasources) {
       _.each(endpoint.page.datasources, datasource => {
