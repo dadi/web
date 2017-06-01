@@ -183,7 +183,13 @@ Cache.prototype.init = function () {
     var contentType = self.getReqContentType(req)
 
     // File extension for cache file
-    var opts = { directory: { extension: mime.extension(contentType) } }
+    var cacheExt = compressible(contentType) && help.canCompress(req.headers)
+      ? '.' + help.canCompress(req.headers)
+      : null
+
+    var opts = {
+      directory: { extension: mime.extension(contentType) + cacheExt }
+    }
 
     // Compression settings
     var shouldCompress = compressible(contentType)
