@@ -197,10 +197,18 @@ Cache.prototype.init = function () {
       : false
 
     // attempt to get from the cache
+    console.log('looking for: ')
+    console.log('      ' + requestUrl)
+    console.log('      ' + filename)
+
     self.cache
       .get(filename, opts)
       .then(stream => {
         debug('serving %s%s from cache', req.headers.host, req.url)
+
+        console.log('found: ')
+        console.log('      ' + requestUrl)
+        console.log('      ' + filename)
 
         res.setHeader('X-Cache-Lookup', 'HIT')
 
@@ -211,6 +219,7 @@ Cache.prototype.init = function () {
 
         res.statusCode = 200
         res.setHeader('X-Cache', 'HIT')
+        console.log('here')
         res.setHeader('Content-Type', contentType)
         res.setHeader(
           'Cache-Control',
@@ -259,7 +268,11 @@ Cache.prototype.init = function () {
         if (res.statusCode !== 200) return
 
         // cache the content, with applicable file extension
-        self.cache.set(filename, Buffer.concat(data), opts).then(() => {})
+        try {
+          self.cache.set(filename, Buffer.concat(data), opts).then(() => {})
+        } catch (e) {
+          console.log('Could not cache content: ' + requestUrl)
+        }
       }
       return next()
     }
