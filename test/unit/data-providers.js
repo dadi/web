@@ -184,6 +184,52 @@ describe("Data Providers", function(done) {
       })
     })
 
+    it("should not compress data if the client does not support it, instead return content-length", function(
+      done
+    ) {
+      TestHelper.enableApiConfig().then(() => {
+        var pages = TestHelper.setUpPages()
+        pages[0].datasources = ["car-makes-unchained"]
+
+        var text = JSON.stringify({ hello: "world!" })
+
+        zlib.gzip(text, function(_, data) {
+          TestHelper.setupApiIntercepts()
+
+          var connectionString =
+            "http://" +
+            config.get("server.host") +
+            ":" +
+            config.get("server.port")
+          var apiConnectionString =
+            "http://" + config.get("api.host") + ":" + config.get("api.port")
+
+          var scope = nock(apiConnectionString)
+            .get(
+              "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
+            )
+            .times(5)
+            .reply(200, data)
+
+          var providerSpy = sinon.spy(apiProvider.prototype, "processOutput")
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?cache=false")
+              .set("Accept-Encoding", "")
+              .end((err, res) => {
+                should.not.exist(res.headers["content-encoding"])
+                should.exist(res.headers["content-length"])
+
+                done()
+              })
+          })
+        })
+      })
+    })
+
     it("should return an errors collection when a datasource times out", function(
       done
     ) {
