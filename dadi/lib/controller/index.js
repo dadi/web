@@ -32,7 +32,7 @@ var Controller = function (page, options, meta) {
   this.datasources = {}
   this.events = []
   this.preloadEvents = []
-  this.pushManifest = this.pushManifest = config
+  this.pushManifest = config
     .get('globalPushManifest')
     .concat(this.page.pushManifest) || []
 
