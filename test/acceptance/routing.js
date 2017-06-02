@@ -620,7 +620,7 @@ describe("Routing", function(done) {
           client
             .get("/test")
             .set("X-Forwarded-Proto", "https")
-            .expect(302)
+            .expect(301)
             .end(function(err, res) {
               if (err) return done(err)
               done()
@@ -648,7 +648,7 @@ describe("Routing", function(done) {
           var httpClient = request(
             "http://" + config.get("server.host") + ":9999"
           )
-          httpClient.get("/test").expect(301).end(function(err, res) {
+          httpClient.get("/test").expect(302).end(function(err, res) {
             if (err) return done(err)
             done()
           })
