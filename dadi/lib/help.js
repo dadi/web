@@ -11,7 +11,6 @@ var path = require('path')
 var perfy = require('perfy')
 
 var version = require('../../package.json').version
-var Cache = require(path.join(__dirname, '/cache'))
 var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
 var errorView = require(path.join(__dirname, '/view/errors'))
@@ -172,7 +171,7 @@ module.exports.parseQuery = function (queryStr) {
   return ret
 }
 
-module.exports.clearCache = function (req, cache, callback) {
+module.exports.clearCache = function (req, Cache, callback) {
   var pathname = req.body.path
   var modelDir = crypto.createHash('sha1').update(pathname).digest('hex')
   var cacheDir = config.get('caching.directory.path')
@@ -195,7 +194,7 @@ module.exports.clearCache = function (req, cache, callback) {
       url: req.headers['host'] + pathname
     }
 
-    var endpoint = cache.getEndpointMatchingRequest(endpointRequest)
+    var endpoint = Cache.getEndpointMatchingRequest(endpointRequest)
 
     if (endpoint && endpoint.page && endpoint.page.datasources) {
       _.each(endpoint.page.datasources, datasource => {
@@ -219,28 +218,24 @@ module.exports.clearCache = function (req, cache, callback) {
   }
 
   // delete using Redis client
-  if (typeof Cache === 'function' && Cache().cache) {
-    Cache().cache
-      .flush(modelDir)
-      .then(() => {
-        if (datasourceCachePaths.length === 0) {
-          return callback(null)
-        }
+  Cache.cache
+    .flush(modelDir)
+    .then(() => {
+      if (datasourceCachePaths.length === 0) {
+        return callback(null)
+      }
 
-        _.each(datasourceCachePaths, (dsFile, idx) => {
-          Cache().cache.flush(dsFile).then(() => {
-            if (idx === datasourceCachePaths.length - 1) {
-              return callback(null)
-            }
-          })
+      _.each(datasourceCachePaths, (dsFile, idx) => {
+        Cache.cache.flush(dsFile).then(() => {
+          if (idx === datasourceCachePaths.length - 1) {
+            return callback(null)
+          }
         })
       })
-      .catch(err => {
-        console.log(err)
-      })
-  } else {
-    return callback(null)
-  }
+    })
+    .catch(err => {
+      console.log(err)
+    })
 }
 
 /**
