@@ -231,6 +231,11 @@ var conf = convict({
     }
   },
   dust: {
+    beautify: {
+      doc: 'Run the Dust.js output through js-beautify. Respects `contentType` and takes options (https://github.com/beautify-web/js-beautify#options)',
+      format: '*',
+      default: false
+    },
     cache: {
       doc: 'If true, compiled templates are saved to the Dust cache. Recommended setting: true',
       format: Boolean,

@@ -191,7 +191,9 @@ RemoteProvider.prototype.makeRequest = function (done) {
 
   let request = agent.request(this.options, res => {
     if (
-      res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307
+      res.statusCode === 301 ||
+      res.statusCode === 302 ||
+      res.statusCode === 307
     ) {
       this.redirects++
 

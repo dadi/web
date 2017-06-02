@@ -1,9 +1,10 @@
 /**
  * @module View
  */
-var beautifyHtml = require('js-beautify').html
+var beautify = require('js-beautify')
 var path = require('path')
 var dust = require(path.join(__dirname, '/../dust'))
+var config = require(path.join(__dirname, '/../../../config.js'))
 
 var View = function (url, page, json) {
   this.url = url
@@ -41,9 +42,20 @@ View.prototype.render = function (done) {
         return done(err, null)
       }
 
-      if (this.page.beautify) {
+      if (config.get('dust.beautify') || this.page.beautify) {
+        var options = typeof config.get('dust.beautify') === 'object'
+          ? config.get('dust.beautify')
+          : null
+
         try {
-          result = beautifyHtml(result)
+          if (!this.page.contentType || this.page.contentType === 'text/html') {
+            result = beautify.html(result, options)
+          } else if (
+            ~this.page.contentType.indexOf('javascript') ||
+            ~this.page.contentType.indexOf('json')
+          ) {
+            result = beautify(result, options)
+          }
         } catch (e) {
           err = e
         }
