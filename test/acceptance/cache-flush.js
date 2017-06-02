@@ -439,7 +439,7 @@ describe("Cache Flush", function(done) {
                       )
                       files
                         .filter(function(file) {
-                          return file.substr(-5) === ".html"
+                          return file.substr(-10) === ".html.gzip"
                         })
                         .forEach(function(file) {
                           fs.unlinkSync(
