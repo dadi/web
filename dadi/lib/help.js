@@ -6,7 +6,7 @@ var crypto = require('crypto')
 var debug = require('debug')('web:timer')
 var fs = require('fs')
 var http = require('http')
-var https = require('spdy')
+var https = require('https')
 var path = require('path')
 var perfy = require('perfy')
 
@@ -293,7 +293,16 @@ module.exports.getToken = function () {
 module.exports.canCompress = function (reqHeaders) {
   var compressType = false
 
-  if (config.get('headers.useCompression')) {
+  if (config.get('headers.useGzipCompression')) {
+    console.log(
+      'WARN! The config setting `useGzipCompression` is depricated and will be removed in a future version.'
+    )
+  }
+
+  if (
+    config.get('headers.useCompression') ||
+    config.get('headers.useGzipCompression')
+  ) {
     var acceptEncoding = reqHeaders['accept-encoding'] || ''
     if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'
     if (~acceptEncoding.indexOf('br')) compressType = 'br'

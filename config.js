@@ -74,6 +74,11 @@ var conf = convict({
       format: Array,
       default: [],
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
+    },
+    http2: {
+      doc: 'Use http2 if server.protocol is https.',
+      format: Boolean,
+      default: false
     }
   },
   api: {
@@ -275,6 +280,11 @@ var conf = convict({
     }
   },
   headers: {
+    useGzipCompression: {
+      doc: 'Depricated: use `useCompression` instead.',
+      format: Boolean,
+      default: true
+    },
     useCompression: {
       doc: "If true, uses br or gzip compression where available and adds a 'Content-Encoding: [br|gzip]' header to the response.",
       format: Boolean,
@@ -520,7 +530,7 @@ var conf = convict({
     }
   },
   globalPushManifest: {
-    doc: 'A list of assets to push when sever.protocol is http2.',
+    doc: 'A list of assets to push when server.http2 is true and server.protocol is https.',
     format: Array,
     default: []
   }
