@@ -41,18 +41,14 @@ module.exports.html = function (res, req, next, statusCode, contentType) {
       ? help.canCompress(req.headers)
       : false
 
-    if (shouldCompress) res.setHeader('Content-Encoding', shouldCompress)
-
-    switch (shouldCompress) {
-      case 'br':
-        resBody = brotli.compressSync(Buffer.from(resBody, 'utf-8'))
-        break
-      case 'gzip':
-        resBody = zlib.gzipSync(resBody)
-        break
-      default:
-        res.setHeader('Content-Length', Buffer.byteLength(resBody))
+    if (shouldCompress) {
+      res.setHeader('Content-Encoding', shouldCompress)
+      resBody = shouldCompress === 'br'
+        ? brotli.compressSync(Buffer.from(resBody, 'utf-8'))
+        : zlib.gzipSync(resBody)
     }
+
+    res.setHeader('Content-Length', Buffer.byteLength(resBody))
 
     if (req.method.toLowerCase() === 'head') {
       res.setHeader('Connection', 'close')

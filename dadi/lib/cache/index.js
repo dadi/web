@@ -6,6 +6,7 @@ var crypto = require('crypto')
 var debug = require('debug')('web:cache')
 var path = require('path')
 var url = require('url')
+var fs = require('fs')
 
 var compressible = require('compressible')
 var mime = require('mime-types')
@@ -217,10 +218,17 @@ Cache.prototype.init = function () {
           config.get('headers.cacheControl')[contentType] ||
             'public, max-age=86400'
         )
-        res.setHeader('ETag', etag(filename))
 
         // Add compression headers
         if (shouldCompress) res.setHeader('Content-Encoding', shouldCompress)
+
+        // Add extra headers
+        stream.on('open', fd => {
+          fs.fstat(fd, (_, stats) => {
+            res.setHeader('Content-Length', stats.size)
+            res.setHeader('ETag', etag(stats))
+          })
+        })
 
         // send cached content back
         stream.pipe(res)
