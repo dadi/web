@@ -292,13 +292,7 @@ module.exports.getToken = function () {
  */
 module.exports.canCompress = function (reqHeaders) {
   var compressType = false
-
-  if (config.get('headers.useGzipCompression')) {
-    console.log(
-      'WARN! The config setting `useGzipCompression` is depricated and will be removed in a future version.'
-    )
-  }
-
+  
   if (
     config.get('headers.useCompression') ||
     config.get('headers.useGzipCompression')
