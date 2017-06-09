@@ -621,7 +621,8 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
       return this
     })
     .then(pages => {
-      return this.compile(options)
+      // We run `compile()` but return the Server instance.
+      return this.compile(options).then(() => this)
     })
 }
 
