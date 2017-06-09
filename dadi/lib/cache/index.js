@@ -57,8 +57,7 @@ Cache.prototype.cachingEnabled = function (req) {
   if (config.get('debug')) return false
 
   // if it's in the endpoint and caching is enabled
-  var endpoint = this.getEndpointMatchingRequest(req)
-  if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
+  var endpoint = this.getEndpoint(req)
 
   if (endpoint) {
     if (endpoint.page && endpoint.page.settings) {
@@ -129,12 +128,32 @@ Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
  */
 Cache.prototype.getReqContentType = function (req) {
   // Check for content-type in the page json
-  var endpoint = this.getEndpointMatchingRequest(req)
-  if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
+  var endpoint = this.getEndpoint(req)
 
   return endpoint && endpoint.page && endpoint.page.contentType
     ? endpoint.page.contentType
-    : mime.lookup(path.extname(req.url))
+    : false
+}
+
+Cache.prototype.getEndpoint = function (req) {
+  var endpoint = this.getEndpointMatchingRequest(req)
+  if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
+
+  return endpoint || false
+}
+
+/**
+ * Retrieves the pushManifest of the page that the requested URL matches
+ * @param {IncomingMessage} req - the current HTTP request
+ * @returns {string}
+ */
+Cache.prototype.getPushManifest = function (req) {
+  // Check for content-type in the page json
+  var endpoint = this.getEndpoint(req)
+
+  return endpoint && endpoint.page && endpoint.page.pushManifest
+    ? endpoint.page.pushManifest
+    : []
 }
 
 /**
@@ -154,6 +173,12 @@ Cache.prototype.init = function () {
     debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
 
     if (!enabled) return next()
+
+    // Check it's a page
+    if (!self.getEndpoint(req)) return next()
+
+    // get contentType that current endpoint requires
+    var contentType = self.getReqContentType(req)
 
     // only cache GET requests
     if (req.method && req.method.toLowerCase() !== 'get') return next()
@@ -180,9 +205,6 @@ Cache.prototype.init = function () {
     var noCache =
       query.cache && query.cache.toString().toLowerCase() === 'false'
 
-    // get contentType that current endpoint requires
-    var contentType = self.getReqContentType(req)
-
     // File extension for cache file
     var cacheExt = compressible(contentType) && help.canCompress(req.headers)
       ? '.' + help.canCompress(req.headers)
@@ -203,24 +225,22 @@ Cache.prototype.init = function () {
       .then(stream => {
         debug('serving %s%s from cache', req.headers.host, req.url)
 
-        res.setHeader('X-Cache-Lookup', 'HIT')
-
         if (noCache) {
+          res.setHeader('X-Cache-Lookup', 'HIT')
           res.setHeader('X-Cache', 'MISS')
           return next()
         }
 
-        res.statusCode = 200
-        res.setHeader('X-Cache', 'HIT')
-        res.setHeader('Content-Type', contentType)
-        res.setHeader(
-          'Cache-Control',
-          config.get('headers.cacheControl')[contentType] ||
+        var headers = {
+          'X-Cache-Lookup': 'HIT',
+          'X-Cache': 'HIT',
+          'Content-Type': contentType,
+          'Cache-Control': config.get('headers.cacheControl')[contentType] ||
             'public, max-age=86400'
-        )
+        }
 
         // Add compression headers
-        if (shouldCompress) res.setHeader('Content-Encoding', shouldCompress)
+        if (shouldCompress) headers['Content-Encoding'] = shouldCompress
 
         // Add extra headers
         stream.on('open', fd => {
@@ -230,7 +250,9 @@ Cache.prototype.init = function () {
           })
         })
 
-        // send cached content back
+        res.statusCode = 200
+        Object.keys(headers).map(i => res.setHeader(i, headers[i]))
+
         stream.pipe(res)
       })
       .catch(() => {
@@ -273,6 +295,7 @@ Cache.prototype.init = function () {
           console.log('Could not cache content: ' + requestUrl)
         }
       }
+
       return next()
     }
   })

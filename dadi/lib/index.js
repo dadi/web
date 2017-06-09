@@ -56,6 +56,7 @@ log.init(config.get('logging'), config.get('aws'), process.env.NODE_ENV)
 var Server = function () {
   this.components = {}
   this.monitors = {}
+  this.cacheLayer = {}
 }
 
 Server.prototype.start = function (done) {
@@ -112,24 +113,6 @@ Server.prototype.start = function (done) {
 
       return next()
     })
-
-    // config.updateConfigDataForDomain(host).then(() => {
-
-    // options = this.loadPaths(config.get('paths'))
-    //
-    // options.host = req.headers.host
-
-    // this.loadApi(options, true, () => {
-    //   debug('config loaded for domain "%s"', req.headers.host)
-    // return next()
-    // })
-    // }).catch((err) => {
-    //   if (err) {
-    //     return next(err)
-    //   } else {
-    //     return next()
-    //   }
-    // })
   })
 
   if (config.get('logging.sentry.dsn') !== '') {
@@ -161,7 +144,9 @@ Server.prototype.start = function (done) {
   this.cacheLayer.init()
 
   // init main public path for static files
-  if (options.publicPath) app.use(servePublic.middleware(options.publicPath))
+  if (options.publicPath) {
+    app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
+  }
 
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -175,7 +160,11 @@ Server.prototype.start = function (done) {
       var hostOptions = this.loadPaths(hostConfig.paths)
 
       app.use(
-        servePublic.middleware(hostOptions.publicPath, virtualHost.hostnames)
+        servePublic.middleware(
+          hostOptions.publicPath,
+          this.cacheLayer,
+          virtualHost.hostnames
+        )
       )
     }
   })
@@ -185,7 +174,8 @@ Server.prototype.start = function (done) {
     app.use(
       servePublic.middleware(
         options.workspacePath + '/debug' ||
-          path.join(__dirname, '/../../workspace/debug')
+          path.join(__dirname, '/../../workspace/debug'),
+        this.cacheLayer
       )
     )
   }
@@ -565,7 +555,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
   var page = Page(obj.name, schema, options.host)
 
   // create a handler for requests to this page
-  var controller = new Controller(page, options, schema.page)
+  var controller = new Controller(page, options, schema.page, this.cacheLayer)
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods

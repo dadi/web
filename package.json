@@ -68,6 +68,7 @@
     "send": "^0.15.1",
     "server-destroy": "1.0.1",
     "spdy": "^3.4.7",
+    "through": "^2.3.8",
     "toobusy-js": "^0.5.1",
     "underscore": "~1.8.3",
     "underscore.string": "^3.2.2",
