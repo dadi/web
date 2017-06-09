@@ -27,8 +27,6 @@ var Public = function (req, res, next, files, publicPath, isMiddleware, cache) {
     .concat(this.cacheInstance.getPushManifest(req))
   this.endpoint = this.cacheInstance.getEndpoint(req)
 
-  console.log(this.endpoint)
-
   // Make it so
   this.init(req, res, next, files)
 }
