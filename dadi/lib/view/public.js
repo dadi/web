@@ -11,6 +11,7 @@ var url = require('url')
 var _ = require('underscore')
 var crypto = require('crypto')
 var through = require('through')
+var async = require('async')
 
 var Cache = require(path.join(__dirname, '/../cache'))
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
@@ -44,7 +45,7 @@ Public.prototype.init = function (req, res, next, files) {
 
   if (filteredFiles.length) {
     this.files = filteredFiles
-    return filteredFiles.forEach(i => this.process(req, res, next, i))
+    return async.each(filteredFiles, i => this.process(req, res, next, i))
   } else {
     return next()
   }
