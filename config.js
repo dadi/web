@@ -298,7 +298,8 @@ var conf = convict({
         'image/jpeg': 'public, max-age=86400',
         'text/css': 'public, max-age=86400',
         'text/javascript': 'public, max-age=86400',
-        'application/javascript': 'public, max-age=86400'
+        'application/javascript': 'public, max-age=86400',
+        'image/x-icon': 'public, max-age=31536000000'
       }
     }
   },
