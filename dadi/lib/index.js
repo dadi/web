@@ -645,7 +645,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
   var page = Page(obj.name, schema, options.host, options.templateCandidate)
 
   // create a handler for requests to this page
-  var controller = new Controller(page, options, schema.page)
+  var controller = new Controller(page, options, schema.page, schema.engine)
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods
@@ -764,13 +764,14 @@ Server.prototype.compile = function (options) {
   const templatePath = options.pagePath
 
   // Get a list of templates to render based on the registered components
-  const componentTemplates = _.compact(
-    Object.keys(this.components).map(route => {
-      if (this.components[route].options.host === options.host) {
-        return path.join(templatePath, this.components[route].page.template)
+  const componentTemplates = Object.keys(this.components).map(route => {
+    if (this.components[route].options.host === options.host) {
+      return {
+        engine: this.components[route].engine,
+        file: path.join(templatePath, this.components[route].page.template)
       }
-    })
-  )
+    }
+  })
 
   // Loading engines and templates
   return templateStore

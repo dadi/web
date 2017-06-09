@@ -15,6 +15,7 @@ const Template = require(path.join(__dirname, 'template'))
   * Builds a template store.
   */
 const TemplateStore = function () {
+  this.additionalTemplates = []
   this.engines = {}
   this.pagesPath = path.resolve(config.get('paths.pages'))
   this.templates = {}
@@ -173,11 +174,8 @@ TemplateStore.prototype.loadEngines = function (engines) {
 /**
   * Loads files from an array of paths.
   *
-  * @param {array} pages The absolute paths for the files to be loaded.
+  * @param {array} files The absolute paths for the files to be loaded.
   * @param {object} options Additional options.
-  * @param {string} options.basePath When present, makes the name relative to this directory.
-  * @param {boolean} options.recursive Whether to load files in sub-directories.
-  * @param {string} options.namespace A namespace for the files.
   *
   * @return {Promise} A Promise resolving when all files have been loaded.
   */
@@ -190,6 +188,7 @@ TemplateStore.prototype.loadFiles = function (files, options) {
       const templateName = options.basePath
         ? path.relative(options.basePath, file).slice(0, -extension.length)
         : path.basename(file, extension)
+      const engine = options.engines && options.engines[file]
 
       return new Promise((resolve, reject) => {
         fs.readFile(file, 'utf8', (err, data) => {
@@ -198,6 +197,7 @@ TemplateStore.prototype.loadFiles = function (files, options) {
           return resolve(
             this.loadTemplate({
               data: data,
+              engine: engine,
               extension: extension,
               name: templateName,
               namespace: options.namespace,
@@ -221,12 +221,24 @@ TemplateStore.prototype.loadFiles = function (files, options) {
   * @return {Promise} A Promise resolving when all pages have been loaded.
   */
 TemplateStore.prototype.loadPages = function (pages, options) {
+  let enginesMap = {}
+
+  pages.forEach(page => {
+    if (page.engine) {
+      enginesMap[page.file] = page.engine
+    }
+  })
+
   const extendedOptions = Object.assign(
     {
       basePath: this.pagesPath
     },
-    options
+    options,
+    {
+      engines: enginesMap
+    }
   )
+  const filePaths = pages.map(page => page.file)
 
   return helpers
     .readDirectory(this.pagesPath, {
@@ -235,10 +247,10 @@ TemplateStore.prototype.loadPages = function (pages, options) {
     })
     .then(files => {
       this.additionalTemplates = files.filter(file => {
-        return pages.indexOf(file) === -1
+        return filePaths.indexOf(file) === -1
       })
 
-      return this.loadFiles(pages, extendedOptions)
+      return this.loadFiles(filePaths, extendedOptions)
     })
     .then(loadedTemplates => {
       debug('Loaded templates: %o', loadedTemplates)
@@ -257,19 +269,23 @@ TemplateStore.prototype.loadPages = function (pages, options) {
 TemplateStore.prototype.loadTemplate = function (parameters) {
   parameters = parameters || {}
 
-  const engine = this.findEngineForExtension(parameters.extension)
+  const engine = parameters.engine
+    ? this.engines[parameters.engine]
+    : this.findEngineForExtension(parameters.extension)
 
   if (!engine) {
+    const error = new Error(
+      `Error loading template "${parameters.name}": no engine for extension ${parameters.extension}.`
+    )
+
     log.error(
       { module: 'templates' },
       {
-        err: new Error(
-          `Error loading template "${parameters.name}": no engine for extension ${parameters.extension}.`
-        )
+        err: error
       }
     )
 
-    return
+    throw error
   }
 
   const name = parameters.name
@@ -375,3 +391,4 @@ TemplateStore.prototype.validateEngine = function (factory, engine) {
 }
 
 module.exports = new TemplateStore()
+module.exports.TemplateStore = TemplateStore
