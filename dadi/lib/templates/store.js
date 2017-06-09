@@ -352,11 +352,13 @@ TemplateStore.prototype.validateEngine = function (factory, engine) {
     errors.push('is missing the metadata block')
   } else {
     if (!(factory.metadata.extensions instanceof Array)) {
-      errors.push('is missing the extensions property on the metadata block')
+      errors.push(
+        'is missing a valid extensions property on the metadata block'
+      )
     }
 
     if (typeof factory.metadata.handle !== 'string') {
-      errors.push('is missing the handle property on the metadata block')
+      errors.push('is missing a valid handle property on the metadata block')
     }
   }
 
@@ -381,7 +383,8 @@ TemplateStore.prototype.validateEngine = function (factory, engine) {
   }
 
   if (errors.length) {
-    const errorMessage = `Validation failed for "${factory && factory.metadata.name}" templating engine: ${errors.join(', ')}`
+    const engineName = factory && factory.metadata && factory.metadata.name
+    const errorMessage = `Validation failed for ${engineName ? engineName + ' ' : ''}templating engine: ${errors.join(', ')}`
     const error = new Error(errorMessage)
 
     log.error({ module: 'templates' }, { err: error }, errorMessage)

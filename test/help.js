@@ -96,7 +96,7 @@ TestHelper.prototype.updateConfig = function(configBlock) {
     fs.writeFileSync(config.configPath(), JSON.stringify(newConfig, null, 2))
     config.loadFile(path.resolve(config.configPath()))
     delete require.cache[configKey]
-    return resolve("")
+    return resolve(config)
   })
 }
 
@@ -105,7 +105,7 @@ TestHelper.prototype.resetConfig = function() {
     fs.writeFileSync(config.configPath(), this.originalConfigString)
     config.loadFile(path.resolve(config.configPath()))
     delete require.cache[configKey]
-    return resolve("")
+    return resolve(config)
   })
 }
 
