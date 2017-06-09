@@ -5,7 +5,6 @@ var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 var _ = require('underscore')
 var bodyParser = require('body-parser')
 var colors = require("colors") // eslint-disable-line
-var compress = require('compression')
 var debug = require('debug')('web:server')
 var dust = require('./dust')
 var enableDestroy = require('server-destroy')
@@ -13,8 +12,6 @@ var fs = require('fs')
 var mkdirp = require('mkdirp')
 var path = require('path')
 var raven = require('raven')
-var serveFavicon = require('serve-favicon')
-var serveStatic = require('serve-static')
 var session = require('express-session')
 var toobusy = require('toobusy-js')
 var dadiStatus = require('@dadi/status')
@@ -40,7 +37,9 @@ var cache = require(path.join(__dirname, '/cache'))
 var Controller = require(path.join(__dirname, '/controller'))
 var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
 var help = require(path.join(__dirname, '/help'))
+var Send = require(path.join(__dirname, '/view/send'))
 var Middleware = require(path.join(__dirname, '/middleware'))
+var servePublic = require(path.join(__dirname, '/view/public'))
 var monitor = require(path.join(__dirname, '/monitor'))
 var Page = require(path.join(__dirname, '/page'))
 var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
@@ -57,11 +56,10 @@ log.init(config.get('logging'), config.get('aws'), process.env.NODE_ENV)
 var Server = function () {
   this.components = {}
   this.monitors = {}
+  this.cacheLayer = {}
 }
 
 Server.prototype.start = function (done) {
-  var self = this
-
   this.readyState = 2
 
   var options = this.loadPaths()
@@ -75,7 +73,7 @@ Server.prototype.start = function (done) {
   }
 
   // override configuration variables based on request's host header
-  app.use((req, res, next) => {
+  app.use(function virtualHosts (req, res, next) {
     var virtualHosts = config.get('virtualHosts')
 
     if (_.isEmpty(virtualHosts)) {
@@ -115,24 +113,6 @@ Server.prototype.start = function (done) {
 
       return next()
     })
-
-    // config.updateConfigDataForDomain(host).then(() => {
-
-    // options = this.loadPaths(config.get('paths'))
-    //
-    // options.host = req.headers.host
-
-    // this.loadApi(options, true, () => {
-    //   debug('config loaded for domain "%s"', req.headers.host)
-    // return next()
-    // })
-    // }).catch((err) => {
-    //   if (err) {
-    //     return next(err)
-    //   } else {
-    //     return next()
-    //   }
-    // })
   })
 
   if (config.get('logging.sentry.dsn') !== '') {
@@ -143,9 +123,11 @@ Server.prototype.start = function (done) {
 
   // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
+    var domain = config.get('rewrites.forceDomain')
+
     app.use(
       forceDomain({
-        hostname: config.get('rewrites.forceDomain'),
+        hostname: domain,
         port: 80
       })
     )
@@ -155,58 +137,16 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.setUpRequest())
   app.use(apiMiddleware.transportSecurity())
 
-  // add gzip compression
-  if (config.get('headers.useGzipCompression')) {
-    app.use(compress())
+  // set up cache
+  this.cacheLayer = cache(this)
+
+  // initialise the cache
+  this.cacheLayer.init()
+
+  // init main public path for static files
+  if (options.publicPath) {
+    app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
   }
-
-  // serve static files (css,js,fonts)
-  if (options.mediaPath) {
-    app.use(serveStatic(options.mediaPath, { index: false }))
-  }
-
-  // serve static files from "public" folders
-  var initPublic = function (app, hosts, publicPath) {
-    // favicon middleware
-    app.use((req, res, next) => {
-      // attempts to serve a favicon if the current host header matches
-      // one of the host names specified when this middleware was added to the stack
-      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-        try {
-          var fn = serveFavicon(
-            (publicPath || path.join(__dirname, '/../../public')) +
-              '/favicon.ico'
-          )
-          fn(req, res, next)
-        } catch (err) {
-          // no favicon found
-          next()
-        }
-      } else {
-        next()
-      }
-    })
-
-    // static file middleware, for "public" folder
-    app.use((req, res, next) => {
-      var fn = serveStatic(publicPath, {
-        index: false,
-        maxAge: '1d',
-        setHeaders: setCustomCacheControl
-      })
-
-      // attempts to serve a static file if the current host header matches
-      // one of the host names specified when this middleware was added to the stack
-      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-        fn(req, res, next)
-      } else {
-        next()
-      }
-    })
-  }
-
-  // init main public path
-  if (options.publicPath) initPublic(app, [], options.publicPath)
 
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -219,17 +159,23 @@ Server.prototype.start = function (done) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
       var hostOptions = this.loadPaths(hostConfig.paths)
 
-      initPublic(app, virtualHost.hostnames, hostOptions.publicPath)
+      app.use(
+        servePublic.middleware(
+          hostOptions.publicPath,
+          this.cacheLayer,
+          virtualHost.hostnames
+        )
+      )
     }
   })
 
   // add debug files to static paths
   if (config.get('debug')) {
     app.use(
-      serveStatic(
+      servePublic.middleware(
         options.workspacePath + '/debug' ||
           path.join(__dirname, '/../../workspace/debug'),
-        { index: false }
+        this.cacheLayer
       )
     )
   }
@@ -265,19 +211,13 @@ Server.prototype.start = function (done) {
     app.use(session(sessionOptions))
   }
 
-  // set up cache
-  var cacheLayer = cache(self)
-
   // handle routing & redirects
-  router(self, options)
+  router(this, options)
 
   if (config.get('api.enabled')) {
     // authentication layer
-    auth(self)
+    auth(this)
   }
-
-  // initialise the cache
-  cacheLayer.init()
 
   // start listening
   var server = (this.server = app.listen())
@@ -325,12 +265,7 @@ Server.prototype.start = function (done) {
 
   // initialise virtualDirectories for serving static content
   _.each(config.get('virtualDirectories'), function (directory) {
-    app.use(
-      serveStatic(path.resolve(directory.path), {
-        index: directory.index,
-        redirect: directory.forceTrailingSlash
-      })
-    )
+    app.use(servePublic.middleware(path.resolve(directory.path)))
   })
 
   // dust configuration
@@ -345,19 +280,28 @@ Server.prototype.start = function (done) {
     // do something when app is closing
     process.on(
       'exit',
-      this.exitHandler.bind(null, { server: this, cleanup: true })
+      this.exitHandler.bind(null, {
+        server: this,
+        cleanup: true
+      })
     )
 
     // catches ctrl+c event
     process.on(
       'SIGINT',
-      this.exitHandler.bind(null, { server: this, exit: true })
+      this.exitHandler.bind(null, {
+        server: this,
+        exit: true
+      })
     )
 
     // catches uncaught exceptions
     process.on(
       'uncaughtException',
-      this.exitHandler.bind(null, { server: this, exit: true })
+      this.exitHandler.bind(null, {
+        server: this,
+        exit: true
+      })
     )
   }
 
@@ -385,14 +329,6 @@ Server.prototype.exitHandler = function (options, err) {
     log.info({ module: 'server' }, 'Server stopped, process exiting.')
     process.exit()
   }
-}
-
-function setCustomCacheControl (res, path) {
-  _.each(config.get('headers.cacheControl'), (value, key) => {
-    if (serveStatic.mime.lookup(path) === key && value !== '') {
-      res.setHeader('Cache-Control', value)
-    }
-  })
 }
 
 // this is mostly needed for tests
@@ -434,7 +370,6 @@ Server.prototype.loadPaths = function (paths) {
   options.eventPath = path.resolve(paths.events)
   options.filtersPath = path.resolve(paths.filters)
   options.helpersPath = path.resolve(paths.helpers)
-  options.mediaPath = path.resolve(paths.media)
   options.middlewarePath = path.resolve(paths.middleware)
   options.pagePath = path.resolve(paths.pages)
   options.partialPaths = this.resolvePaths(paths.partials)
@@ -456,8 +391,8 @@ Server.prototype.loadApi = function (options, reload, callback) {
         help.validateRequestMethod(req, res, 'POST') &&
         help.validateRequestCredentials(req, res)
       ) {
-        return help.clearCache(req, err => {
-          help.sendBackJSON(200, res, next)(err, {
+        return help.clearCache(req, this.cacheLayer, err => {
+          Send.json(200, res, next)(err, {
             result: 'success',
             message: 'Succeed to clear'
           })
@@ -620,7 +555,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
   var page = Page(obj.name, schema, options.host)
 
   // create a handler for requests to this page
-  var controller = new Controller(page, options, schema.page)
+  var controller = new Controller(page, options, schema.page, this.cacheLayer)
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods
@@ -685,7 +620,7 @@ Server.prototype.addComponent = function (options, reload) {
               if (next) {
                 return next()
               } else {
-                return help.sendBackJSON(404, res, next)(
+                return Send.json(404, res, next)(
                   null,
                   require(options.filepath)
                 )
@@ -696,10 +631,7 @@ Server.prototype.addComponent = function (options, reload) {
           if (next) {
             return next()
           } else {
-            return help.sendBackJSON(404, res, next)(
-              null,
-              require(options.filepath)
-            )
+            return Send.json(404, res, next)(null, require(options.filepath))
           }
         }
       })

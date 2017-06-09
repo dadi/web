@@ -549,7 +549,9 @@ describe("Router", function(done) {
       })
     })
 
-    it("should proxy the request if rewrite rule specifies", function(done) {
+    it.skip("should proxy the request if rewrite rule specifies", function(
+      done
+    ) {
       TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {

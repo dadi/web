@@ -15,25 +15,28 @@ var log = require('@dadi/logger')
 var Datasource = require(path.join(__dirname, '/../datasource'))
 var Event = require(path.join(__dirname, '/../event'))
 var View = require(path.join(__dirname, '/../view'))
-
-// helpers
-var sendBackHTML = help.sendBackHTML
-var sendBackJSON = help.sendBackJSON
+var Send = require(path.join(__dirname, '/../view/send'))
+var servePublic = require(path.join(__dirname, '/../view/public'))
+var Cache = require(path.join(__dirname, '/../cache'))
 
 /**
  *
  */
-var Controller = function (page, options, meta) {
+var Controller = function (page, options, meta, cache) {
   if (!page) throw new Error('Page instance required')
 
   this.page = page
 
   this.options = options || {}
   this.meta = meta || {}
+  this.cacheLayer = Cache(cache)
 
   this.datasources = {}
   this.events = []
   this.preloadEvents = []
+  this.pushManifest = config
+    .get('globalPushManifest')
+    .concat(this.page.pushManifest) || []
 
   this.attachDatasources(err => {
     if (err) {
@@ -168,25 +171,26 @@ Controller.prototype.process = function process (req, res, next) {
   debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
-  var done
-
   var statusCode = res.statusCode || 200
-
   var data = this.buildInitialViewData(req)
-
   var view = new View(req.url, this.page, data.json)
 
-  if (data.json) {
-    done = sendBackJSON(statusCode, res, next)
-  } else {
-    done = sendBackHTML(
-      req.method,
-      statusCode,
-      this.page.contentType,
+  // Push http2 assets
+  if (!data.json && config.get('server.protocol') === 'https' && res.push) {
+    servePublic.process(
+      req,
       res,
-      next
+      next,
+      this.pushManifest,
+      this.options.publicPath,
+      false,
+      this.cacheLayer
     )
   }
+
+  var done = data.json
+    ? Send.json(statusCode, res, next)
+    : Send.html(res, req, next, statusCode, this.page.contentType)
 
   this.loadData(req, res, data, (err, data, dsResponse) => {
     // return 404 if requiredDatasources contain no data
@@ -203,7 +207,7 @@ Controller.prototype.process = function process (req, res, next) {
     // not just the data, send the whole response back
     if (dsResponse) {
       if (dsResponse.statusCode === 202) {
-        done = sendBackJSON(dsResponse.statusCode, res, next)
+        done = Send.json(dsResponse.statusCode, res, next)
         return done(null, data)
       }
     }

@@ -74,6 +74,11 @@ var conf = convict({
       format: Array,
       default: [],
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
+    },
+    http2: {
+      doc: 'Use http2 if server.protocol is https.',
+      format: Boolean,
+      default: false
     }
   },
   api: {
@@ -276,7 +281,12 @@ var conf = convict({
   },
   headers: {
     useGzipCompression: {
-      doc: "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
+      doc: 'Depricated: use `useCompression` instead.',
+      format: Boolean,
+      default: true
+    },
+    useCompression: {
+      doc: "If true, uses br or gzip compression where available and adds a 'Content-Encoding: [br|gzip]' header to the response.",
       format: Boolean,
       default: true
     },
@@ -284,9 +294,12 @@ var conf = convict({
       doc: "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
       format: Object,
       default: {
+        'image/png': 'public, max-age=86400',
+        'image/jpeg': 'public, max-age=86400',
         'text/css': 'public, max-age=86400',
         'text/javascript': 'public, max-age=86400',
-        'application/javascript': 'public, max-age=86400'
+        'application/javascript': 'public, max-age=86400',
+        'image/x-icon': 'public, max-age=31536000000'
       }
     }
   },
@@ -354,7 +367,6 @@ var conf = convict({
       events: path.join(__dirname, '/workspace/events'),
       filters: path.join(__dirname, '/workspace/utils/filters'),
       helpers: path.join(__dirname, '/workspace/utils/helpers'),
-      media: path.join(__dirname, '/workspace/media'),
       middleware: path.join(__dirname, '/workspace/middleware'),
       pages: path.join(__dirname, '/workspace/pages'),
       partials: path.join(__dirname, '/workspace/partials'),
@@ -517,6 +529,11 @@ var conf = convict({
       format: Array,
       default: []
     }
+  },
+  globalPushManifest: {
+    doc: 'A list of assets to push when server.http2 is true and server.protocol is https.',
+    format: Array,
+    default: []
   }
 })
 

@@ -34,7 +34,7 @@ var compileTrust = function (val) {
 }
 
 middleware.handleHostHeader = function () {
-  return function (req, res, next) {
+  return function hostHeaderCheck (req, res, next) {
     if (!req.headers.host || req.headers.host === '') {
       res.statusCode = 400
       return res.end()
@@ -45,7 +45,7 @@ middleware.handleHostHeader = function () {
 }
 
 middleware.setUpRequest = function () {
-  return function (req, res, next) {
+  return function populateRequest (req, res, next) {
     Object.defineProperty(req, 'protocol', {
       get: function () {
         var protocol = config.get('server.protocol')
@@ -138,7 +138,7 @@ middleware.transportSecurity = function () {
     log.info('Transport security is not enabled.')
   }
 
-  return function (req, res, next) {
+  return function protocolRedirect (req, res, next) {
     if (securityEnabled() && !req.secure) {
       log.info('Redirecting insecure request for', req.url)
       redirect(req, res, HTTPS)

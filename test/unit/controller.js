@@ -38,7 +38,7 @@ describe("Controller", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client.get("/not-a-page").expect(404).end(function(err, res) {
+        client.get("/not-a-page").expect(404).end((err, res) => {
           if (err) return done(err)
           res.text.should.eql("Page Not Found Template")
           done()
@@ -47,9 +47,7 @@ describe("Controller", function(done) {
     })
   })
 
-  it("should return a 404 if a page's requiredDatasources are not populated", function(
-    done
-  ) {
+  it("should return a 404 if requiredDatasources are not populated", done => {
     TestHelper.disableApiConfig().then(() => {
       var pages = TestHelper.setUpPages()
       pages[0].settings.cache = false
@@ -78,22 +76,33 @@ describe("Controller", function(done) {
     done
   ) {
     TestHelper.disableApiConfig().then(() => {
-      var pages = TestHelper.setUpPages()
-      pages[0].datasources = ["categories"]
-      pages[0].requiredDatasources = ["categories"]
+      TestHelper.updateConfig({
+        allowJsonView: true
+      }).then(() => {
+        var pages = TestHelper.setUpPages()
+        pages[0].datasources = ["categories"]
+        pages[0].requiredDatasources = ["categories"]
 
-      TestHelper.startServer(pages).then(() => {
-        // provide API response
-        var results = { categories: { results: [{ _id: 1, title: "books" }] } }
-        sinon
-          .stub(Controller.Controller.prototype, "loadData")
-          .yields(null, results)
+        TestHelper.startServer(pages).then(() => {
+          // provide API response
+          var results = {
+            categories: { results: [{ _id: 1, title: "books" }] }
+          }
+          sinon
+            .stub(Controller.Controller.prototype, "loadData")
+            .yields(null, results)
 
-        var client = request(connectionString)
-        client.get(pages[0].routes[0].path).expect(200).end(function(err, res) {
-          if (err) return done(err)
-          Controller.Controller.prototype.loadData.restore()
-          done()
+          var client = request(connectionString)
+          client
+            .get(pages[0].routes[0].path + "?json=true")
+            .expect(200)
+            .end((err, res) => {
+              if (err) return done(err)
+              should.exist(res.body.categories)
+              res.body.categories.results.length.should.be.above(0)
+              Controller.Controller.prototype.loadData.restore()
+              done()
+            })
         })
       })
     })

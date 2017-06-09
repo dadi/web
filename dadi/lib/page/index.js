@@ -20,6 +20,7 @@ var Page = function (name, schema, hostKey) {
   this.events = schema.events || []
   this.preloadEvents = schema.preloadEvents || []
   this.requiredDatasources = schema.requiredDatasources || []
+  this.pushManifest = schema.pushManifest || []
 
   this.settings = schema.settings
   this.beautify = this.settings.hasOwnProperty('beautify')
