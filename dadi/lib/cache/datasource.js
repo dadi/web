@@ -162,18 +162,12 @@ DatasourceCache.prototype.cacheResponse = function (datasource, data, done) {
   })
 }
 
-var instance
-
 module.exports = function () {
-  if (!instance) {
-    instance = new DatasourceCache()
-  }
-
-  return instance
+  return new DatasourceCache()
 }
 
 module.exports._reset = function () {
-  instance = null
+
 }
 
 module.exports.DatasourceCache = DatasourceCache
