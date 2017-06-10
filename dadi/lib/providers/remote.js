@@ -15,6 +15,8 @@ const BearerAuthStrategy = require(path.join(__dirname, '/../auth/bearer'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const RemoteProvider = function () {
+  this.dataCache = DatasourceCache()
+
   RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) + 1
   console.log('RemoteProvider:', RemoteProvider.numInstances)
 }
@@ -181,7 +183,6 @@ RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
  */
 RemoteProvider.prototype.load = function (requestUrl, done) {
   this.requestUrl = requestUrl
-  this.dataCache = DatasourceCache()
 
   this.options = {
     protocol: this.datasource.source.protocol || config.get('api.protocol'),
