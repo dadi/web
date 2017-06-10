@@ -88,12 +88,24 @@ DatasourceCache.prototype.getFilename = function (datasource) {
 DatasourceCache.prototype.getOptions = function (datasource) {
   var options = datasource.schema.datasource.caching || {}
 
-  options = _.extend(this.cacheOptions, options)
+  options = Object.assign({}, options, this.cacheOptions)
+  //options = _.extend(this.cacheOptions, options)
 
-  if (!options.directory || s.isBlank(options.directory.path)) {
+  if (!options.directory) {
     options.directory = {
       path: config.get('caching.directory.path')
     }
+  } else {
+    if (s.isBlank(options.directory.path)) {
+      options.directory.path = config.get('caching.directory.path')
+    }
+  }
+
+  // update ttl if it's been explicitly set in the datasource
+  if (datasource.schema.datasource.caching &&
+    datasource.schema.datasource.caching.ttl &&
+    datasource.schema.datasource.caching.ttl !== options.ttl) {
+    options.ttl = datasource.schema.datasource.caching.ttl
   }
 
   options.directory.extension = 'json'
