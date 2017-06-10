@@ -4,6 +4,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [1.10.0] - 2017-02-25
+
+## Added
+
+* [#117](https://github.com/dadi/web/issues/117): allow an array of partial paths
+* add metadata for pagination ([e34be99](https://github.com/dadi/web/commit/e34be99))
+* add pagination to Markdown provider ([09618e7](https://github.com/dadi/web/commit/09618e7))
+* add transportSecurity configuration option ([03fd4e8](https://github.com/dadi/web/commit/03fd4e8))
+* API connection disabled by default ([1199527](https://github.com/dadi/web/commit/1199527))
+* start in cluster mode by default ([5987dd2](https://github.com/dadi/web/commit/5987dd2))
+
+## Changed
+
+* [#123](https://github.com/dadi/web/issues/123): xxx
+* [#110](https://github.com/dadi/web/issues/110): filter hidden files for xx
+* use debug statements instead of log statements ([e425040](https://github.com/dadi/web/commit/e425040))
+* implement transportSecurity properly ([f18764c](https://github.com/dadi/web/commit/f18764c))
+* pass authstrategy to Bearer module ([3a6bacc](https://github.com/dadi/web/commit/3a6bacc))
+* rebuild chained datasource endpoints after applying results from chainee
+
+## 1.9.0 - [2017-02-13]
+
+### Added
+
+* start in cluster mode by default ([5987dd2d](https://github.com/dadi/web/commit/5987dd2d))
+* allow array of partial paths ([bbb226d9](https://github.com/dadi/web/commit/bbb226d9))
+* add debug statements instead of log statements ([e4250401](https://github.com/dadi/web/commit/e4250401))
+
+## [1.8.1] - 2017-02-03
+
+## Changed
+
+* pass authstrategy to Bearer module ([3a6baccc](https://github.com/dadi/web/commit/3a6baccc))
+
+## [1.8.0] - 2017-01-23
+
+## Added
+
+* add example https config file ([d069b2b](https://github.com/dadi/web/commit/d069b2b))
+* add http/http+https/https support ([05cee15](https://github.com/dadi/web/commit/05cee15))
+* add markdown provider ([71070a0](https://github.com/dadi/web/commit/71070a0))
+* add search/filter/sort/count/fields methods ([a8e88ce](https://github.com/dadi/web/commit/a8e88ce))
+
+## Changed
+
+* allow a 404 route to skip validation ([9ba36b6](https://github.com/dadi/web/commit/9ba36b6))
+* extend ds cache options using main config options ([c0e9a12](https://github.com/dadi/web/commit/c0e9a12))
+* make hard-coded protocol redirect dynamic ([52f7fe8](https://github.com/dadi/web/commit/52f7fe8))
+* make tests run cross platform ([2f3f708](https://github.com/dadi/web/commit/2f3f708))
+* redirect http to https with 301 instead of 302 ([ae6c13a](https://github.com/dadi/web/commit/ae6c13a))
+* remove call to hasOwnProperty for node >= 6 ([cfa48ad](https://github.com/dadi/web/commit/cfa48ad))
+
 ## [1.7.3] - 2017-01-11
 
 ### Changed
@@ -155,6 +207,23 @@ In 1.7.0 this has changed. If you want your datasources to be cached differently
   }
 }
 ```
+
+## [1.6.14] - 2016-11-02
+### Added
+- export the main application instance, so client apps can access the running server
+```
+var app = require('@dadi/web').App
+```
+
+## [1.6.13] - 2016-10-21
+### Changed
+- remove log rotation option from log modules (these have been removed already from @dadi/logger, however Web 1.6 hasn't yet been modified to use the external library)
+- when passing request headers from the page to the datasources, strip unnecessary headers
+
+## [1.6.12] - 2016-10-11
+### Added
+- retry strategy for Redis Cluster connections
+- documentation for Redis Cluster hosts
 
 ## [1.6.0] - 2016-06-08
 

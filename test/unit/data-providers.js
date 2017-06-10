@@ -50,7 +50,7 @@ describe('Data Providers', function (done) {
           var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
           var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
 
-          var stub = sinon.stub(Bearer.BearerAuthStrategy.prototype, 'getToken', function(strategy, callback) {
+          var stub = sinon.stub(Bearer.BearerAuthStrategy.prototype, 'getToken').callsFake(function(strategy, callback) {
             should.exist(strategy.config)
             should.exist(strategy.config)
             strategy.config.host.should.eql('127.0.0.1')

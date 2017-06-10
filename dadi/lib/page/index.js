@@ -24,6 +24,7 @@ var Page = function (name, schema) {
   this.beautify = this.settings.hasOwnProperty('beautify') ? this.settings.beautify : false
   this.keepWhitespace = getWhitespaceSetting(this.settings)
   this.passFilters = this.settings.hasOwnProperty('passFilters') ? this.settings.passFilters : false
+  this.passHeaders = this.settings.hasOwnProperty('passHeaders') ? this.settings.passHeaders : false
 
   checkCacheSetting(schema, this.name)
   checkRouteSetting(schema, this.name)

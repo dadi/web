@@ -1,6 +1,11 @@
 var path = require('path')
 var should = require('should')
+
 var sinon = require('sinon')
+var sinonTest = require('sinon-test')
+
+sinon.test = sinonTest.configureTest(sinon)
+sinon.testCase = sinonTest.configureTestCase(sinon)
 
 var api = require(__dirname + '/../../dadi/lib/api')
 var Server = require(__dirname + '/../../dadi/lib')

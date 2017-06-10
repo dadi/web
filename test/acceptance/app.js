@@ -70,6 +70,9 @@ describe('Application', function () {
       var apiHost = 'http://' + config.get('api.host') + ':' + config.get('api.port')
       var client = request(clientHost)
 
+      console.log(apiHost)
+      console.log(nock.pendingMocks())
+
       var endpoint1 = '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D'
       var scope2 = nock(apiHost)
         .get(endpoint1)

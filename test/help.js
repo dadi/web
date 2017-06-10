@@ -4,7 +4,7 @@ var fs = require('fs')
 var http = require('http')
 var nock = require('nock')
 var path = require('path')
-var uuid = require('node-uuid')
+var uuid = require('uuid')
 
 var api = require(__dirname + '/../dadi/lib/api')
 var Server = require(__dirname + '/../dadi/lib')

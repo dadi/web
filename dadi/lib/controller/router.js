@@ -314,6 +314,7 @@ module.exports = function (server, options) {
     // determine if we need to even call
     server.app.use(function (req, res, next) {
       this.shouldCall = rewriteFunction.call(server.app.Router, req, res, next)
+      if (!this.shouldCall) return res.end()
       if (!res.finished) next()
     })
 

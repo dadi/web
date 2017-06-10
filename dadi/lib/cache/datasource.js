@@ -20,6 +20,9 @@ var DatasourceCache = function () {
   this.cache = Cache().cache
   this.cacheOptions = config.get('caching')
 
+  DatasourceCache.numInstances = (DatasourceCache.numInstances || 0) + 1
+  console.log('DatasourceCache:', DatasourceCache.numInstances)
+
   var directoryEnabled = this.cacheOptions.directory.enabled
   var redisEnabled = this.cacheOptions.redis.enabled
 
@@ -50,6 +53,8 @@ DatasourceCache.prototype.cachingEnabled = function (datasource) {
   }
 
   var options = this.getOptions(datasource)
+
+  debug('options (%s): %o', datasource.name, options)
 
   // enabled if the datasource caching block says it's enabled
   return enabled && (options.directory.enabled || options.redis.enabled)

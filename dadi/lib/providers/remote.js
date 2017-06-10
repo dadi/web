@@ -14,7 +14,10 @@ const help = require(path.join(__dirname, '/../help'))
 const BearerAuthStrategy = require(path.join(__dirname, '/../auth/bearer'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
-const RemoteProvider = function () {}
+const RemoteProvider = function () {
+  RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) + 1
+  console.log('RemoteProvider:', RemoteProvider.numInstances)
+}
 
 /**
  * initialise - initialises the datasource provider
@@ -56,8 +59,20 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint () {
  * @return {void}
  */
 RemoteProvider.prototype.getHeaders = function getHeaders (done) {
-  const headers = {
+  var headers = {
     'accept-encoding': 'gzip'
+  }
+
+  if (this.datasource.requestHeaders) {
+    delete this.datasource.requestHeaders['host']
+    delete this.datasource.requestHeaders['content-length']
+    delete this.datasource.requestHeaders['accept']
+
+    if (this.datasource.requestHeaders['content-type'] !== 'application/json') {
+      this.datasource.requestHeaders['content-type'] = 'application/json'
+    }
+
+    headers = _.extend(headers, this.datasource.requestHeaders)
   }
 
   // If the data-source has its own auth strategy, use it.
@@ -189,7 +204,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 
       this.options = _.extend(this.options, headers)
 
-      log.info({module: 'helper'}, "GET datasource '" + this.datasource.schema.datasource.key + "': " + this.options.path)
+      log.info({module: 'remote'}, "GET datasource '" + this.datasource.schema.datasource.key + "': " + this.options.path)
 
       const agent = (this.options.protocol === 'https') ? https : http
       let request = agent.request(this.options, (res) => {
@@ -290,7 +305,7 @@ RemoteProvider.prototype.processOutput = function processOutput (res, data, done
     err.remoteIp = this.options.host
     err.remotePort = this.options.port
 
-    log.error({module: 'helper'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint)
+    log.error({module: 'remote'}, res.statusMessage + ' (' + res.statusCode + ')' + ': ' + this.endpoint)
 
     console.log(err)
     // return done(err)
@@ -300,11 +315,11 @@ RemoteProvider.prototype.processOutput = function processOutput (res, data, done
   // Cache 200 responses
   if (res.statusCode === 200) {
     this.dataCache.cacheResponse(this.datasource, data, () => {
-      //
+      return done(null, data)
     })
+  } else {
+    return done(null, data)
   }
-
-  return done(null, data)
 }
 
 /**
