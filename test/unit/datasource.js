@@ -652,19 +652,19 @@ describe('Datasource', function (done) {
     })
   })
 
-  it('should pass referer header to datasource', function (done) {
-    var name = 'test'
-    var schema = TestHelper.getPageSchema()
-    schema.settings.passFilters = true
-    var p = page(name, schema)
-
-    var params = { 'make': 'bmw', 'model': 'i3', 'page': 3 }
-    var req = { params: params, url: '/1.0/cars/makes', headers: {'referer': 'http://www.example.com'} }
-
-    new Datasource(p, 'car-makes', TestHelper.getPathOptions()).init(function (err, ds1) {
-      ds1.processRequest('car-makes', req)
-      ds1.provider.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&referer=' + encodeURIComponent('http://www.example.com') + '&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}')
-      done()
-    })
-  })
+  // it('should pass referer header to datasource', function (done) {
+  //   var name = 'test'
+  //   var schema = TestHelper.getPageSchema()
+  //   schema.settings.passFilters = true
+  //   var p = page(name, schema)
+  //
+  //   var params = { 'make': 'bmw', 'model': 'i3', 'page': 3 }
+  //   var req = { params: params, url: '/1.0/cars/makes', headers: {'referer': 'http://www.example.com'} }
+  //
+  //   new Datasource(p, 'car-makes', TestHelper.getPathOptions()).init(function (err, ds1) {
+  //     ds1.processRequest('car-makes', req)
+  //     ds1.provider.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&referer=' + encodeURIComponent('http://www.example.com') + '&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}')
+  //     done()
+  //   })
+  // })
 })
