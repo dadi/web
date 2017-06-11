@@ -235,7 +235,8 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
  */
 RemoteProvider.prototype.processDatasourceParameters = function processDatasourceParameters (schema, uri) {
   debug('processDatasourceParameters %s', uri)
-  let query = '?'
+
+  let query = (uri.indexOf('?') > 0) ? '&' : '?'
 
   const params = [
     { 'count': (schema.datasource.count || 0) },

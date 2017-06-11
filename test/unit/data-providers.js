@@ -111,6 +111,44 @@ describe('Data Providers', function (done) {
       })
     })
 
+    it('should return append query params if endpoint already has a querystring', function (done) {
+      TestHelper.enableApiConfig().then(() => {
+        var pages = TestHelper.setUpPages()
+        pages[0].datasources = ['car-makes-with-query']
+
+        TestHelper.setupApiIntercepts()
+
+        var data = { 'hello': 'world' }
+
+        var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
+        var apiConnectionString = 'http://' + config.get('api.host') + ':' + config.get('api.port')
+
+        var expected = apiConnectionString + '/1.0/cars/makes?param=value&count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+
+        var scope = nock(apiConnectionString)
+        .get('/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false')
+        .times(5)
+        .reply(200, data)
+
+        var providerSpy = sinon.spy(remoteProvider.prototype, 'processDatasourceParameters')
+
+        TestHelper.startServer(pages).then(() => {
+          var client = request(connectionString)
+
+          client
+          .get(pages[0].routes[0].path + '?cache=false')
+          .end((err, res) => {
+            providerSpy.restore()
+            providerSpy.called.should.eql(true)
+
+            providerSpy.firstCall.returnValue.should.eql(expected)
+
+            done()
+          })
+        })
+      })
+    })
+
     it('should return an errors collection when a datasource times out', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({'allowJsonView': true}).then(() => {
