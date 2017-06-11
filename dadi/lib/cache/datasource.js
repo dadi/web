@@ -4,13 +4,13 @@
 var _ = require('underscore')
 var crypto = require('crypto')
 var debug = require('debug')('web:datasource-cache')
+var merge = require('deepmerge')
 var path = require('path')
 var s = require('underscore.string')
 var url = require('url')
 
 var Cache = require(path.join(__dirname, '/index.js'))
 var config = require(path.join(__dirname, '/../../../config.js'))
-// var log = require('@dadi/logger')
 
 /**
  * Creates a new DatasourceCache singleton for caching datasource results
@@ -21,7 +21,7 @@ var DatasourceCache = function () {
   this.cacheOptions = config.get('caching')
 
   DatasourceCache.numInstances = (DatasourceCache.numInstances || 0) + 1
-  console.log('DatasourceCache:', DatasourceCache.numInstances)
+  // console.log('DatasourceCache:', DatasourceCache.numInstances)
 
   var directoryEnabled = this.cacheOptions.directory.enabled
   var redisEnabled = this.cacheOptions.redis.enabled
@@ -86,27 +86,7 @@ DatasourceCache.prototype.getFilename = function (datasource) {
  * @returns {object} options for the cache
  */
 DatasourceCache.prototype.getOptions = function (datasource) {
-  var options = datasource.schema.datasource.caching || {}
-
-  options = Object.assign({}, options, this.cacheOptions)
-  //options = _.extend(this.cacheOptions, options)
-
-  if (!options.directory) {
-    options.directory = {
-      path: config.get('caching.directory.path')
-    }
-  } else {
-    if (s.isBlank(options.directory.path)) {
-      options.directory.path = config.get('caching.directory.path')
-    }
-  }
-
-  // update ttl if it's been explicitly set in the datasource
-  if (datasource.schema.datasource.caching &&
-    datasource.schema.datasource.caching.ttl &&
-    datasource.schema.datasource.caching.ttl !== options.ttl) {
-    options.ttl = datasource.schema.datasource.caching.ttl
-  }
+  var options = merge(this.cacheOptions, datasource.schema.datasource.caching || {})
 
   options.directory.extension = 'json'
 
@@ -150,15 +130,19 @@ DatasourceCache.prototype.getFromCache = function (datasource, done) {
  *
  */
 DatasourceCache.prototype.cacheResponse = function (datasource, data, done) {
-  debug('write to cache (%s)', datasource.name)
+  var enabled = this.cachingEnabled(datasource)
 
-  if (!this.cachingEnabled(datasource)) return
+  if (!enabled) {
+    return done(false)
+  }
+
+  debug('write to cache (%s)', datasource.name)
 
   var filename = this.getFilename(datasource)
   var options = this.getOptions(datasource)
 
   this.cache.set(filename, data, options).then(() => {
-    done()
+    return done(true)
   })
 }
 
