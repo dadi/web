@@ -21,7 +21,7 @@ var Cache = function (server) {
   this.cache = new DadiCache(config.get('caching'))
 
   Cache.numInstances = (Cache.numInstances || 0) + 1
-  console.log('Cache:', Cache.numInstances)
+  // console.log('Cache:', Cache.numInstances)
 
   var directoryEnabled = config.get('caching.directory.enabled')
   var redisEnabled = config.get('caching.redis.enabled')

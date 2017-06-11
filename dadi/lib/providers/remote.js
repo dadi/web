@@ -18,7 +18,7 @@ const RemoteProvider = function () {
   this.dataCache = DatasourceCache()
 
   RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) + 1
-  console.log('RemoteProvider:', RemoteProvider.numInstances)
+  // console.log('RemoteProvider:', RemoteProvider.numInstances)
 }
 
 /**
@@ -315,7 +315,7 @@ RemoteProvider.prototype.processOutput = function processOutput (res, data, done
 
   // Cache 200 responses
   if (res.statusCode === 200) {
-    this.dataCache.cacheResponse(this.datasource, data, () => {
+    this.dataCache.cacheResponse(this.datasource, data, written => {
       return done(null, data)
     })
   } else {

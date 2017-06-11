@@ -20,7 +20,7 @@ var Datasource = function (page, datasource, options) {
   this.options = options || {}
 
   Datasource.numInstances = (Datasource.numInstances || 0) + 1
-  console.log('Datasource:', Datasource.numInstances, datasource)
+  // console.log('Datasource:', Datasource.numInstances, datasource)
 }
 
 Datasource.prototype.init = function (callback) {
