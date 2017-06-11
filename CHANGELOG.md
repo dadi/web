@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [1.10.6] - 2017-06-11
+
+
+# [1.10.5] - 2017-04-10
+Use full array of paths to resolve component, not just first index
+Add requestParams to datasource endpoint
+fix: leave url params unmodified when lowercasing urls
+
+# [1.10.4] - 2017-03-07
+fix: attach compression middleware prior to static middleware
+The following vulnerabilities are fixed with an upgrade:
+    - https://snyk.io/vuln/npm:qs:20170213
+
+# [1.10.3] - 2017-03-05
+
+now uses single cache instance for pages & datasources, passing override options if necessary
+fix: set ds cache files to use json extension
+
 # [1.10.0] - 2017-02-25
 
 ## Added

@@ -1,12 +1,10 @@
 /**
  * @module Cache
  */
-var _ = require('underscore')
 var crypto = require('crypto')
 var debug = require('debug')('web:datasource-cache')
 var merge = require('deepmerge')
 var path = require('path')
-var s = require('underscore.string')
 var url = require('url')
 
 var Cache = require(path.join(__dirname, '/index.js'))
