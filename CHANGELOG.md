@@ -6,21 +6,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 # [1.10.6] - 2017-06-11
 
+## Added
+* datasource endpoints can now start with querystring parameters, additional parameters will be added to the end rather than replacing what is there
+
+## Changed
+* revert back to individual cache instances for pages & datasources
+* fix: allow datasource cache options to override main cache options
 
 # [1.10.5] - 2017-04-10
-Use full array of paths to resolve component, not just first index
-Add requestParams to datasource endpoint
-fix: leave url params unmodified when lowercasing urls
+
+## Changed
+* fix: use full array of paths to resolve component for cache, not just the first index
+* fix: leave URL querystring params unmodified when lowercasing URLs
 
 # [1.10.4] - 2017-03-07
-fix: attach compression middleware prior to static middleware
-The following vulnerabilities are fixed with an upgrade:
-    - https://snyk.io/vuln/npm:qs:20170213
+
+## Changed
+* fix: attach compression middleware prior to static middleware
+* fix: the following vulnerabilities fixed
+  - https://snyk.io/vuln/npm:qs:20170213
 
 # [1.10.3] - 2017-03-05
 
-now uses single cache instance for pages & datasources, passing override options if necessary
-fix: set ds cache files to use json extension
+## Changed
+* use a single cache instance for pages & datasources, passing override options if necessary
+* fix: set datasource cache files to use json extension
 
 # [1.10.0] - 2017-02-25
 
