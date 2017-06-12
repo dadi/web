@@ -211,8 +211,7 @@ Router.prototype.validate = function (route, req, res) {
             return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in array "' + param.in + '"')
           }
         } else if (param.fetch) {
-          var routeValidator = new RouteValidator(route, param, this.options)
-          routeValidator.get(req).then(() => {
+          RouteValidator().get(route, param, this.options, req).then(() => {
             return resolve('')
           }).catch((err) => {
             return reject('Parameter "' + param.param + '=' + req.params[param.param] + '" not found in datasource "' + param.fetch + '". ' + err)
@@ -314,6 +313,7 @@ module.exports = function (server, options) {
     // determine if we need to even call
     server.app.use(function (req, res, next) {
       this.shouldCall = rewriteFunction.call(server.app.Router, req, res, next)
+      if (!this.shouldCall) return res.end()
       if (!res.finished) next()
     })
 

@@ -26,6 +26,9 @@ var sendBackJSON = help.sendBackJSON
 var Controller = function (page, options, meta) {
   if (!page) throw new Error('Page instance required')
 
+  Controller.numInstances = (Controller.numInstances || 0) + 1
+  // console.log('Controller:', Controller.numInstances)
+
   this.page = page
 
   this.options = options || {}
