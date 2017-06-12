@@ -1,6 +1,6 @@
 {
   "name": "@dadi/web",
-  "version": "1.10.6",
+  "version": "1.11.0",
   "description": "Web frontend and template layer for @dadi/api",
   "main": "main.js",
   "scripts": {
