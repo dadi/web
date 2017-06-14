@@ -344,6 +344,7 @@ Controller.prototype.loadData = function (req, res, data, done) {
             try {
               data[ds.schema.datasource.key] = (typeof result === 'object' ? result : JSON.parse(result))
             } catch (e) {
+              console.log('Provider Load Error:', ds.name, ds.provider.endpoint)
               console.log(e)
             }
           }

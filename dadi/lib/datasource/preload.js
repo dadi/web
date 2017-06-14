@@ -21,8 +21,13 @@ Preload.prototype.init = function (options) {
       datasource.provider.load(null, (err, result) => {
         if (err) console.log(err)
         if (result) {
-          var results = (typeof result === 'object' ? result : JSON.parse(result))
-          this.data[source] = results.results ? results.results : results
+          try {
+            var results = (typeof result === 'object' ? result : JSON.parse(result))
+            this.data[source] = results.results ? results.results : results
+          } catch (e) {
+            console.log('Preload Load Error:', datasource.name, datasource.provider.endpoint)
+            console.log(e)
+          }
         }
       })
     })

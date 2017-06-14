@@ -25,10 +25,18 @@ RouteValidator.prototype.get = function (route, param, options, req) {
       if (err) return reject(err)
 
       if (result) {
-        var results = (typeof result === 'object' ? result : JSON.parse(result))
-        if (results.results && results.results.length > 0) {
-          return resolve('')
-        } else {
+        try {
+          var results = (typeof result === 'object' ? result : JSON.parse(result))
+
+          if (results.results && results.results.length > 0) {
+            return resolve('')
+          } else {
+            return reject('')
+          }
+        } catch (e) {
+          console.log('RouteValidator Load Error:', datasource.name, datasource.provider.endpoint)
+          console.log(e)
+
           return reject('')
         }
       }
