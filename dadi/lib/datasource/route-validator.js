@@ -1,5 +1,6 @@
 var path = require('path')
 var Datasource = require(path.join(__dirname, '/../datasource'))
+var Providers = require(path.join(__dirname, '/../providers'))
 
 var RouteValidator = function () {
   this.validationDatasources = {}
@@ -19,14 +20,21 @@ RouteValidator.prototype.get = function (route, param, options, req) {
       })
     }
 
-    datasource.processRequest(route.path, req)
+    var requestUrl = datasource.processRequest(route.path, req)
 
-    return datasource.provider.load(null, (err, result) => {
+    datasource.provider = new Providers[datasource.source.type]()
+    datasource.provider.initialise(datasource, datasource.schema)
+
+    return datasource.provider.load(requestUrl, (err, data) => {
       if (err) return reject(err)
 
-      if (result) {
+      datasource.provider.destroy()
+      datasource.provider = null
+
+      // TODO: simplify this, doesn't require a try/catch
+      if (data) {
         try {
-          var results = (typeof result === 'object' ? result : JSON.parse(result))
+          var results = data // JSON.parse(data.toString())
 
           if (results.results && results.results.length > 0) {
             return resolve('')
@@ -34,7 +42,7 @@ RouteValidator.prototype.get = function (route, param, options, req) {
             return reject('')
           }
         } catch (e) {
-          console.log('RouteValidator Load Error:', datasource.name, datasource.provider.endpoint)
+          console.log('RouteValidator Load Error:', datasource.name, requestUrl)
           console.log(e)
 
           return reject('')

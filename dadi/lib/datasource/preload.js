@@ -3,6 +3,7 @@ var path = require('path')
 
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
 var Datasource = require(path.join(__dirname, '/../datasource'))
+var Providers = require(path.join(__dirname, '/../providers'))
 
 var Preload = function () {
   this.data = {}
@@ -18,14 +19,24 @@ Preload.prototype.init = function (options) {
         return
       }
 
-      datasource.provider.load(null, (err, result) => {
+      var requestUrl = datasource.processRequest('preload', req)
+
+      datasource.provider = new Providers[datasource.source.type]()
+      datasource.provider.initialise(datasource, datasource.schema)
+
+      datasource.provider.load(requestUrl, (err, data) => {
         if (err) console.log(err)
-        if (result) {
+
+        datasource.provider.destroy()
+        datasource.provider = null
+
+        // TODO: simplify this, doesn't require a try/catch
+        if (data) {
           try {
-            var results = (typeof result === 'object' ? result : JSON.parse(result))
+            var results = data
             this.data[source] = results.results ? results.results : results
           } catch (e) {
-            console.log('Preload Load Error:', datasource.name, datasource.provider.endpoint)
+            console.log('Preload Load Error:', datasource.name, requestUrl)
             console.log(e)
           }
         }

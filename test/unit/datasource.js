@@ -178,7 +178,8 @@ describe('Datasource', function (done) {
     var dsName = 'car-makes'
 
     new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
-      ds.provider.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}')
+      console.log(ds)
+      ds.processRequest(dsName).should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}')
       done()
     })
   })
@@ -193,8 +194,8 @@ describe('Datasource', function (done) {
 
     new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
       ds.schema.datasource.skip = 5
-      ds.processRequest(dsName, req)
-      ds.provider.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&skip=5&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}')
+      var u = ds.processRequest(dsName, req)
+      u.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&skip=5&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}')
       done()
     })
   })
@@ -205,7 +206,9 @@ describe('Datasource', function (done) {
     var dsName = 'car-makes'
 
     new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
-      ds.provider.endpoint.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}')
+      console.log(ds)
+      var u = ds.processRequest(dsName, {})
+      u.should.eql('http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}')
       done()
     })
   })
