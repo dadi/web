@@ -30,7 +30,7 @@ RouteValidator.prototype.get = function (route, param, options, req) {
     return datasource.provider.load(req.url, (err, data) => {
       if (err) return reject(err)
 
-      if (datasource.provider.destroy) {
+      if (datasource.provider && datasource.provider.destroy) {
         datasource.provider.destroy()
       }
 
