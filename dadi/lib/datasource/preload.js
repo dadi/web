@@ -41,7 +41,7 @@ Preload.prototype.init = function (options) {
             var results = data
             this.data[source] = results.results ? results.results : results
           } catch (e) {
-            console.log('Preload Load Error:', datasource.name, requestUrl)
+            console.log('Preload Load Error:', datasource.name)
             console.log(e)
           }
         }

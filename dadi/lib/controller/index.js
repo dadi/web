@@ -361,7 +361,7 @@ Controller.prototype.loadData = function (req, res, data, done) {
             try {
               data[ds.schema.datasource.key] = result
             } catch (e) {
-              console.log('Provider Load Error:', ds.name, requestUrl)
+              console.log('Provider Load Error:', ds.name, req.url)
               console.log(e)
             }
           }

@@ -47,7 +47,7 @@ RouteValidator.prototype.get = function (route, param, options, req) {
             return reject('')
           }
         } catch (e) {
-          console.log('RouteValidator Load Error:', datasource.name, requestUrl)
+          console.log('RouteValidator Load Error:', datasource.name, req.url)
           console.log(e)
 
           return reject('')

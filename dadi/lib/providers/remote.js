@@ -21,7 +21,7 @@ const RemoteProvider = function () {
   // console.log('RemoteProvider:', RemoteProvider.numInstances)
 }
 
-RemoteProvider.prototype.destroy = function() {
+RemoteProvider.prototype.destroy = function () {
   RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) - 1
 }
 

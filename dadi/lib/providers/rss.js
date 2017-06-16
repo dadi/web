@@ -84,7 +84,7 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
           cachedData = JSON.parse(cachedData.toString())
           return done(null, cachedData)
         } catch (err) {
-          log.error('RSS: cache data incomplete, making HTTP request: ' + err + '(' + cacheOptions.cacheKey + ')')
+          console.error('RSS: cache data incomplete, making HTTP request: ' + err + '(' + cacheOptions.cacheKey + ')')
         }
       }
 

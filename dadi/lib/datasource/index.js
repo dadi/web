@@ -98,9 +98,9 @@ Datasource.prototype.loadDatasource = function (done) {
  * @param  {IncomingMessage} req - the original HTTP request
  */
 Datasource.prototype.processRequest = function (datasource, req) {
-  //console.log('> DS PROCESS REQUEST')
-  //console.log(this.schema.datasource.filter)
-  //this.schema.datasource.filter = this.originalFilter
+  // console.log('> DS PROCESS REQUEST')
+  // console.log(this.schema.datasource.filter)
+  // this.schema.datasource.filter = this.originalFilter
   // var filter = this.originalFilter || {}
 
   var datasourceParams = _.clone(this.schema.datasource)
@@ -124,7 +124,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
   if (this.page.passHeaders) {
     this.requestHeaders = req.headers
   }
-
 
   // if the current datasource matches the page name
   // add some params from the query string or request params
@@ -158,7 +157,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
     // URI encode each querystring value
     _.each(query, (value, key) => {
       if (key === 'filter') {
-        //_.extend(this.schema.datasource.filter, JSON.parse(value))
+        // _.extend(this.schema.datasource.filter, JSON.parse(value))
         datasourceParams.filter = _.extend(datasourceParams.filter, JSON.parse(value))
       }
     })

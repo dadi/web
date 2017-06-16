@@ -80,7 +80,6 @@ Router.prototype.loadRewrites = function (options, done) {
         // Get redirects from API collection
         var freshRules = []
         ds.provider.load(null, function (err, response) {
-
           if (err) {
             console.log('Error loading data in Router Rewrite module')
             console.log(err)

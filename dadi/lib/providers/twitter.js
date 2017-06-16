@@ -71,7 +71,7 @@ TwitterProvider.prototype.load = function load (requestUrl, done) {
           cachedData = JSON.parse(cachedData.toString())
           return done(null, cachedData)
         } catch (err) {
-          log.error('Twitter: cache data incomplete, making HTTP request: ' + err + '(' + cacheOptions.cacheKey + ')')
+          console.error('Twitter: cache data incomplete, making HTTP request: ' + err + '(' + cacheOptions.cacheKey + ')')
         }
       }
 
