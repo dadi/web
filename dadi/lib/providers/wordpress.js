@@ -161,7 +161,8 @@ WordPressProvider.prototype.processOutput = function processOutput (res, data, d
  * @return {void}
  */
 WordPressProvider.prototype.processRequest = function processRequest (req) {
-  return this.buildEndpoint(req)
+  // return this.buildEndpoint(req)
+  this.buildEndpoint(req)
 }
 
 /**

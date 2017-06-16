@@ -50,7 +50,7 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint (datasourceParam
   }
 
   const apiConfig = config.get('api')
-  const source = datasourceParams.source
+  const source = datasourceParams.source || this.datasource.source
 
   const protocol = source.protocol || 'http'
   const host = source.host || apiConfig.host
@@ -59,7 +59,8 @@ RemoteProvider.prototype.buildEndpoint = function buildEndpoint (datasourceParam
   const uri = [protocol, '://', host, (port !== '' ? ':' : ''),
     port, '/', this.datasource.source.modifiedEndpoint || source.endpoint].join('')
 
-  return this.processDatasourceParameters(datasourceParams, uri)
+  // return this.processDatasourceParameters(datasourceParams, uri)
+  this.endpoint = this.processDatasourceParameters(datasourceParams, uri)
 }
 
 /**
@@ -73,8 +74,8 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
     protocol: this.datasource.source.protocol || config.get('api.protocol'),
     host: this.datasource.source.host || config.get('api.host'),
     port: this.datasource.source.port || config.get('api.port'),
-    // path: url.parse(this.endpoint).path,
-    path: url.parse(requestUrl).path,
+    path: url.parse(this.endpoint).path,
+    // path: url.parse(requestUrl).path,
     method: 'GET'
   }
 
@@ -84,7 +85,8 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
   var cacheOptions = {
     name: this.datasource.name,
     caching: this.schema.datasource.caching,
-    endpoint: requestUrl // this.endpoint
+    // endpoint: requestUrl
+    endpoint: this.endpoint
   }
 
   this.dataCache.getFromCache(cacheOptions, (cachedData) => {
@@ -99,25 +101,28 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
       }
     }
 
-    debug('load %s', requestUrl)
+    // debug('load %s', requestUrl)
+    debug('load %s', this.endpoint)
 
     this.getHeaders((err, headers) => {
       err && done(err)
 
       this.options = _.extend(this.options, headers)
 
-      log.info({module: 'remote'}, 'GET datasource "' + this.datasource.schema.datasource.key + '": ' + decodeURIComponent(requestUrl))
+      log.info({module: 'remote'}, 'GET datasource "' + this.datasource.schema.datasource.key + '": ' + decodeURIComponent(this.endpoint))
 
       const agent = (this.options.protocol === 'https') ? https : http
 
       let request = agent.request(this.options)
 
       request.on('response', (res) => {
-        this.handleResponse(requestUrl, res, done)
+        // this.handleResponse(requestUrl, res, done)
+        this.handleResponse(this.endpoint, res, done)
       })
 
       request.on('error', (err) => {
-        const message = err.toString() + ". Couldn't request data from " + requestUrl
+        // const message = err.toString() + ". Couldn't request data from " + requestUrl
+        const message = err.toString() + ". Couldn't request data from " + this.endpoint
 
         err.name = 'GetData'
         err.message = message
@@ -235,7 +240,8 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
         {module: 'remote'},
         'GOT datasource "' +
         this.datasource.schema.datasource.key +
-        '": ' + decodeURIComponent(requestUrl) +
+        '": ' + decodeURIComponent(this.endpoint) +
+        // '": ' + decodeURIComponent(requestUrl) +
         ' (HTTP 200, ' +
         require('humanize-plus').fileSize(Buffer.byteLength(data)) + ')'
       )
@@ -246,7 +252,8 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
       var cacheOptions = {
         name: this.datasource.name,
         caching: this.schema.datasource.caching,
-        endpoint: requestUrl // this.endpoint
+        // endpoint: requestUrl
+        endpoint: this.endpoint
       }
 
       this.dataCache.cacheResponse(cacheOptions, data, written => {
@@ -274,7 +281,8 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
  * @param  {http.IncomingMessage} req - the full HTTP request object
  */
 RemoteProvider.prototype.processRequest = function (datasourceParams) {
-  return this.buildEndpoint(datasourceParams)
+  // return this.buildEndpoint(datasourceParams)
+  this.buildEndpoint(datasourceParams)
 }
 
 /**

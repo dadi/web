@@ -87,12 +87,11 @@ Router.prototype.loadRewrites = function (options, done) {
             return cb(null)
           }
 
-          if (response) {
-            response = JSON.parse(response)
-          }
+          // if (response) {
+          //   response = JSON.parse(response)
+          // }
 
           if (response.results) {
-            // api.in(self.rewritesDatasource).find().then(function (response)
             var idx = 0
 
             _.each(response.results, function (rule) {
@@ -343,7 +342,8 @@ module.exports = function (server, options) {
           }
 
           if (data) {
-            var results = JSON.parse(data.toString())
+            // var results = JSON.parse(data.toString())
+            var results = data
 
             if (results && results.results && results.results.length > 0 && results.results[0].rule === req.url) {
               var rule = results.results[0]

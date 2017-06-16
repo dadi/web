@@ -19,15 +19,20 @@ Preload.prototype.init = function (options) {
         return
       }
 
-      var requestUrl = datasource.processRequest('preload', req)
-
       datasource.provider = new Providers[datasource.source.type]()
       datasource.provider.initialise(datasource, datasource.schema)
 
-      datasource.provider.load(requestUrl, (err, data) => {
+      // var requestUrl = datasource.processRequest('preload', req)
+      // datasource.processRequest('preload', null)
+
+      // datasource.provider.load(requestUrl, (err, data) => {
+      datasource.provider.load(null, (err, data) => {
         if (err) console.log(err)
 
-        datasource.provider.destroy()
+        if (datasource.provider.destroy) {
+          datasource.provider.destroy()
+        }
+
         datasource.provider = null
 
         // TODO: simplify this, doesn't require a try/catch

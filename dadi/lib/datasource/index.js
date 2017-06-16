@@ -106,8 +106,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
   var datasourceParams = _.clone(this.schema.datasource)
   datasourceParams.filter = this.originalFilter || {}
 
-  //console.log(datasourceParams)
-
   var query = JSON.parse(JSON.stringify(url.parse(req.url, true).query))
 
   // handle the cache flag
@@ -126,6 +124,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   if (this.page.passHeaders) {
     this.requestHeaders = req.headers
   }
+
 
   // if the current datasource matches the page name
   // add some params from the query string or request params
@@ -225,9 +224,11 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   if (typeof this.provider.processRequest === 'function') {
     if (this.provider.hasOwnProperty('processSchemaParams') && this.provider.processSchemaParams === false) {
-      return this.provider.processRequest(req)
+      // return this.provider.processRequest(req)
+      this.provider.processRequest(req)
     } else {
-      return this.provider.processRequest(datasourceParams)
+      // return this.provider.processRequest(datasourceParams)
+      this.provider.processRequest(datasourceParams)
     }
   }
 }

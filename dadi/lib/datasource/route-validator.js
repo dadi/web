@@ -20,15 +20,20 @@ RouteValidator.prototype.get = function (route, param, options, req) {
       })
     }
 
-    var requestUrl = datasource.processRequest(route.path, req)
-
     datasource.provider = new Providers[datasource.source.type]()
     datasource.provider.initialise(datasource, datasource.schema)
 
-    return datasource.provider.load(requestUrl, (err, data) => {
+    // var requestUrl = datasource.processRequest(route.path, req)
+    datasource.processRequest(route.path, req)
+
+    // return datasource.provider.load(requestUrl, (err, data) => {
+    return datasource.provider.load(req.url, (err, data) => {
       if (err) return reject(err)
 
-      datasource.provider.destroy()
+      if (datasource.provider.destroy) {
+        datasource.provider.destroy()
+      }
+
       datasource.provider = null
 
       // TODO: simplify this, doesn't require a try/catch

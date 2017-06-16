@@ -334,14 +334,16 @@ Controller.prototype.loadData = function (req, res, data, done) {
         ds.provider = new Providers[ds.source.type]()
         ds.provider.initialise(ds, ds.schema)
 
-        var requestUrl = processSearchParameters(ds.schema.datasource.key, ds, req)
+        // var requestUrl = processSearchParameters(ds.schema.datasource.key, ds, req)
+        processSearchParameters(ds.schema.datasource.key, ds, req)
 
         /**
          * Call the data provider's load method to obtain data
          * for this datasource
          * @returns err, {Object} result, {Object} dsResponse
          */
-        ds.provider.load(requestUrl, function (err, result, dsResponse) {
+        // ds.provider.load(requestUrl, function (err, result, dsResponse) {
+        ds.provider.load(req.url, function (err, result, dsResponse) {
           help.timer.stop('datasource: ' + ds.name)
 
           if (ds.provider.destroy) {
@@ -478,11 +480,14 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
     chainedDatasource.provider = new Providers[chainedDatasource.source.type]()
     chainedDatasource.provider.initialise(chainedDatasource, chainedDatasource.schema)
 
-    var requestUrl = chainedDatasource.provider.buildEndpoint(chainedDatasource.schema.datasource)
+    // var requestUrl = chainedDatasource.provider.buildEndpoint(chainedDatasource.schema.datasource)
+    chainedDatasource.provider.buildEndpoint(chainedDatasource.schema.datasource)
 
-    debug('datasource (load): %s %s', chainedDatasource.name, requestUrl)
+    // debug('datasource (load): %s %s', chainedDatasource.name, requestUrl)
+    debug('datasource (load): %s %s', chainedDatasource.name, chainedDatasource.provider.endpoint)
 
-    chainedDatasource.provider.load(requestUrl, (err, chainedData) => {
+    // chainedDatasource.provider.load(requestUrl, (err, chainedData) => {
+    chainedDatasource.provider.load(req.url, (err, chainedData) => {
       if (err) log.error({module: 'controller'}, err)
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)')
@@ -508,7 +513,8 @@ Controller.prototype.processChained = function (chainedDatasources, data, req, d
 function processSearchParameters (key, datasource, req) {
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
-  return datasource.processRequest(key, req)
+  // return datasource.processRequest(key, req)
+  datasource.processRequest(key, req)
 }
 
 module.exports = function (page, options, meta) {
