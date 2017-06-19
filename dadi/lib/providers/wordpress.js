@@ -20,6 +20,7 @@ WordPressProvider.prototype.initialise = function initialise (datasource, schema
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
+  this.processSchemaParams = false
   this.wordpressApi = new Purest({
     provider: 'wordpress',
     version: 'v1.1'
@@ -32,7 +33,7 @@ WordPressProvider.prototype.initialise = function initialise (datasource, schema
  * @param  {obj} req - web request object
  * @return {void}
  */
-WordPressProvider.prototype.buildEndpoint = function buildEndpoint (req) {
+WordPressProvider.prototype.buildEndpoint = function (req) {
   const endpointParams = this.schema.datasource.endpointParams || []
   const endpoint = this.schema.datasource.source.endpoint
 
@@ -80,15 +81,28 @@ WordPressProvider.prototype.buildQueryParams = function buildQueryParams () {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-WordPressProvider.prototype.load = function load (requestUrl, done) {
+WordPressProvider.prototype.load = function (requestUrl, done) {
   try {
     const queryParams = this.buildQueryParams()
 
     this.cacheKey = [this.endpoint, encodeURIComponent(JSON.stringify(this.schema.datasource))].join('+')
-    this.dataCache = DatasourceCache()
+    this.dataCache = new DatasourceCache()
 
-    this.dataCache.getFromCache(this.datasource, (cachedData) => {
-      if (cachedData) return done(null, cachedData)
+    var cacheOptions = {
+      name: this.datasource.name,
+      caching: this.schema.datasource.caching,
+      cacheKey: this.cacheKey
+    }
+
+    this.dataCache.getFromCache(cacheOptions, (cachedData) => {
+      if (cachedData) {
+        try {
+          cachedData = JSON.parse(cachedData.toString())
+          return done(null, cachedData)
+        } catch (err) {
+          log.error('Wordpress: cache data incomplete, making HTTP request: ' + err + '(' + cacheOptions.cacheKey + ')')
+        }
+      }
 
       this.wordpressApi.query()
         .select(this.endpoint)
@@ -125,8 +139,14 @@ WordPressProvider.prototype.processOutput = function processOutput (res, data, d
     return done(err)
   }
 
+  var cacheOptions = {
+    name: this.datasource.name,
+    caching: this.schema.datasource.caching,
+    cacheKey: this.cacheKey
+  }
+
   if (res.statusCode === 200) {
-    this.dataCache.cacheResponse(this.datasource, JSON.stringify(data), () => {
+    this.dataCache.cacheResponse(cacheOptions, JSON.stringify(data), () => {
       //
     })
   }
@@ -141,6 +161,7 @@ WordPressProvider.prototype.processOutput = function processOutput (res, data, d
  * @return {void}
  */
 WordPressProvider.prototype.processRequest = function processRequest (req) {
+  // return this.buildEndpoint(req)
   this.buildEndpoint(req)
 }
 

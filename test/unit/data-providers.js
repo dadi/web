@@ -102,7 +102,10 @@ describe('Data Providers', function (done) {
             .end((err, res) => {
               providerSpy.restore()
               providerSpy.called.should.eql(true)
-              providerSpy.firstCall.args[1].should.eql(text)
+
+              var buffer = providerSpy.firstCall.args[2]
+
+              buffer.toString().should.eql(text)
 
               done()
             })
@@ -602,7 +605,7 @@ describe('Data Providers', function (done) {
           TestHelper.startServer(pages).then(() => {
             var connectionString = 'http://' + config.get('server.host') + ':' + config.get('server.port')
             var client = request(connectionString)
-
+            console.log(pages[0].routes[0].path)
             client
             .get(pages[0].routes[0].path + '?json=true')
             .end((err, res) => {

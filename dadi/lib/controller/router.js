@@ -86,12 +86,11 @@ Router.prototype.loadRewrites = function (options, done) {
             return cb(null)
           }
 
-          if (response) {
-            response = JSON.parse(response)
-          }
+          // if (response) {
+          //   response = JSON.parse(response)
+          // }
 
           if (response.results) {
-            // api.in(self.rewritesDatasource).find().then(function (response)
             var idx = 0
 
             _.each(response.results, function (rule) {
@@ -335,14 +334,15 @@ module.exports = function (server, options) {
 
         ds.provider.processRequest(ds.page.name, req)
 
-        ds.provider.load(req.url, function (err, result) {
+        ds.provider.load(req.url, function (err, data) {
           if (err) {
             console.log('Error loading data in Router Rewrite module')
             return next(err)
           }
 
-          if (result) {
-            var results = (typeof result === 'object') ? result : JSON.parse(result)
+          if (data) {
+            // var results = JSON.parse(data.toString())
+            var results = data
 
             if (results && results.results && results.results.length > 0 && results.results[0].rule === req.url) {
               var rule = results.results[0]
