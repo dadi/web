@@ -9,8 +9,6 @@ var debug = require('debug')('web:timer')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
-var log = require('@dadi/logger')
-var mkdirp = require('mkdirp')
 var path = require('path')
 var perfy = require('perfy')
 
@@ -410,6 +408,7 @@ function readDirectory (directory, options) {
       files.forEach(file => {
         const absolutePath = path.join(directory, file)
         const stats = fs.statSync(absolutePath)
+
         const isValidExtension =
           !extensions || extensions.indexOf(path.extname(file)) !== -1
 
@@ -478,48 +477,3 @@ function readFiles (files, options) {
 }
 
 module.exports.readFiles = readFiles
-
-/**
-  * Writes a string to a file, creating any directories necessary.
-  *
-  * @param {string} filePath The full path to the file.
-  * @param {string} content The content to be written.
-  * @param {boolean} append Whether to append to a file if it already exists.
-  *
-  * @return {Promise} A Promise that resolves with the content written.
-  */
-function writeToFile (filePath, content, append) {
-  return new Promise((resolve, reject) => {
-    mkdirp(path.dirname(filePath), (err, made) => {
-      if (err) {
-        log.error(
-          { module: 'templates' },
-          { err: err },
-          "Error creating directory for file '%s'",
-          filePath
-        )
-
-        return reject(err)
-      }
-
-      const writeFunction = append ? fs.appendFile : fs.writeFile
-
-      writeFunction.call(this, filePath, content, err => {
-        if (err) {
-          log.error(
-            { module: 'templates' },
-            { err: err },
-            "Error writing to file '%s'",
-            filePath
-          )
-
-          return reject(err)
-        }
-
-        resolve(content)
-      })
-    })
-  })
-}
-
-module.exports.writeToFile = writeToFile
