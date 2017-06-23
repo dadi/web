@@ -6,54 +6,30 @@ var path = require("path")
 var should = require("should")
 var sinon = require("sinon")
 
-var api = require(__dirname + "/../../dadi/lib/api")
-var Server = require(__dirname + "/../../dadi/lib")
-var Page = require(__dirname + "/../../dadi/lib/page")
-var Controller = require(__dirname + "/../../dadi/lib/controller")
-var TestHelper = require(__dirname + "/../help")()
-var config = require(__dirname + "/../../config")
-var help = require(__dirname + "/../../dadi/lib/help")
-var remoteProvider = require(__dirname + "/../../dadi/lib/providers/remote")
-var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
-var Helper = require(__dirname + "/../../dadi/lib/help")
+var helpers = require(__dirname + "/../../dadi/lib/help")
 
-var connectionString =
-  "http://" + config.get("server.host") + ":" + config.get("server.port")
-
-describe("Help", done => {
-  beforeEach(done => {
-    TestHelper.resetConfig().then(() => {
-      TestHelper.disableApiConfig().then(() => {
-        done()
-      })
-    })
-  })
-
-  afterEach(done => {
-    TestHelper.stopServer(done)
-  })
-
+describe.only("Help", done => {
   describe("HtmlEncode", () => {
     it("should HTML encode the specified string", done => {
-      Helper.htmlEncode("\u00A0").should.eql("&#160;")
+      helpers.htmlEncode("\u00A0").should.eql("&#160;")
       done()
     })
   })
 
   describe("Timer", () => {
     it("should save and return stats", done => {
-      sinon.stub(Helper.timer, "isDebugEnabled", () => {
+      sinon.stub(helpers.timer, "isDebugEnabled", () => {
         return true
       })
 
       var key = "load"
 
-      Helper.timer.start(key)
-      Helper.timer.stop(key)
+      helpers.timer.start(key)
+      helpers.timer.stop(key)
 
-      var stats = Helper.timer.getStats()
+      var stats = helpers.timer.getStats()
 
-      Helper.timer.isDebugEnabled.restore()
+      helpers.timer.isDebugEnabled.restore()
 
       stats[0].key.should.eql(key)
       should.exist(stats[0].value)
@@ -61,7 +37,7 @@ describe("Help", done => {
     })
   })
 
-  describe.only("File system helpers", () => {
+  describe("File system helpers", () => {
     var mockStatSync = path => {
       return {
         isDirectory: () => path.indexOf(".") === -1,
@@ -78,14 +54,14 @@ describe("Help", done => {
 
         var mockReaddir = sinon.stub(fs, "readdir").yields(fsReadError)
 
-        Helper.readDirectory(directory, {}).then(response => {
+        helpers.readDirectory(directory, {}).then(response => {
           response.should.be.Array
           response.should.be.empty()
 
           done()
         })
 
-        mockReaddir.restore()
+        fs.readdir.restore()
       })
 
       it("throws an error if the directory is not found, or the read operation fails, and `failIfNotFound` is truthy", done => {
@@ -96,16 +72,18 @@ describe("Help", done => {
 
         var mockReaddir = sinon.stub(fs, "readdir").yields(fsReadError)
 
-        Helper.readDirectory(directory, {
-          failIfNotFound: true
-        }).catch(err => {
-          err.message.should.eql(fsReadError.message)
-          err.code.should.eql(fsReadError.code)
+        helpers
+          .readDirectory(directory, {
+            failIfNotFound: true
+          })
+          .catch(err => {
+            err.message.should.eql(fsReadError.message)
+            err.code.should.eql(fsReadError.code)
 
-          done()
-        })
+            done()
+          })
 
-        mockReaddir.restore()
+        fs.readdir.restore()
       })
 
       it("lists all files in a directory, returning a list of full paths", done => {
@@ -115,7 +93,7 @@ describe("Help", done => {
         var mockReaddir = sinon.stub(fs, "readdir").yields(null, files)
         var mockStat = sinon.stub(fs, "statSync", mockStatSync)
 
-        Helper.readDirectory(directory, {}).then(response => {
+        helpers.readDirectory(directory, {}).then(response => {
           response.should.deepEqual([
             path.join(directory, "file1.js"),
             path.join(directory, "file2.png")
@@ -125,8 +103,8 @@ describe("Help", done => {
           done()
         })
 
-        mockReaddir.restore()
-        mockStat.restore()
+        fs.readdir.restore()
+        fs.statSync.restore()
       })
 
       it("lists all files in a directory, filtered by extension, returning a list of full paths", done => {
@@ -142,20 +120,22 @@ describe("Help", done => {
         var mockReaddir = sinon.stub(fs, "readdir").yields(null, files)
         var mockStat = sinon.stub(fs, "statSync", mockStatSync)
 
-        Helper.readDirectory(directory, {
-          extensions: [".js", ".txt"]
-        }).then(response => {
-          response.should.deepEqual([
-            path.join(directory, "file1.js"),
-            path.join(directory, "file3.js"),
-            path.join(directory, "file4.txt")
-          ])
+        helpers
+          .readDirectory(directory, {
+            extensions: [".js", ".txt"]
+          })
+          .then(response => {
+            response.should.deepEqual([
+              path.join(directory, "file1.js"),
+              path.join(directory, "file3.js"),
+              path.join(directory, "file4.txt")
+            ])
 
-          done()
-        })
+            done()
+          })
 
-        mockReaddir.restore()
-        mockStat.restore()
+        fs.readdir.restore()
+        fs.statSync.restore()
       })
 
       it("lists all files in a directory and searches sub-directories recursively, returning a list of full paths", done => {
@@ -171,19 +151,22 @@ describe("Help", done => {
           .yields(null, filesLevel2)
         var mockStat = sinon.stub(fs, "statSync", mockStatSync)
 
-        Helper.readDirectory(directory, {
-          extensions: [".js"],
-          recursive: true
-        }).then(response => {
-          response.should.deepEqual([
-            path.join(directory, "file1.js"),
-            path.join(directory, "directory1", "file3.js")
-          ])
+        helpers
+          .readDirectory(directory, {
+            extensions: [".js"],
+            recursive: true
+          })
+          .then(response => {
+            response.should.deepEqual([
+              path.join(directory, "file1.js"),
+              path.join(directory, "directory1", "file3.js")
+            ])
 
-          done()
-        })
+            done()
+          })
 
-        mockStat.restore()
+        fs.readdir.restore()
+        fs.statSync.restore()
       })
     })
 
@@ -198,18 +181,20 @@ describe("Help", done => {
         var mockStat = sinon.stub(fs, "statSync", mockStatSync)
         var callbackFn = sinon.spy()
 
-        Helper.readFiles(files, {
-          callback: callbackFn
-        }).then(response => {
-          callbackFn.callCount.should.eql(3)
-          callbackFn.getCall(0).args[0].should.eql(files[1])
-          callbackFn.getCall(1).args[0].should.eql(files[2])
-          callbackFn.getCall(2).args[0].should.eql(files[3])
+        helpers
+          .readFiles(files, {
+            callback: callbackFn
+          })
+          .then(response => {
+            callbackFn.callCount.should.eql(3)
+            callbackFn.getCall(0).args[0].should.eql(files[1])
+            callbackFn.getCall(1).args[0].should.eql(files[2])
+            callbackFn.getCall(2).args[0].should.eql(files[3])
 
-          done()
-        })
+            done()
+          })
 
-        mockStat.restore()
+        fs.statSync.restore()
       })
 
       it("executes a callback for each file in a given list of full paths, filtered by extension, with the path as a parameter", done => {
@@ -222,29 +207,33 @@ describe("Help", done => {
         var mockStat = sinon.stub(fs, "statSync", mockStatSync)
         var callbackFn = sinon.spy()
 
-        Helper.readFiles(files, {
-          callback: callbackFn,
-          extensions: [".png"]
-        }).then(response => {
-          callbackFn.callCount.should.eql(1)
-          callbackFn.getCall(0).args[0].should.eql(files[3])
+        helpers
+          .readFiles(files, {
+            callback: callbackFn,
+            extensions: [".png"]
+          })
+          .then(response => {
+            callbackFn.callCount.should.eql(1)
+            callbackFn.getCall(0).args[0].should.eql(files[3])
 
-          done()
-        })
+            done()
+          })
 
-        mockStat.restore()
+        fs.statSync.restore()
       })
 
       it("rejects if the callback is missing or is invalid", done => {
         var files = ["some/directory/sub-directory1"]
 
-        Helper.readFiles(files, {
-          callback: "notAFunction"
-        }).catch(error1 => {
-          return Helper.readFiles(files, {}).catch(err => {
-            done()
+        helpers
+          .readFiles(files, {
+            callback: "notAFunction"
           })
-        })
+          .catch(error1 => {
+            return helpers.readFiles(files, {}).catch(err => {
+              done()
+            })
+          })
       })
     })
   })

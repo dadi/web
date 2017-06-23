@@ -1,86 +1,56 @@
 "use strict"
 
+const fs = require("fs")
 const path = require("path")
 const sinon = require("sinon")
 const should = require("should")
 
-const api = require(__dirname + "/../../dadi/lib/api")
-const Server = require(__dirname + "/../help").Server
+const helpers = require(__dirname + "/../../dadi/lib/help")
 const TemplateStore = require(__dirname + "/../../dadi/lib/templates/store")
   .TemplateStore
-const TestHelper = require(__dirname + "/../help")()
+const testHelpers = require(__dirname + "/../help")()
 
+let additionalFiles
+let directoryListing
 let config
+let pages
 let templateStore
 
-describe.only("Template store", function(done) {
-  beforeEach(done => {
-    TestHelper.resetConfig().then(newConfig => {
-      config = newConfig
+beforeEach(done => {
+  testHelpers.resetConfig().then(newConfig => {
+    config = newConfig
 
-      templateStore = new TemplateStore()
+    templateStore = new TemplateStore()
 
-      done()
-    })
-  })
+    directoryListing = [
+      path.resolve(config.get("paths.pages"), "page1.dust"),
+      path.resolve(config.get("paths.pages"), "page2.dust"),
+      path.resolve(config.get("paths.pages"), "sub-dir-1/page3.dust"),
+      path.resolve(config.get("paths.pages"), "partials/partial1.dust")
+    ]
 
-  it("should load template engines", done => {
-    templateStore.loadEngines([require("@dadi/web-dustjs")])
+    pages = [
+      {
+        engine: "dust",
+        file: directoryListing[0]
+      },
+      {
+        engine: "dust",
+        file: directoryListing[1]
+      },
+      {
+        engine: "dust",
+        file: directoryListing[2]
+      }
+    ]
 
-    templateStore.engines.dust.should.be.Object
-    templateStore.engines.dust.factory.should.be.Function
-    templateStore.engines.dust.started.should.eql(false)
-
-    done()
-  })
-
-  it("should load engine config block onto global config", done => {
-    templateStore.loadEngines([require("@dadi/web-dustjs")])
-
-    const engine = templateStore.engines.dust
-    const engineConfig = config.get("engines.dust")
-
-    engineConfig.should.be.Object
-
-    Object.keys(engine.factory.metadata.config).forEach(property => {
-      should.exist(engineConfig[property])
-    })
+    additionalFiles = [directoryListing[3]]
 
     done()
   })
+})
 
-  it("should start an engine when a template that requires it is loaded", done => {
-    templateStore.loadEngines([require("@dadi/web-dustjs")])
-
-    templateStore
-      .loadTemplate({
-        data: "",
-        extension: ".dust",
-        name: "fakeTemplate1",
-        namespace: undefined,
-        path: "/fake/path/fakeTemplate1.dust"
-      })
-      .then(loadedTemplate => {
-        templateStore.engines.dust.started.should.eql(true)
-
-        done()
-      })
-  })
-
-  it("should throw an error when loading a template with an extension that is not supported", () => {
-    templateStore.loadEngines([require("@dadi/web-dustjs")])
-
-    should.throws(() => {
-      templateStore.loadTemplate({
-        data: "",
-        extension: ".foo",
-        name: "fakeTemplate2",
-        namespace: undefined,
-        path: "/fake/path/fakeTemplate2.foo"
-      })
-    })
-  })
-
+describe("Template store", function(done) {
   describe("Validation", function(done) {
     it("throw if engine is missing a metadata block", done => {
       const fakeFactory = {}
@@ -329,6 +299,153 @@ describe.only("Template store", function(done) {
         .should.not.eql(-1)
 
       done()
+    })
+  })
+
+  describe("loadEngine", () => {
+    it("should load template engines", done => {
+      templateStore.loadEngines([require("@dadi/web-dustjs")])
+
+      templateStore.engines.dust.should.be.Object
+      templateStore.engines.dust.factory.should.be.Function
+      templateStore.engines.dust.started.should.eql(false)
+
+      done()
+    })
+
+    it("should load engine config block onto global config", done => {
+      templateStore.loadEngines([require("@dadi/web-dustjs")])
+
+      const engine = templateStore.engines.dust
+      const engineConfig = config.get("engines.dust")
+
+      engineConfig.should.be.Object
+
+      Object.keys(engine.factory.metadata.config).forEach(property => {
+        should.exist(engineConfig[property])
+      })
+
+      done()
+    })
+  })
+
+  describe("loadTemplate", () => {
+    it("should start an engine when a template that requires it is loaded", done => {
+      templateStore.loadEngines([require("@dadi/web-dustjs")])
+
+      templateStore
+        .loadTemplate({
+          data: "",
+          extension: ".dust",
+          name: "fakeTemplate1",
+          namespace: undefined,
+          path: "/fake/path/fakeTemplate1.dust"
+        })
+        .then(loadedTemplate => {
+          templateStore.engines.dust.started.should.eql(true)
+
+          done()
+        })
+    })
+
+    it("should throw an error when loading a template with an extension that is not supported", () => {
+      templateStore.loadEngines([require("@dadi/web-dustjs")])
+
+      should.throws(() => {
+        templateStore.loadTemplate({
+          data: "",
+          extension: ".foo",
+          name: "fakeTemplate2",
+          namespace: undefined,
+          path: "/fake/path/fakeTemplate2.foo"
+        })
+      })
+    })
+
+    it.only(
+      "should instantiate the engine and call its `initialise` and `register` methods",
+      done => {
+        var mockInitialiseFn = sinon.stub()
+        var mockRegisterFn = sinon.stub()
+
+        var fakeEngine = () => {
+          var Engine = function() {}
+
+          Engine.prototype.initialise = mockInitialiseFn
+          Engine.prototype.getCore = function() {}
+          Engine.prototype.getInfo = function() {}
+          Engine.prototype.register = mockRegisterFn
+          Engine.prototype.render = function() {}
+
+          return Engine
+        }
+
+        fakeEngine.metadata = {
+          extensions: [".dust"],
+          handle: "dust"
+        }
+
+        var templateData = {
+          data: "This is the content of the template",
+          extension: ".dust",
+          name: "fakeTemplate1",
+          namespace: undefined,
+          path: "/fake/path/fakeTemplate1.dust"
+        }
+
+        templateStore.loadEngines([fakeEngine])
+
+        templateStore
+          .loadTemplate(templateData)
+          .then(response => {
+            mockInitialiseFn.calledOnce.should.be.true()
+            mockRegisterFn.getCall(0).args[0].should.eql(templateData.name)
+            mockRegisterFn.getCall(0).args[1].should.eql(templateData.data)
+            mockRegisterFn.getCall(0).args[2].should.eql(templateData.path)
+
+            done()
+          })
+          .catch(err => {
+            console.log("** ERR:", err)
+          })
+      }
+    )
+  })
+
+  describe("loadPages", () => {
+    it("should all templates corresponding to the given pages, setting any remaining templates as additional templates", done => {
+      sinon.stub(helpers, "readDirectory", () => {
+        return Promise.resolve(directoryListing)
+      })
+
+      var mockReadFile = sinon
+        .stub(fs, "readFile")
+        .yields(null, "File contents")
+      sinon.stub(fs, "statSync", () => ({
+        isFile: () => true
+      }))
+
+      templateStore.loadEngines([require("@dadi/web-dustjs")])
+
+      templateStore.loadPages(pages, {}).then(response => {
+        pages.forEach((page, index) => {
+          mockReadFile.getCall(index).args[0].should.eql(page.file)
+        })
+
+        var expectedTemplatesLoaded = pages.map(page => {
+          var extension = path.extname(page.file)
+
+          return path
+            .relative(config.get("paths.pages"), page.file)
+            .replace(extension, "")
+        })
+
+        response.should.deepEqual(expectedTemplatesLoaded)
+
+        templateStore.additionalTemplates.should.deepEqual(additionalFiles)
+
+        done()
+      })
     })
   })
 })

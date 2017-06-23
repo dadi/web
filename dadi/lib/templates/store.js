@@ -215,7 +215,8 @@ TemplateStore.prototype.loadFiles = function (files, options) {
 /**
   * Loads page templates.
   *
-  * @param {array} files The absolute paths for the files to be loaded.
+  * @param {array} pages.engines An array containing the engine for a page
+  * @param {array} pages.file An array containing the full path for a page
   * @param {object} options Additional options.
   *
   * @return {Promise} A Promise resolving when all pages have been loaded.
@@ -254,6 +255,8 @@ TemplateStore.prototype.loadPages = function (pages, options) {
     })
     .then(loadedTemplates => {
       debug('Loaded templates: %o', loadedTemplates)
+
+      return loadedTemplates
     })
 }
 
