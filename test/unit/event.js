@@ -89,18 +89,23 @@ describe('Event', function (done) {
     })
   })
 
-  it('should throw errors when they occur in the attached event', function (done) {
+  it('should handle errors gracefully when they occur in the attached event', function (done) {
     var pageName = 'test'
     var eventName = 'test_event_error'
     var newEvent = e(pageName, eventName, { 'eventPath': path.join(__dirname, '../app/events') })
 
     var data = { test: true }
 
-    should.throws(function () {
-      newEvent.run({}, {}, data, function (err, result) {})
-    })
+    var req = {
+      url: '/test',
+      params: { one: 1 }
+    }
 
-    done()
+    newEvent.run(req, {}, data, function (err, result) {
+      should.not.exist(err)
+      should.not.exist(result)
+      done()
+    })
   })
 
   it('should load the referenced event file from the filesystem', function (done) {

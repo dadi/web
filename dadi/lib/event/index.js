@@ -29,13 +29,18 @@ Event.prototype.loadEvent = function () {
 }
 
 Event.prototype.run = function (req, res, data, done) {
-  this.loadEvent()(req, res, data, function (err, result) {
-    if (err) {
-      log.error({module: 'event'}, err)
-    }
+  try {
+    this.loadEvent()(req, res, data, (err, result) => {
+      if (err) {
+        log.error({module: 'event', event: this.name, page: this.page, url: req.url, params: req.params, options: this.options}, err)
+      }
 
-    return done(err, result)
-  })
+      return done(err, result)
+    })
+  } catch (err) {
+    log.error({module: 'event', event: this.name, page: this.page, url: req.url, params: req.params, options: this.options}, err)
+    return done(null, null)
+  }
 }
 
 module.exports = function (pageName, eventName, options) {
