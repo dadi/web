@@ -14,6 +14,7 @@ var log = require('@dadi/logger')
 
 var Datasource = require(path.join(__dirname, '/../datasource'))
 var Event = require(path.join(__dirname, '/../event'))
+var Providers = require(path.join(__dirname, '/../providers'))
 var View = require(path.join(__dirname, '/../view'))
 
 // helpers
@@ -25,6 +26,9 @@ var sendBackJSON = help.sendBackJSON
  */
 var Controller = function (page, options, meta) {
   if (!page) throw new Error('Page instance required')
+
+  Controller.numInstances = (Controller.numInstances || 0) + 1
+  // console.log('Controller:', Controller.numInstances)
 
   this.page = page
 
@@ -315,9 +319,9 @@ Controller.prototype.loadData = function (req, res, data, done) {
 
   _.each(self.datasources, function (ds, key) {
     if (ds.chained) {
-      chainedDatasources[key] = ds
+      chainedDatasources[key] = _.clone(ds)
     } else {
-      primaryDatasources[key] = ds
+      primaryDatasources[key] = _.clone(ds)
     }
   })
 
@@ -365,24 +369,39 @@ Controller.prototype.loadData = function (req, res, data, done) {
             })
           }
 
-          processSearchParameters(ds.schema.datasource.key, ds, req)
-
           help.timer.start('datasource: ' + ds.name)
 
+          ds.provider = new Providers[ds.source.type]()
+          ds.provider.initialise(ds, ds.schema)
+
+          // var requestUrl = processSearchParameters(ds.schema.datasource.key, ds, req)
+          processSearchParameters(ds.schema.datasource.key, ds, req)
+
+          /**
+         * Call the data provider's load method to obtain data
+         * for this datasource
+         * @returns err, {Object} result, {Object} dsResponse
+         */
+          // ds.provider.load(requestUrl, function (err, result, dsResponse) {
           ds.provider.load(req.url, (err, result, dsResponse) => {
-            help.timer.stop('datasource: ' + ds.name)
             if (err) return done(err)
 
-            if (dsResponse) {
-              return done(null, result, dsResponse)
+            help.timer.stop('datasource: ' + ds.name)
+
+            if (ds.provider.destroy) {
+              ds.provider.destroy()
             }
 
+            ds.provider = null
+
+            if (dsResponse) return done(null, result, dsResponse)
+
+            // TODO: simplify this, doesn't require a try/catch
             if (result) {
               try {
-                data[ds.schema.datasource.key] = typeof result === 'object'
-                  ? result
-                  : JSON.parse(result)
+                data[ds.schema.datasource.key] = result
               } catch (e) {
+                console.log('Provider Load Error:', ds.name, req.url)
                 console.log(e)
               }
             }
@@ -519,26 +538,34 @@ Controller.prototype.processChained = function (
       chainedDatasource.schema.datasource.filter = JSON.parse(filter)
     }
 
-    chainedDatasource.provider.buildEndpoint(
-      chainedDatasource.schema,
-      function () {}
+    chainedDatasource.provider = new Providers[chainedDatasource.source.type]()
+    chainedDatasource.provider.initialise(
+      chainedDatasource,
+      chainedDatasource.schema
     )
 
-    debug(
-      'datasource (load): %s %o',
-      chainedDatasource.name,
-      chainedDatasource.schema.datasource.filter
+    // var requestUrl = chainedDatasource.provider.buildEndpoint(chainedDatasource.schema.datasource)
+    chainedDatasource.provider.buildEndpoint(
+      chainedDatasource.schema.datasource
     )
-    chainedDatasource.provider.load(req.url, (err, result) => {
+
+    // debug('datasource (load): %s %s', chainedDatasource.name, requestUrl)
+    debug(
+      'datasource (load): %s %s',
+      chainedDatasource.name,
+      chainedDatasource.provider.endpoint
+    )
+
+    // chainedDatasource.provider.load(requestUrl, (err, chainedData) => {
+    chainedDatasource.provider.load(req.url, (err, chainedData) => {
       if (err) log.error({ module: 'controller' }, err)
 
       help.timer.stop('datasource: ' + chainedDatasource.name + ' (chained)')
 
-      if (result) {
+      // TODO: simplify this, doesn't require a try/catch
+      if (chainedData) {
         try {
-          data[chainedKey] = typeof result === 'object'
-            ? result
-            : JSON.parse(result)
+          data[chainedKey] = chainedData
         } catch (e) {
           log.error({ module: 'controller' }, e)
         }
@@ -556,6 +583,7 @@ Controller.prototype.processChained = function (
 function processSearchParameters (key, datasource, req) {
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
+  // return datasource.processRequest(key, req)
   datasource.processRequest(key, req)
 }
 

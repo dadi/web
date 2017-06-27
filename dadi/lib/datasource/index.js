@@ -18,6 +18,9 @@ var Datasource = function (page, datasource, options) {
   this.page = page
   this.name = datasource
   this.options = options || {}
+
+  Datasource.numInstances = (Datasource.numInstances || 0) + 1
+  // console.log('Datasource:', Datasource.numInstances, datasource)
 }
 
 Datasource.prototype.init = function (callback) {
@@ -106,19 +109,31 @@ Datasource.prototype.loadDatasource = function (done) {
  * @param  {IncomingMessage} req - the original HTTP request
  */
 Datasource.prototype.processRequest = function (datasource, req) {
-  this.schema.datasource.filter = this.originalFilter
+  // console.log('> DS PROCESS REQUEST')
+  // console.log(this.schema.datasource.filter)
+  // this.schema.datasource.filter = this.originalFilter
+  // var filter = this.originalFilter || {}
 
-  var query = url.parse(req.url, true).query
+  var datasourceParams = _.clone(this.schema.datasource)
+  datasourceParams.filter = this.originalFilter || {}
+
+  var query = JSON.parse(JSON.stringify(url.parse(req.url, true).query))
 
   // handle the cache flag
   if (query.cache && query.cache === 'false') {
-    this.schema.datasource.cache = false
+    // this.schema.datasource.cache = false
+    datasourceParams.cache = false
   } else {
-    delete this.schema.datasource.cache
+    // delete this.schema.datasource.cache
+    delete datasourceParams.cache
   }
 
-  if (req.headers && req.headers.referer) {
-    this.schema.datasource.referer = encodeURIComponent(req.headers.referer)
+  // if (req.headers && req.headers.referer) {
+  //   this.schema.datasource.referer = encodeURIComponent(req.headers.referer)
+  // }
+
+  if (this.page.passHeaders) {
+    this.requestHeaders = req.headers
   }
 
   // if the current datasource matches the page name
@@ -132,8 +147,15 @@ Datasource.prototype.processRequest = function (datasource, req) {
     })
 
     // handle pagination param
-    if (this.schema.datasource.paginate) {
-      this.schema.datasource.page =
+    // if (this.schema.datasource.paginate) {
+    //   this.schema.datasource.page = query.page ||
+    //     (requestParamsPage && req.params[requestParamsPage]) ||
+    //     req.params.page ||
+    //     1
+    // }
+
+    if (datasourceParams.paginate) {
+      datasourceParams.page =
         query.page ||
         (requestParamsPage && req.params[requestParamsPage]) ||
         req.params.page ||
@@ -150,16 +172,28 @@ Datasource.prototype.processRequest = function (datasource, req) {
     // URI encode each querystring value
     _.each(query, (value, key) => {
       if (key === 'filter') {
-        _.extend(this.schema.datasource.filter, JSON.parse(value))
+        // _.extend(this.schema.datasource.filter, JSON.parse(value))
+        datasourceParams.filter = _.extend(
+          datasourceParams.filter,
+          JSON.parse(value)
+        )
       }
     })
   }
 
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
-  var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gmi
+  var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gim
 
-  this.schema.datasource.filter = JSON.parse(
-    JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (
+  // this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (match, p1, p2, p3, p4, offset, string) {
+  //   if (req.params[p3]) {
+  //     return req.params[p3]
+  //   } else {
+  //     return match
+  //   }
+  // }))
+
+  datasourceParams.filter = JSON.parse(
+    JSON.stringify(datasourceParams.filter).replace(paramRule, function (
       match,
       p1,
       p2,
@@ -194,7 +228,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
         : encodeURIComponent(paramValue)
 
       if (obj.target === 'filter') {
-        this.schema.datasource.filter[obj.field] = paramValue
+        // this.schema.datasource.filter[obj.field] = paramValue
+        datasourceParams.filter[obj.field] = paramValue
       } else if (obj.target === 'endpoint') {
         var placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
         this.source.modifiedEndpoint = this.schema.datasource.source.endpoint.replace(
@@ -205,22 +240,35 @@ Datasource.prototype.processRequest = function (datasource, req) {
     } else {
       if (obj.target === 'filter') {
         // param not found in request, remove it from the datasource filter
-        if (this.schema.datasource.filter[obj.field]) {
-          delete this.schema.datasource.filter[obj.field]
+        // if (this.schema.datasource.filter[obj.field]) {
+        //   delete this.schema.datasource.filter[obj.field]
+        // }
+        if (datasourceParams.filter[obj.field]) {
+          delete datasourceParams.filter[obj.field]
         }
       }
     }
   })
 
   if (this.schema.datasource.filterEventResult) {
-    this.schema.datasource.filter = _.extend(
-      this.schema.datasource.filter,
+    // this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult)
+    datasourceParams.filter = _.extend(
+      datasourceParams.filter,
       this.schema.datasource.filterEventResult
     )
   }
 
   if (typeof this.provider.processRequest === 'function') {
-    this.provider.processRequest(req)
+    if (
+      this.provider.hasOwnProperty('processSchemaParams') &&
+      this.provider.processSchemaParams === false
+    ) {
+      // return this.provider.processRequest(req)
+      this.provider.processRequest(req)
+    } else {
+      // return this.provider.processRequest(datasourceParams)
+      this.provider.processRequest(datasourceParams)
+    }
   }
 }
 
