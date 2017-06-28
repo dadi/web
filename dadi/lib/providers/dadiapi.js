@@ -24,7 +24,7 @@ const DadiApiProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-DadiApiProvider.prototype.initialise = function initialise (datasource, schema) {
+DadiApiProvider.prototype.initialise = function (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
@@ -36,7 +36,7 @@ DadiApiProvider.prototype.initialise = function initialise (datasource, schema) 
  *
  * @return {void}
  */
-DadiApiProvider.prototype.buildEndpoint = function buildEndpoint () {
+DadiApiProvider.prototype.buildEndpoint = function () {
   const apiConfig = config.get('api')
   const source = this.schema.datasource.source
 
@@ -63,7 +63,7 @@ DadiApiProvider.prototype.buildEndpoint = function buildEndpoint () {
  * @param  {fn} done - callback
  * @return {void}
  */
-DadiApiProvider.prototype.getHeaders = function getHeaders (done) {
+DadiApiProvider.prototype.getHeaders = function (done) {
   const headers = {
     'accept-encoding': 'gzip'
   }
@@ -121,7 +121,7 @@ DadiApiProvider.prototype.getHeaders = function getHeaders (done) {
  * @param  {fn} done - callback
  * @return {void}
  */
-DadiApiProvider.prototype.handleResponse = function handleResponse (res, done) {
+DadiApiProvider.prototype.handleResponse = function (res, done) {
   const encoding = res.headers['content-encoding']
     ? res.headers['content-encoding']
     : ''
@@ -167,7 +167,7 @@ DadiApiProvider.prototype.handleResponse = function handleResponse (res, done) {
  * @param  {string} protocol
  * @return {module} http|https
  */
-DadiApiProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
+DadiApiProvider.prototype.keepAliveAgent = function (protocol) {
   return protocol === 'https'
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
@@ -242,10 +242,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
  * @param  {type} uri - the original datasource endpoint
  * @returns {string} uri with query string appended
  */
-DadiApiProvider.prototype.processDatasourceParameters = function processDatasourceParameters (
-  schema,
-  uri
-) {
+DadiApiProvider.prototype.processDatasourceParameters = function (schema, uri) {
   debug('processDatasourceParameters %s', uri)
   let query = '?'
 
@@ -288,11 +285,7 @@ DadiApiProvider.prototype.processDatasourceParameters = function processDatasour
  * @param  {fn} done
  * @return {void}
  */
-DadiApiProvider.prototype.processOutput = function processOutput (
-  res,
-  data,
-  done
-) {
+DadiApiProvider.prototype.processOutput = function (res, data, done) {
   // Return a 202 Accepted response immediately,
   // along with the datasource response
   if (res.statusCode === 202) {
@@ -363,7 +356,7 @@ DadiApiProvider.prototype.processOutput = function processOutput (
  * @param  {obj} req - web request object
  * @return {void}
  */
-DadiApiProvider.prototype.processRequest = function processRequest (req) {
+DadiApiProvider.prototype.processRequest = function (req) {
   this.buildEndpoint()
 }
 
@@ -373,9 +366,7 @@ DadiApiProvider.prototype.processRequest = function processRequest (req) {
  * @param  {?} obj - sort parameter
  * @return {?}
  */
-DadiApiProvider.prototype.processSortParameter = function processSortParameter (
-  obj
-) {
+DadiApiProvider.prototype.processSortParameter = function (obj) {
   let sort = {}
 
   if (typeof obj !== 'object' || obj === null) return sort

@@ -40,7 +40,9 @@ describe("Controller", function(done) {
 
         client.get("/not-a-page").expect(404).end(function(err, res) {
           if (err) return done(err)
+
           res.text.should.eql("Page Not Found Template")
+
           done()
         })
       })

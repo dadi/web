@@ -40,7 +40,6 @@
     "convict": "3.0.0",
     "debug": "^2.6.1",
     "dustjs-helpers": "^1.7.3",
-    "dustjs-linkedin": "^2.7.2",
     "event-stream": "^3.3.1",
     "express-session": "1.15.2",
     "feedparser": "^2.2.0",
@@ -68,8 +67,7 @@
     "server-destroy": "1.0.1",
     "toobusy-js": "^0.5.1",
     "underscore": "~1.8.3",
-    "underscore.string": "^3.2.2",
-    "wildcard": "^1.1.2"
+    "underscore.string": "^3.2.2"
   },
   "devDependencies": {
     "env-test": "^1.0.0",
@@ -88,7 +86,8 @@
     "superagent": "^3.5.2",
     "superagent-mock": "^3.3.0",
     "supertest": "latest",
-    "validate-commit-msg": "^2.12.1"
+    "validate-commit-msg": "^2.12.1",
+    "@dadi/web-dustjs": "dadi/web-dustjs"
   },
   "repository": {
     "type": "git",

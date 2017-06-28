@@ -1,0 +1,10 @@
+{
+  "page": {
+    "name": "index"
+  },
+  "routes": [
+    {
+      "path": "/"
+    }
+  ]
+}

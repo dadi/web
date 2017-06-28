@@ -1,3 +1,5 @@
+'use strict'
+
 /**
  * @module Controller
  */
@@ -23,13 +25,14 @@ var sendBackJSON = help.sendBackJSON
 /**
  *
  */
-var Controller = function (page, options, meta) {
+var Controller = function (page, options, meta, engine) {
   if (!page) throw new Error('Page instance required')
 
   this.page = page
 
   this.options = options || {}
   this.meta = meta || {}
+  this.engine = engine
 
   this.datasources = {}
   this.events = []
@@ -559,8 +562,8 @@ function processSearchParameters (key, datasource, req) {
   datasource.processRequest(key, req)
 }
 
-module.exports = function (page, options, meta) {
-  return new Controller(page, options, meta)
+module.exports = function (page, options, meta, engine) {
+  return new Controller(page, options, meta, engine)
 }
 
 module.exports.Controller = Controller

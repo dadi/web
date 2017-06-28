@@ -1,3 +1,5 @@
+'use strict'
+
 var version = require('../../package.json').version
 var site = require('../../package.json').name
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
@@ -7,7 +9,6 @@ var bodyParser = require('body-parser')
 var colors = require("colors") // eslint-disable-line
 var compress = require('compression')
 var debug = require('debug')('web:server')
-var dust = require('./dust')
 var enableDestroy = require('server-destroy')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
@@ -45,6 +46,7 @@ var monitor = require(path.join(__dirname, '/monitor'))
 var Page = require(path.join(__dirname, '/page'))
 var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
 var router = require(path.join(__dirname, '/controller/router'))
+var templateStore = require(path.join(__dirname, '/templates/store'))
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var log = require('@dadi/logger')
@@ -54,8 +56,9 @@ log.init(config.get('logging'), config.get('aws'), process.env.NODE_ENV)
  * Creates a new Server instance.
  * @constructor
  */
-var Server = function () {
+var Server = function (appOptions) {
   this.components = {}
+  this.appOptions = appOptions
   this.monitors = {}
 }
 
@@ -73,6 +76,9 @@ Server.prototype.start = function (done) {
   if (options.configPath) {
     config.loadFile(options.configPath)
   }
+
+  // Load templating engines
+  templateStore.loadEngines(this.appOptions && this.appOptions.engines)
 
   // override configuration variables based on request's host header
   app.use((req, res, next) => {
@@ -333,12 +339,6 @@ Server.prototype.start = function (done) {
     )
   })
 
-  // dust configuration
-  dust.setDebug(config.get('dust.debug'))
-  dust.setDebugLevel(config.get('dust.debugLevel'))
-  dust.setConfig('cache', config.get('dust.cache'))
-  dust.setConfig('whitespace', config.get('dust.whitespace'))
-
   this.readyState = 1
 
   if (config.get('env') !== 'test') {
@@ -403,7 +403,9 @@ Server.prototype.stop = function (done) {
 
   Object.keys(this.components).forEach(this.removeComponent.bind(this))
 
-  this.server.destroy()
+  if (this.server) {
+    this.server.destroy()
+  }
 
   if (this.app.redirectInstance) {
     this.app.redirectInstance.destroy()
@@ -432,12 +434,9 @@ Server.prototype.loadPaths = function (paths) {
 
   options.datasourcePath = path.resolve(paths.datasources)
   options.eventPath = path.resolve(paths.events)
-  options.filtersPath = path.resolve(paths.filters)
-  options.helpersPath = path.resolve(paths.helpers)
   options.mediaPath = path.resolve(paths.media)
   options.middlewarePath = path.resolve(paths.middleware)
   options.pagePath = path.resolve(paths.pages)
-  options.partialPaths = this.resolvePaths(paths.partials)
   options.publicPath = path.resolve(paths.public)
   options.routesPath = path.resolve(paths.routes)
   options.tokenWalletsPath = path.resolve(paths.tokenWallets)
@@ -506,14 +505,15 @@ Server.prototype.loadApi = function (options, reload, callback) {
     })
   }
 
-  // load routes
-  this.updatePages(options.pagePath, options, reload || false)
-
   // Load middleware
   this.initMiddleware(options.middlewarePath, options)
 
-  // compile all dust templates
-  this.compile(options).then(() => {
+  // Load routes
+  return this.updatePages(
+    options.pagePath,
+    options,
+    reload || false
+  ).then(() => {
     this.addMonitor(options.datasourcePath, dsFile => {
       this.updatePages(options.pagePath, options, true)
     })
@@ -527,12 +527,6 @@ Server.prototype.loadApi = function (options, reload, callback) {
       this.compile(options)
     })
 
-    _.each(options.partialPaths, partialPath => {
-      this.addMonitor(partialPath, partialFile => {
-        this.compile(options)
-      })
-    })
-
     this.addMonitor(options.routesPath, file => {
       if (this.app.Router) {
         this.app.Router.loadRewrites(options, () => {
@@ -543,7 +537,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
     debug('load complete')
 
-    if (callback && typeof callback === 'function') {
+    if (typeof callback === 'function') {
       callback()
     }
   })
@@ -575,29 +569,61 @@ Server.prototype.loadMiddleware = function (directoryPath, options) {
 }
 
 Server.prototype.updatePages = function (directoryPath, options, reload) {
-  if (fs.existsSync(directoryPath)) {
-    var pages = fs.readdirSync(directoryPath)
-
-    pages.forEach(page => {
-      if (path.extname(page) !== '.json') return
-
-      // get the full path to the page file
-      var pageFilepath = path.join(directoryPath, page)
-
-      // strip the filename minus the extension
-      // to use as the page name
-      var name = page.slice(0, page.indexOf('.'))
-
-      this.addRoute(
-        {
-          name: name,
-          filepath: pageFilepath
-        },
-        options,
-        reload
-      )
+  return help
+    .readDirectory(directoryPath, {
+      recursive: true
     })
-  }
+    .then(pages => {
+      pages.forEach(page => {
+        // Ignore files that aren't a JSON schema
+        if (path.extname(page) !== '.json') return
+
+        const relativePath = path.relative(directoryPath, page)
+
+        // strip the filename minus the extension
+        // to use as the page name
+        const name = relativePath.slice(0, -'.json'.length)
+
+        // Find a file with the same base name as the JSON file, which will be
+        // a candidate to page template.
+        let templateCandidate
+
+        pages.some(page => {
+          const candidateExtension = path.extname(page)
+
+          if (candidateExtension === '.json') return
+
+          const relativePath = path.relative(directoryPath, page)
+          const candidateName = relativePath.slice(
+            0,
+            -candidateExtension.length
+          )
+
+          if (candidateName === name) {
+            templateCandidate = candidateName + candidateExtension
+
+            return true
+          }
+        })
+
+        this.addRoute(
+          {
+            name: name,
+            filepath: page
+          },
+          _.extend({}, options, {
+            templateCandidate: templateCandidate
+          }),
+          reload
+        )
+      })
+
+      return this
+    })
+    .then(pages => {
+      // We run `compile()` but return the Server instance.
+      return this.compile(options).then(() => this)
+    })
 }
 
 Server.prototype.addRoute = function (obj, options, reload) {
@@ -617,20 +643,20 @@ Server.prototype.addRoute = function (obj, options, reload) {
 
   // create a page with the supplied schema,
   // using the filename as the page name
-  var page = Page(obj.name, schema, options.host)
+  var page = Page(obj.name, schema, options.host, options.templateCandidate)
 
   // create a handler for requests to this page
-  var controller = new Controller(page, options, schema.page)
+  var controller = new Controller(page, options, schema.page, schema.engine)
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods
   this.addComponent(
     {
+      component: controller,
+      filepath: obj.filepath,
       host: options.host || '',
       key: page.key,
-      routes: page.routes,
-      component: controller,
-      filepath: obj.filepath
+      routes: page.routes
     },
     reload
   )
@@ -736,65 +762,24 @@ Server.prototype.removeMonitor = function (filepath) {
 }
 
 Server.prototype.compile = function (options) {
-  return new Promise((resolve, reject) => {
-    var templatePath = options.pagePath
-    var partialPaths = options.partialPaths
+  const templatePath = options.pagePath
 
-    // reset the dust cache so templates can be reloaded
-    dust.clearCache()
-
-    // Get a list of templates to render based on the registered components
-    var componentTemplates = _.compact(
-      Object.keys(this.components).map(route => {
-        if (this.components[route].options.host === options.host) {
-          return path.join(templatePath, this.components[route].page.template)
-        }
-      })
-    )
-
-    // Load component templates
-    dust
-      .loadFiles(componentTemplates, '', false, options.host)
-      .then(() => {
-        debug('templates loaded')
-        // Load templates in the template folder that haven't already been loaded
-        return dust.loadDirectory(templatePath)
-      })
-      .then(() => {
-        debug('additional templates loaded %s', templatePath)
-        // Load partials
-        return _.each(partialPaths, partialPath => {
-          return dust.loadDirectory(
-            partialPath,
-            path.basename(partialPath),
-            true,
-            options.host
-          )
-        })
-      })
-      .then(() => {
-        debug('partials loaded %s', partialPaths.join(', '))
-        // Load filters
-        return dust.requireDirectory(options.filtersPath)
-      })
-      .then(() => {
-        debug('filters loaded %s', options.filtersPath)
-        // Load helpers
-        return dust.requireDirectory(options.helpersPath)
-      })
-      .then(() => {
-        debug('templates loaded %O', Object.keys(dust.templates).sort())
-        // Write client-side files
-        dust.writeClientsideFiles()
-
-        return resolve()
-      })
-      .catch(err => {
-        log.error({ module: 'server' }, err)
-
-        throw err
-      })
+  // Get a list of templates to render based on the registered components
+  const componentTemplates = Object.keys(this.components).map(route => {
+    if (this.components[route].options.host === options.host) {
+      return {
+        engine: this.components[route].engine,
+        file: path.join(templatePath, this.components[route].page.template)
+      }
+    }
   })
+
+  // Loading engines and templates
+  return templateStore
+    .loadPages(componentTemplates, {
+      namespace: options.host
+    })
+    .then(templates => templateStore.finishLoading())
 }
 
 Server.prototype.getSessionStore = function (sessionConfig, env) {
@@ -886,7 +871,7 @@ Server.prototype.delete = buildVerbMethod('delete')
 Server.prototype.trace = buildVerbMethod('trace')
 
 // singleton
-module.exports = new Server()
+module.exports = options => new Server(options)
 
 // generate a method for http request methods matching `verb`
 // if a route is passed, the node module `path-to-regexp` is
@@ -944,6 +929,7 @@ function onListening (e) {
     var env = config.get('env')
     var protocol = config.get('server.protocol') || 'http'
     var redirectPort = config.get('server.redirectPort')
+    var engine = Object.keys(config.get('engines')) || 'Not found!'.red
     var extraPadding = (redirectPort > 0 && '          ') || ''
 
     var startText = '\n'
@@ -984,6 +970,7 @@ function onListening (e) {
     startText += '  Version:     '.green + extraPadding + version + '\n'
     startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
     startText += '  Environment: '.green + extraPadding + env + '\n'
+    startText += '  Engine:      '.green + extraPadding + engine + '\n'
 
     if (config.get('api.enabled') === true) {
       startText +=
