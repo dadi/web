@@ -19,10 +19,7 @@ const MarkdownProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-MarkdownProvider.prototype.initialise = function initialise (
-  datasource,
-  schema
-) {
+MarkdownProvider.prototype.initialise = function (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.extension = schema.datasource.source.extension
@@ -36,9 +33,7 @@ MarkdownProvider.prototype.initialise = function initialise (
  * @param  {?} obj - sort parameter
  * @return {?}
  */
-MarkdownProvider.prototype.processSortParameter = function processSortParameter (
-  obj
-) {
+MarkdownProvider.prototype.processSortParameter = function (obj) {
   let sort = {}
 
   if (_.isObject(obj)) {
@@ -148,19 +143,13 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
   }
 }
 
-MarkdownProvider.prototype.readFileAsync = function readFileAsync (
-  filename,
-  callback
-) {
+MarkdownProvider.prototype.readFileAsync = function (filename, callback) {
   fs.readFile(filename, 'utf8', function (err, data) {
     return callback(err, { _name: filename, _contents: data })
   })
 }
 
-MarkdownProvider.prototype.parseRawDataAsync = function parseRawDataAsync (
-  data,
-  callback
-) {
+MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
   const yamlRegex = /---[\n\r]+([\s\S]*)[\n\r]+---[\n\r]+([\s\S]*)/
   const posts = []
 
