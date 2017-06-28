@@ -165,7 +165,7 @@ describe("Data Providers", function(done) {
           .reply(200, data)
 
         var providerSpy = sinon.spy(
-          remoteProvider.prototype,
+          apiProvider.prototype,
           "processDatasourceParameters"
         )
 
@@ -1053,49 +1053,50 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the datasource requestParams to filter the results", function(
-      done
-    ) {
-      var dsSchema = TestHelper.getSchemaFromFile(
-        TestHelper.getPathOptions().datasourcePath,
-        "markdown"
-      )
+    it.skip(
+      "should use the datasource requestParams to filter the results",
+      function(done) {
+        var dsSchema = TestHelper.getSchemaFromFile(
+          TestHelper.getPathOptions().datasourcePath,
+          "markdown"
+        )
 
-      sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
-        .yields(null, dsSchema)
+        sinon
+          .stub(Datasource.Datasource.prototype, "loadDatasource")
+          .yields(null, dsSchema)
 
-      TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
-          pages[0].routes[0].path = "/test/:category?"
+        TestHelper.disableApiConfig().then(() => {
+          TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ["markdown"]
+            pages[0].routes[0].path = "/test/:category?"
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                "http://" +
+                config.get("server.host") +
+                ":" +
+                config.get("server.port")
+              var client = request(connectionString)
 
-            client.get("/test/sports?json=true").end((err, res) => {
-              Datasource.Datasource.prototype.loadDatasource.restore()
+              client.get("/test/sports?json=true").end((err, res) => {
+                Datasource.Datasource.prototype.loadDatasource.restore()
 
-              res.body.params["category"].should.equal("sports")
-              res.body.markdown.results[0].attributes.category.should.equal(
-                "sports"
-              )
-              res.body.markdown.metadata.page.should.equal(1)
-              res.body.markdown.metadata.limit.should.equal(1)
-              res.body.markdown.metadata.totalPages.should.be.above(1)
+                res.body.params["category"].should.equal("sports")
+                res.body.markdown.results[0].attributes.category.should.equal(
+                  "sports"
+                )
+                res.body.markdown.metadata.page.should.equal(1)
+                res.body.markdown.metadata.limit.should.equal(1)
+                res.body.markdown.metadata.totalPages.should.be.above(1)
 
-              done()
+                done()
+              })
             })
           })
         })
-      })
-    })
+      }
+    )
 
     it("should return the number of records specified by the count property", function(
       done
