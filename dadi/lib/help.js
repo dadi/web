@@ -342,13 +342,14 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallets') +
-        '/' +
-        this.generateTokenWalletFilename(
-          config.get('api.host'),
-          config.get('api.port'),
-          config.get('auth.clientId')
-        )
+      path:
+        config.get('paths.tokenWallets') +
+          '/' +
+          this.generateTokenWalletFilename(
+            config.get('api.host'),
+            config.get('api.port'),
+            config.get('auth.clientId')
+          )
     }
   })
 }
@@ -362,7 +363,14 @@ _.mixin({
     return _.map(arguments[0], function (item) {
       var obj = {}
       _.each(args.split(','), function (arg) {
-        obj[arg] = item[arg]
+        if (arg.indexOf('.') > 0) {
+          // handle nested fields, e.g. "attributes.title"
+          var parts = arg.split('.')
+          obj[parts[0]] = obj[parts[0]] || {}
+          obj[parts[0]][parts[1]] = item[parts[0]][parts[1]]
+        } else {
+          obj[arg] = item[arg]
+        }
       })
       return obj
     })

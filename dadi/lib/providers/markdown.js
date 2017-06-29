@@ -81,12 +81,16 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
         if (err) return done(err, null)
 
         this.parseRawDataAsync(readResults, posts => {
-          const sort = this.processSortParameter(this.schema.datasource.sort)
-          const search = this.schema.datasource.search
-          const count = this.schema.datasource.count
-          const fields = this.schema.datasource.fields || []
-          const filter = this.schema.datasource.filter
-          const page = this.schema.datasource.page || 1
+          const params = this.datasourceParams
+            ? this.datasourceParams
+            : this.schema.datasource
+
+          const sort = this.processSortParameter(params.sort)
+          const search = params.search
+          const count = params.count
+          const fields = params.fields || []
+          const filter = params.filter
+          const page = params.page || 1
 
           let metadata = []
           let postCount = posts.length
@@ -141,6 +145,16 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
   } catch (ex) {
     done(ex, null)
   }
+}
+
+/**
+ * processRequest - called on every request, rebuild buildEndpoint
+ *
+ * @param  {obj} req - web request object
+ * @return {void}
+ */
+MarkdownProvider.prototype.processRequest = function (datasourceParams) {
+  this.datasourceParams = datasourceParams
 }
 
 MarkdownProvider.prototype.readFileAsync = function (filename, callback) {
