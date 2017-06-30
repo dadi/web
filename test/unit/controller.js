@@ -305,7 +305,7 @@ describe("Controller", function(done) {
               var call = providerSpy.secondCall
               var provider = call.thisValue
 
-              var q = require("url").parse(provider.endpoint, true).query
+              var q = require("url").parse(provider.options.path, true).query
               var filter = q.filter
               var filterObj = JSON.parse(filter)
               should.exist(filterObj._id)
@@ -361,6 +361,11 @@ describe("Controller", function(done) {
 
               var filterDatasource = providerSpy.thisValues[1]
 
+              var q = require("url").parse(filterDatasource.options.path, true)
+                .query
+              var filter = q.filter
+              var filterObj = JSON.parse(filter)
+
               filterDatasource.schema.datasource.filterEventResult.should.exist
               filterDatasource
                 .schema.datasource.filterEventResult.x.should.exist
@@ -368,11 +373,11 @@ describe("Controller", function(done) {
                 "1"
               )
 
-              filterDatasource.schema.datasource.filter.x.should.exist
-              filterDatasource.schema.datasource.filter.x.should.eql("1")
+              filterObj.x.should.exist
+              filterObj.x.should.eql("1")
 
-              filterDatasource.schema.datasource.filter.y.should.exist
-              filterDatasource.schema.datasource.filter.y.should.eql("2")
+              filterObj.y.should.exist
+              filterObj.y.should.eql("2")
 
               done()
             })

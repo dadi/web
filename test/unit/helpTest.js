@@ -40,7 +40,7 @@ describe("Help", function(done) {
 
   describe("Timer", function() {
     it("should save and return stats", function(done) {
-      sinon.stub(Helper.timer, "isDebugEnabled", () => {
+      sinon.stub(Helper.timer, "isDebugEnabled").callsFake(() => {
         return true
       })
 

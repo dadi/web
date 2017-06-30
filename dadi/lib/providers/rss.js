@@ -18,6 +18,7 @@ const RSSProvider = function () {}
 RSSProvider.prototype.initialise = function initialise (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
+  this.processSchemaParams = false
   // this.setAuthStrategy()
 }
 
@@ -72,10 +73,29 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
       this.endpoint,
       encodeURIComponent(JSON.stringify(this.schema.datasource))
     ].join('+')
-    this.dataCache = DatasourceCache()
+    this.dataCache = new DatasourceCache()
 
-    this.dataCache.getFromCache(this.datasource, cachedData => {
-      if (cachedData) return done(null, cachedData)
+    var cacheOptions = {
+      name: this.datasource.name,
+      caching: this.schema.datasource.caching,
+      cacheKey: this.cacheKey
+    }
+
+    this.dataCache.getFromCache(cacheOptions, cachedData => {
+      if (cachedData) {
+        try {
+          cachedData = JSON.parse(cachedData.toString())
+          return done(null, cachedData)
+        } catch (err) {
+          console.error(
+            'RSS: cache data incomplete, making HTTP request: ' +
+              err +
+              '(' +
+              cacheOptions.cacheKey +
+              ')'
+          )
+        }
+      }
 
       const items = []
       const feedparser = new FeedParser()
@@ -100,8 +120,14 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
       feedparser.on('error', done)
 
       feedparser.on('end', () => {
+        var cacheOptions = {
+          name: this.datasource.name,
+          caching: this.schema.datasource.caching,
+          cacheKey: this.cacheKey
+        }
+
         context.dataCache.cacheResponse(
-          this.datasource,
+          cacheOptions,
           JSON.stringify(items),
           () => {}
         )
