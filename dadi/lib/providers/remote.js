@@ -123,12 +123,12 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 
       this.options = _.extend(this.options, headers)
 
-      this.makeRequest(done)
+      this.makeRequest(requestUrl, done)
     })
   })
 }
 
-RemoteProvider.prototype.makeRequest = function (done) {
+RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
   debug(
     'GET datasource "%s" %o',
     this.datasource.schema.datasource.key,
@@ -158,9 +158,9 @@ RemoteProvider.prototype.makeRequest = function (done) {
       this.options = _.extend(this.options, options)
 
       debug('following %s redirect to %s', res.statusCode, res.headers.location)
-      this.makeRequest(done)
+      this.makeRequest(requestUrl, done)
     } else {
-      this.handleResponse(res, done)
+      this.handleResponse(requestUrl, res, done)
     }
   })
 

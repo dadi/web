@@ -151,7 +151,7 @@ Cache.prototype.init = function () {
    * @param {IncomingMessage} req - the current HTTP request
    * @returns {object}
    */
-  this.server.app.use(function (req, res, next) {
+  this.server.app.use(function cache (req, res, next) {
     var enabled = self.cachingEnabled(req)
 
     debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)

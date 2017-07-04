@@ -91,7 +91,7 @@ describe("Help", done => {
         var files = ["directory1", "file1.js", "file2.png"]
 
         var mockReaddir = sinon.stub(fs, "readdir").yields(null, files)
-        var mockStat = sinon.stub(fs, "statSync", mockStatSync)
+        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
 
         helpers.readDirectory(directory, {}).then(response => {
           response.should.deepEqual([
@@ -118,7 +118,7 @@ describe("Help", done => {
         ]
 
         var mockReaddir = sinon.stub(fs, "readdir").yields(null, files)
-        var mockStat = sinon.stub(fs, "statSync", mockStatSync)
+        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
 
         helpers
           .readDirectory(directory, {
@@ -149,7 +149,8 @@ describe("Help", done => {
           .yields(null, filesLevel1)
           .onCall(1)
           .yields(null, filesLevel2)
-        var mockStat = sinon.stub(fs, "statSync", mockStatSync)
+
+        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
 
         helpers
           .readDirectory(directory, {
@@ -178,7 +179,7 @@ describe("Help", done => {
           "some/directory/file2.js",
           "some/directory/file3.png"
         ]
-        var mockStat = sinon.stub(fs, "statSync", mockStatSync)
+        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
         var callbackFn = sinon.spy()
 
         helpers
@@ -204,7 +205,7 @@ describe("Help", done => {
           "some/directory/file2.js",
           "some/directory/file3.png"
         ]
-        var mockStat = sinon.stub(fs, "statSync", mockStatSync)
+        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
         var callbackFn = sinon.spy()
 
         helpers

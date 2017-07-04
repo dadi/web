@@ -2,7 +2,7 @@ var _ = require('underscore')
 var url = require('url')
 
 var forceDomain = function (options) {
-  return function (req, res, next) {
+  return function forceDomain (req, res, next) {
     var protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
     var newRoute = domainRedirect(protocol, req.headers.host, req.url, options)
     var statusCode

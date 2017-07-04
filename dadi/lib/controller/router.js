@@ -347,7 +347,7 @@ module.exports = function (server, options) {
   server.app.Router = new Router(server, options)
 
   // middleware which blocks requests when we're too busy
-  server.app.use(function (req, res, next) {
+  server.app.use(function tooBusy (req, res, next) {
     if (config.get('toobusy.enabled') && toobusy()) {
       res.statusCode = 503
       return res.end('HTTP Error 503 - Server Busy')
@@ -363,12 +363,12 @@ module.exports = function (server, options) {
     rewriteFunction = rewrite(server.app.Router.rules)
 
     // process rewrite rules first
-    server.app.use((req, res, next) => {
+    server.app.use(function rewrites (req, res, next) {
       rewriteFunction(req, res, next)
     })
 
     // load rewrites from our DS and handle them
-    server.app.use((req, res, next) => {
+    server.app.use(function datasourceRewrites (req, res, next) {
       debug('processing %s', req.url)
 
       if (
@@ -449,7 +449,7 @@ module.exports = function (server, options) {
     })
 
     // handle generic url rewrite rules
-    server.app.use((req, res, next) => {
+    server.app.use(function configurableRewrites (req, res, next) {
       debug('processing configurable rewrites %s', req.url)
 
       var redirect = false
