@@ -24,7 +24,7 @@ var cachepath
 
 describe("Datasource Cache", function(done) {
   beforeEach(function(done) {
-    datasourceCache._reset()
+    // datasourceCache._reset()
 
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
@@ -182,7 +182,14 @@ describe("Datasource Cache", function(done) {
           .update(ds.schema.datasource.key)
           .digest("hex")
         var dsCache = datasourceCache()
-        dsCache.getFilename(ds).indexOf(expectToFind).should.be.above(-1)
+        dsCache
+          .getFilename({
+            name: ds.name,
+            caching: cacheConfig.caching,
+            endpoint: ""
+          })
+          .indexOf(expectToFind)
+          .should.be.above(-1)
         done()
       })
     })
@@ -235,17 +242,168 @@ describe("Datasource Cache", function(done) {
             url: "/1.0/makes/ford",
             params: { make: "ford" }
           })
-          var filename1 = dsCache.getFilename(datasource)
+          var filename1 = dsCache.getFilename({
+            name: datasource.name,
+            caching: cacheConfig.caching,
+            endpoint: datasource.provider.endpoint
+          })
           datasource.processRequest(datasource.schema.datasource.key, {
             url: "/1.0/makes/mazda",
             params: { make: "mazda" }
           })
-          var filename2 = dsCache.getFilename(datasource)
+          var filename2 = dsCache.getFilename({
+            name: datasource.name,
+            caching: cacheConfig.caching,
+            endpoint: datasource.provider.endpoint
+          })
 
           filename1.should.not.eql(filename2)
 
           done()
         })
+      })
+    })
+  })
+
+  describe("getOptions", function(done) {
+    it("should use the datasource ttl if it's different", function(done) {
+      var cacheConfig = {
+        caching: {
+          ttl: 300,
+          directory: {
+            enabled: true
+          },
+          redis: {
+            enabled: false
+          }
+        }
+      }
+
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        ds.schema.datasource.caching.ttl = 1000
+        var c = cache(server.object)
+        var dsCache = datasourceCache()
+        var opts = dsCache.getOptions({
+          name: ds.name,
+          caching: ds.schema.datasource.caching,
+          endpoint: ""
+        })
+
+        opts.ttl.should.eql(1000)
+        done()
+      })
+    })
+
+    it("should merge datasource directory options with main config options", function(
+      done
+    ) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: true,
+            path: "./cache"
+          },
+          redis: {
+            enabled: false,
+            host: "127.0.0.1",
+            port: 6379
+          }
+        }
+      }
+
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+        var dsCache = datasourceCache()
+
+        ds.schema.datasource.caching.directory.enabled = true
+        var p = ds.schema.datasource.caching.directory.path
+        delete ds.schema.datasource.caching.directory.path
+        ds.schema.datasource.caching.redis.enabled = false
+
+        var options = dsCache.getOptions({
+          name: ds.name,
+          caching: ds.schema.datasource.caching,
+          endpoint: ""
+        })
+
+        options.directory.path.should.eql(cacheConfig.caching.directory.path)
+
+        ds.schema.datasource.caching.directory.path = p
+        done()
+      })
+    })
+
+    it("should merge datasource redis options with main config options", function(
+      done
+    ) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: false,
+            path: "./cache"
+          },
+          redis: {
+            enabled: true,
+            host: "127.0.0.1",
+            port: 6379
+          }
+        }
+      }
+
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+        var dsCache = datasourceCache()
+
+        ds.schema.datasource.caching.directory.enabled = false
+        ds.schema.datasource.caching.redis.enabled = true
+
+        var options = dsCache.getOptions({
+          name: ds.name,
+          caching: ds.schema.datasource.caching,
+          endpoint: ""
+        })
+
+        options.directory.enabled.should.eql(false)
+        options.redis.enabled.should.eql(true)
+        options.redis.host.should.eql(cacheConfig.caching.redis.host)
+        done()
+      })
+    })
+
+    it("should use datasource redis options over main config options", function(
+      done
+    ) {
+      var cacheConfig = {
+        caching: {
+          directory: {
+            enabled: false,
+            path: "./cache"
+          },
+          redis: {
+            enabled: true,
+            port: 6379
+          }
+        }
+      }
+
+      TestHelper.updateConfig(cacheConfig).then(() => {
+        var c = cache(server.object)
+        var dsCache = datasourceCache()
+
+        ds.schema.datasource.caching.directory.enabled = false
+        ds.schema.datasource.caching.redis.enabled = true
+        ds.schema.datasource.caching.redis.port = 13057
+
+        var options = dsCache.getOptions({
+          name: ds.name,
+          caching: ds.schema.datasource.caching,
+          endpoint: ""
+        })
+
+        options.directory.enabled.should.eql(false)
+        options.redis.enabled.should.eql(true)
+        options.redis.port.should.eql(13057)
+        done()
       })
     })
   })
@@ -257,10 +415,13 @@ describe("Datasource Cache", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
-            enabled: true
+            enabled: true,
+            path: "./cache/web"
           },
           redis: {
-            enabled: false
+            enabled: false,
+            host: "127.0.0.1",
+            port: 6379
           }
         }
       }
@@ -269,7 +430,15 @@ describe("Datasource Cache", function(done) {
         ds.schema.datasource.caching.directory.enabled = false
         var c = cache(server.object)
         var dsCache = datasourceCache()
-        dsCache.cachingEnabled(ds).should.eql(false)
+
+        dsCache
+          .cachingEnabled({
+            name: ds.name,
+            caching: ds.schema.datasource.caching,
+            endpoint: ""
+          })
+          .should.eql(false)
+
         done()
       })
     })
@@ -293,7 +462,13 @@ describe("Datasource Cache", function(done) {
         ds.provider.endpoint += "&cache=false"
         var c = cache(server.object)
         var dsCache = datasourceCache()
-        dsCache.cachingEnabled(ds).should.eql(false)
+        dsCache
+          .cachingEnabled({
+            name: ds.name,
+            caching: ds.schema.datasource.caching,
+            endpoint: ds.provider.endpoint
+          })
+          .should.eql(false)
         done()
       })
     })
@@ -314,7 +489,13 @@ describe("Datasource Cache", function(done) {
         ds.schema.datasource.caching.directory.enabled = true
         var c = cache(server.object)
         var dsCache = datasourceCache()
-        dsCache.cachingEnabled(ds).should.eql(true)
+        dsCache
+          .cachingEnabled({
+            name: ds.name,
+            caching: ds.schema.datasource.caching,
+            endpoint: ""
+          })
+          .should.eql(true)
         done()
       })
     })
@@ -357,10 +538,18 @@ describe("Datasource Cache", function(done) {
           setTimeout(function() {
             var dsCache = datasourceCache()
 
-            dsCache.getFromCache(ds, function(data) {
-              data.should.eql(expected)
-              done()
-            })
+            dsCache.getFromCache(
+              {
+                name: ds.name,
+                caching: ds.schema.datasource.caching,
+                endpoint: ds.provider.endpoint
+              },
+              function(data) {
+                data.should.not.eql(false)
+                data.toString().should.eql(expected)
+                done()
+              }
+            )
           }, 1000)
         })
       })
@@ -398,10 +587,17 @@ describe("Datasource Cache", function(done) {
           if (err) console.log(err.toString())
 
           var dsCache = datasourceCache()
-          dsCache.getFromCache(ds, function(data) {
-            data.should.eql(false)
-            done()
-          })
+          dsCache.getFromCache(
+            {
+              name: ds.name,
+              caching: ds.schema.datasource.caching,
+              endpoint: ds.provider.endpoint
+            },
+            function(data) {
+              data.should.eql(false)
+              done()
+            }
+          )
         })
       })
     })
@@ -425,10 +621,17 @@ describe("Datasource Cache", function(done) {
         var data = "ds content from filesystem"
 
         var dsCache = datasourceCache()
-        dsCache.getFromCache(ds, function(data) {
-          data.should.eql(false)
-          done()
-        })
+        dsCache.getFromCache(
+          {
+            name: ds.name,
+            caching: ds.schema.datasource.caching,
+            endpoint: ""
+          },
+          function(data) {
+            data.should.eql(false)
+            done()
+          }
+        )
       })
     })
 
@@ -468,10 +671,17 @@ describe("Datasource Cache", function(done) {
 
           setTimeout(function() {
             var dsCache = datasourceCache()
-            dsCache.getFromCache(ds, function(data) {
-              data.should.eql(false)
-              done()
-            })
+            dsCache.getFromCache(
+              {
+                name: ds.name,
+                caching: ds.schema.datasource.caching,
+                endpoint: ds.provider.endpoint
+              },
+              function(data) {
+                data.should.eql(false)
+                done()
+              }
+            )
           }, 1500)
         })
       })
@@ -508,12 +718,20 @@ describe("Datasource Cache", function(done) {
         var data = "ds content from filesystem"
 
         var dsCache = datasourceCache()
-        dsCache.cacheResponse(ds, data, function() {
-          fs.readFile(cachepath, function(err, content) {
-            content.toString().should.eql(data)
-            done()
-          })
-        })
+        dsCache.cacheResponse(
+          {
+            name: ds.name,
+            caching: ds.schema.datasource.caching,
+            endpoint: ds.provider.endpoint
+          },
+          data,
+          function() {
+            fs.readFile(cachepath, function(err, content) {
+              content.toString().should.eql(data)
+              done()
+            })
+          }
+        )
       })
     })
 
@@ -550,9 +768,17 @@ describe("Datasource Cache", function(done) {
         c.redisClient = redisClient
 
         var dsCache = datasourceCache()
-        dsCache.cacheResponse(ds, data, function() {
-          done()
-        })
+        dsCache.cacheResponse(
+          {
+            name: ds.name,
+            caching: ds.schema.datasource.caching,
+            endpoint: ds.provider.endpoint
+          },
+          data,
+          function() {
+            done()
+          }
+        )
       })
     })
   })

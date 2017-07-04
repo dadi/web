@@ -362,66 +362,63 @@ describe("Template store", function(done) {
       })
     })
 
-    it.only(
-      "should instantiate the engine and call its `initialise` and `register` methods",
-      done => {
-        var mockInitialiseFn = sinon.stub()
-        var mockRegisterFn = sinon.stub()
+    it("should instantiate the engine and call its `initialise` and `register` methods", done => {
+      var mockInitialiseFn = sinon.stub()
+      var mockRegisterFn = sinon.stub()
 
-        var fakeEngine = () => {
-          var Engine = function() {}
+      var fakeEngine = () => {
+        var Engine = function() {}
 
-          Engine.prototype.initialise = mockInitialiseFn
-          Engine.prototype.getCore = function() {}
-          Engine.prototype.getInfo = function() {}
-          Engine.prototype.register = mockRegisterFn
-          Engine.prototype.render = function() {}
+        Engine.prototype.initialise = mockInitialiseFn
+        Engine.prototype.getCore = function() {}
+        Engine.prototype.getInfo = function() {}
+        Engine.prototype.register = mockRegisterFn
+        Engine.prototype.render = function() {}
 
-          return Engine
-        }
-
-        fakeEngine.metadata = {
-          extensions: [".dust"],
-          handle: "dust"
-        }
-
-        var templateData = {
-          data: "This is the content of the template",
-          extension: ".dust",
-          name: "fakeTemplate1",
-          namespace: undefined,
-          path: "/fake/path/fakeTemplate1.dust"
-        }
-
-        templateStore.loadEngines([fakeEngine])
-
-        templateStore
-          .loadTemplate(templateData)
-          .then(response => {
-            mockInitialiseFn.calledOnce.should.be.true()
-            mockRegisterFn.getCall(0).args[0].should.eql(templateData.name)
-            mockRegisterFn.getCall(0).args[1].should.eql(templateData.data)
-            mockRegisterFn.getCall(0).args[2].should.eql(templateData.path)
-
-            done()
-          })
-          .catch(err => {
-            console.log("** ERR:", err)
-          })
+        return Engine
       }
-    )
+
+      fakeEngine.metadata = {
+        extensions: [".dust"],
+        handle: "dust"
+      }
+
+      var templateData = {
+        data: "This is the content of the template",
+        extension: ".dust",
+        name: "fakeTemplate1",
+        namespace: undefined,
+        path: "/fake/path/fakeTemplate1.dust"
+      }
+
+      templateStore.loadEngines([fakeEngine])
+
+      templateStore
+        .loadTemplate(templateData)
+        .then(response => {
+          mockInitialiseFn.calledOnce.should.be.true()
+          mockRegisterFn.getCall(0).args[0].should.eql(templateData.name)
+          mockRegisterFn.getCall(0).args[1].should.eql(templateData.data)
+          mockRegisterFn.getCall(0).args[2].should.eql(templateData.path)
+
+          done()
+        })
+        .catch(err => {
+          console.log("** ERR:", err)
+        })
+    })
   })
 
   describe("loadPages", () => {
     it("should all templates corresponding to the given pages, setting any remaining templates as additional templates", done => {
-      sinon.stub(helpers, "readDirectory", () => {
+      sinon.stub(helpers, "readDirectory").callsFake(() => {
         return Promise.resolve(directoryListing)
       })
 
       var mockReadFile = sinon
         .stub(fs, "readFile")
         .yields(null, "File contents")
-      sinon.stub(fs, "statSync", () => ({
+      sinon.stub(fs, "statSync").callsFake(() => ({
         isFile: () => true
       }))
 

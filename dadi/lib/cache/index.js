@@ -20,6 +20,9 @@ var Cache = function (server) {
   this.server = server
   this.cache = new DadiCache(config.get('caching'))
 
+  Cache.numInstances = (Cache.numInstances || 0) + 1
+  // console.log('Cache:', Cache.numInstances)
+
   var directoryEnabled = config.get('caching.directory.enabled')
   var redisEnabled = config.get('caching.redis.enabled')
 
@@ -198,9 +201,7 @@ Cache.prototype.init = function () {
 
         res.statusCode = 200
         res.setHeader('X-Cache', 'HIT')
-        res.setHeader('Server', config.get('server.name'))
         res.setHeader('Content-Type', contentType)
-        //   res.setHeader('Content-Length', stat.size)
 
         // send cached content back
         stream.pipe(res)

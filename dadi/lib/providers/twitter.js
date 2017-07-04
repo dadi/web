@@ -2,10 +2,12 @@
 
 const _ = require('underscore')
 const path = require('path')
-const Purest = require('purest')
+const request = require('request')
+const promise = Promise
+const purest = require('purest')({ request, promise })
+const purestConfig = require('@purest/providers')
 const config = require(path.join(__dirname, '/../../../config.js'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
-
 const TwitterProvider = function () {}
 
 /**
@@ -19,8 +21,9 @@ TwitterProvider.prototype.initialise = function initialise (datasource, schema) 
   this.datasource = datasource
   this.schema = schema
   this.setAuthStrategy()
-  this.twitterApi = new Purest({
+  this.twitterApi = purest({
     provider: 'twitter',
+    config: purestConfig,
     key: this.consumerKey,
     secret: this.consumerSecret
   })
@@ -55,25 +58,42 @@ TwitterProvider.prototype.load = function load (requestUrl, done) {
   try {
     const endpoint = this.schema.datasource.source.endpoint
     const queryParams = this.buildQueryParams()
-
     this.cacheKey = [
       endpoint,
       encodeURIComponent(JSON.stringify(this.schema.datasource))
     ].join('+')
-    this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache(this.datasource, cachedData => {
-      if (cachedData) return done(null, cachedData)
+    this.dataCache = new DatasourceCache()
+
+    var cacheOptions = {
+      name: this.datasource.name,
+      caching: this.schema.datasource.caching,
+      cacheKey: this.cacheKey
+    }
+
+    this.dataCache.getFromCache(cacheOptions, cachedData => {
+      if (cachedData) {
+        try {
+          cachedData = JSON.parse(cachedData.toString())
+          return done(null, cachedData)
+        } catch (err) {
+          console.error(
+            'Twitter: cache data incomplete, making HTTP request: ' +
+              err +
+              '(' +
+              cacheOptions.cacheKey +
+              ')'
+          )
+        }
+      }
 
       this.twitterApi
-        .query()
         .select(endpoint)
         .where(queryParams)
         .auth(this.accessTokenKey, this.accessTokenSecret)
-        .request((err, res, body) => {
-          if (err) return done(err, null)
-          this.processOutput(res, body, done)
-        })
+        .request()
+        .catch(err => done(err, null))
+        .then(result => this.processOutput(result[0], result[1], done))
     })
   } catch (ex) {
     done(ex, null)
@@ -108,7 +128,14 @@ TwitterProvider.prototype.processOutput = function processOutput (
 
   if (res.statusCode === 200) {
     data = this.processFields(data)
-    this.dataCache.cacheResponse(this.datasource, JSON.stringify(data), () => {
+
+    var cacheOptions = {
+      name: this.datasource.name,
+      caching: this.schema.datasource.caching,
+      cacheKey: this.cacheKey
+    }
+
+    this.dataCache.cacheResponse(cacheOptions, JSON.stringify(data), () => {
       //
     })
   }

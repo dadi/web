@@ -111,8 +111,6 @@ module.exports.sendBackJSON = function (successCode, res, next) {
 
     var resBody = JSON.stringify(results, null, 2)
 
-    res.setHeader('Server', config.get('server.name'))
-
     res.statusCode = successCode
     res.setHeader('Content-Type', 'application/json')
     res.setHeader('content-length', Buffer.byteLength(resBody))
@@ -154,7 +152,6 @@ module.exports.sendBackHTML = function (
     var resBody = results
 
     res.statusCode = successCode
-    res.setHeader('Server', config.get('server.name'))
     res.setHeader('Content-Type', contentType)
     res.setHeader('Content-Length', Buffer.byteLength(resBody))
 
@@ -347,7 +344,8 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallets') +
+      path:
+        config.get('paths.tokenWallets') +
         '/' +
         this.generateTokenWalletFilename(
           config.get('api.host'),
@@ -367,7 +365,14 @@ _.mixin({
     return _.map(arguments[0], function (item) {
       var obj = {}
       _.each(args.split(','), function (arg) {
-        obj[arg] = item[arg]
+        if (arg.indexOf('.') > 0) {
+          // handle nested fields, e.g. "attributes.title"
+          var parts = arg.split('.')
+          obj[parts[0]] = obj[parts[0]] || {}
+          obj[parts[0]][parts[1]] = item[parts[0]][parts[1]]
+        } else {
+          obj[arg] = item[arg]
+        }
       })
       return obj
     })
