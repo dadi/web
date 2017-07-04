@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [3.0.0] - 2017-07-04
+
+## Added
+
+* [#103](https://github.com/dadi/web/issues/103): multiple template engine support
+
+## Changed
+
+* [#184](https://github.com/dadi/web/issues/184): unrestricted environment configurations allowed
+* [#175](https://github.com/dadi/web/issues/175): response header "SERVER (DADI)" removed
+* [#165](https://github.com/dadi/web/issues/165): only check matching routes after all middleware functions have completed
+* [#98](https://github.com/dadi/web/issues/98): log more informative error when an event fails
+
+# [2.1.0] - 2017-04-06
+
+## Changed
+
+* ensure request parameters passed to Markdown provider
+
 # [2.0.0] - 2017-04-06
 
 ## Added
