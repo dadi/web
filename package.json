@@ -1,6 +1,6 @@
 {
   "name": "@dadi/web",
-  "version": "2.1.0",
+  "version": "3.0.0-rc.1",
   "description": "Web frontend and template layer for @dadi/api",
   "main": "main.js",
   "scripts": {
@@ -32,7 +32,6 @@
     "body-parser": "^1.11.0",
     "chokidar": "^1.5.2",
     "colors": "latest",
-    "common-dustjs-helpers": "^1.4.1",
     "compression": "^1.6.0",
     "connect-modrewrite": "^0.10.1",
     "connect-mongo": "latest",
