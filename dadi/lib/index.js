@@ -60,8 +60,6 @@ var Server = function () {
 }
 
 Server.prototype.start = function (done) {
-  var self = this
-
   this.readyState = 2
 
   var options = this.loadPaths()
@@ -75,7 +73,7 @@ Server.prototype.start = function (done) {
   }
 
   // override configuration variables based on request's host header
-  app.use((req, res, next) => {
+  app.use(function virtualHosts (req, res, next) {
     var virtualHosts = config.get('virtualHosts')
 
     if (_.isEmpty(virtualHosts)) {
@@ -125,9 +123,11 @@ Server.prototype.start = function (done) {
 
   // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
+    var domain = config.get('rewrites.forceDomain')
+
     app.use(
       forceDomain({
-        hostname: config.get('rewrites.forceDomain'),
+        hostname: domain,
         port: 80
       })
     )
@@ -141,6 +141,9 @@ Server.prototype.start = function (done) {
   if (config.get('headers.useGzipCompression')) {
     app.use(compress())
   }
+
+  // request logging middleware
+  app.use(log.requestLogger)
 
   // serve static files (css,js,fonts)
   if (options.mediaPath) {
@@ -222,9 +225,6 @@ Server.prototype.start = function (done) {
   // parse application/x-www-form-urlencoded
   app.use(bodyParser.urlencoded({ extended: true }))
 
-  // request logging middleware
-  app.use(log.requestLogger)
-
   // session manager
   var sessionConfig = config.get('sessions')
 
@@ -248,14 +248,14 @@ Server.prototype.start = function (done) {
   }
 
   // set up cache
-  var cacheLayer = cache(self)
+  var cacheLayer = cache(this)
 
   // handle routing & redirects
-  router(self, options)
+  router(this, options)
 
   if (config.get('api.enabled')) {
     // authentication layer
-    auth(self)
+    auth(this)
   }
 
   // initialise the cache
@@ -327,19 +327,28 @@ Server.prototype.start = function (done) {
     // do something when app is closing
     process.on(
       'exit',
-      this.exitHandler.bind(null, { server: this, cleanup: true })
+      this.exitHandler.bind(null, {
+        server: this,
+        cleanup: true
+      })
     )
 
     // catches ctrl+c event
     process.on(
       'SIGINT',
-      this.exitHandler.bind(null, { server: this, exit: true })
+      this.exitHandler.bind(null, {
+        server: this,
+        exit: true
+      })
     )
 
     // catches uncaught exceptions
     process.on(
       'uncaughtException',
-      this.exitHandler.bind(null, { server: this, exit: true })
+      this.exitHandler.bind(null, {
+        server: this,
+        exit: true
+      })
     )
   }
 
@@ -459,10 +468,11 @@ Server.prototype.loadApi = function (options, reload, callback) {
           package: '@dadi/web',
           version: version,
           healthCheck: {
-            baseUrl: 'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port'),
+            baseUrl:
+              'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port'),
             routes: config.get('status.routes')
           }
         }

@@ -507,6 +507,7 @@ describe("Datasource Cache", function(done) {
     it("should read data from a file", function(done) {
       var cacheConfig = {
         caching: {
+          ttl: 300,
           directory: {
             enabled: true
           },
@@ -526,37 +527,39 @@ describe("Datasource Cache", function(done) {
           crypto.createHash("sha1").update(ds.name).digest("hex") +
           "_" +
           crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
-        cachepath = path.join(
-          ds.schema.datasource.caching.directory.path,
-          filename + "." + ds.schema.datasource.caching.directory.extension
+
+        var cachepath = path.resolve(
+          path.join(
+            ds.schema.datasource.caching.directory.path,
+            filename + "." + ds.schema.datasource.caching.directory.extension
+          )
         )
         var expected = "ds content from filesystem"
 
-        fs.writeFile(cachepath, expected, { encoding: "utf-8" }, function(err) {
-          if (err) done(err)
+        fs.writeFileSync(cachepath, expected)
 
-          setTimeout(function() {
-            var dsCache = datasourceCache()
+        setTimeout(function() {
+          var dsCache = datasourceCache()
 
-            dsCache.getFromCache(
-              {
-                name: ds.name,
-                caching: ds.schema.datasource.caching,
-                endpoint: ds.provider.endpoint
-              },
-              function(data) {
-                data.should.not.eql(false)
-                data.toString().should.eql(expected)
-                done()
-              }
-            )
-          }, 1000)
-        })
+          dsCache.getFromCache(
+            {
+              name: ds.name,
+              caching: ds.schema.datasource.caching,
+              endpoint: ds.provider.endpoint
+            },
+            function(data) {
+              data.should.not.eql(false)
+              data.toString().should.eql(expected)
+              done()
+            }
+          )
+        }, 1000)
       })
     })
 
     it("should return false if cache file is not found", function(done) {
       var cacheConfig = {
+        ttl: 300,
         caching: {
           directory: {
             enabled: true
@@ -577,9 +580,11 @@ describe("Datasource Cache", function(done) {
           crypto.createHash("sha1").update(ds.name).digest("hex") +
           "_" +
           crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
-        cachepath = path.join(
-          ds.schema.datasource.caching.directory.path,
-          filename + "_XX." + ds.schema.datasource.caching.directory.extension
+        cachepath = path.resolve(
+          path.join(
+            ds.schema.datasource.caching.directory.path,
+            filename + "_XX." + ds.schema.datasource.caching.directory.extension
+          )
         )
         var expected = "ds content from filesystem"
 
@@ -660,9 +665,11 @@ describe("Datasource Cache", function(done) {
           crypto.createHash("sha1").update(ds.name).digest("hex") +
           "_" +
           crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
-        cachepath = path.join(
-          ds.schema.datasource.caching.directory.path,
-          filename + "." + ds.schema.datasource.caching.directory.extension
+        cachepath = path.resolve(
+          path.join(
+            ds.schema.datasource.caching.directory.path,
+            filename + "." + ds.schema.datasource.caching.directory.extension
+          )
         )
         var expected = "ds content from filesystem"
 
@@ -710,9 +717,11 @@ describe("Datasource Cache", function(done) {
           crypto.createHash("sha1").update(ds.name).digest("hex") +
           "_" +
           crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
-        cachepath = path.join(
-          ds.schema.datasource.caching.directory.path,
-          filename + "." + ds.schema.datasource.caching.directory.extension
+        cachepath = path.resolve(
+          path.join(
+            ds.schema.datasource.caching.directory.path,
+            filename + "." + ds.schema.datasource.caching.directory.extension
+          )
         )
 
         var data = "ds content from filesystem"

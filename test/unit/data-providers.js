@@ -271,6 +271,94 @@ describe("Data Providers", function(done) {
     })
   })
 
+  describe("Remote", function(done) {
+    it("should return an errors collection when a datasource times out", function(
+      done
+    ) {
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["car-makes-unchained-remote"]
+
+          TestHelper.setupApiIntercepts()
+
+          var connectionString =
+            "http://" +
+            config.get("server.host") +
+            ":" +
+            config.get("server.port")
+          var apiConnectionString =
+            "http://" + config.get("api.host") + ":" + config.get("api.port")
+
+          var scope = nock(apiConnectionString)
+            .defaultReplyHeaders({
+              "content-encoding": ""
+            })
+            .get("/1.0/cars/makes")
+            .times(5)
+            .reply(504)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .end((err, res) => {
+                should.exist(res.body["car-makes-unchained-remote"].errors)
+                res.body[
+                  "car-makes-unchained-remote"
+                ].errors[0].title.should.eql("Datasource Timeout")
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should return an errors collection when a datasource is not found", function(
+      done
+    ) {
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["car-makes-unchained-remote"]
+
+          TestHelper.setupApiIntercepts()
+
+          var connectionString =
+            "http://" +
+            config.get("server.host") +
+            ":" +
+            config.get("server.port")
+          var apiConnectionString =
+            "http://" + config.get("api.host") + ":" + config.get("api.port")
+
+          var scope = nock(apiConnectionString)
+            .defaultReplyHeaders({
+              "content-encoding": ""
+            })
+            .get("/1.0/cars/makes")
+            .times(5)
+            .reply(404)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?cache=false&json=true")
+              .end((err, res) => {
+                should.exist(res.body["car-makes-unchained-remote"].errors)
+                res.body[
+                  "car-makes-unchained-remote"
+                ].errors[0].title.should.eql("Datasource Not Found")
+                done()
+              })
+          })
+        })
+      })
+    })
+  })
+
   describe("Static", function(done) {
     it("should sort the results by the provided field", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(

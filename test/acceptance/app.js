@@ -108,7 +108,6 @@ describe("Application", function() {
         TestHelper.startServer(pages).then(() => {
           client.get("/categories/Crime").end((err, res) => {
             if (err) return done(err)
-
             res.text.should.eql("<h3>Crime</h3>")
             should.exist(res.headers["x-cache"])
             res.headers["x-cache"].should.eql("MISS")
