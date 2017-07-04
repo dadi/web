@@ -418,6 +418,7 @@ describe("Template store", function(done) {
       var mockReadFile = sinon
         .stub(fs, "readFile")
         .yields(null, "File contents")
+
       sinon.stub(fs, "statSync").callsFake(() => ({
         isFile: () => true
       }))
@@ -436,6 +437,9 @@ describe("Template store", function(done) {
             .relative(config.get("paths.pages"), page.file)
             .replace(extension, "")
         })
+
+        fs.statSync.restore()
+        fs.readFile.restore()
 
         response.should.deepEqual(expectedTemplatesLoaded)
 
