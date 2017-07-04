@@ -29,9 +29,10 @@ var Router = function (server, options) {
   this.handlers = []
   this.rules = []
 
-  this.rewritesFile = config.get('rewrites.path') === ''
-    ? null
-    : path.resolve(config.get('rewrites.path'))
+  this.rewritesFile =
+    config.get('rewrites.path') === ''
+      ? null
+      : path.resolve(config.get('rewrites.path'))
   this.rewritesDatasource = config.get('rewrites.datasource')
   this.loadDatasourceAsFile = config.get('rewrites.loadDatasourceAsFile')
 

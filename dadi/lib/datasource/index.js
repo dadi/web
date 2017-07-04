@@ -223,9 +223,10 @@ Datasource.prototype.processRequest = function (datasource, req) {
       req.params.hasOwnProperty(obj.param) && req.params[obj.param]
 
     if (obj.field && paramValue) {
-      paramValue = obj.type === 'Number'
-        ? Number(paramValue)
-        : encodeURIComponent(paramValue)
+      paramValue =
+        obj.type === 'Number'
+          ? Number(paramValue)
+          : encodeURIComponent(paramValue)
 
       if (obj.target === 'filter') {
         // this.schema.datasource.filter[obj.field] = paramValue

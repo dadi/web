@@ -256,14 +256,14 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
             title: 'Datasource Timeout',
             details:
               "The datasource '" +
-                this.datasource.name +
-                "' timed out: " +
-                res.statusMessage +
-                ' (' +
-                res.statusCode +
-                ')' +
-                ': ' +
-                this.endpoint
+              this.datasource.name +
+              "' timed out: " +
+              res.statusMessage +
+              ' (' +
+              res.statusCode +
+              ')' +
+              ': ' +
+              this.endpoint
           }
         ]
       }
@@ -276,14 +276,14 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
             title: 'Datasource Not Found',
             details:
               'Datasource "' +
-                this.datasource.name +
-                '" failed. ' +
-                res.statusMessage +
-                ' (' +
-                res.statusCode +
-                ')' +
-                ': ' +
-                this.endpoint
+              this.datasource.name +
+              '" failed. ' +
+              res.statusMessage +
+              ' (' +
+              res.statusCode +
+              ')' +
+              ': ' +
+              this.endpoint
           }
         ]
       }

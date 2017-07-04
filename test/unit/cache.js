@@ -8,7 +8,7 @@ sinon.test = sinonTest.configureTest(sinon)
 sinon.testCase = sinonTest.configureTestCase(sinon)
 
 var api = require(__dirname + "/../../dadi/lib/api")
-var Server = require(__dirname + "/../../dadi/lib")
+var Server = require(__dirname + "/../help").Server
 var cache = require(__dirname + "/../../dadi/lib/cache")
 var datasource = require(__dirname + "/../../dadi/lib/datasource")
 var page = require(__dirname + "/../../dadi/lib/page")

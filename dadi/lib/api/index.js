@@ -226,9 +226,13 @@ Api.prototype.listener = function (req, res) {
       try {
         // if end of the stack, no middleware could handle the current
         // request, so get matching routes from the loaded page components and
-        // add them to the stack after the cache handler but just before the
-        // 404 handler, then continue the loop
-        if (this.stack[stackIdx].name === 'cache' && !pathsLoaded) {
+        // add them to the stack just before the 404 handler, then continue the loop
+        // console.log(pathsLoaded, this.stack[stackIdx].name, this.stack[stackIdx+1] ? this.stack[stackIdx+1].name : 'nothing left!')
+        if (
+          this.stack[stackIdx + 1] &&
+          this.stack[stackIdx + 1].name === 'notFound' &&
+          !pathsLoaded
+        ) {
           // find path specific handlers
           var hrstart = process.hrtime()
 
@@ -372,7 +376,8 @@ function onError (api) {
       res.end(
         errorView({
           headline: 'Something went wrong.',
-          human: 'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
+          human:
+            'We apologise, but something is not working as it should. It is not something you did, but we cannot complete this right now.',
           developer: data.message,
           stack: data.stack,
           statusCode: data.statusCode,
@@ -386,7 +391,7 @@ function onError (api) {
 
 // return a 404
 function notFound (api, req, res) {
-  return function () {
+  return function notFound () {
     res.statusCode = 404
 
     // look for a 404 page that has been loaded
@@ -401,7 +406,8 @@ function notFound (api, req, res) {
       res.end(
         errorView({
           headline: 'Page not found.',
-          human: 'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
+          human:
+            'This page has either been moved, or it never existed at all. Sorry about that, this was not your fault.',
           developer: 'HTTP Headers',
           stack: JSON.stringify(req.headers, null, 2),
           statusCode: '404',
