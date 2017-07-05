@@ -27,6 +27,7 @@
     "@dadi/metadata": "^1.0.0",
     "@dadi/passport": "latest",
     "@dadi/status": "latest",
+    "@dadi/web-dustjs": "latest",
     "@purest/providers": "^1.0.0",
     "async": "^2.3.0",
     "body-parser": "^1.11.0",
@@ -91,8 +92,7 @@
     "superagent-mock": "^3.3.0",
     "supertest": "latest",
     "uuid": "^3.0.1",
-    "validate-commit-msg": "^2.12.1",
-    "@dadi/web-dustjs": "latest"
+    "validate-commit-msg": "^2.12.1"
   },
   "repository": {
     "type": "git",

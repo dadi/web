@@ -14,7 +14,7 @@ if (~currentPath.indexOf('node_modules')) {
   fs.stat(destinationFile, (err, stats) => {
     if (err && err.code && err.code === 'ENOENT') {
       // file doesn't exist
-      fs.writeFile(destinationFile, "require('@dadi/web')", function(err) {
+      fs.writeFile(destinationFile, "require('@dadi/web')({engines:[require('@dadi/web-dustjs')]})", function(err) {
         if (err) return console.log(err)
         console.log('Web entry point created at', destinationFile)
       })
