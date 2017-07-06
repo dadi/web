@@ -73,6 +73,15 @@ TemplateStore.prototype.get = function (templateName) {
 }
 
 /**
+  * Retrieves the engines object.
+  *
+  * @return {Object} The engines object.
+  */
+TemplateStore.prototype.getEngines = function () {
+  return this.engines
+}
+
+/**
   * Computes the list of file extensions supported by all engines.
   *
   * @return {Array} An array of extensions.
@@ -206,9 +215,7 @@ TemplateStore.prototype.loadFiles = function (files, options) {
           )
         })
       })
-    },
-
-    extensions: this.getSupportedExtensions()
+    }
   })
 }
 
@@ -243,7 +250,6 @@ TemplateStore.prototype.loadPages = function (pages, options) {
 
   return helpers
     .readDirectory(this.pagesPath, {
-      extensions: this.getSupportedExtensions(),
       recursive: true
     })
     .then(files => {
