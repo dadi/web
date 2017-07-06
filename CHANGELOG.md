@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [3.0.2] - 2017-07-06
+
+## Changed
+
+* throw error at startup when the pages directory contains templates without an engine that can handle them
+* fix an issue where information about the loaded engines on the app startup screen was sometimes incorrect
+
 # [3.0.1] - 2017-07-05
 
 ## Changed
