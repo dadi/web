@@ -467,7 +467,8 @@ Server.prototype.loadApi = function (options, reload, callback) {
           package: '@dadi/web',
           version: version,
           healthCheck: {
-            baseUrl: 'http://' +
+            baseUrl:
+              'http://' +
               config.get('server.host') +
               ':' +
               config.get('server.port'),
@@ -919,74 +920,73 @@ function onListening (e) {
 
     var env = config.get('env')
     var protocol = config.get('server.protocol') || 'http'
-    var redirectPort = config.get('server.redirectPort')
+    // var redirectPort = config.get('server.redirectPort')
     var engines = Object.keys(templateStore.getEngines())
-    var enginesInfo = engines.length ? engines.join(', ') : 'None'.red
-    var extraPadding = (redirectPort > 0 && '          ') || ''
+    var enginesInfo = engines.length ? engines.join(', ') : 'none'.red
 
-    var startText = '\n'
-    startText += '  ----------------------------\n'
-    startText += '  ' + config.get('app.name').green + '\n'
-    startText += "  Started 'DADI Web'\n"
-    startText += '  ----------------------------\n'
+    var apiStr = config.get('api.enabled')
+      ? config.get('api.host') + ':' + config.get('api.port')
+      : ''
+    var svrStr =
+      protocol +
+      '://' +
+      config.get('server.host') +
+      ':' +
+      config.get('server.port')
 
-    if (protocol === 'http') {
-      startText +=
-        '  Server:      '.green +
-        extraPadding +
-        'http://' +
-        config.get('server.host') +
-        ':' +
-        config.get('server.port') +
-        '\n'
-    } else if (protocol === 'https') {
-      if (redirectPort > 0) {
-        startText +=
-          '  Server (http > https): '.green +
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.redirectPort') +
-          '\n'
+    function pad (str, padChar, offset) {
+      var longest =
+        Math.max(config.get('app.name').length, apiStr.length, svrStr.length) +
+        18
+
+      if (offset > 0) longest = longest - offset
+      var pad = Array(longest).join(padChar || ' ')
+
+      if (typeof str === 'undefined') return pad
+      else {
+        return (str + pad).substring(0, pad.length)
       }
-      startText +=
-        '  Server:      '.green +
-        extraPadding +
-        'https://' +
-        config.get('server.host') +
-        ':' +
-        config.get('server.port') +
-        '\n'
     }
 
-    startText += '  Version:     '.green + extraPadding + version + '\n'
-    startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
-    startText += '  Environment: '.green + extraPadding + env + '\n'
-    startText += '  Engine:      '.green + extraPadding + enginesInfo + '\n'
+    var txt = '\n\n'
+    txt += '  ▓▓▓▓▓  ▓▓▓▓▓▓▓\n'
+    txt += '              ▓▓▓▓\n'
+    txt += '     ▓▓▓▓▓▓▓    ▓▓▓▓\n'
+    txt += '              ▓▓▓▓\n'
+    txt += '          ▓▓▓▓▓▓▓\n'
+    txt += '\n'
 
-    if (config.get('api.enabled') === true) {
-      startText +=
-        '  API:         '.green +
-        extraPadding +
-        config.get('api.host') +
-        ':' +
-        config.get('api.port') +
-        '\n'
-    } else {
-      startText +=
-        '  API:         '.green + extraPadding + 'Disabled'.red + '\n'
-      startText += '  ----------------------------\n'
-    }
+    txt += '  ✓ '.green
+    txt += 'Started DADI Web\n'.bold
+    txt += '  ℹ '.yellow
+    txt += 'Documentation at ' + 'http://docs.dadi.tech\n'.underline
+    txt += '  ℹ '.yellow
+    txt += '<CTRL> + C to shut down\n\n'
+
+    txt += pad('  ┌', '─', 1) + '┐\n'
+    txt += pad('  │ ' + config.get('app.name'), ' ', 1) + '│\n'
+
+    txt += pad(' ┌─────────────┬', '─') + '┐\n'
+    txt += pad(' │ Server      │ ' + svrStr) + '│\n'
+    txt += pad(' │ Version     │ ' + version) + '│\n'
+    txt += pad(' │ Node.js     │ ' + nodeVersion) + '│\n'
+    txt += pad(' │ Environment │ ' + env) + '│\n'
+    txt += pad(' │ Engine      │ ' + enginesInfo) + '│\n'
+    txt += pad(' └─────────────┴', '─') + '┘\n'
+    txt +=
+      pad('  │ DADI API   │ ' + (apiStr || 'not connected'), ' ', 1) + '│\n'
+    txt += pad('  └────────────┴', '─', 1) + '┘'
 
     if (env !== 'test') {
-      startText +=
-        '\n\n  Copyright ' +
+      txt +=
+        '\n\n  ' +
         String.fromCharCode(169) +
-        ' 2015-' +
+        ' ' +
         new Date().getFullYear() +
-        ' DADI+ Limited (https://dadi.tech)'.white +
-        '\n'
-      console.log(startText)
+        ' DADI+ Limited ('.white +
+        'https://dadi.tech'.underline +
+        ')\n  All rights reserved.\n'
+      console.log(txt)
     }
   })
 }
