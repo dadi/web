@@ -1,12 +1,10 @@
 var _ = require("underscore")
 var fs = require("fs")
 var path = require("path")
-var sinon = require("sinon")
 var should = require("should")
 var Readable = require("stream").Readable
 var request = require("supertest")
 var zlib = require("zlib")
-var destroy = require("destroy")
 
 var api = require(__dirname + "/../../dadi/lib/api")
 var Bearer = require(__dirname + "/../../dadi/lib/auth/bearer")
@@ -43,72 +41,54 @@ describe("Public folder", function(done) {
   })
 
   it("should return files from the public folder", function(done) {
-    TestHelper.disableApiConfig().then(() => {
-      TestHelper.updateConfig({ allowJsonView: true }).then(() => {
-        var pages = TestHelper.setUpPages()
+    var pages = TestHelper.setUpPages()
 
-        TestHelper.startServer(pages).then(() => {
-          var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
-          var client = request(connectionString)
+    TestHelper.startServer(pages).then(() => {
+      var connectionString =
+        "http://" + config.get("server.host") + ":" + config.get("server.port")
+      var client = request(connectionString)
 
-          client.get("/image.png").end((err, res) => {
-            should.exist(res.headers["content-type"])
-            res.headers["content-type"].should.eql("image/png")
-            res.headers["cache-control"].should.eql("public, max-age=86400")
-            done()
-          })
-        })
+      client.get("/image.png").end((err, res) => {
+        should.exist(res.headers["content-type"])
+        res.headers["content-type"].should.eql("image/png")
+        res.headers["cache-control"].should.eql("public, max-age=86400")
+        done()
       })
     })
   })
 
   it("should not compress images in the public folder", function(done) {
-    TestHelper.disableApiConfig().then(() => {
-      TestHelper.updateConfig({ allowJsonView: true }).then(() => {
-        var pages = TestHelper.setUpPages()
+    var pages = TestHelper.setUpPages()
 
-        TestHelper.startServer(pages).then(() => {
-          var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
-          var client = request(connectionString)
+    TestHelper.startServer(pages).then(() => {
+      var connectionString =
+        "http://" + config.get("server.host") + ":" + config.get("server.port")
+      var client = request(connectionString)
 
-          client.get("/image.png").end((err, res) => {
-            should.not.exist(res.headers["content-encoding"])
-            done()
-          })
-        })
+      client.get("/image.png").end((err, res) => {
+        should.not.exist(res.headers["content-encoding"])
+        done()
       })
     })
   })
 
-  it("should have a longer cache life for a favicon", function(done) {
-    TestHelper.disableApiConfig().then(() => {
-      TestHelper.updateConfig({ allowJsonView: true }).then(() => {
-        var pages = TestHelper.setUpPages()
+  it("should compress files in the public folder where necessary", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
 
-        TestHelper.startServer(pages).then(() => {
-          var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
-          var client = request(connectionString)
+    TestHelper.startServer(pages).then(() => {
+      var connectionString =
+        "http://" + config.get("server.host") + ":" + config.get("server.port")
+      var client = request(connectionString)
 
-          client.get("/favicon.ico").end((err, res) => {
-            res.headers["cache-control"].should.eql(
-              "public, max-age=31536000000"
-            )
-            done()
-          })
+      client
+        .get("/gzipme.css")
+        .set("accept-encoding", "gzip")
+        .end((err, res) => {
+          res.headers["content-encoding"].should.eql("gzip")
+          done()
         })
-      })
     })
   })
 })
