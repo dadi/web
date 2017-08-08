@@ -26,16 +26,20 @@ StaticProvider.prototype.initialise = function initialise (datasource, schema) {
 StaticProvider.prototype.load = function load (requestUrl, done) {
   let data = this.schema.datasource.source.data
 
+  const params = this.datasourceParams
+    ? this.datasourceParams
+    : this.schema.datasource
+
   if (Array.isArray(data)) {
-    const sort = this.schema.datasource.sort
-    const search = this.schema.datasource.search
-    const count = this.schema.datasource.count
-    const fields = this.schema.datasource.fields || []
+    const sort = params.sort
+    const search = params.search
+    const count = params.count
+    const fields = params.fields || []
 
     if (search) data = _.where(data, search)
 
     // apply a filter
-    data = _.where(data, this.schema.datasource.filter)
+    data = _.where(data, params.filter)
 
     // Sort by field (with date support)
     if (sort && Object.keys(sort).length > 0) {
@@ -60,6 +64,16 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
   }
 
   done(null, { results: Array.isArray(data) ? data : [data] })
+}
+
+/**
+ * processRequest - called on every request, rebuild buildEndpoint
+ *
+ * @param  {obj} req - web request object
+ * @return {void}
+ */
+StaticProvider.prototype.processRequest = function (datasourceParams) {
+  this.datasourceParams = datasourceParams
 }
 
 module.exports = StaticProvider

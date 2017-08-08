@@ -24,13 +24,10 @@
     "workspace": "test/app",
     "datasources": "test/app/datasources",
     "pages": "test/app/pages",
-    "partials": "test/app/partials",
     "events": "test/app/events",
     "middleware": "test/app/middleware",
     "media": "test/app/media",
     "public": "test/app/public",
-    "routes": "test/app/routes",
-    "filters": "test/app/utils/filters",
-    "helpers": "test/app/utils/helpers"
+    "routes": "test/app/routes"
   }
 }

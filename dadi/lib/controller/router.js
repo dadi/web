@@ -29,9 +29,10 @@ var Router = function (server, options) {
   this.handlers = []
   this.rules = []
 
-  this.rewritesFile = config.get('rewrites.path') === ''
-    ? null
-    : path.resolve(config.get('rewrites.path'))
+  this.rewritesFile =
+    config.get('rewrites.path') === ''
+      ? null
+      : path.resolve(config.get('rewrites.path'))
   this.rewritesDatasource = config.get('rewrites.datasource')
   this.loadDatasourceAsFile = config.get('rewrites.loadDatasourceAsFile')
 
@@ -81,9 +82,9 @@ Router.prototype.loadRewrites = function (options, done) {
             return cb(null)
           }
 
-          if (response) {
-            response = JSON.parse(response)
-          }
+          // if (response) {
+          //   response = JSON.parse(response)
+          // }
 
           if (response.results) {
             var idx = 0
@@ -242,10 +243,8 @@ Router.prototype.validate = function (route, options, req, res) {
               )
             }
           } else if (param.fetch) {
-            var routeValidator = new RouteValidator(route, param, options)
-
-            routeValidator
-              .get(req)
+            RouteValidator()
+              .get(route, param, this.options, req)
               .then(() => {
                 return resolve('')
               })
@@ -399,16 +398,15 @@ module.exports = function (server, options) {
 
         debug('load rewrites', req.url)
 
-        ds.provider.load(req.url, (err, result) => {
+        ds.provider.load(req.url, function (err, data) {
           if (err) {
             console.log('Error loading data in Router Rewrite module')
             return next(err)
           }
 
-          if (result) {
-            var results = typeof result === 'object'
-              ? result
-              : JSON.parse(result)
+          if (data) {
+            // var results = JSON.parse(data.toString())
+            var results = data
 
             if (
               results &&

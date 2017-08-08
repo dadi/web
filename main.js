@@ -5,74 +5,92 @@ var debug = require('debug')('cluster')
 var fs = require('fs')
 var path = require('path')
 
-var app
 var log = require('@dadi/logger')
 log.init(config.get('logging'))
 
 require('console-stamp')(console, 'yyyy-mm-dd HH:MM:ss.l')
 
-if (config.get('cluster')) {
-  if (cluster.isMaster) {
-    var numWorkers = require('os').cpus().length
-    log.info('Starting DADI Web in cluster mode, using ' + numWorkers + ' workers.')
-    log.info('Master cluster setting up ' + numWorkers + ' workers...')
+function createApp (options) {
+  options = options || {}
 
-    // Start new workers
-    for (var i = 0; i < numWorkers; i++) {
-      cluster.fork()
-    }
+  var app
 
-    // New worker alive
-    cluster.on('online', function (worker) {
-      log.info('Worker ' + worker.process.pid + ' is online')
-    })
+  if (config.get('cluster')) {
+    if (cluster.isMaster) {
+      var numWorkers = require('os').cpus().length
+      log.info(
+        'Starting DADI Web in cluster mode, using ' + numWorkers + ' workers.'
+      )
+      log.info('Master cluster setting up ' + numWorkers + ' workers...')
 
-    // Handle a thread exit, start a new worker
-    cluster.on('exit', function (worker, code, signal) {
-      log.info('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal)
-      log.info('Starting a new worker')
-
-      cluster.fork()
-    })
-
-    // Watch the current directory for a "restart.web" file
-    var watcher = chokidar.watch(process.cwd(), {
-      depth: 0,
-      ignored: /(^|[/\\])\../,  // ignores dotfiles, see https://regex101.com/r/7VuO4e/1
-      ignoreInitial: true
-    })
-
-    watcher.on('add', function (filePath) {
-      if (path.basename(filePath) === 'restart.web') {
-        log.info('Shutdown requested')
-        fs.unlinkSync(filePath)
-        restartWorkers()
+      // Start new workers
+      for (var i = 0; i < numWorkers; i++) {
+        cluster.fork()
       }
-    })
-  } else {
-    // Start Workers
-    app = require(path.join(__dirname, '/index.js'))
 
-    app.start(function () {
-      log.info('Process ' + process.pid + ' is listening for incoming requests')
+      // New worker alive
+      cluster.on('online', function (worker) {
+        log.info('Worker ' + worker.process.pid + ' is online')
+      })
 
-      process.on('message', function (message) {
-        if (message.type === 'shutdown') {
-          log.info('Process ' + process.pid + ' is shutting down...')
+      // Handle a thread exit, start a new worker
+      cluster.on('exit', function (worker, code, signal) {
+        log.info(
+          'Worker ' +
+            worker.process.pid +
+            ' died with code: ' +
+            code +
+            ', and signal: ' +
+            signal
+        )
+        log.info('Starting a new worker')
 
-          process.exit(0)
+        cluster.fork()
+      })
+
+      // Watch the current directory for a "restart.web" file
+      var watcher = chokidar.watch(process.cwd(), {
+        depth: 0,
+        ignored: /(^|[/\\])\../, // ignores dotfiles, see https://regex101.com/r/7VuO4e/1
+        ignoreInitial: true
+      })
+
+      watcher.on('add', function (filePath) {
+        if (path.basename(filePath) === 'restart.web') {
+          log.info('Shutdown requested')
+          fs.unlinkSync(filePath)
+          restartWorkers()
         }
       })
+    } else {
+      // Start Workers
+      app = require(path.join(__dirname, '/index.js'))(options)
+
+      app.start(function () {
+        log.info(
+          'Process ' + process.pid + ' is listening for incoming requests'
+        )
+
+        process.on('message', function (message) {
+          if (message.type === 'shutdown') {
+            log.info('Process ' + process.pid + ' is shutting down...')
+
+            process.exit(0)
+          }
+        })
+      })
+    }
+  } else {
+    // Single thread start
+    debug('starting DADI Web in single thread mode.')
+
+    app = require(path.join(__dirname, '/index.js'))(options)
+    app.start(function () {
+      debug('process ' + process.pid + ' is listening for incoming requests')
     })
   }
-} else {
-  // Single thread start
-  debug('starting DADI Web in single thread mode.')
 
-  app = require(path.join(__dirname, '/index.js'))
-  app.start(function () {
-    debug('process ' + process.pid + ' is listening for incoming requests')
-  })
+  return app
 }
 
 function restartWorkers () {
@@ -100,13 +118,17 @@ function restartWorkers () {
 }
 
 // export the modules
-module.exports.App = app
+module.exports = createApp
+module.exports.App = createApp
 module.exports.Config = require('./config')
 module.exports.Event = require(path.join(__dirname, '/dadi/lib/event'))
-module.exports.Preload = require(path.join(__dirname, '/dadi/lib/datasource/preload'))
+module.exports.Preload = require(path.join(
+  __dirname,
+  '/dadi/lib/datasource/preload'
+))
 
 // Loaded page & route components
-module.exports.Components = require(path.join(__dirname, '/dadi/lib')).components
-
-// Dust template lib
-module.exports.Dust = require(path.join(__dirname, '/dadi/lib/dust'))
+module.exports.Components = require(path.join(
+  __dirname,
+  '/dadi/lib'
+)).components

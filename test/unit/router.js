@@ -549,9 +549,7 @@ describe("Router", function(done) {
       })
     })
 
-    it.skip("should proxy the request if rewrite rule specifies", function(
-      done
-    ) {
+    it("should proxy the request if rewrite rule specifies", function(done) {
       TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {
@@ -972,7 +970,8 @@ describe("Router", function(done) {
       schema.routes[0].path = "/test"
       var page = Page("test", schema)
 
-      var req = {}, res = {}
+      var req = {},
+        res = {}
 
       server.app.Router.testConstraint(page.routes[0].path, req, res, function(
         result
@@ -1001,7 +1000,8 @@ describe("Router", function(done) {
         page.routes[0].constraint
       )
 
-      var req = { url: "/test" }, res = {}
+      var req = { url: "/test" },
+        res = {}
 
       server.app.Router.testConstraint(page.routes[0].path, req, res, function(
         result

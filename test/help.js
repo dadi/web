@@ -12,6 +12,12 @@ var Datasource = require(__dirname + "/../dadi/lib/datasource")
 var Page = require(__dirname + "/../dadi/lib/page")
 var Server = require(__dirname + "/../dadi/lib")
 
+var serverOptions = {
+  engines: [require("@dadi/web-dustjs")]
+}
+
+var Server = require(__dirname + "/../dadi/lib")(serverOptions)
+
 var config
 var testConfigString
 var configKey = path.resolve(path.join(__dirname, "/../config"))
@@ -91,7 +97,7 @@ TestHelper.prototype.updateConfig = function(configBlock) {
     fs.writeFileSync(config.configPath(), JSON.stringify(newConfig, null, 2))
     config.loadFile(path.resolve(config.configPath()))
     delete require.cache[configKey]
-    return resolve("")
+    return resolve(config)
   })
 }
 
@@ -100,7 +106,7 @@ TestHelper.prototype.resetConfig = function() {
     fs.writeFileSync(config.configPath(), this.originalConfigString)
     config.loadFile(path.resolve(config.configPath()))
     delete require.cache[configKey]
-    return resolve("")
+    return resolve(config)
   })
 }
 
@@ -208,7 +214,7 @@ TestHelper.prototype.startServer = function(pages) {
           )
 
           if (++idx === pages.length) {
-            return resolve("")
+            return resolve(Server.compile(options).then(() => Server))
           }
         })
       }, 200)
@@ -317,3 +323,9 @@ module.exports = function() {
 }
 
 module.exports.TestHelper = TestHelper
+module.exports.Server = Server
+module.exports.getNewServer = options => {
+  options = options || serverOptions
+
+  return require(__dirname + "/../dadi/lib")(options)
+}

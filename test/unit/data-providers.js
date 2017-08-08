@@ -60,18 +60,16 @@ describe("Data Providers", function(done) {
           var apiConnectionString =
             "http://" + config.get("api.host") + ":" + config.get("api.port")
 
-          var stub = sinon.stub(
-            Bearer.BearerAuthStrategy.prototype,
-            "getToken",
-            function(strategy, callback) {
+          var stub = sinon
+            .stub(Bearer.BearerAuthStrategy.prototype, "getToken")
+            .callsFake(function(strategy, callback) {
               should.exist(strategy.config)
               should.exist(strategy.config)
               strategy.config.host.should.eql("127.0.0.1")
 
               stub.restore()
               return done()
-            }
-          )
+            })
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
@@ -124,7 +122,10 @@ describe("Data Providers", function(done) {
               .end((err, res) => {
                 providerSpy.restore()
                 providerSpy.called.should.eql(true)
-                providerSpy.firstCall.args[1].should.eql(text)
+
+                var buffer = providerSpy.firstCall.args[2]
+
+                buffer.toString().should.eql(text)
 
                 done()
               })
@@ -133,99 +134,54 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return brotli response if accept header specifies it", function(
+    it("should return append query params if endpoint already has a querystring", function(
       done
     ) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["car-makes-unchained"]
+        pages[0].datasources = ["car-makes-with-query"]
 
-        var text = JSON.stringify({ hello: "world!" })
+        TestHelper.setupApiIntercepts()
 
-        zlib.gzip(text, function(_, data) {
-          TestHelper.setupApiIntercepts()
+        var data = { hello: "world" }
 
-          var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
-          var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var apiConnectionString =
+          "http://" + config.get("api.host") + ":" + config.get("api.port")
 
-          var scope = nock(apiConnectionString)
-            .defaultReplyHeaders({
-              "content-encoding": "br"
+        var expected =
+          apiConnectionString +
+          '/1.0/cars/makes?param=value&count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+
+        var scope = nock(apiConnectionString)
+          .get(
+            "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
+          )
+          .times(5)
+          .reply(200, data)
+
+        var providerSpy = sinon.spy(
+          apiProvider.prototype,
+          "processDatasourceParameters"
+        )
+
+        TestHelper.startServer(pages).then(() => {
+          var client = request(connectionString)
+
+          client
+            .get(pages[0].routes[0].path + "?cache=false")
+            .end((err, res) => {
+              providerSpy.restore()
+              providerSpy.called.should.eql(true)
+
+              providerSpy.firstCall.returnValue.should.eql(expected)
+
+              done()
             })
-            .get(
-              "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
-            )
-            .times(5)
-            .reply(200, data)
-
-          var providerSpy = sinon.spy(apiProvider.prototype, "processOutput")
-
-          TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
-
-            client
-              .get(pages[0].routes[0].path + "?cache=false")
-              .set("Accept-Encoding", "br")
-              .end((err, res) => {
-                providerSpy.restore()
-                providerSpy.called.should.eql(true)
-                // supertest does not support brotli compression yet, so we can't fully test
-                //providerSpy.firstCall.args[1].should.eql(text)
-
-                done()
-              })
-          })
-        })
-      })
-    })
-
-    it("should not compress data if the client does not support it, instead return content-length", function(
-      done
-    ) {
-      TestHelper.enableApiConfig().then(() => {
-        var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["car-makes-unchained"]
-
-        var text = JSON.stringify({ hello: "world!" })
-
-        zlib.gzip(text, function(_, data) {
-          TestHelper.setupApiIntercepts()
-
-          var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
-          var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
-
-          var scope = nock(apiConnectionString)
-            .get(
-              "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
-            )
-            .times(5)
-            .reply(200, data)
-
-          var providerSpy = sinon.spy(apiProvider.prototype, "processOutput")
-
-          TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
-
-            client
-              .get(pages[0].routes[0].path + "?cache=false")
-              .set("Accept-Encoding", "")
-              .end((err, res) => {
-                should.not.exist(res.headers["content-encoding"])
-                should.exist(res.headers["content-length"])
-
-                done()
-              })
-          })
         })
       })
     })
@@ -307,6 +263,94 @@ describe("Data Providers", function(done) {
                 res.body["car-makes-unchained"].errors[0].title.should.eql(
                   "Datasource Not Found"
                 )
+                done()
+              })
+          })
+        })
+      })
+    })
+  })
+
+  describe("Remote", function(done) {
+    it("should return an errors collection when a datasource times out", function(
+      done
+    ) {
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["car-makes-unchained-remote"]
+
+          TestHelper.setupApiIntercepts()
+
+          var connectionString =
+            "http://" +
+            config.get("server.host") +
+            ":" +
+            config.get("server.port")
+          var apiConnectionString =
+            "http://" + config.get("api.host") + ":" + config.get("api.port")
+
+          var scope = nock(apiConnectionString)
+            .defaultReplyHeaders({
+              "content-encoding": ""
+            })
+            .get("/1.0/cars/makes")
+            .times(5)
+            .reply(504)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .end((err, res) => {
+                should.exist(res.body["car-makes-unchained-remote"].errors)
+                res.body[
+                  "car-makes-unchained-remote"
+                ].errors[0].title.should.eql("Datasource Timeout")
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should return an errors collection when a datasource is not found", function(
+      done
+    ) {
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["car-makes-unchained-remote"]
+
+          TestHelper.setupApiIntercepts()
+
+          var connectionString =
+            "http://" +
+            config.get("server.host") +
+            ":" +
+            config.get("server.port")
+          var apiConnectionString =
+            "http://" + config.get("api.host") + ":" + config.get("api.port")
+
+          var scope = nock(apiConnectionString)
+            .defaultReplyHeaders({
+              "content-encoding": ""
+            })
+            .get("/1.0/cars/makes")
+            .times(5)
+            .reply(404)
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?cache=false&json=true")
+              .end((err, res) => {
+                should.exist(res.body["car-makes-unchained-remote"].errors)
+                res.body[
+                  "car-makes-unchained-remote"
+                ].errors[0].title.should.eql("Datasource Not Found")
                 done()
               })
           })
@@ -887,7 +931,7 @@ describe("Data Providers", function(done) {
               ":" +
               config.get("server.port")
             var client = request(connectionString)
-
+            console.log(pages[0].routes[0].path)
             client
               .get(pages[0].routes[0].path + "?json=true")
               .end((err, res) => {
@@ -1376,9 +1420,13 @@ describe("Data Providers", function(done) {
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.markdown.results)
-                console.log(res.body.markdown.results)
-                //res.body.markdown.results[0].attributes.title.should.eql("Another Quick Brown Fox")
-                //res.body.markdown.results[1].attributes.title.should.eql("A Quick Brown Fox")
+
+                res.body.markdown.results[0].attributes.title.should.eql(
+                  "A Quick Brown Fox"
+                )
+                res.body.markdown.results[1].attributes.title.should.eql(
+                  "Another Quick Brown Fox"
+                )
                 done()
               })
           })

@@ -1,8 +1,11 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.7.0
+version: v1.7.1
 ignore: {}
 # patches apply the minimum changes required to fix a vulnerability
 patch:
   'npm:marked:20170112':
     - marked:
         patched: '2017-02-10T14:26:06.244Z'
+  'npm:ms:20170412':
+    - compression > debug > ms:
+        patched: '2017-05-24T07:54:07.419Z'

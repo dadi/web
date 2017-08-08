@@ -26,6 +26,9 @@ var Cache = function (server) {
   this.server = server
   this.cache = new DadiCache(config.get('caching'))
 
+  Cache.numInstances = (Cache.numInstances || 0) + 1
+  // console.log('Cache:', Cache.numInstances)
+
   var directoryEnabled = config.get('caching.directory.enabled')
   var redisEnabled = config.get('caching.redis.enabled')
 
@@ -139,7 +142,9 @@ Cache.prototype.getEndpoint = function (req) {
   var endpoint = this.getEndpointMatchingRequest(req)
   if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
 
-  return endpoint || false
+  if (!endpoint) {
+    endpoint = this.getEndpointMatchingLoadedPaths(req)
+  }
 }
 
 /**
@@ -206,9 +211,10 @@ Cache.prototype.init = function () {
       query.cache && query.cache.toString().toLowerCase() === 'false'
 
     // File extension for cache file
-    var cacheExt = compressible(contentType) && help.canCompress(req.headers)
-      ? '.' + help.canCompress(req.headers)
-      : null
+    var cacheExt =
+      compressible(contentType) && help.canCompress(req.headers)
+        ? '.' + help.canCompress(req.headers)
+        : null
 
     var opts = {
       directory: { extension: mime.extension(contentType) + cacheExt }
@@ -235,7 +241,8 @@ Cache.prototype.init = function () {
           'X-Cache-Lookup': 'HIT',
           'X-Cache': 'HIT',
           'Content-Type': contentType,
-          'Cache-Control': config.get('headers.cacheControl')[contentType] ||
+          'Cache-Control':
+            config.get('headers.cacheControl')[contentType] ||
             'public, max-age=86400'
         }
 
