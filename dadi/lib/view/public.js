@@ -142,41 +142,46 @@ Public.prototype.openStream = function (
 
       // Extra headers from fstat
       headers['ETag'] = etag(stats)
-      headers['Content-Length'] = stats.size
       headers['Last-Modified'] = stats.mtime.toUTCString()
+      headers['Content-Length'] = stats.size
 
-      // Send
-      Object.keys(headers).map(i => res.setHeader(i, headers[i]))
-      this.compress(res, rs, shouldCompress, cacheInfo)
+      // Delivery
+      this.deliver(res, rs, shouldCompress, cacheInfo, headers)
     })
   })
 }
 
-Public.prototype.compress = function (res, stream, shouldCompress, cacheInfo) {
+Public.prototype.deliver = function (
+  res,
+  rs,
+  shouldCompress,
+  cacheInfo,
+  headers
+) {
   var parent = this
 
-  // Pipe through the cache, if applicable, and send the file on
-  function setCache (data) {
-    var self = this
-    parent.cacheInstance.cache
-      .set(cacheInfo.name, data, cacheInfo.opts)
-      .then(() => {
-        self.emit('data', data)
-      })
-  }
+  var extras = through(function write (data) {
+    // Set cache if needed
+    if (cacheInfo) {
+      parent.cacheInstance.cache.set(cacheInfo.name, data, cacheInfo.opts)
+
+      // Update with the compressed size
+      headers['Content-Length'] = data.byteLength
+    }
+
+    // Set headers
+    Object.keys(headers).map(i => res.setHeader(i, headers[i]))
+
+    // Pass data through
+    this.queue(data)
+  })
 
   if (shouldCompress === 'br') {
-    console.log('1')
-    stream.pipe(brotli.compressStream()).pipe(through(setCache)).pipe(res)
+    rs.pipe(brotli.compressStream()).pipe(extras).pipe(res)
   } else if (shouldCompress === 'gzip') {
-    console.log('2')
-    stream.pipe(zlib.createGzip()).pipe(through(setCache)).pipe(res)
-  } else if (cacheInfo) {
-    console.log('3')
-    stream.pipe(through(setCache)).pipe(res)
+    rs.pipe(zlib.createGzip()).pipe(extras).pipe(res)
   } else {
-    console.log('4')
-    stream.pipe(res)
+    rs.pipe(extras).pipe(res)
   }
 }
 
