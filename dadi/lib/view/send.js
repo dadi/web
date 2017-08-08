@@ -8,6 +8,11 @@ var help = require(path.join(__dirname, '/../help'))
 
 var self = this
 
+/**
+ * Sends back JSON
+ * @param {res} res - the HTTP response
+ * @param {req} req - the HTTP request
+ */
 module.exports.json = function (successCode, res, next) {
   return function (err, results) {
     if (err) return next(err)
@@ -43,9 +48,10 @@ module.exports.html = function (res, req, next, statusCode, contentType) {
 
     if (shouldCompress) {
       res.setHeader('Content-Encoding', shouldCompress)
-      resBody = shouldCompress === 'br'
-        ? brotli.compressSync(Buffer.from(resBody, 'utf-8'))
-        : zlib.gzipSync(resBody)
+      resBody =
+        shouldCompress === 'br'
+          ? brotli.compressSync(Buffer.from(resBody, 'utf-8'))
+          : zlib.gzipSync(resBody)
     }
 
     res.setHeader('Content-Length', Buffer.byteLength(resBody))

@@ -145,8 +145,6 @@ Server.prototype.start = function (done) {
 
   // set up cache
   this.cacheLayer = cache(this)
-
-  // initialise the cache
   this.cacheLayer.init()
 
   // init main public path for static files
@@ -220,10 +218,8 @@ Server.prototype.start = function (done) {
   // handle routing & redirects
   router(this, options)
 
-  if (config.get('api.enabled')) {
-    // authentication layer
-    auth(this)
-  }
+  // authentication layer
+  if (config.get('api.enabled')) auth(this)
 
   // start listening
   var server = (this.server = app.listen())

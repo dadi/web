@@ -138,27 +138,14 @@ Cache.prototype.getReqContentType = function (req) {
     : false
 }
 
+/**
+ * Adds the Cache middleware to the stack
+ */
 Cache.prototype.getEndpoint = function (req) {
   var endpoint = this.getEndpointMatchingRequest(req)
   if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
 
-  if (!endpoint) {
-    endpoint = this.getEndpointMatchingLoadedPaths(req)
-  }
-}
-
-/**
- * Retrieves the pushManifest of the page that the requested URL matches
- * @param {IncomingMessage} req - the current HTTP request
- * @returns {string}
- */
-Cache.prototype.getPushManifest = function (req) {
-  // Check for content-type in the page json
-  var endpoint = this.getEndpoint(req)
-
-  return endpoint && endpoint.page && endpoint.page.pushManifest
-    ? endpoint.page.pushManifest
-    : []
+  return endpoint
 }
 
 /**
@@ -175,9 +162,9 @@ Cache.prototype.init = function () {
   this.server.app.use(function cache (req, res, next) {
     var enabled = self.cachingEnabled(req)
 
-    debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
-
     if (!enabled) return next()
+
+    debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
 
     // Check it's a page
     if (!self.getEndpoint(req)) return next()
@@ -266,6 +253,7 @@ Cache.prototype.init = function () {
         // not found in cache
         res.setHeader('X-Cache', 'MISS')
         res.setHeader('X-Cache-Lookup', 'MISS')
+
         return cacheResponse()
       })
 

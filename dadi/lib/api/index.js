@@ -3,7 +3,6 @@ var debug = require('debug')('web:api')
 var fs = require('fs')
 var http = require('http')
 var https = require('https')
-var http2 = require('spdy')
 var path = require('path')
 var pathToRegexp = require('path-to-regexp')
 var raven = require('raven')
@@ -79,11 +78,7 @@ var Api = function () {
     // we need to catch any errors resulting from bad parameters
     // such as incorrect passphrase or no passphrase provided
     try {
-      if (config.get('server.http2')) {
-        this.httpsInstance = http2.createServer(serverOptions, this.listener)
-      } else {
-        this.httpsInstance = https.createServer(serverOptions, this.listener)
-      }
+      this.httpsInstance = https.createServer(serverOptions, this.listener)
     } catch (ex) {
       var exPrefix = 'error starting https server: '
       switch (ex.message) {
@@ -217,11 +212,13 @@ Api.prototype.listener = function (req, res) {
   req.params = {}
   req.paths = []
 
-  var originalReqParams = req.params
-  var pathsLoaded = false
+  // get matching routes, and add req.params
+  var matches = this.getMatchingRoutes(req)
 
-  var doStack = stackIdx => {
-    return err => {
+  var originalReqParams = req.params
+
+  var doStack = function (i) {
+    return function (err) {
       if (err) return errStack(0)(err)
 
       // add the original params back, in case a middleware
@@ -229,54 +226,28 @@ Api.prototype.listener = function (req, res) {
       _.extend(req.params, originalReqParams)
 
       try {
-        // if end of the stack, no middleware could handle the current
-        // request, so get matching routes from the loaded page components and
-        // add them to the stack just before the 404 handler, then continue the loop
-        // console.log(pathsLoaded, this.stack[stackIdx].name, this.stack[stackIdx+1] ? this.stack[stackIdx+1].name : 'nothing left!')
-        if (
-          this.stack[stackIdx + 1] &&
-          this.stack[stackIdx + 1].name === 'notFound' &&
-          !pathsLoaded
-        ) {
-          // find path specific handlers
-          var hrstart = process.hrtime()
-
-          var matches = this.getMatchingRoutes(req)
-
-          var hrend = process.hrtime(hrstart)
-          debug(
-            'getMatchingRoutes execution %ds %dms',
-            hrend[0],
-            hrend[1] / 1000000
-          )
-
-          if (!_.isEmpty(matches)) {
-            // add the matches after the cache middleware and before the final 404 handler
-            _.each(matches, match => {
-              this.stack.splice(-1, 0, match)
-            })
-          }
-
-          pathsLoaded = true
-        }
-
-        this.stack[stackIdx](req, res, doStack(++stackIdx))
+        self.stack[i](req, res, doStack(++i))
       } catch (e) {
         return errStack(0)(e)
       }
     }
   }
 
-  var errStack = stackIdx => {
-    return err => {
-      this.errors[stackIdx](err, req, res, errStack(++stackIdx))
+  var self = this
+
+  var errStack = function (i) {
+    return function (err) {
+      self.errors[i](err, req, res, errStack(++i))
     }
   }
 
-  // push the 404 handler
+  // add path specific handlers
+  this.stack = this.stack.concat(matches)
+
+  // add 404 handler
   this.stack.push(notFound(this, req, res))
 
-  // start going through the middleware
+  // start going through the middleware/routes
   doStack(0)()
 }
 

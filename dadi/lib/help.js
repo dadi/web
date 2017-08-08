@@ -297,8 +297,10 @@ module.exports.canCompress = function (reqHeaders) {
   var compressType = false
 
   if (
-    config.get('headers.useCompression') ||
-    config.get('headers.useGzipCompression')
+    (config.get('headers.useCompression') ||
+      config.get('headers.useGzipCompression')) &&
+    config.get('caching.directory.enabled') &&
+    !config.get('debug')
   ) {
     var acceptEncoding = reqHeaders['accept-encoding'] || ''
     if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'

@@ -19,7 +19,6 @@ var Event = require(path.join(__dirname, '/../event'))
 var Providers = require(path.join(__dirname, '/../providers'))
 var View = require(path.join(__dirname, '/../view'))
 var Send = require(path.join(__dirname, '/../view/send'))
-var servePublic = require(path.join(__dirname, '/../view/public'))
 var Cache = require(path.join(__dirname, '/../cache'))
 
 /**
@@ -41,8 +40,6 @@ var Controller = function (page, options, meta, engine, cache) {
   this.datasources = {}
   this.events = []
   this.preloadEvents = []
-  this.pushManifest =
-    config.get('globalPushManifest').concat(this.page.pushManifest) || []
 
   this.attachDatasources(err => {
     if (err) {
@@ -180,19 +177,6 @@ Controller.prototype.process = function process (req, res, next) {
   var statusCode = res.statusCode || 200
   var data = this.buildInitialViewData(req)
   var view = new View(req.url, this.page, data.json)
-
-  // Push http2 assets
-  if (!data.json && config.get('server.protocol') === 'https' && res.push) {
-    servePublic.process(
-      req,
-      res,
-      next,
-      this.pushManifest,
-      this.options.publicPath,
-      false,
-      this.cacheLayer
-    )
-  }
 
   var done = data.json
     ? Send.json(statusCode, res, next)
