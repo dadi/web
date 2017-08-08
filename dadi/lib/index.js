@@ -921,6 +921,7 @@ function onListening (e) {
     var env = config.get('env')
     var protocol = config.get('server.protocol') || 'http'
     // var redirectPort = config.get('server.redirectPort')
+    console.log(JSON.stringify(templateStore))
     var engines = Object.keys(templateStore.getEngines())
     var enginesInfo = engines.length ? engines.join(', ') : 'none'.red
 
@@ -983,9 +984,10 @@ function onListening (e) {
         String.fromCharCode(169) +
         ' ' +
         new Date().getFullYear() +
-        ' DADI+ Limited ('.white +
+        ' DADI+ Limited (' +
         'https://dadi.tech'.underline +
         ')\n  All rights reserved.\n'
+
       console.log(txt)
     }
   })
