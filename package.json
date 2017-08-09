@@ -80,7 +80,7 @@
   "devDependencies": {
     "env-test": "^1.0.0",
     "husky": "^0.13.3",
-    "istanbul": "^1.1.0-alpha.1",
+    "istanbul": "^0.4.5",
     "istanbul-cobertura-badger": "^1.1.0",
     "lint-staged": "^3.4.0",
     "mocha": "latest",
