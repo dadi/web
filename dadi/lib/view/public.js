@@ -159,23 +159,38 @@ Public.prototype.deliver = function (
   headers
 ) {
   var parent = this
+  var data = []
 
-  var extras = through(function write (data) {
-    // Set cache if needed
-    if (cacheInfo) {
-      parent.cacheInstance.cache.set(cacheInfo.name, data, cacheInfo.opts)
+  var extras = through(
+    function write (chunk) {
+      if (chunk) data.push(chunk)
 
-      // Update with the compressed size
-      headers['Content-Length'] = data.byteLength
+      // Update header with the compressed size
+      if (cacheInfo) headers['Content-Length'] = data.byteLength
+
+      // Set headers
+      try {
+        Object.keys(headers).map(i => res.setHeader(i, headers[i]))
+      } catch (e) {
+        // silence
+      }
+
+      // Pass data through
+      this.queue(chunk)
+    },
+    function end () {
+      // Set cache if needed
+      if (cacheInfo) {
+        parent.cacheInstance.cache
+          .set(cacheInfo.name, Buffer.concat(data), cacheInfo.opts)
+          .then(() => {})
+      }
+
+      this.emit('end')
     }
+  )
 
-    // Set headers
-    Object.keys(headers).map(i => res.setHeader(i, headers[i]))
-
-    // Pass data through
-    this.queue(data)
-  })
-
+  // Compress
   if (shouldCompress === 'br') {
     rs.pipe(brotli.compressStream()).pipe(extras).pipe(res)
   } else if (shouldCompress === 'gzip') {
