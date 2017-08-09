@@ -217,7 +217,7 @@ TestHelper.prototype.startServer = function(pages) {
             return resolve(Server.compile(options).then(() => Server))
           }
         })
-      }, 200)
+      }, 100)
     })
   })
 }
@@ -227,7 +227,7 @@ TestHelper.prototype.stopServer = function(done) {
   Server.stop(function() {
     setTimeout(function() {
       done()
-    }, 200)
+    }, 100)
   })
 }
 

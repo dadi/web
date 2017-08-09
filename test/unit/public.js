@@ -40,6 +40,98 @@ describe("Public folder", function(done) {
     TestHelper.stopServer(done)
   })
 
+  it("should compress files in the public folder where necessary", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    TestHelper.updateConfig({}).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var client = request(connectionString)
+
+        client
+          .get("/gzipme.css")
+          .set("accept-encoding", "gzip")
+          .end((err, res) => {
+            res.headers["content-encoding"].should.eql("gzip")
+            done()
+          })
+      })
+    })
+  })
+
+  it("should cache compressible files in the public folder where necessary", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    var cacheConfig = {
+      caching: {
+        directory: {
+          enabled: true
+        }
+      }
+    }
+
+    TestHelper.updateConfig(cacheConfig).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+
+        request(connectionString)
+          .get("/gzipme.css")
+          .set("accept-encoding", "gzip")
+          .end((err, res) => {
+            res.headers["x-cache"].should.eql("HIT")
+            res.headers["content-encoding"].should.eql("gzip")
+            done()
+          })
+      })
+    })
+  })
+
+  it("should not cache compressible files in the public folder when cache is disabled", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    var cacheConfig = {
+      caching: {
+        directory: {
+          enabled: false
+        }
+      }
+    }
+
+    TestHelper.updateConfig(cacheConfig).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var client = request(connectionString)
+
+        client
+          .get("/gzipme.css")
+          .set("accept-encoding", "gzip")
+          .end((err, res) => {
+            should.not.exist(res.headers["x-cache"])
+            res.headers["content-encoding"].should.eql("gzip")
+            done()
+          })
+      })
+    })
+  })
+
   it("should return files from the public folder", function(done) {
     var pages = TestHelper.setUpPages()
 
@@ -69,26 +161,6 @@ describe("Public folder", function(done) {
         should.not.exist(res.headers["content-encoding"])
         done()
       })
-    })
-  })
-
-  it("should compress files in the public folder where necessary", function(
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
-
-    TestHelper.startServer(pages).then(() => {
-      var connectionString =
-        "http://" + config.get("server.host") + ":" + config.get("server.port")
-      var client = request(connectionString)
-
-      client
-        .get("/gzipme.css")
-        .set("accept-encoding", "gzip")
-        .end((err, res) => {
-          res.headers["content-encoding"].should.eql("gzip")
-          done()
-        })
     })
   })
 })

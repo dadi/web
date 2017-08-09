@@ -225,37 +225,6 @@ describe("Cache", function(done) {
   )
 
   it(
-    "should not cache if the url key can be found in the loaded keys but it does not specify options",
-    sinon.test(function(done) {
-      var server = sinon.mock(Server)
-      server.object.app = api()
-
-      server.object.components["/actualUrl"] = {
-        page: {
-          routes: [
-            {
-              path: "/actualUrl"
-            }
-          ],
-          xxx: {
-            cache: false
-          }
-        }
-      }
-
-      var req = {
-        paths: ["/actualUrl"],
-        url: "http://www.example.com/actualUrl"
-      }
-
-      cache.reset()
-      cache(server.object).cachingEnabled(req).should.eql(false)
-
-      done()
-    })
-  )
-
-  it(
     "should not cache if the url key can be found in the loaded keys but ?json=true exists in the query",
     sinon.test(function(done) {
       var server = sinon.mock(Server)
