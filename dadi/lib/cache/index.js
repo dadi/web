@@ -63,13 +63,12 @@ Cache.prototype.cachingEnabled = function (req) {
   var endpoint = this.getEndpoint(req)
 
   if (endpoint) {
-    if (endpoint.page && endpoint.page.settings) {
-      this.options = endpoint.page.settings
-    } else {
-      this.options.cache = false
-    }
+    this.options.cache =
+      typeof endpoint.page.settings.cache !== 'undefined'
+        ? endpoint.page.settings.cache
+        : this.enabled
 
-    return this.enabled && (this.options.cache || false)
+    return this.enabled && this.options.cache
   } else {
     // Otherwise it might be in the public folder
     var file = url.parse(req.url).pathname
