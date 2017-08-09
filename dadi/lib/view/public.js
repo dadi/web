@@ -114,7 +114,16 @@ Public.prototype.process = function (req, res, next, file) {
         )
       })
   } else {
-    return this.openStream(res, req, file, next, false, headers, false, false)
+    return this.openStream(
+      res,
+      req,
+      file,
+      next,
+      false,
+      headers,
+      shouldCompress,
+      false
+    )
   }
 }
 
@@ -166,7 +175,7 @@ Public.prototype.deliver = function (
       if (chunk) data.push(chunk)
 
       // Update header with the compressed size
-      if (cacheInfo) headers['Content-Length'] = data.byteLength
+      if (shouldCompress) headers['Content-Length'] = data.byteLength
 
       // Set headers
       try {
