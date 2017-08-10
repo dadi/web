@@ -391,7 +391,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
         return help.clearCache(req, this.cacheLayer, err => {
           Send.json(200, res, next)(err, {
             result: 'success',
-            message: 'Succeed to clear'
+            message: 'Cache cleared successfully'
           })
         })
       } else {
