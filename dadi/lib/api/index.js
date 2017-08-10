@@ -227,7 +227,6 @@ Api.prototype.listener = function (req, res) {
         // if end of the stack, no middleware could handle the current
         // request, so get matching routes from the loaded page components and
         // add them to the stack just before the 404 handler, then continue the loop
-        // 404 handler, then continue the loop
 
         if (
           this.stack[stackIdx + 1] &&
