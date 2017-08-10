@@ -143,15 +143,6 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.setUpRequest())
   app.use(apiMiddleware.transportSecurity())
 
-  // set up cache
-  this.cacheLayer = cache(this)
-  this.cacheLayer.init()
-
-  // init main public path for static files
-  if (options.publicPath) {
-    app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
-  }
-
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
     var hostConfigFile = './config/' + virtualHost.configFile
@@ -215,11 +206,22 @@ Server.prototype.start = function (done) {
     app.use(session(sessionOptions))
   }
 
+  // set up cache
+  this.cacheLayer = cache(this)
+
+  // init main public path for static files
+  if (options.publicPath) {
+    app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
+  }
+
   // handle routing & redirects
   router(this, options)
 
   // authentication layer
   if (config.get('api.enabled')) auth(this)
+
+  // Initialise the cache
+  this.cacheLayer.init()
 
   // start listening
   var server = (this.server = app.listen())
