@@ -21,9 +21,6 @@ var DatasourceCache = function () {
   this.cacheOptions = config.get('caching')
   this.cache = new DadiCache(this.cacheOptions)
 
-  DatasourceCache.numInstances = (DatasourceCache.numInstances || 0) + 1
-  // console.log('DatasourceCache:', DatasourceCache.numInstances)
-
   var directoryEnabled = this.cacheOptions.directory.enabled
   var redisEnabled = this.cacheOptions.redis.enabled
 
