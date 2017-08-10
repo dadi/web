@@ -228,7 +228,11 @@ Api.prototype.listener = function (req, res) {
         // request, so get matching routes from the loaded page components and
         // add them to the stack after the cache handler but just before the
         // 404 handler, then continue the loop
-        if (this.stack[stackIdx].name === 'cache' && !pathsLoaded) {
+        if (
+          this.stack[stackIdx + 1] &&
+          this.stack[stackIdx + 1].name === 'notFound' &&
+          !pathsLoaded
+        ) {
           // find path specific handlers
           var hrstart = process.hrtime()
 
@@ -386,7 +390,7 @@ function onError (api) {
 
 // return a 404
 function notFound (api, req, res) {
-  return function () {
+  return function notFound () {
     res.statusCode = 404
 
     // look for a 404 page that has been loaded
