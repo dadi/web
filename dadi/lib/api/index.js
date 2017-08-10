@@ -212,13 +212,11 @@ Api.prototype.listener = function (req, res) {
   req.params = {}
   req.paths = []
 
-  // get matching routes, and add req.params
-  var matches = this.getMatchingRoutes(req)
-
   var originalReqParams = req.params
+  var pathsLoaded = false
 
-  var doStack = function (i) {
-    return function (err) {
+  var doStack = stackIdx => {
+    return err => {
       if (err) return errStack(0)(err)
 
       // add the original params back, in case a middleware
@@ -226,28 +224,50 @@ Api.prototype.listener = function (req, res) {
       _.extend(req.params, originalReqParams)
 
       try {
-        self.stack[i](req, res, doStack(++i))
+        // if end of the stack, no middleware could handle the current
+        // request, so get matching routes from the loaded page components and
+        // add them to the stack after the cache handler but just before the
+        // 404 handler, then continue the loop
+        if (this.stack[stackIdx].name === 'cache' && !pathsLoaded) {
+          // find path specific handlers
+          var hrstart = process.hrtime()
+
+          var matches = this.getMatchingRoutes(req)
+
+          var hrend = process.hrtime(hrstart)
+          debug(
+            'getMatchingRoutes execution %ds %dms',
+            hrend[0],
+            hrend[1] / 1000000
+          )
+
+          if (!_.isEmpty(matches)) {
+            // add the matches after the cache middleware and before the final 404 handler
+            _.each(matches, match => {
+              this.stack.splice(-1, 0, match)
+            })
+          }
+
+          pathsLoaded = true
+        }
+
+        this.stack[stackIdx](req, res, doStack(++stackIdx))
       } catch (e) {
         return errStack(0)(e)
       }
     }
   }
 
-  var self = this
-
-  var errStack = function (i) {
-    return function (err) {
-      self.errors[i](err, req, res, errStack(++i))
+  var errStack = stackIdx => {
+    return err => {
+      this.errors[stackIdx](err, req, res, errStack(++stackIdx))
     }
   }
 
-  // add path specific handlers
-  this.stack = this.stack.concat(matches)
-
-  // add 404 handler
+  // push the 404 handler
   this.stack.push(notFound(this, req, res))
 
-  // start going through the middleware/routes
+  // start going through the middleware
   doStack(0)()
 }
 
@@ -366,7 +386,7 @@ function onError (api) {
 
 // return a 404
 function notFound (api, req, res) {
-  return function notFound () {
+  return function () {
     res.statusCode = 404
 
     // look for a 404 page that has been loaded
