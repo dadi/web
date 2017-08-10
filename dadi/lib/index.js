@@ -523,6 +523,8 @@ Server.prototype.loadApi = function (options, reload, callback) {
     this.addMonitor(options.pagePath, pageFile => {
       this.updatePages(options.pagePath, options, true)
       this.compile(options)
+
+      templateStore.reInitilise()
     })
 
     this.addMonitor(options.routesPath, file => {
