@@ -15,19 +15,19 @@ var Cache = require(path.join(__dirname, '/../cache'))
 var config = require(path.resolve(path.join(__dirname, '/../../../config')))
 var help = require(path.join(__dirname, '/../help'))
 
-var Public = function (req, res, next, files, publicPath, isMiddleware, cache) {
-  this.cacheInstance = Cache(cache)
-  this.publicPath = publicPath
-  this.isMiddleware = isMiddleware
+var Public = function (arg) {
+  this.cacheInstance = Cache(arg.cache)
+  this.publicPath = arg.publicPath
+  this.isMiddleware = arg.isMiddleware
   this.files = []
-  this.endpoint = this.cacheInstance.getEndpoint(req)
+  this.endpoint = this.cacheInstance.getEndpoint(arg.req)
 
   // Make it so
-  this.init(req, res, next, files)
+  this.init({ req: arg.req, res: arg.res, next: arg.next, files: arg.files })
 }
 
-Public.prototype.init = function (req, res, next, files) {
-  var filteredFiles = files
+Public.prototype.init = function (arg) {
+  var filteredFiles = arg.files
     .map(i => url.parse(i).pathname.replace(/\/+$/, ''))
     .filter(i => i.length)
     .map(i => ({
@@ -38,26 +38,28 @@ Public.prototype.init = function (req, res, next, files) {
 
   if (filteredFiles.length) {
     this.files = filteredFiles
-    return async.each(filteredFiles, i => this.process(req, res, next, i))
+    return async.each(filteredFiles, file =>
+      this.process({ req: arg.req, res: arg.res, next: arg.next, file: file })
+    )
   } else {
-    return next()
+    return arg.next()
   }
 }
 
-Public.prototype.process = function (req, res, next, file) {
-  var contentType = mime.lookup(file.url)
+Public.prototype.process = function (arg) {
+  var contentType = mime.lookup(arg.file.url)
   var shouldCompress = compressible(contentType)
-    ? help.canCompress(req.headers)
+    ? help.canCompress(arg.req.headers)
     : false
 
   // Cache
   var cacheExt =
-    compressible(contentType) && help.canCompress(req.headers)
-      ? '.' + help.canCompress(req.headers)
+    compressible(contentType) && help.canCompress(arg.req.headers)
+      ? '.' + help.canCompress(arg.req.headers)
       : null
 
   var cacheInfo = {
-    name: crypto.createHash('sha1').update(file.url).digest('hex'),
+    name: crypto.createHash('sha1').update(arg.file.url).digest('hex'),
     opts: {
       directory: {
         extension: mime.extension(contentType) + cacheExt
@@ -87,86 +89,72 @@ Public.prototype.process = function (req, res, next, file) {
         headers['X-Cache-Lookup'] = 'HIT'
         headers['X-Cache'] = 'HIT'
 
-        return this.openStream(
-          res,
-          req,
-          file,
-          next,
-          cacheReadStream,
-          headers,
-          false,
-          false
-        )
+        return this.openStream({
+          res: arg.res,
+          req: arg.req,
+          file: arg.file,
+          next: arg.next,
+          rs: cacheReadStream,
+          headers: headers
+        })
       })
       .catch(() => {
         headers['X-Cache'] = 'MISS'
         headers['X-Cache-Lookup'] = 'MISS'
 
-        return this.openStream(
-          res,
-          req,
-          file,
-          next,
-          false,
-          headers,
-          shouldCompress,
-          cacheInfo
-        )
+        return this.openStream({
+          res: arg.res,
+          req: arg.req,
+          file: arg.file,
+          next: arg.next,
+          headers: headers,
+          shouldCompress: shouldCompress,
+          cacheInfo: cacheInfo
+        })
       })
   } else {
-    return this.openStream(
-      res,
-      req,
-      file,
-      next,
-      false,
-      headers,
-      shouldCompress,
-      false
-    )
+    return this.openStream({
+      res: arg.res,
+      req: arg.req,
+      file: arg.file,
+      next: arg.next,
+      headers: headers,
+      shouldCompress: shouldCompress
+    })
   }
 }
 
-Public.prototype.openStream = function (
-  res,
-  req,
-  file,
-  next,
-  rs,
-  headers,
-  shouldCompress,
-  cacheInfo
-) {
-  if (!rs) rs = fs.createReadStream(file.path)
+Public.prototype.openStream = function (arg) {
+  if (!arg.rs) arg.rs = fs.createReadStream(arg.file.path)
 
   // Move on if something goes wrong
-  rs.on('error', () => {
-    return next()
+  arg.rs.on('error', () => {
+    return arg.next()
   })
 
   // Pipe if the file opens & handle compression
-  rs.on('open', fd => {
+  arg.rs.on('open', fd => {
     fs.fstat(fd, (err, stats) => {
-      if (err && this.isMiddleware) return next()
+      if (err && this.isMiddleware) return arg.next()
 
       // Extra headers from fstat
-      headers['ETag'] = etag(stats)
-      headers['Last-Modified'] = stats.mtime.toUTCString()
-      headers['Content-Length'] = stats.size
+      arg.headers['ETag'] = etag(stats)
+      arg.headers['Last-Modified'] = stats.mtime.toUTCString()
+      arg.headers['Content-Length'] = stats.size
 
       // Delivery
-      this.deliver(res, rs, shouldCompress, cacheInfo, headers)
+      this.deliver({
+        res: arg.res,
+        rs: arg.rs,
+        shouldCompress: arg.shouldCompress,
+        cacheInfo: arg.cacheInfo,
+        headers: arg.headers
+      })
     })
   })
 }
 
-Public.prototype.deliver = function (
-  res,
-  rs,
-  shouldCompress,
-  cacheInfo,
-  headers
-) {
+Public.prototype.deliver = function (arg) {
   var parent = this
   var data = []
 
@@ -175,11 +163,11 @@ Public.prototype.deliver = function (
       if (chunk) data.push(chunk)
 
       // Update header with the compressed size
-      if (shouldCompress) headers['Content-Length'] = data.byteLength
+      if (arg.shouldCompress) arg.headers['Content-Length'] = data.byteLength
 
       // Set headers
       try {
-        Object.keys(headers).map(i => res.setHeader(i, headers[i]))
+        Object.keys(arg.headers).map(i => arg.res.setHeader(i, arg.headers[i]))
       } catch (e) {
         // silence
       }
@@ -189,9 +177,9 @@ Public.prototype.deliver = function (
     },
     function end () {
       // Set cache if needed
-      if (cacheInfo) {
+      if (arg.cacheInfo) {
         parent.cacheInstance.cache
-          .set(cacheInfo.name, Buffer.concat(data), cacheInfo.opts)
+          .set(arg.cacheInfo.name, Buffer.concat(data), arg.cacheInfo.opts)
           .then(() => {})
       }
 
@@ -200,12 +188,12 @@ Public.prototype.deliver = function (
   )
 
   // Compress
-  if (shouldCompress === 'br') {
-    rs.pipe(brotli.compressStream()).pipe(extras).pipe(res)
-  } else if (shouldCompress === 'gzip') {
-    rs.pipe(zlib.createGzip()).pipe(extras).pipe(res)
+  if (arg.shouldCompress === 'br') {
+    arg.rs.pipe(brotli.compressStream()).pipe(extras).pipe(arg.res)
+  } else if (arg.shouldCompress === 'gzip') {
+    arg.rs.pipe(zlib.createGzip()).pipe(extras).pipe(arg.res)
   } else {
-    rs.pipe(extras).pipe(res)
+    arg.rs.pipe(extras).pipe(arg.res)
   }
 }
 
@@ -213,11 +201,27 @@ module.exports = {
   middleware: function (publicPath, cache, hosts) {
     return (req, res, next) => {
       if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-        return new Public(req, res, next, [req.url], publicPath, true, cache)
+        return new Public({
+          req: req,
+          res: res,
+          next: next,
+          files: [req.url],
+          publicPath: publicPath,
+          isMiddleware: true,
+          cache: cache
+        })
       }
     }
   },
   process: function (req, res, next, files, publicPath, isMiddleware, cache) {
-    return new Public(req, res, next, files, publicPath, false, cache)
+    return new Public({
+      req: req,
+      res: res,
+      next: next,
+      files: files,
+      publicPath: publicPath,
+      isMiddleware: false,
+      cache: cache
+    })
   }
 }
