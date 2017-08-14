@@ -70,11 +70,11 @@ module.exports.html = function (res, req, next, statusCode, contentType) {
  * @param {res} res - the HTTP response
  */
 module.exports.addHeaders = function (res) {
-  var headers = config.get('headers').cors || []
+  var headers = config.get('headers').cors || {}
 
-  headers.forEach((value, header) => {
-    res.setHeader(header, value)
-    if (header === 'Access-Control-Allow-Origin' && value !== '*') {
+  Object.keys(headers).forEach((key) => {
+    res.setHeader(key, headers[key])
+    if (key === 'Access-Control-Allow-Origin' && headers[key] !== '*') {
       res.setHeader('Vary', 'Origin')
     }
   })
