@@ -61,6 +61,7 @@
     "purest": "^3.0.1",
     "qs": "6.4.0",
     "raven": "^1.2.1",
+    "readdirp": "^2.1.0",
     "recursive-readdir": "^2.1.1",
     "redis": "^2.2.5",
     "request": "^2.74.0",

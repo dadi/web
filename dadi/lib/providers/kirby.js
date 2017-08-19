@@ -5,7 +5,7 @@ const fs = require('fs')
 // const mime = require('mime')
 const path = require('path')
 const readdirp = require('readdirp')
-
+const templateStore = require(path.join(__dirname, '/../templates/store'))
 const visiblePageRe = /^\d+-/
 
 const KirbyProvider = function () {}
@@ -32,13 +32,13 @@ KirbyProvider.prototype.initialise = function (datasource, schema) {
  * @return {void}
  */
 KirbyProvider.prototype.load = function (requestUrl, done) {
-  let data = []
+  // let data = []
 
   const contentPath = path.resolve(this.schema.datasource.source.path)
 
   console.log('contentPath:', contentPath)
 
-  getStuff(contentPath, data).then(() => {
+  getStuff(contentPath, []).then(data => {
     return done(null, { results: Array.isArray(data) ? data : [data] })
   })
 
@@ -119,8 +119,9 @@ KirbyProvider.prototype.load = function (requestUrl, done) {
       page = Object.assign({}, page, attributes)
 
       page.render = function (chunk, context, bodies, params) {
-        var dust = require('dustjs-linkedin')
         var re = new RegExp(`${this.attributes.template}$`)
+
+        let dust = templateStore.engines['dust'].handler.getCore()
 
         let template = Object.keys(dust.cache).filter(key => {
           return re.test(key) ? key : null
