@@ -1,7 +1,8 @@
 'use strict'
 
 const fs = require('fs')
-// const mime = require('mime')
+const mime = require('mime')
+const marked = require('marked')
 const path = require('path')
 const readdirp = require('readdirp')
 const templateStore = require(path.join(__dirname, '/../templates/store'))
@@ -31,6 +32,9 @@ KirbyProvider.prototype.initialise = function (datasource, schema) {
  * @return {void}
  */
 KirbyProvider.prototype.load = function (requestUrl, done) {
+  this.pageKey =
+    this.datasourceParams.filter && this.datasourceParams.filter['key']
+
   const contentPath = path.resolve(this.schema.datasource.source.path)
 
   this.buildPages(contentPath, []).then(data => {
@@ -85,7 +89,13 @@ KirbyProvider.prototype.buildPages = function (thePath, theCollection, depth) {
     readdirp(options)
       .on('data', entry => {
         if (entry.fullParentDir !== options.root) {
-          parents.push(entry)
+          if (this.pageKey) {
+            if (entry.fullParentDir.indexOf(this.pageKey) > -1) {
+              parents.push(entry)
+            }
+          } else {
+            parents.push(entry)
+          }
         }
       })
       .on('end', () => {
@@ -115,9 +125,9 @@ KirbyProvider.prototype.buildPage = function (entry) {
     let template = entry.name.replace('.txt', '')
 
     let page = {
+      uid: key,
       attributes: {
         directory: directory,
-        key: key,
         template: template,
         visible: isVisible
       },
@@ -141,14 +151,37 @@ KirbyProvider.prototype.buildPage = function (entry) {
           ? null
           : field.substring(pos + 1).trim()
 
-      if (value) attributes[key] = value
+      if (value) {
+        attributes[key] = value
+
+        if (key === 'body') {
+          attributes['bodyHtml'] = marked(value)
+        }
+      }
     })
 
     page = Object.assign({}, page, attributes)
 
-    page.render = function (chunk, context, bodies, params) {
-      var re = new RegExp(`${this.attributes.template}$`)
+    // add images from the same directory
+    page.images = []
 
+    readdirp({
+      root: directory,
+      entryType: 'files',
+      fileFilter: file => {
+        return mime.lookup(file.fullPath) === 'image/jpeg'
+      },
+      lstat: false
+    }).on('data', file => {
+      page.images.push(
+        file.fullPath.replace(process.cwd(), '').replace('workspace/', '')
+      )
+    })
+
+    // render function
+    // TODO: make template engine agnostic
+    page.render = function (chunk, context, bodies, params) {
+      let re = new RegExp(`${this.attributes.template}$`)
       let dust = templateStore.engines['dust'].handler.getCore()
 
       let template = Object.keys(dust.cache).filter(key => {
@@ -169,6 +202,16 @@ KirbyProvider.prototype.buildPage = function (entry) {
       return resolve(page)
     })
   })
+}
+
+/**
+ * processRequest - called on every request, rebuild buildEndpoint
+ *
+ * @param  {obj} req - web request object
+ * @return {void}
+ */
+KirbyProvider.prototype.processRequest = function (datasourceParams) {
+  this.datasourceParams = datasourceParams
 }
 
 module.exports = KirbyProvider
