@@ -253,10 +253,16 @@ Server.prototype.start = function (done) {
 
     // add the session middleware
     app.use(session(sessionOptions))
-    app.use(csrf())
-  } else {
-    app.use(cookieParser())
-    app.use(csrf({ cookie: true }))
+  }
+
+  // use csrf protection if enabled
+  if (config.get('security.csrf')) {
+    if (sessionConfig.enabled) {
+      app.use(csrf())
+    } else {
+      app.use(cookieParser())
+      app.use(csrf({ cookie: true }))
+    }
   }
 
   // set up cache

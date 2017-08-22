@@ -161,7 +161,10 @@ Controller.prototype.buildInitialViewData = function (req) {
   data.global = config.has('global') ? config.get('global') : {} // global values from config
   data.debug = config.get('debug')
   data.json = json || false
-  data.csrfToken = req.csrfToken()
+
+  if (config.get('security.csrf')) {
+    data.csrfToken = req.csrfToken()
+  }
 
   delete data.query.json
   delete data.params.json
