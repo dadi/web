@@ -87,7 +87,7 @@
     "nodeunit": ">=0.5.1",
     "prettier": "^1.1.0",
     "should": "latest",
-    "sinon": "latest",
+    "sinon": "^2.x.x",
     "sinon-test": "^1.0.2",
     "snazzy": "^6.0.0",
     "standard": "8.6.0",
