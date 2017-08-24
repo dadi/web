@@ -467,7 +467,8 @@ Server.prototype.loadApi = function (options, reload, callback) {
           package: '@dadi/web',
           version: version,
           healthCheck: {
-            baseUrl: 'http://' +
+            baseUrl:
+              'http://' +
               config.get('server.host') +
               ':' +
               config.get('server.port'),
@@ -510,12 +511,19 @@ Server.prototype.loadApi = function (options, reload, callback) {
     })
 
     this.addMonitor(options.eventPath, eventFile => {
+      // Delete the existing cached events
+      Object.keys(require.cache).forEach(i => {
+        if (i.includes(options.eventPath)) delete require.cache[i]
+      })
+
+      // Reload
       this.updatePages(options.pagePath, options, true)
     })
 
     this.addMonitor(options.pagePath, pageFile => {
       this.updatePages(options.pagePath, options, true)
       this.compile(options)
+      templateStore.reInitialise()
     })
 
     this.addMonitor(options.routesPath, file => {
