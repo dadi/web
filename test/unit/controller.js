@@ -110,6 +110,148 @@ describe("Controller", function(done) {
     })
   })
 
+  /*
+  @jimlambie my understanding of csurf's implementation is that if it's used (csrf enabled in web config), then any POST requests must provide a valid token under the name _csrf, and if it either isn't present or is incorrect, then a 403 is generated, which currently gets picked up by web for the custom error page. If you could knock up a couple of tests for this, that'd be great!
+
+  Also, probably worth testing that if csrf is enabled, that the csrfToken is present on the view model.
+  */
+  describe("CSRF", function() {
+    it("should add a csrfToken to the view context", function(done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body.csrfToken)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should return a 403 if a POST request is missing a csrf token", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["categories"]
+
+          TestHelper.startServer(pages).then(() => {
+            // provide API response
+            var results = {
+              categories: { results: [{ _id: 1, title: "books" }] }
+            }
+
+            sinon
+              .stub(Controller.Controller.prototype, "loadData")
+              .yields(null, results)
+
+            var client = request(connectionString)
+            client
+              .post(pages[0].routes[0].path + "?json=true")
+              .send()
+              .expect(403)
+              .end((err, res) => {
+                if (err) return done(err)
+                Controller.Controller.prototype.loadData.restore()
+                res.text.indexOf("invalid csrf token").should.be.above(0)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should return 403 when POST request contains an invalid csrfToken", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body.csrfToken)
+
+                client
+                  .post(pages[0].routes[0].path)
+                  .send({ _csrf: "XXX" })
+                  .expect(403)
+                  .end((err, res) => {
+                    if (err) return done(err)
+                    res.text.indexOf("invalid csrf token").should.be.above(0)
+                    done()
+                  })
+              })
+          })
+        })
+      })
+    })
+
+    it("should return 200 when POST request contains a valid csrfToken", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body.csrfToken)
+
+                client
+                  .post(pages[0].routes[0].path)
+                  .send({ _csrf: res.body.csrfToken.toString() })
+                  .expect(200)
+                  .end((err, res) => {
+                    if (err) return done(err)
+                    res.text.indexOf("invalid csrf token").should.be.above(0)
+                    done()
+                  })
+              })
+          })
+        })
+      })
+    })
+  })
+
   describe("Events", function(done) {
     it("should load events in the order they are specified", function(done) {
       TestHelper.disableApiConfig().then(() => {
