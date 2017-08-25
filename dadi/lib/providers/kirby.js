@@ -32,39 +32,50 @@ KirbyProvider.prototype.initialise = function (datasource, schema) {
  * @return {void}
  */
 KirbyProvider.prototype.load = function (requestUrl, done) {
+  const contentPath = path.resolve(this.schema.datasource.source.path)
+  const sort = this.datasourceParams.sort
+  // const search = this.datasourceParams.search
+  const count = this.datasourceParams.count
+  // const fields = this.datasourceParams.fields || []
+
   this.pageKey =
     this.datasourceParams.filter && this.datasourceParams.filter['key']
 
-  const contentPath = path.resolve(this.schema.datasource.source.path)
-
   this.buildPages(contentPath, []).then(data => {
-    //   const sort = this.schema.datasource.sort
-    //   const search = this.schema.datasource.search
-    //   const count = this.schema.datasource.count
-    //   const fields = this.schema.datasource.fields || []
-    //
     //   if (search) data = _.where(data, search)
-    //
+
     //   // apply a filter
     //   data = _.where(data, this.schema.datasource.filter)
-    //
-    //   // Sort by field (with date support)
-    //   if (sort && Object.keys(sort).length > 0) {
-    //     Object.keys(sort).forEach(field => {
-    //       data = _.sortBy(data, post => {
-    //         const value = post[field]
-    //         const valueAsDate = new Date(value)
-    //         return valueAsDate.toString() !== 'Invalid Date'
-    //           ? +valueAsDate
-    //           : value
-    //       })
-    //       if (sort[field] === -1) {
-    //         data = data.reverse()
-    //       }
-    //     })
-    //   }
-    //
-    //   if (count) data = _.first(data, count)
+
+    // Sort by field (with date support)
+    if (sort && Object.keys(sort).length > 0) {
+      Object.keys(sort).forEach(field => {
+        data.sort((a, b) => {
+          const aValue = a[field]
+          const aValueAsDate = new Date(aValue)
+
+          const bValue = b[field]
+          const bValueAsDate = new Date(bValue)
+
+          if (aValueAsDate.toString() === 'Invalid Date') {
+            if (aValue < bValue) return -1
+            if (aValue > bValue) return 1
+            return 0
+          } else {
+            if (aValueAsDate < bValueAsDate) return -1
+            if (aValueAsDate > bValueAsDate) return 1
+            return 0
+          }
+        })
+
+        if (sort[field] === -1) {
+          data = data.reverse()
+        }
+      })
+    }
+
+    if (count) data = data.slice(0, count)
+
     //   if (fields && !_.isEmpty(fields)) {
     //     data = _.chain(data).selectFields(fields.join(',')).value()
     //   }
