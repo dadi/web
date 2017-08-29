@@ -214,6 +214,14 @@ Server.prototype.start = function (done) {
     app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
   }
 
+  // initialise virtualDirectories for serving static content
+  var parent = this
+  config.get('virtualDirectories').forEach(directory => {
+    app.use(
+      servePublic.middleware(path.resolve(directory.path), parent.cacheLayer)
+    )
+  })
+
   // handle routing & redirects
   router(this, options)
 
@@ -266,11 +274,6 @@ Server.prototype.start = function (done) {
 
   // preload data
   Preload().init(options)
-
-  // initialise virtualDirectories for serving static content
-  _.each(config.get('virtualDirectories'), function (directory) {
-    app.use(servePublic.middleware(path.resolve(directory.path)))
-  })
 
   this.readyState = 1
 

@@ -163,4 +163,36 @@ describe("Public folder", function(done) {
       })
     })
   })
+
+  it("should return files from a config.virtualDirectories folder", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    var virtualConfig = {
+      virtualDirectories: [
+        {
+          path: "./"
+        }
+      ]
+    }
+
+    TestHelper.updateConfig(virtualConfig).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var client = request(connectionString)
+
+        // Serve the readme for Web
+        client.get("/README.md").end((err, res) => {
+          should.exist(res.headers["content-type"])
+          res.headers["content-type"].should.eql("text/markdown")
+          done()
+        })
+      })
+    })
+  })
 })
