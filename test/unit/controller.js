@@ -1,7 +1,6 @@
 var _ = require("underscore")
 var nock = require("nock")
 var request = require("supertest")
-// var cookieParser = require("cookie-parser")
 var should = require("should")
 var sinon = require("sinon")
 
