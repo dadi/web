@@ -1,6 +1,7 @@
 var _ = require("underscore")
 var nock = require("nock")
 var request = require("supertest")
+// var cookieParser = require("cookie-parser")
 var should = require("should")
 var sinon = require("sinon")
 
@@ -111,7 +112,10 @@ describe("Controller", function(done) {
   })
 
   /*
-  @jimlambie my understanding of csurf's implementation is that if it's used (csrf enabled in web config), then any POST requests must provide a valid token under the name _csrf, and if it either isn't present or is incorrect, then a 403 is generated, which currently gets picked up by web for the custom error page. If you could knock up a couple of tests for this, that'd be great!
+  @jimlambie my understanding of csurf's implementation is that if it's used (csrf enabled in web config),
+  then any POST requests must provide a valid token under the name _csrf, and if it either isn't present
+  or is incorrect, then a 403 is generated, which currently gets picked up by web for the custom error page.
+  If you could knock up a couple of tests for this, that'd be great!
 
   Also, probably worth testing that if csrf is enabled, that the csrfToken is present on the view model.
   */
@@ -134,6 +138,31 @@ describe("Controller", function(done) {
               .end((err, res) => {
                 if (err) return done(err)
                 should.exist(res.body.csrfToken)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should set a cookie with the csrf secret", function(done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .expect(TestHelper.shouldSetCookie("_csrf"))
+              .end((err, res) => {
+                if (err) return done(err)
                 done()
               })
           })
@@ -196,12 +225,17 @@ describe("Controller", function(done) {
             client
               .get(pages[0].routes[0].path + "?json=true")
               .expect(200)
+              .expect(TestHelper.shouldSetCookie("_csrf"))
               .end((err, res) => {
                 if (err) return done(err)
                 should.exist(res.body.csrfToken)
 
                 client
                   .post(pages[0].routes[0].path)
+                  .set(
+                    "Cookie",
+                    "_csrf=" + TestHelper.extractCookieValue(res, "_csrf")
+                  )
                   .send({ _csrf: "XXX" })
                   .expect(403)
                   .end((err, res) => {
@@ -232,17 +266,22 @@ describe("Controller", function(done) {
             client
               .get(pages[0].routes[0].path + "?json=true")
               .expect(200)
+              .expect(TestHelper.shouldSetCookie("_csrf"))
               .end((err, res) => {
                 if (err) return done(err)
                 should.exist(res.body.csrfToken)
 
                 client
                   .post(pages[0].routes[0].path)
+                  .set(
+                    "Cookie",
+                    "_csrf=" + TestHelper.extractCookieValue(res, "_csrf")
+                  )
                   .send({ _csrf: res.body.csrfToken.toString() })
                   .expect(200)
                   .end((err, res) => {
                     if (err) return done(err)
-                    res.text.indexOf("invalid csrf token").should.be.above(0)
+                    res.text.indexOf("invalid csrf token").should.equal(-1)
                     done()
                   })
               })

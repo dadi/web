@@ -110,6 +110,16 @@ TestHelper.prototype.resetConfig = function() {
   })
 }
 
+TestHelper.prototype.extractCookieValue = function(res, cookieName) {
+  var cookies = res.headers["set-cookie"]
+  var cookie = cookies.find(function(cookie) {
+    return cookie.startsWith(cookieName + "=")
+  })
+  var data = cookie.split(";")[0]
+  var value = data.split("=")[1]
+  return value
+}
+
 /**
  * Tests that the response has the Set-Cookie header equal to "name"
  */
