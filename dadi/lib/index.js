@@ -16,6 +16,8 @@ var path = require('path')
 var serveFavicon = require('serve-favicon')
 var serveStatic = require('serve-static')
 var session = require('express-session')
+var csrf = require('csurf')
+var cookieParser = require('cookie-parser')
 var toobusy = require('toobusy-js')
 var dadiStatus = require('@dadi/status')
 
@@ -244,6 +246,16 @@ Server.prototype.start = function (done) {
 
     // add the session middleware
     app.use(session(sessionOptions))
+  }
+
+  // use csrf protection if enabled
+  if (config.get('security.csrf')) {
+    if (sessionConfig.enabled) {
+      app.use(csrf())
+    } else {
+      app.use(cookieParser())
+      app.use(csrf({ cookie: true }))
+    }
   }
 
   // set up cache
