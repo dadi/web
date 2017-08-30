@@ -288,14 +288,6 @@ var conf = convict({
         format: String,
         default: ''
       }
-    },
-    sentry: {
-      dsn: {
-        doc:
-          "The 'DSN' to use for logging errors and events to a Sentry server. It should be similar to 'https://693ef18da3184cffa82144fde2979cbc:a0651b0286784761a62ef8e8fc128722@app.getsentry.com/59524'.",
-        format: String,
-        default: ''
-      }
     }
   },
   globalEvents: {
