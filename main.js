@@ -74,10 +74,8 @@ function createApp (options) {
         debug('process %s is listening for incoming requests', process.pid)
 
         // Export loaded page & route components
-        setTimeout(function () {
-          module.exports.App = app
-          module.exports.Components = app.components
-        }, 2000)
+        module.exports.App = app
+        module.exports.Components = app.components
 
         process.on('message', function (message) {
           if (message.type === 'shutdown') {
@@ -98,10 +96,8 @@ function createApp (options) {
       debug('process %s is listening for incoming requests', process.pid)
 
       // Export loaded page & route components
-      setTimeout(function () {
-        module.exports.App = app
-        module.exports.Components = app.components
-      }, 2000)
+      module.exports.App = app
+      module.exports.Components = app.components
     })
   }
 
