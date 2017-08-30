@@ -6,9 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 # [3.1.0] - 2017-08-30
 
+## Added
+
+* [#59](https://github.com/dadi/web/issues/59): add support for CSRF token security. Usage information [here](https://github.com/dadi/web/pull/205)
+
 ## Changed
+
 * [#204](https://github.com/dadi/web/issues/204): remove Sentry support in favour of a future error handing implementation
 * [#209](https://github.com/dadi/web/issues/209): wait for components and routes to be loaed before exporting
+
+# [3.0.4] - 2017-07-14
+
+## Changed
+
+* ensure static datasources are passed request parameters for filtering data
 
 # [3.0.2] - 2017-07-06
 
