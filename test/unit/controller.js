@@ -111,12 +111,9 @@ describe("Controller", function(done) {
   })
 
   /*
-  @jimlambie my understanding of csurf's implementation is that if it's used (csrf enabled in web config),
-  then any POST requests must provide a valid token under the name _csrf, and if it either isn't present
-  or is incorrect, then a 403 is generated, which currently gets picked up by web for the custom error page.
-  If you could knock up a couple of tests for this, that'd be great!
+  If CSRF is used (csrf enabled in web config), then any POST requests must provide a valid token under the name _csrf, and if it either isn't present or is incorrect, then a 403 is generated, which currently gets picked up by web for the custom error page.
 
-  Also, probably worth testing that if csrf is enabled, that the csrfToken is present on the view model.
+  Also, if csrf is enabled, the csrfToken should be present on the view model.
   */
   describe("CSRF", function() {
     it("should add a csrfToken to the view context", function(done) {
