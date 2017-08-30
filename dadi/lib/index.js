@@ -13,7 +13,6 @@ var enableDestroy = require('server-destroy')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
 var path = require('path')
-var raven = require('raven')
 var serveFavicon = require('serve-favicon')
 var serveStatic = require('serve-static')
 var session = require('express-session')
@@ -120,12 +119,6 @@ Server.prototype.start = function (done) {
       return next()
     })
   })
-
-  if (config.get('logging.sentry.dsn') !== '') {
-    app.use(
-      raven.middleware.express.requestHandler(config.get('logging.sentry.dsn'))
-    )
-  }
 
   // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
