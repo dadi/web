@@ -346,7 +346,10 @@ function onError (api) {
       message: err.message
     }
 
-    data.stack = err.stack ? err.stack : 'Nothing to see'
+    data.stack =
+      err.stack && config.get('env') !== 'production'
+        ? err.stack
+        : 'Nothing to see'
 
     // look for a page that has been loaded
     // that matches the error code and call its handler if it exists
