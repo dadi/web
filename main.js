@@ -1,30 +1,34 @@
-var chokidar = require('chokidar')
-var cluster = require('cluster')
-var config = require('./config')
-var debug = require('debug')('cluster')
-var fs = require('fs')
-var path = require('path')
+'use strict'
 
-var log = require('@dadi/logger')
+const chokidar = require('chokidar')
+const cluster = require('cluster')
+const config = require('./config')
+const debug = require('debug')('web:cluster')
+const fs = require('fs')
+const path = require('path')
+
+const log = require('@dadi/logger')
 log.init(config.get('logging'))
 
 require('console-stamp')(console, 'yyyy-mm-dd HH:MM:ss.l')
 
+let app
+
 function createApp (options) {
   options = options || {}
 
-  var app
-
   if (config.get('cluster')) {
     if (cluster.isMaster) {
-      var numWorkers = require('os').cpus().length
+      let numWorkers = require('os').cpus().length
+
       log.info(
         'Starting DADI Web in cluster mode, using ' + numWorkers + ' workers.'
       )
+
       log.info('Master cluster setting up ' + numWorkers + ' workers...')
 
       // Start new workers
-      for (var i = 0; i < numWorkers; i++) {
+      for (let i = 0; i < numWorkers; i++) {
         cluster.fork()
       }
 
@@ -49,7 +53,7 @@ function createApp (options) {
       })
 
       // Watch the current directory for a "restart.web" file
-      var watcher = chokidar.watch(process.cwd(), {
+      let watcher = chokidar.watch(process.cwd(), {
         depth: 0,
         ignored: /(^|[/\\])\../, // ignores dotfiles, see https://regex101.com/r/7VuO4e/1
         ignoreInitial: true
@@ -67,9 +71,13 @@ function createApp (options) {
       app = require(path.join(__dirname, '/index.js'))(options)
 
       app.start(function () {
-        log.info(
-          'Process ' + process.pid + ' is listening for incoming requests'
-        )
+        debug('process %s is listening for incoming requests', process.pid)
+
+        // Export loaded page & route components
+        setTimeout(function () {
+          module.exports.App = app
+          module.exports.Components = app.components
+        }, 2000)
 
         process.on('message', function (message) {
           if (message.type === 'shutdown') {
@@ -85,8 +93,15 @@ function createApp (options) {
     debug('starting DADI Web in single thread mode.')
 
     app = require(path.join(__dirname, '/index.js'))(options)
+
     app.start(function () {
-      debug('process ' + process.pid + ' is listening for incoming requests')
+      debug('process %s is listening for incoming requests', process.pid)
+
+      // Export loaded page & route components
+      setTimeout(function () {
+        module.exports.App = app
+        module.exports.Components = app.components
+      }, 2000)
     })
   }
 
@@ -94,8 +109,8 @@ function createApp (options) {
 }
 
 function restartWorkers () {
-  var wid
-  var workerIds = []
+  let wid
+  let workerIds = []
 
   for (wid in cluster.workers) {
     workerIds.push(wid)
@@ -119,16 +134,9 @@ function restartWorkers () {
 
 // export the modules
 module.exports = createApp
-module.exports.App = createApp
 module.exports.Config = require('./config')
 module.exports.Event = require(path.join(__dirname, '/dadi/lib/event'))
 module.exports.Preload = require(path.join(
   __dirname,
   '/dadi/lib/datasource/preload'
 ))
-
-// Loaded page & route components
-module.exports.Components = require(path.join(
-  __dirname,
-  '/dadi/lib'
-)).components
