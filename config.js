@@ -424,7 +424,7 @@ var conf = convict({
       doc:
         'If true, a CSRF token will be provided, and all form submissions must include this as _csrf',
       format: '*',
-      default: false
+      default: true
     }
   },
   env: {
