@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [3.1.0] - 2017-08-30
+
+## Changed
+* [#204](https://github.com/dadi/web/issues/204): remove Sentry support in favour of a future error handing implementation
+* [#209](https://github.com/dadi/web/issues/209): wait for components and routes to be loaed before exporting
+
 # [3.0.2] - 2017-07-06
 
 ## Changed

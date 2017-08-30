@@ -70,7 +70,8 @@ var conf = convict({
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATH'
     },
     sslIntermediateCertificatePaths: {
-      doc: 'The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)',
+      doc:
+        'The filenames of SSL intermediate certificates, overrides sslIntermediateCertificate (singular)',
       format: Array,
       default: [],
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
@@ -201,7 +202,8 @@ var conf = convict({
     },
     redis: {
       enabled: {
-        doc: 'If enabled, cache files will be saved to the specified Redis server',
+        doc:
+          'If enabled, cache files will be saved to the specified Redis server',
         format: Boolean,
         default: false
       },
@@ -232,12 +234,14 @@ var conf = convict({
   },
   headers: {
     useGzipCompression: {
-      doc: "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
+      doc:
+        "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
       format: Boolean,
       default: true
     },
     cacheControl: {
-      doc: "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
+      doc:
+        "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
       format: Object,
       default: {
         'text/css': 'public, max-age=86400',
@@ -274,19 +278,13 @@ var conf = convict({
     },
     accessLog: {
       enabled: {
-        doc: "If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`.",
+        doc:
+          "If true, HTTP access logging is enabled. The log file name is similar to the setting used for normal logging, with the addition of 'access'. For example `web.access.log`.",
         format: Boolean,
         default: true
       },
       kinesisStream: {
         doc: 'An AWS Kinesis stream to write to log records to.',
-        format: String,
-        default: ''
-      }
-    },
-    sentry: {
-      dsn: {
-        doc: "The 'DSN' to use for logging errors and events to a Sentry server. It should be similar to 'https://693ef18da3184cffa82144fde2979cbc:a0651b0286784761a62ef8e8fc128722@app.getsentry.com/59524'.",
         format: String,
         default: ''
       }
@@ -328,29 +326,34 @@ var conf = convict({
       default: 'dadiweb.sid'
     },
     secret: {
-      doc: 'This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.',
+      doc:
+        'This is the secret used to sign the session ID cookie. This can be either a string for a single secret, or an array of multiple secrets. If an array of secrets is provided, only the first element will be used to sign the session ID cookie, while all the elements will be considered when verifying the signature in requests.',
       format: String,
       default: 'dadiwebsecretsquirrel',
       env: 'SESSION_SECRET'
     },
     resave: {
-      doc: 'Forces the session to be saved back to the session store, even if the session was never modified during the request.',
+      doc:
+        'Forces the session to be saved back to the session store, even if the session was never modified during the request.',
       format: Boolean,
       default: false
     },
     saveUninitialized: {
-      doc: "Forces a session that is 'uninitialized' to be saved to the store. A session is uninitialized when it is new but not modified.",
+      doc:
+        "Forces a session that is 'uninitialized' to be saved to the store. A session is uninitialized when it is new but not modified.",
       format: Boolean,
       default: false
     },
     store: {
-      doc: 'The session store instance, defaults to a new MemoryStore instance.',
+      doc:
+        'The session store instance, defaults to a new MemoryStore instance.',
       format: String,
       default: ''
     },
     cookie: {
       maxAge: {
-        doc: "Set the cookie’s expiration as an interval of seconds in the future, relative to the time the browser received the cookie. Null means no 'expires' parameter is set so the cookie becomes a browser-session cookie. When the user closes the browser the cookie (and session) will be removed.",
+        doc:
+          "Set the cookie’s expiration as an interval of seconds in the future, relative to the time the browser received the cookie. Null means no 'expires' parameter is set so the cookie becomes a browser-session cookie. When the user closes the browser the cookie (and session) will be removed.",
         format: '*',
         default: 60000
       },
@@ -393,7 +396,8 @@ var conf = convict({
       default: false
     },
     stripIndexPages: {
-      doc: "A set of filenames to remove from URLs. For example ['index.php', 'default.aspx']",
+      doc:
+        "A set of filenames to remove from URLs. For example ['index.php', 'default.aspx']",
       format: Array,
       default: []
     },
@@ -405,12 +409,14 @@ var conf = convict({
   },
   security: {
     trustProxy: {
-      doc: 'If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address',
+      doc:
+        'If true, trusts the values specified in X-Forwarded-* headers, such as protocol and client IP address',
       format: '*',
       default: true
     },
     transportSecurity: {
-      doc: 'If true, requires requests to be secure. Overridden if server.protocol is set to https.',
+      doc:
+        'If true, requires requests to be secure. Overridden if server.protocol is set to https.',
       format: '*',
       default: false
     }
@@ -428,23 +434,27 @@ var conf = convict({
     default: {}
   },
   virtualDirectories: {
-    doc: 'Allows specifying folders where additional static content may reside. An array entry should like look { "path": "data/legacy_features", "index": "default.html", "forceTrailingSlash": false }',
+    doc:
+      'Allows specifying folders where additional static content may reside. An array entry should like look { "path": "data/legacy_features", "index": "default.html", "forceTrailingSlash": false }',
     format: Array,
     default: []
   },
   allowJsonView: {
-    doc: 'If true, allows appending ?json=true to the querystring to view the raw JSON output for each page.',
+    doc:
+      'If true, allows appending ?json=true to the querystring to view the raw JSON output for each page.',
     format: Boolean,
     default: false
   },
   toobusy: {
     enabled: {
-      doc: 'If true, server will respond with HTTP 503 if the server is deemed too busy.',
+      doc:
+        'If true, server will respond with HTTP 503 if the server is deemed too busy.',
       format: Boolean,
       default: false
     },
     maxLag: {
-      doc: "The maximum amount of time in milliseconds that the event queue is behind before we consider the process 'too busy'.",
+      doc:
+        "The maximum amount of time in milliseconds that the event queue is behind before we consider the process 'too busy'.",
       format: Number,
       default: 70
     },
@@ -455,12 +465,14 @@ var conf = convict({
     }
   },
   cluster: {
-    doc: 'If true, Web runs in cluster mode, starting a worker for each CPU core',
+    doc:
+      'If true, Web runs in cluster mode, starting a worker for each CPU core',
     format: Boolean,
     default: true
   },
   debug: {
-    doc: 'If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.',
+    doc:
+      'If true, debug mode is enabled and a panel containing the JSON loaded for each page is displayed alongside the normal content.',
     format: Boolean,
     default: false
   },
