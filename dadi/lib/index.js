@@ -217,9 +217,7 @@ Server.prototype.start = function (done) {
   // initialise virtualDirectories for serving static content
   var parent = this
   config.get('virtualDirectories').forEach(directory => {
-    app.use(
-      servePublic.middleware(path.resolve(directory.path), parent.cacheLayer)
-    )
+    app.use(servePublic.virtualDirectories(directory, parent.cacheLayer))
   })
 
   // handle routing & redirects

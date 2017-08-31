@@ -21,6 +21,9 @@ var Public = function (arg) {
   this.isMiddleware = arg.isMiddleware
   this.files = []
   this.endpoint = this.cacheInstance.getEndpoint(arg.req)
+  this.index = arg.index || []
+  this.loadAttempts = 0
+  this.originalPath = ''
 
   // Make it so
   this.init({ req: arg.req, res: arg.res, next: arg.next, files: arg.files })
@@ -57,11 +60,14 @@ Public.prototype.process = function (arg) {
   // Cache
   var cacheExt =
     compressible(contentType) && help.canCompress(arg.req.headers)
-      ? '.' + help.canCompress(arg.req.headers)
+      ? `.${help.canCompress(arg.req.headers)}`
       : null
 
   var cacheInfo = {
-    name: crypto.createHash('sha1').update(arg.file.url).digest('hex'),
+    name: crypto
+      .createHash('sha1')
+      .update(arg.file.url)
+      .digest('hex'),
     opts: {
       directory: {
         extension: mime.extension(contentType) + cacheExt
@@ -129,9 +135,29 @@ Public.prototype.process = function (arg) {
 Public.prototype.openStream = function (arg) {
   if (!arg.rs) arg.rs = fs.createReadStream(arg.file.path)
 
-  // Move on if something goes wrong
+  // Try to load a folder index, if nothing found
   arg.rs.on('error', () => {
-    return arg.next()
+    if (this.loadAttempts === 0) this.originalPath = arg.file.path
+
+    if (this.index[this.loadAttempts]) {
+      this.process({
+        req: arg.req,
+        res: arg.res,
+        next: arg.next,
+        file: {
+          url: arg.file.url,
+          ext: arg.file.ext,
+          path: path.join(
+            this.originalPath,
+            this.index[this.loadAttempts] || ''
+          )
+        }
+      })
+    } else {
+      return arg.next()
+    }
+
+    this.loadAttempts++
   })
 
   // Pipe if the file opens & handle compression
@@ -191,9 +217,15 @@ Public.prototype.deliver = function (arg) {
 
   // Compress
   if (arg.shouldCompress === 'br') {
-    arg.rs.pipe(brotli.compressStream()).pipe(extras).pipe(arg.res)
+    arg.rs
+      .pipe(brotli.compressStream())
+      .pipe(extras)
+      .pipe(arg.res)
   } else if (arg.shouldCompress === 'gzip') {
-    arg.rs.pipe(zlib.createGzip()).pipe(extras).pipe(arg.res)
+    arg.rs
+      .pipe(zlib.createGzip())
+      .pipe(extras)
+      .pipe(arg.res)
   } else {
     arg.rs.pipe(extras).pipe(arg.res)
   }
@@ -213,6 +245,22 @@ module.exports = {
           cache: cache
         })
       }
+    }
+  },
+  virtualDirectories: function (directory, cache, hosts) {
+    return (req, res, next) => {
+      if (!Array.isArray(directory.index)) directory.index = [directory.index]
+
+      return new Public({
+        req: req,
+        res: res,
+        next: next,
+        files: [req.url],
+        publicPath: path.resolve(directory.path),
+        isMiddleware: true,
+        cache: cache,
+        index: directory.index
+      })
     }
   },
   process: function (req, res, next, files, publicPath, isMiddleware, cache) {
