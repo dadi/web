@@ -1,21 +1,21 @@
-var fs = require('fs')
-var path = require('path')
-var zlib = require('zlib')
-var brotli = require('iltorb')
-var mime = require('mime-types')
-var compressible = require('compressible')
-var etag = require('etag')
-var url = require('url')
-var _ = require('underscore')
-var crypto = require('crypto')
-var through = require('through')
-var async = require('async')
+const fs = require('fs')
+const path = require('path')
+const zlib = require('zlib')
+const brotli = require('iltorb')
+const mime = require('mime-types')
+const compressible = require('compressible')
+const etag = require('etag')
+const url = require('url')
+const _ = require('underscore')
+const crypto = require('crypto')
+const through = require('through')
+const async = require('async')
 
-var Cache = require(path.join(__dirname, '/../cache'))
-var config = require(path.resolve(path.join(__dirname, '/../../../config')))
-var help = require(path.join(__dirname, '/../help'))
+const Cache = require(path.join(__dirname, '/../cache'))
+const config = require(path.resolve(path.join(__dirname, '/../../../config')))
+const help = require(path.join(__dirname, '/../help'))
 
-var Public = function (arg) {
+const Public = function (arg) {
   this.cacheInstance = Cache(arg.cache)
   this.publicPath = arg.publicPath
   this.isMiddleware = arg.isMiddleware
@@ -30,7 +30,7 @@ var Public = function (arg) {
 }
 
 Public.prototype.init = function (arg) {
-  var filteredFiles = arg.files
+  const filteredFiles = arg.files
     .map(i => url.parse(i).pathname.replace(/\/+$/, ''))
     .filter(i => i.length)
     .map(i => ({
@@ -52,18 +52,18 @@ Public.prototype.init = function (arg) {
 }
 
 Public.prototype.process = function (arg) {
-  var contentType = mime.lookup(arg.file.url)
-  var shouldCompress = compressible(contentType)
+  const contentType = mime.lookup(arg.file.url)
+  const shouldCompress = compressible(contentType)
     ? help.canCompress(arg.req.headers)
     : false
 
   // Cache
-  var cacheExt =
+  const cacheExt =
     compressible(contentType) && help.canCompress(arg.req.headers)
       ? `.${help.canCompress(arg.req.headers)}`
       : null
 
-  var cacheInfo = {
+  const cacheInfo = {
     name: crypto
       .createHash('sha1')
       .update(arg.file.url)
@@ -183,10 +183,10 @@ Public.prototype.openStream = function (arg) {
 }
 
 Public.prototype.deliver = function (arg) {
-  var parent = this
-  var data = []
+  const parent = this
+  const data = []
 
-  var extras = through(
+  const extras = through(
     function write (chunk) {
       if (chunk) data.push(chunk)
 
