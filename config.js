@@ -321,6 +321,7 @@ var conf = convict({
     format: Object,
     default: {
       datasources: path.join(__dirname, '/workspace/datasources'),
+      events: path.join(__dirname, '/workspace/events'),
       middleware: path.join(__dirname, '/workspace/middleware'),
       pages: path.join(__dirname, '/workspace/pages'),
       public: path.join(__dirname, '/workspace/public'),
