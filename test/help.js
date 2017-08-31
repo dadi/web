@@ -42,7 +42,9 @@ var TestHelper = function() {
 TestHelper.prototype.setupApiIntercepts = function() {
   var host = "http://" + config.get("api.host") + ":" + config.get("api.port")
 
-  var apiTestScope = nock(host).get("/").reply(401)
+  var apiTestScope = nock(host)
+    .get("/")
+    .reply(401)
 
   var authScope1 = nock(host)
     .post("/token")
@@ -108,6 +110,16 @@ TestHelper.prototype.resetConfig = function() {
     delete require.cache[configKey]
     return resolve(config)
   })
+}
+
+TestHelper.prototype.extractCookieValue = function(res, cookieName) {
+  var cookies = res.headers["set-cookie"]
+  var cookie = cookies.find(function(cookie) {
+    return cookie.startsWith(cookieName + "=")
+  })
+  var data = cookie.split(";")[0]
+  var value = data.split("=")[1]
+  return value
 }
 
 /**

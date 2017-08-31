@@ -5,7 +5,6 @@ var http = require('http')
 var https = require('https')
 var path = require('path')
 var pathToRegexp = require('path-to-regexp')
-var raven = require('raven')
 var url = require('url')
 
 var log = require('@dadi/logger')
@@ -21,13 +20,6 @@ var Api = function () {
   this.paths = []
   this.all = []
   this.errors = []
-
-  // Sentry error handler
-  if (config.get('logging.sentry.dsn') !== '') {
-    this.errors.push(
-      raven.middleware.express.errorHandler(config.get('logging.sentry.dsn'))
-    )
-  }
 
   // Fallthrough error handler
   this.errors.push(onError(this))
@@ -353,7 +345,10 @@ function onError (api) {
       message: err.message
     }
 
-    data.stack = err.stack ? err.stack : 'Nothing to see'
+    data.stack =
+      err.stack && config.get('env') !== 'production'
+        ? err.stack
+        : 'Nothing to see'
 
     // look for a page that has been loaded
     // that matches the error code and call its handler if it exists

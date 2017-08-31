@@ -161,6 +161,10 @@ Controller.prototype.buildInitialViewData = function (req) {
   data.debug = config.get('debug')
   data.json = json || false
 
+  if (config.get('security.csrf')) {
+    data.csrfToken = req.csrfToken()
+  }
+
   delete data.query.json
   delete data.params.json
 

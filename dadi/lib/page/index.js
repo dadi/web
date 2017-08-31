@@ -1,12 +1,13 @@
+'use strict'
+
 /**
  * @module Page
  */
-var _ = require('underscore')
-var pathToRegexp = require('path-to-regexp')
+const pathToRegexp = require('path-to-regexp')
 
-var _pages = {}
+let _pages = {}
 
-var Page = function (name, schema, hostKey, templateCandidate) {
+const Page = function (name, schema, hostKey, templateCandidate) {
   schema.settings = schema.settings || {}
 
   this.name = name // schema.page.name || name
@@ -47,7 +48,7 @@ var Page = function (name, schema, hostKey, templateCandidate) {
  * @api public
  */
 Page.prototype.constructRoutes = function (schema) {
-  var routes = schema.routes || [{ path: '/' + this.name }]
+  let routes = schema.routes || [{ path: '/' + this.name }]
 
   if (schema.route) {
     if (schema.route.path && typeof schema.route.path === 'string') {
@@ -64,7 +65,7 @@ Page.prototype.constructRoutes = function (schema) {
   }
 
   // add default params to each route
-  _.each(routes, route => {
+  routes.forEach(route => {
     route.params = route.params || []
   })
 
@@ -79,14 +80,20 @@ Page.prototype.constructRoutes = function (schema) {
  * @api public
  */
 Page.prototype.toPath = function (params) {
-  var error
-  var url
+  let error
+  let url
 
   this.routes.forEach(route => {
-    var keys = pathToRegexp(route.path).keys
+    let keys = pathToRegexp(route.path).keys
 
     // only attempt this if the route's parameters match those passed to toPath
-    if (_.difference(_.pluck(keys, 'name'), Object.keys(params)).length === 0) {
+    let matchingKeys = Object.keys(params).every(param => {
+      return keys.filter(key => {
+        key.name === param
+      })
+    })
+
+    if (matchingKeys) {
       try {
         url = pathToRegexp.compile(route.path)(params)
         error = null
@@ -100,7 +107,8 @@ Page.prototype.toPath = function (params) {
     error = new Error(
       'No routes for page "' +
         this.name +
-        '" match the supplied number of parameters'
+        '" match the supplied parameters: ' +
+        JSON.stringify(params)
     )
   }
 
@@ -117,10 +125,10 @@ Page.prototype.toPath = function (params) {
  */
 function checkRouteSetting (schema, name) {
   if (!schema.routes && schema.route && typeof schema.route !== 'object') {
-    var newSchema = schema
+    let newSchema = schema
     newSchema.routes = [{ path: schema.route }]
     delete newSchema.route
-    var message =
+    let message =
       '\nThe `route` property for pages has been extended to provide better routing functionality.\n'
     message +=
       "Please modify the route property for page '" +
@@ -142,7 +150,7 @@ function checkCacheSetting (schema, name) {
     schema.settings.cache = schema.page.cache
     delete schema.page.cache
 
-    var message = '\nThe `cache` property should be nested under `settings`.\n'
+    let message = '\nThe `cache` property should be nested under `settings`.\n'
     message +=
       "Please modify the descriptor file for page '" +
       name +

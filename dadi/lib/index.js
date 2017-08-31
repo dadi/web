@@ -12,8 +12,9 @@ var enableDestroy = require('server-destroy')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
 var path = require('path')
-var raven = require('raven')
 var session = require('express-session')
+var csrf = require('csurf')
+var cookieParser = require('cookie-parser')
 var toobusy = require('toobusy-js')
 var dadiStatus = require('@dadi/status')
 
@@ -121,12 +122,6 @@ Server.prototype.start = function (done) {
     })
   })
 
-  if (config.get('logging.sentry.dsn') !== '') {
-    app.use(
-      raven.middleware.express.requestHandler(config.get('logging.sentry.dsn'))
-    )
-  }
-
   // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
     var domain = config.get('rewrites.forceDomain')
@@ -204,6 +199,16 @@ Server.prototype.start = function (done) {
 
     // add the session middleware
     app.use(session(sessionOptions))
+  }
+
+  // use csrf protection if enabled
+  if (config.get('security.csrf')) {
+    if (sessionConfig.enabled) {
+      app.use(csrf())
+    } else {
+      app.use(cookieParser())
+      app.use(csrf({ cookie: true }))
+    }
   }
 
   // set up cache
