@@ -172,7 +172,7 @@ describe("Public folder", function(done) {
     var virtualConfig = {
       virtualDirectories: [
         {
-          path: "./"
+          path: "./test/app/virtualdir"
         }
       ]
     }
@@ -187,9 +187,107 @@ describe("Public folder", function(done) {
         var client = request(connectionString)
 
         // Serve the readme for Web
-        client.get("/README.md").end((err, res) => {
-          should.exist(res.headers["content-type"])
-          res.headers["content-type"].should.eql("text/markdown")
+        client.get("/virtualdir/testing.html").end((err, res) => {
+          res.text.should.eql("My name is testing.html")
+          done()
+        })
+      })
+    })
+  })
+
+  it("should return an index file if specified for a config.virtualDirectories folder", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    var virtualConfig = {
+      virtualDirectories: [
+        {
+          path: "./test/app/virtualdir",
+          index: "index.html"
+        }
+      ]
+    }
+
+    TestHelper.updateConfig(virtualConfig).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var client = request(connectionString)
+
+        // Serve the readme for Web
+        client.get("/virtualdir/").end((err, res) => {
+          res.text.should.eql("My name is index.html")
+          done()
+        })
+      })
+    })
+  })
+
+  it("should return an index files if specified as an array for a config.virtualDirectories folder", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    var virtualConfig = {
+      virtualDirectories: [
+        {
+          path: "./test/app/virtualdir",
+          index: ["index.html", "default.html"]
+        }
+      ]
+    }
+
+    TestHelper.updateConfig(virtualConfig).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var client = request(connectionString)
+
+        // Serve the readme for Web
+        client.get("/virtualdir/").end((err, res) => {
+          res.text.should.eql("My name is index.html")
+
+          client.get("/virtualdir/subfolder/").end((err, res) => {
+            res.text.should.eql("Sub folder default.html")
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  it("should NOT return an index file if NOT specified for a config.virtualDirectories folder", function(
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    var virtualConfig = {
+      virtualDirectories: [
+        {
+          path: "./test/app/virtualdir"
+        }
+      ]
+    }
+
+    TestHelper.updateConfig(virtualConfig).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var client = request(connectionString)
+
+        // Serve the readme for Web
+        client.get("/virtualdir/").end((err, res) => {
+          res.statusCode.should.eql(404)
           done()
         })
       })
