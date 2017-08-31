@@ -214,6 +214,9 @@ Server.prototype.start = function (done) {
   // set up cache
   this.cacheLayer = cache(this)
 
+  // handle routing & redirects
+  router(this, options)
+
   // init main public path for static files
   if (options.publicPath) {
     app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
@@ -224,9 +227,6 @@ Server.prototype.start = function (done) {
   config.get('virtualDirectories').forEach(directory => {
     app.use(servePublic.virtualDirectories(directory, parent.cacheLayer))
   })
-
-  // handle routing & redirects
-  router(this, options)
 
   // authentication layer
   if (config.get('api.enabled')) auth(this)
