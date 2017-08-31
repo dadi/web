@@ -29,7 +29,7 @@ Preload.prototype.init = function (options) {
       datasource.provider.load(null, (err, data) => {
         if (err) console.log(err)
 
-        if (datasource.provider.destroy) {
+        if (datasource.provider && datasource.provider.destroy) {
           datasource.provider.destroy()
         }
 

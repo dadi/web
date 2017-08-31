@@ -6,8 +6,14 @@ var crypto = require('crypto')
 var debug = require('debug')('web:cache')
 var path = require('path')
 var url = require('url')
+var fs = require('fs')
+
+var compressible = require('compressible')
+var mime = require('mime-types')
+var etag = require('etag')
 
 var config = require(path.join(__dirname, '/../../../config.js'))
+var help = require(path.join(__dirname, '/../help'))
 
 var DadiCache = require('@dadi/cache')
 
@@ -19,9 +25,6 @@ var DadiCache = require('@dadi/cache')
 var Cache = function (server) {
   this.server = server
   this.cache = new DadiCache(config.get('caching'))
-
-  Cache.numInstances = (Cache.numInstances || 0) + 1
-  // console.log('Cache:', Cache.numInstances)
 
   var directoryEnabled = config.get('caching.directory.enabled')
   var redisEnabled = config.get('caching.redis.enabled')
@@ -46,31 +49,29 @@ module.exports = function (server) {
  * @returns {Boolean}
  */
 Cache.prototype.cachingEnabled = function (req) {
+  // Check it is not a json view
   var query = url.parse(req.url, true).query
-  if (query.json && query.json !== 'false') {
-    return false
-  }
+  if (query.json && query.json !== 'false') return false
 
-  if (config.get('debug')) {
-    return false
-  }
+  // Disable cache for debug mode
+  if (config.get('debug')) return false
 
-  var endpoint = this.getEndpointMatchingRequest(req)
+  // if it's in the endpoint and caching is enabled
+  var endpoint = this.getEndpoint(req)
 
-  if (!endpoint) {
-    endpoint = this.getEndpointMatchingLoadedPaths(req)
-  }
+  if (endpoint) {
+    this.options.cache =
+      typeof endpoint.page.settings.cache !== 'undefined'
+        ? endpoint.page.settings.cache
+        : this.enabled
 
-  // not found in the loaded routes, let's not bother caching
-  if (!endpoint) return false
-
-  if (endpoint.page && endpoint.page.settings) {
-    this.options = endpoint.page.settings
+    return this.enabled && this.options.cache
   } else {
-    this.options.cache = false
-  }
+    // Otherwise it might be in the public folder
+    var file = url.parse(req.url).pathname
 
-  return this.enabled && (this.options.cache || false)
+    return compressible(mime.lookup(file))
+  }
 }
 
 /**
@@ -80,12 +81,7 @@ Cache.prototype.cachingEnabled = function (req) {
  */
 Cache.prototype.getEndpointMatchingRequest = function (req) {
   var endpoints = this.server.components
-  var requestUrl = url.parse(req.url, true).pathname
-
-  // strip trailing slash before testing
-  if (requestUrl !== '/' && requestUrl[requestUrl.length - 1] === '/') {
-    requestUrl = requestUrl.substring(0, requestUrl.length - 1)
-  }
+  var requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
 
   // get the host key that matches the request's host header
   var virtualHosts = config.get('virtualHosts')
@@ -96,7 +92,7 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
     }) || ''
 
   // check if there is a match in the loaded routes for the current request URL
-  var endpoint = _.find(endpoints, endpoint => {
+  return _.find(endpoints, endpoint => {
     var paths = _.pluck(endpoint.page.routes, 'path')
     return (
       _.contains(paths, requestUrl) &&
@@ -105,9 +101,8 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
         : true)
     )
   })
-
-  return endpoint
 }
+
 /**
  * Retrieves the page component that best matches the paths loaded in api/index.js
  * @param {IncomingMessage} req - the current HTTP request
@@ -130,14 +125,23 @@ Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
  * @param {IncomingMessage} req - the current HTTP request
  * @returns {string}
  */
-Cache.prototype.getEndpointContentType = function (req) {
+Cache.prototype.getReqContentType = function (req) {
+  // Check for content-type in the page json
+  var endpoint = this.getEndpoint(req)
+
+  return endpoint && endpoint.page && endpoint.page.contentType
+    ? endpoint.page.contentType
+    : false
+}
+
+/**
+ * Adds the Cache middleware to the stack
+ */
+Cache.prototype.getEndpoint = function (req) {
   var endpoint = this.getEndpointMatchingRequest(req)
+  if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
 
-  if (!endpoint) {
-    endpoint = this.getEndpointMatchingLoadedPaths(req)
-  }
-
-  return endpoint.page.contentType
+  return endpoint
 }
 
 /**
@@ -154,9 +158,15 @@ Cache.prototype.init = function () {
   this.server.app.use(function cache (req, res, next) {
     var enabled = self.cachingEnabled(req)
 
+    if (!enabled) return next()
+
     debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
 
-    if (!enabled) return next()
+    // Check it's a page
+    if (!self.getEndpoint(req)) return next()
+
+    // get contentType that current endpoint requires
+    var contentType = self.getReqContentType(req)
 
     // only cache GET requests
     if (req.method && req.method.toLowerCase() !== 'get') return next()
@@ -183,33 +193,63 @@ Cache.prototype.init = function () {
     var noCache =
       query.cache && query.cache.toString().toLowerCase() === 'false'
 
-    // get contentType that current endpoint requires
-    var contentType = self.getEndpointContentType(req)
+    // File extension for cache file
+    var cacheExt =
+      compressible(contentType) && help.canCompress(req.headers)
+        ? '.' + help.canCompress(req.headers)
+        : null
+
+    var opts = {
+      directory: { extension: mime.extension(contentType) + cacheExt }
+    }
+
+    // Compression settings
+    var shouldCompress = compressible(contentType)
+      ? help.canCompress(req.headers)
+      : false
 
     // attempt to get from the cache
     self.cache
-      .get(filename)
+      .get(filename, opts)
       .then(stream => {
         debug('serving %s%s from cache', req.headers.host, req.url)
 
-        res.setHeader('X-Cache-Lookup', 'HIT')
-
         if (noCache) {
+          res.setHeader('X-Cache-Lookup', 'HIT')
           res.setHeader('X-Cache', 'MISS')
           return next()
         }
 
-        res.statusCode = 200
-        res.setHeader('X-Cache', 'HIT')
-        res.setHeader('Content-Type', contentType)
+        var headers = {
+          'X-Cache-Lookup': 'HIT',
+          'X-Cache': 'HIT',
+          'Content-Type': contentType,
+          'Cache-Control':
+            config.get('headers.cacheControl')[contentType] ||
+            'public, max-age=86400'
+        }
 
-        // send cached content back
+        // Add compression headers
+        if (shouldCompress) headers['Content-Encoding'] = shouldCompress
+
+        // Add extra headers
+        stream.on('open', fd => {
+          fs.fstat(fd, (_, stats) => {
+            res.setHeader('Content-Length', stats.size)
+            res.setHeader('ETag', etag(stats))
+          })
+        })
+
+        res.statusCode = 200
+        Object.keys(headers).map(i => res.setHeader(i, headers[i]))
+
         stream.pipe(res)
       })
       .catch(() => {
         // not found in cache
         res.setHeader('X-Cache', 'MISS')
         res.setHeader('X-Cache-Lookup', 'MISS')
+
         return cacheResponse()
       })
 
@@ -222,9 +262,11 @@ Cache.prototype.init = function () {
       var _end = res.end
       var _write = res.write
 
-      var data = ''
+      var data = []
 
       res.write = function (chunk) {
+        if (chunk) data.push(chunk)
+
         _write.apply(res, arguments)
       }
 
@@ -232,14 +274,19 @@ Cache.prototype.init = function () {
         // respond before attempting to cache
         _end.apply(res, arguments)
 
-        if (chunk) data += chunk
+        if (chunk && !data.length) data.push(chunk)
 
         // if response is not 200 don't cache
         if (res.statusCode !== 200) return
 
-        // cache the content
-        self.cache.set(filename, data).then(() => {})
+        // cache the content, with applicable file extension
+        try {
+          self.cache.set(filename, Buffer.concat(data), opts).then(() => {})
+        } catch (e) {
+          console.log('Could not cache content: ' + requestUrl)
+        }
       }
+
       return next()
     }
   })

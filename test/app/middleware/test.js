@@ -1,17 +1,13 @@
-var path = require('path');
-var http = require("http");
-var url = require('url');
+var path = require("path")
+var http = require("http")
+var url = require("url")
 
-var Middleware = function (app) {
+var Middleware = function(app) {
+  app.use("/feature/*", function(req, res, next) {})
+}
 
-  app.use('/feature/*', function (req, res, next) {
+module.exports = function(app) {
+  return new Middleware(app)
+}
 
-  });
-
-};
-
-module.exports = function (app) {
-    return new Middleware(app);
-};
-
-module.exports.Middleware = Middleware;
+module.exports.Middleware = Middleware

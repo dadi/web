@@ -234,8 +234,13 @@ var conf = convict({
   },
   headers: {
     useGzipCompression: {
+      doc: 'Depricated: use `useCompression` instead.',
+      format: Boolean,
+      default: true
+    },
+    useCompression: {
       doc:
-        "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
+        "If true, uses br or gzip compression where available and adds a 'Content-Encoding: [br|gzip]' header to the response.",
       format: Boolean,
       default: true
     },
@@ -244,9 +249,12 @@ var conf = convict({
         "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
       format: Object,
       default: {
+        'image/png': 'public, max-age=86400',
+        'image/jpeg': 'public, max-age=86400',
         'text/css': 'public, max-age=86400',
         'text/javascript': 'public, max-age=86400',
-        'application/javascript': 'public, max-age=86400'
+        'application/javascript': 'public, max-age=86400',
+        'image/x-icon': 'public, max-age=31536000000'
       }
     }
   },
@@ -288,6 +296,14 @@ var conf = convict({
         format: String,
         default: ''
       }
+    },
+    sentry: {
+      dsn: {
+        doc:
+          "The 'DSN' to use for logging errors and events to a Sentry server. It should be similar to 'https://693ef18da3184cffa82144fde2979cbc:a0651b0286784761a62ef8e8fc128722@app.getsentry.com/59524'.",
+        format: String,
+        default: ''
+      }
     }
   },
   globalEvents: {
@@ -306,7 +322,6 @@ var conf = convict({
     default: {
       datasources: path.join(__dirname, '/workspace/datasources'),
       events: path.join(__dirname, '/workspace/events'),
-      media: path.join(__dirname, '/workspace/media'),
       middleware: path.join(__dirname, '/workspace/middleware'),
       pages: path.join(__dirname, '/workspace/pages'),
       public: path.join(__dirname, '/workspace/public'),

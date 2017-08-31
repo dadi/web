@@ -11,7 +11,7 @@ var destinationDir = path.join(currentPath, '../../../workspace')
 if (~currentPath.indexOf('node_modules')) {
   fs.stat(destinationDir, (err, stats) => {
     if (err && err.code && err.code === 'ENOENT') {
-      fs.copy(workspacePath, destinationDir, { overwrite: false }, (err) => {
+      fs.copy(workspacePath, destinationDir, { overwrite: false }, err => {
         if (err) return console.error(err)
         console.log('Web workspace created at', destinationDir)
       })
