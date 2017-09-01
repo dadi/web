@@ -7,6 +7,8 @@
 
 ## DADI Web
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/dadi/web.svg)](https://greenkeeper.io/)
+
 * [Overview](#overview)
 * [Requirements](#requirements)
 * [Your First Web Project](#your-first-web-project)
