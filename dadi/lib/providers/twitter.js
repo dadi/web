@@ -58,15 +58,34 @@ TwitterProvider.prototype.load = function load (requestUrl, done) {
   try {
     const endpoint = this.schema.datasource.source.endpoint
     const queryParams = this.buildQueryParams()
-
     this.cacheKey = [
       endpoint,
       encodeURIComponent(JSON.stringify(this.schema.datasource))
     ].join('+')
-    this.dataCache = DatasourceCache()
 
-    this.dataCache.getFromCache(this.datasource, cachedData => {
-      if (cachedData) return done(null, cachedData)
+    this.dataCache = new DatasourceCache()
+
+    var cacheOptions = {
+      name: this.datasource.name,
+      caching: this.schema.datasource.caching,
+      cacheKey: this.cacheKey
+    }
+
+    this.dataCache.getFromCache(cacheOptions, cachedData => {
+      if (cachedData) {
+        try {
+          cachedData = JSON.parse(cachedData.toString())
+          return done(null, cachedData)
+        } catch (err) {
+          console.error(
+            'Twitter: cache data incomplete, making HTTP request: ' +
+              err +
+              '(' +
+              cacheOptions.cacheKey +
+              ')'
+          )
+        }
+      }
 
       this.twitterApi
         .select(endpoint)
@@ -109,7 +128,14 @@ TwitterProvider.prototype.processOutput = function processOutput (
 
   if (res.statusCode === 200) {
     data = this.processFields(data)
-    this.dataCache.cacheResponse(this.datasource, JSON.stringify(data), () => {
+
+    var cacheOptions = {
+      name: this.datasource.name,
+      caching: this.schema.datasource.caching,
+      cacheKey: this.cacheKey
+    }
+
+    this.dataCache.cacheResponse(cacheOptions, JSON.stringify(data), () => {
       //
     })
   }

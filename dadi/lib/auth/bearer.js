@@ -28,7 +28,8 @@ BearerAuthStrategy.prototype.getToken = function (authStrategy, done) {
     credentials: strategy.credentials,
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallets') +
+      path:
+        config.get('paths.tokenWallets') +
         '/' +
         help.generateTokenWalletFilename(
           strategy.host,

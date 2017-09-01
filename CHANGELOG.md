@@ -4,6 +4,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [3.1.0] - 2017-08-30
+
+## Added
+
+* [#59](https://github.com/dadi/web/issues/59): add support for CSRF token security. Usage information [here](https://github.com/dadi/web/pull/205)
+
+## Changed
+
+* [#204](https://github.com/dadi/web/issues/204): remove Sentry support in favour of a future error handing implementation
+* [#209](https://github.com/dadi/web/issues/209): wait for components and routes to be loaed before exporting
+
+# [3.0.4] - 2017-07-14
+
+## Changed
+
+* ensure static datasources are passed request parameters for filtering data
+
+# [3.0.2] - 2017-07-06
+
+## Changed
+
+* throw error at startup when the pages directory contains templates without an engine that can handle them
+* fix an issue where information about the loaded engines on the app startup screen was sometimes incorrect
+
+# [3.0.1] - 2017-07-05
+
+## Changed
+
+* add https://github.com/dadi/web-dustjs as dependency
+* modify post install script to include the above plugin when creating the server.js file
+
+# [3.0.0] - 2017-07-04
+
+## Added
+
+* [#103](https://github.com/dadi/web/issues/103): multiple template engine support
+
+## Changed
+
+* [#184](https://github.com/dadi/web/issues/184): unrestricted environment configurations allowed
+* [#175](https://github.com/dadi/web/issues/175): response header "SERVER (DADI)" removed
+* [#165](https://github.com/dadi/web/issues/165): only check matching routes after all middleware functions have completed
+* [#98](https://github.com/dadi/web/issues/98): log more informative error when an event fails
+
+# [2.1.0] - 2017-04-06
+
+## Changed
+
+* ensure request parameters passed to Markdown provider
+
 # [2.0.0] - 2017-04-06
 
 ## Added

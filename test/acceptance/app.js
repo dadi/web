@@ -23,17 +23,39 @@ describe("Application", function() {
   beforeEach(function(done) {
     TestHelper.clearCache()
 
-    TestHelper.resetConfig().then(() => {
-      var apiHost =
-        "http://" + config.get("api.host") + ":" + config.get("api.port")
-      scope = nock(apiHost)
-        .post("/token")
-        .times(5)
-        .reply(200, { accessToken: "xx" })
-      var scope1 = nock(apiHost).get("/").times(5).reply(200)
-      done()
+    var apiHost =
+      "http://" + config.get("api.host") + ":" + config.get("api.port")
+    scope = nock(apiHost)
+      .post("/token")
+      .times(5)
+      .reply(200, { accessToken: "xx" })
+
+    var scope1 = nock(apiHost).get("/").reply(200)
+
+    var configUpdate = {
+      server: {
+        host: "127.0.0.1",
+        port: 5000
+      }
+    }
+
+    TestHelper.updateConfig(configUpdate).then(() => {
+      TestHelper.disableApiConfig().then(() => {
+        done()
+      })
     })
   })
+
+  //   TestHelper.resetConfig().then(() => {
+  //     var apiHost = "http://" + config.get("api.host") + ":" + config.get("api.port")
+  //     scope = nock(apiHost)
+  //       .post("/token")
+  //       .times(5)
+  //       .reply(200, { accessToken: "xx" })
+  //     var scope1 = nock(apiHost).get("/").times(5).reply(200)
+  //     done()
+  //   })
+  // })
 
   afterEach(function(done) {
     TestHelper.resetConfig().then(() => {
@@ -86,7 +108,6 @@ describe("Application", function() {
         TestHelper.startServer(pages).then(() => {
           client.get("/categories/Crime").end((err, res) => {
             if (err) return done(err)
-
             res.text.should.eql("<h3>Crime</h3>")
             should.exist(res.headers["x-cache"])
             res.headers["x-cache"].should.eql("MISS")
