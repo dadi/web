@@ -239,8 +239,13 @@ var conf = convict({
   },
   headers: {
     useGzipCompression: {
+      doc: 'Depricated: use `useCompression` instead.',
+      format: Boolean,
+      default: true
+    },
+    useCompression: {
       doc:
-        "If true, uses gzip compression and adds a 'Content-Encoding:gzip' header to the response.",
+        "If true, uses br or gzip compression where available and adds a 'Content-Encoding: [br|gzip]' header to the response.",
       format: Boolean,
       default: true
     },
@@ -249,9 +254,12 @@ var conf = convict({
         "A set of custom cache control headers for different content types. For example 'cacheControl': { 'text/css': 'public, max-age=1000' }",
       format: Object,
       default: {
+        'image/png': 'public, max-age=86400',
+        'image/jpeg': 'public, max-age=86400',
         'text/css': 'public, max-age=86400',
         'text/javascript': 'public, max-age=86400',
-        'application/javascript': 'public, max-age=86400'
+        'application/javascript': 'public, max-age=86400',
+        'image/x-icon': 'public, max-age=31536000000'
       }
     }
   },
@@ -319,7 +327,6 @@ var conf = convict({
     default: {
       datasources: path.join(installRoot, '/workspace/datasources'),
       events: path.join(installRoot, '/workspace/events'),
-      media: path.join(installRoot, '/workspace/media'),
       middleware: path.join(installRoot, '/workspace/middleware'),
       pages: path.join(installRoot, '/workspace/pages'),
       public: path.join(installRoot, '/workspace/public'),
@@ -430,6 +437,12 @@ var conf = convict({
     transportSecurity: {
       doc:
         'If true, requires requests to be secure. Overridden if server.protocol is set to https.',
+      format: '*',
+      default: false
+    },
+    csrf: {
+      doc:
+        'If true, a CSRF token will be provided, and all form submissions must include this as _csrf',
       format: '*',
       default: false
     }

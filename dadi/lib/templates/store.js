@@ -39,6 +39,31 @@ TemplateStore.prototype.findEngineForExtension = function (extension) {
 }
 
 /**
+  * reInitialise template engines
+  *
+  * @return {Promise} Resolves when all functions finish executing.
+  */
+TemplateStore.prototype.reInitialise = function () {
+  let queue = []
+
+  Object.keys(this.engines).forEach(name => {
+    const engine = this.engines[name]
+
+    engine.handler.initialise()
+
+    if (engine.started) {
+      const finishLoadingFunction = engine.handler.finishLoading
+
+      if (typeof finishLoadingFunction === 'function') {
+        queue.push(finishLoadingFunction.call(engine.handler))
+      }
+    }
+  })
+
+  return Promise.all(queue)
+}
+
+/**
   * Triggers the `finishLoading` function on all templating engines.
   *
   * @return {Promise} Resolves when all functions finish executing.
@@ -393,7 +418,9 @@ TemplateStore.prototype.validateEngine = function (factory, engine) {
 
   if (errors.length) {
     const engineName = factory && factory.metadata && factory.metadata.name
-    const errorMessage = `Validation failed for ${engineName ? engineName + ' ' : ''}templating engine: ${errors.join(', ')}`
+    const errorMessage = `Validation failed for ${engineName
+      ? engineName + ' '
+      : ''}templating engine: ${errors.join(', ')}`
     const error = new Error(errorMessage)
 
     log.error({ module: 'templates' }, { err: error }, errorMessage)

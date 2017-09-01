@@ -42,7 +42,9 @@ var TestHelper = function() {
 TestHelper.prototype.setupApiIntercepts = function() {
   var host = "http://" + config.get("api.host") + ":" + config.get("api.port")
 
-  var apiTestScope = nock(host).get("/").reply(401)
+  var apiTestScope = nock(host)
+    .get("/")
+    .reply(401)
 
   var authScope1 = nock(host)
     .post("/token")
@@ -108,6 +110,16 @@ TestHelper.prototype.resetConfig = function() {
     delete require.cache[configKey]
     return resolve(config)
   })
+}
+
+TestHelper.prototype.extractCookieValue = function(res, cookieName) {
+  var cookies = res.headers["set-cookie"]
+  var cookie = cookies.find(function(cookie) {
+    return cookie.startsWith(cookieName + "=")
+  })
+  var data = cookie.split(";")[0]
+  var value = data.split("=")[1]
+  return value
 }
 
 /**
@@ -217,7 +229,7 @@ TestHelper.prototype.startServer = function(pages) {
             return resolve(Server.compile(options).then(() => Server))
           }
         })
-      }, 200)
+      }, 100)
     })
   })
 }
@@ -227,7 +239,7 @@ TestHelper.prototype.stopServer = function(done) {
   Server.stop(function() {
     setTimeout(function() {
       done()
-    }, 200)
+    }, 100)
   })
 }
 
@@ -262,7 +274,8 @@ TestHelper.prototype.getPathOptions = function() {
     pagePath: __dirname + "/../test/app/pages",
     partialPath: __dirname + "/../test/app/partials",
     eventPath: __dirname + "/../test/app/events",
-    routesPath: __dirname + "/../test/app/routes"
+    routesPath: __dirname + "/../test/app/routes",
+    publicPath: __dirname + "/../test/app/public"
   }
 }
 

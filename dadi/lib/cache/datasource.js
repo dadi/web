@@ -21,9 +21,6 @@ var DatasourceCache = function () {
   this.cacheOptions = config.get('caching')
   this.cache = new DadiCache(this.cacheOptions)
 
-  DatasourceCache.numInstances = (DatasourceCache.numInstances || 0) + 1
-  // console.log('DatasourceCache:', DatasourceCache.numInstances)
-
   var directoryEnabled = this.cacheOptions.directory.enabled
   var redisEnabled = this.cacheOptions.redis.enabled
 
@@ -153,14 +150,25 @@ DatasourceCache.prototype.cachingEnabled = function (opts) {
  * @param {object} datasource - a datasource schema object containing the datasource settings
  */
 DatasourceCache.prototype.getFilename = function (opts) {
-  var filename = crypto.createHash('sha1').update(opts.name).digest('hex')
+  var filename = crypto
+    .createHash('sha1')
+    .update(opts.name)
+    .digest('hex')
 
   if (opts.cacheKey) {
     filename +=
-      '_' + crypto.createHash('sha1').update(opts.cacheKey).digest('hex')
+      '_' +
+      crypto
+        .createHash('sha1')
+        .update(opts.cacheKey)
+        .digest('hex')
   } else {
     filename +=
-      '_' + crypto.createHash('sha1').update(opts.endpoint).digest('hex')
+      '_' +
+      crypto
+        .createHash('sha1')
+        .update(opts.endpoint)
+        .digest('hex')
   }
 
   return filename
