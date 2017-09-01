@@ -12,6 +12,8 @@ log.init(config.get('logging'))
 
 require('console-stamp')(console, 'yyyy-mm-dd HH:MM:ss.l')
 
+let app
+
 function createApp (options) {
   return new Promise((resolve, reject) => {
     options = options || {}
@@ -66,8 +68,15 @@ function createApp (options) {
           }
         })
       } else {
+        if (app) {
+          return resolve({
+            App: app,
+            Components: app.components
+          })
+        }
+
         // Start Workers
-        let app = require(path.join(__dirname, '/index.js'))(options)
+        app = require(path.join(__dirname, '/index.js'))(options)
 
         app.start(function () {
           debug('process %s is listening for incoming requests', process.pid)
@@ -87,10 +96,17 @@ function createApp (options) {
         })
       }
     } else {
+      if (app) {
+        return resolve({
+          App: app,
+          Components: app.components
+        })
+      }
+
       // Single thread start
       debug('starting DADI Web in single thread mode.')
 
-      let app = require(path.join(__dirname, '/index.js'))(options)
+      app = require(path.join(__dirname, '/index.js'))(options)
 
       app.start(function () {
         debug('process %s is listening for incoming requests', process.pid)
