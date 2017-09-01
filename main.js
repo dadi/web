@@ -95,12 +95,6 @@ function createApp (options) {
       app.start(function () {
         debug('process %s is listening for incoming requests', process.pid)
 
-        // Export loaded page & route components
-        module.exports.App = app
-        module.exports.Components = app.components
-
-        console.log('!!! HERE:', app.components)
-
         return resolve({
           App: app,
           Components: app.components
