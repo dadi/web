@@ -114,7 +114,9 @@ describe("Cache", function(done) {
       }
 
       cache.reset()
-      cache(server.object).cachingEnabled(req).should.eql(false)
+      cache(server.object)
+        .cachingEnabled(req)
+        .should.eql(false)
 
       done()
     })
@@ -249,7 +251,9 @@ describe("Cache", function(done) {
       }
 
       cache.reset()
-      cache(server.object).cachingEnabled(req).should.eql(false)
+      cache(server.object)
+        .cachingEnabled(req)
+        .should.eql(false)
 
       done()
     })
@@ -321,7 +325,9 @@ describe("Cache", function(done) {
       }
 
       cache.reset()
-      cache(server.object).cachingEnabled(req).should.eql(false)
+      cache(server.object)
+        .cachingEnabled(req)
+        .should.eql(false)
       done()
     })
   )

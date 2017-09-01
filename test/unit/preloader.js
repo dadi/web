@@ -56,7 +56,9 @@ describe("Preloader", function(done) {
           preloadSpy.called.should.eql(true)
           providerStub.called.should.eql(true)
 
-          Preload().get("car-makes").should.eql(results.results)
+          Preload()
+            .get("car-makes")
+            .should.eql(results.results)
 
           done()
         })

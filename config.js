@@ -2,6 +2,11 @@ var convict = require('convict')
 var fs = require('fs')
 var path = require('path')
 
+// Set folder location differently if an npm install
+var installRoot = ~process.cwd().indexOf('node_modules')
+  ? __dirname
+  : process.cwd()
+
 // Define a schema
 var conf = convict({
   app: {
@@ -320,13 +325,13 @@ var conf = convict({
     doc: '',
     format: Object,
     default: {
-      datasources: path.join(__dirname, '/workspace/datasources'),
-      events: path.join(__dirname, '/workspace/events'),
-      middleware: path.join(__dirname, '/workspace/middleware'),
-      pages: path.join(__dirname, '/workspace/pages'),
-      public: path.join(__dirname, '/workspace/public'),
-      routes: path.join(__dirname, '/workspace/routes'),
-      tokenWallets: path.join(__dirname, '/.wallet')
+      datasources: path.join(installRoot, '/workspace/datasources'),
+      events: path.join(installRoot, '/workspace/events'),
+      middleware: path.join(installRoot, '/workspace/middleware'),
+      pages: path.join(installRoot, '/workspace/pages'),
+      public: path.join(installRoot, '/workspace/public'),
+      routes: path.join(installRoot, '/workspace/routes'),
+      tokenWallets: path.join(installRoot, '/.wallet')
     }
   },
   sessions: {

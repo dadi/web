@@ -175,7 +175,10 @@ module.exports.parseQuery = function (queryStr) {
 
 module.exports.clearCache = function (req, Cache, callback) {
   var pathname = req.body.path
-  var modelDir = crypto.createHash('sha1').update(pathname).digest('hex')
+  var modelDir = crypto
+    .createHash('sha1')
+    .update(pathname)
+    .digest('hex')
   var cacheDir = config.get('caching.directory.path')
 
   var datasourceCachePaths = []

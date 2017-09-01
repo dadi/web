@@ -72,7 +72,7 @@ module.exports.html = function (res, req, next, statusCode, contentType) {
 module.exports.addHeaders = function (res) {
   var headers = config.get('headers').cors || {}
 
-  Object.keys(headers).forEach((key) => {
+  Object.keys(headers).forEach(key => {
     res.setHeader(key, headers[key])
     if (key === 'Access-Control-Allow-Origin' && headers[key] !== '*') {
       res.setHeader('Vary', 'Origin')

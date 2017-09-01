@@ -99,10 +99,14 @@ describe("Routing", function(done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.startServer(pages).then(() => {
-      client.get("/test").set("Host", "").expect(400).end(function(err, res) {
-        if (err) return done(err)
-        done()
-      })
+      client
+        .get("/test")
+        .set("Host", "")
+        .expect(400)
+        .end(function(err, res) {
+          if (err) return done(err)
+          done()
+        })
     })
   })
 
@@ -648,10 +652,13 @@ describe("Routing", function(done) {
           var httpClient = request(
             "http://" + config.get("server.host") + ":9999"
           )
-          httpClient.get("/test").expect(302).end(function(err, res) {
-            if (err) return done(err)
-            done()
-          })
+          httpClient
+            .get("/test")
+            .expect(302)
+            .end(function(err, res) {
+              if (err) return done(err)
+              done()
+            })
         })
       })
     })
