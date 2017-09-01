@@ -252,7 +252,11 @@ Server.prototype.start = function (done) {
   }
 
   // load app specific routes
-  this.loadApi(options)
+  this.loadApi(options).then(() => {
+    if (typeof done === 'function') {
+      done()
+    }
+  })
 
   // load virtual host routes
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -308,9 +312,6 @@ Server.prototype.start = function (done) {
       })
     )
   }
-
-  // this is all sync, so callback isn't really necessary.
-  done && done()
 }
 
 Server.prototype.exitHandler = function (options, err) {
