@@ -4,10 +4,9 @@
 [![coverage](https://img.shields.io/badge/coverage-78%25-yellow.svg?style=flat?style=flat-square)](https://github.com/dadi/web)
 [![Build Status](https://travis-ci.org/dadi/web.svg?branch=master)](https://travis-ci.org/dadi/web)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
+[![Greenkeeper badge](https://badges.greenkeeper.io/dadi/web.svg)](https://greenkeeper.io/)
 
 ## DADI Web
-
-[![Greenkeeper badge](https://badges.greenkeeper.io/dadi/web.svg)](https://greenkeeper.io/)
 
 * [Overview](#overview)
 * [Requirements](#requirements)
