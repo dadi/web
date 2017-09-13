@@ -294,7 +294,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
     })
   })
 
-  return queue.then(() => done(null, data))
+  return queue.then(() => done(null, data)).catch(err => done(err))
 }
 
 Controller.prototype.loadData = function (req, res, data, done) {
