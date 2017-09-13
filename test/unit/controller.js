@@ -38,13 +38,16 @@ describe("Controller", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client.get("/not-a-page").expect(404).end((err, res) => {
-          if (err) return done(err)
+        client
+          .get("/not-a-page")
+          .expect(404)
+          .end((err, res) => {
+            if (err) return done(err)
 
-          res.text.should.eql("Page Not Found Template")
+            res.text.should.eql("Page Not Found Template")
 
-          done()
-        })
+            done()
+          })
       })
     })
   })
@@ -65,11 +68,14 @@ describe("Controller", function(done) {
 
         var client = request(connectionString)
 
-        client.get(pages[0].routes[0].path).expect(404).end(function(err, res) {
-          if (err) return done(err)
-          Controller.Controller.prototype.loadData.restore()
-          done()
-        })
+        client
+          .get(pages[0].routes[0].path)
+          .expect(404)
+          .end(function(err, res) {
+            if (err) return done(err)
+            Controller.Controller.prototype.loadData.restore()
+            done()
+          })
       })
     })
   })
@@ -334,6 +340,39 @@ describe("Controller", function(done) {
         })
       })
     })
+
+    it("should run events sequentially, even if they are asynchronous", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].events = ["asyncA", "asyncB"]
+
+          TestHelper.startServer(pages).then(() => {
+            // provide event response
+            var method = sinon.spy(
+              Controller.Controller.prototype,
+              "loadEventData"
+            )
+
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .end(function(err, res) {
+                if (err) return done(err)
+
+                Controller.Controller.prototype.loadEventData.restore()
+                method.restore()
+
+                res.body.asyncA.should.eql("Modified by A")
+                res.body.asyncB.should.eql('A said: "Modified by A"')
+                done()
+              })
+          })
+        })
+      })
+    })
   })
 
   describe("Preload Events", function(done) {
@@ -466,9 +505,13 @@ describe("Controller", function(done) {
 
         TestHelper.setupApiIntercepts()
 
-        var scope1 = nock(host).get(endpointGlobal).reply(200, results1)
+        var scope1 = nock(host)
+          .get(endpointGlobal)
+          .reply(200, results1)
 
-        var scope2 = nock(host).get(/cars\/makes/).reply(200, results2)
+        var scope2 = nock(host)
+          .get(/cars\/makes/)
+          .reply(200, results2)
 
         var providerSpy = sinon.spy(apiProvider.prototype, "load")
 
@@ -521,9 +564,13 @@ describe("Controller", function(done) {
 
         TestHelper.setupApiIntercepts()
 
-        var scope1 = nock(host).get(endpoint1).reply(200, results1)
+        var scope1 = nock(host)
+          .get(endpoint1)
+          .reply(200, results1)
 
-        var scope2 = nock(host).get(endpoint2).reply(200, results2)
+        var scope2 = nock(host)
+          .get(endpoint2)
+          .reply(200, results2)
 
         var providerSpy = sinon.spy(apiProvider.prototype, "load")
 

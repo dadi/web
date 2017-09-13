@@ -268,47 +268,46 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
     return done(null, data)
   }
 
-  _.each(events, (event, idx) => {
-    help.timer.start('event: ' + event.name)
+  let queue = Promise.resolve(true)
 
-    // add a random value to the data obj so we can check if an
-    // event has sent back the obj - in which case we assign it back
-    // to itself
-    var checkValue = crypto
-      .createHash('md5')
-      .update(new Date().toString())
-      .digest('hex')
+  events.forEach(event => {
+    queue = queue.then(() => {
+      return new Promise((resolve, reject) => {
+        help.timer.start('event: ' + event.name)
 
-    data.checkValue = checkValue
+        // add a random value to the data obj so we can check if an
+        // event has sent back the obj - in which case we assign it back
+        // to itself
+        var checkValue = crypto
+          .createHash('md5')
+          .update(new Date().toString())
+          .digest('hex')
 
-    // run the event
-    try {
-      event.run(req, res, data, (err, result) => {
-        help.timer.stop('event: ' + event.name)
+        data.checkValue = checkValue
 
-        if (err) {
-          return done(err, data)
-        }
+        event.run(req, res, data, (err, result) => {
+          help.timer.stop('event: ' + event.name)
 
-        // if we get data back with the same checkValue property,
-        // reassign it to our global data object to avoid circular JSON
-        if (result && result.checkValue && result.checkValue === checkValue) {
-          data = result
-        } else if (result) {
-          // add the result to our global data object
-          data[event.name] = result
-        }
+          if (err) {
+            return reject(err)
+          }
 
-        // return the data if we're at the end of the events
-        // array, we have all the responses to render the page
-        if (idx === events.length - 1) {
-          return done(null, data)
-        }
+          // if we get data back with the same checkValue property,
+          // reassign it to our global data object to avoid circular JSON
+          if (result && result.checkValue && result.checkValue === checkValue) {
+            data = result
+          } else if (result) {
+            // add the result to our global data object
+            data[event.name] = result
+          }
+
+          return resolve(data)
+        })
       })
-    } catch (err) {
-      return done(err, data)
-    }
+    })
   })
+
+  return queue.then(() => done(null, data)).catch(err => done(err))
 }
 
 Controller.prototype.loadData = function (req, res, data, done) {
