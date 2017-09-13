@@ -340,6 +340,39 @@ describe("Controller", function(done) {
         })
       })
     })
+
+    it("should run events sequentially, even if they are asynchronous", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].events = ["asyncA", "asyncB"]
+
+          TestHelper.startServer(pages).then(() => {
+            // provide event response
+            var method = sinon.spy(
+              Controller.Controller.prototype,
+              "loadEventData"
+            )
+
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .end(function(err, res) {
+                if (err) return done(err)
+
+                Controller.Controller.prototype.loadEventData.restore()
+                method.restore()
+
+                res.body.asyncA.should.eql("Modified by A")
+                res.body.asyncB.should.eql('A said: "Modified by A"')
+                done()
+              })
+          })
+        })
+      })
+    })
   })
 
   describe("Preload Events", function(done) {
