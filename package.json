@@ -83,7 +83,7 @@
     "husky": "^0.13.3",
     "istanbul": "^0.4.5",
     "istanbul-cobertura-badger": "^1.1.0",
-    "lint-staged": "^3.4.0",
+    "lint-staged": "^4.1.0",
     "mocha": "latest",
     "nock": "^9.0.13",
     "nodeunit": ">=0.5.1",
