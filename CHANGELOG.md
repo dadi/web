@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [4.0.1] - 2017-09-22
+
+## Changed
+* fix: for every datasource request, the DatasourceCache file instantiated a new DadiCache - combining this with Redis caching results in ever-increasing (and unreleased) Redis connections. This change makes use of the primary Cache layer, instantiated once at application startup.
+
 # [4.0.0] - 2017-09-08
 
 See the full [release notes](https://github.com/dadi/web/releases/tag/v4.0.0).
