@@ -7,8 +7,7 @@ var merge = require('deepmerge')
 var path = require('path')
 var url = require('url')
 
-// var Cache = require(path.join(__dirname, '/index.js'))
-var DadiCache = require('@dadi/cache')
+var Cache = require(path.join(__dirname, '/index.js'))
 var config = require(path.join(__dirname, '/../../../config.js'))
 var log = require('@dadi/logger')
 
@@ -17,12 +16,10 @@ var log = require('@dadi/logger')
  * @constructor
  */
 var DatasourceCache = function () {
-  //  this.cache = Cache().cache
   this.cacheOptions = config.get('caching')
-  this.cache = new DadiCache(this.cacheOptions)
+  this.cache = Cache().cache
 
   DatasourceCache.numInstances = (DatasourceCache.numInstances || 0) + 1
-  // console.log('DatasourceCache:', DatasourceCache.numInstances)
 
   var directoryEnabled = this.cacheOptions.directory.enabled
   var redisEnabled = this.cacheOptions.redis.enabled
