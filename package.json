@@ -81,7 +81,7 @@
     "istanbul": "^1.1.0-alpha.1",
     "istanbul-cobertura-badger": "^1.1.0",
     "lint-staged": "^3.4.0",
-    "mocha": "latest",
+    "mocha": "3.2.x",
     "nock": "^9.0.13",
     "nodeunit": ">=0.5.1",
     "prettier": "^1.1.0",
