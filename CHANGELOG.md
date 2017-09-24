@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [4.0.1] - 2017-09-24
+
+## Changed
+* [#238](https://github.com/dadi/web/issues/238): update metadata for Markdown posts after filtering
+
 # [4.0.1] - 2017-09-22
 
 ## Changed
