@@ -48,7 +48,7 @@
     "dustjs-linkedin": "^2.7.5",
     "etag": "^1.8.0",
     "event-stream": "^3.3.1",
-    "express-session": "1.15.3",
+    "express-session": "1.15.6",
     "feedparser": "^2.2.0",
     "fs-extra": "^3.0.1",
     "humanize-plus": "^1.8.2",
