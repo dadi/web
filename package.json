@@ -37,7 +37,7 @@
     "compressible": "^2.0.10",
     "connect-modrewrite": "^0.10.1",
     "connect-mongo": "latest",
-    "connect-redis": "3.3.0",
+    "connect-redis": "3.3.1",
     "console-stamp": "^0.2.2",
     "convict": "3.0.0",
     "cookie-parser": "^1.4.3",
