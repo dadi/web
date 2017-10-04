@@ -26,7 +26,7 @@
     "@dadi/format-error": "^1.1.0",
     "@dadi/logger": "latest",
     "@dadi/metadata": "^1.0.0",
-    "@dadi/passport": "latest",
+    "@dadi/passport": "~1.5.0",
     "@dadi/status": "latest",
     "@dadi/web-dustjs": "latest",
     "@purest/providers": "^1.0.0",
