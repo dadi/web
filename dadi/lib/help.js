@@ -267,8 +267,9 @@ module.exports.generateTokenWalletFilename = function (host, port, clientId) {
   )
 }
 
-module.exports.getToken = function () {
+module.exports.getToken = function (forceTokenRefresh) {
   return Passport({
+    forceTokenRefresh: forceTokenRefresh,
     issuer: {
       uri: config.get('api.protocol') + '://' + config.get('api.host'),
       port: config.get('api.port'),
@@ -413,7 +414,7 @@ function readFiles (files, options) {
   const extensions = options.extensions
 
   if (typeof callback !== 'function') {
-    return Promise.reject()
+    return Promise.reject(new Error('Callback missing or invalid'))
   }
 
   return new Promise((resolve, reject) => {

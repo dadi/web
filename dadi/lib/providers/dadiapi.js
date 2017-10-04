@@ -78,7 +78,7 @@ DadiApiProvider.prototype.buildEndpoint = function (datasourceParams) {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-DadiApiProvider.prototype.load = function (requestUrl, done) {
+DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
   this.options = {
     protocol: this.datasource.source.protocol || config.get('api.protocol'),
     host: this.datasource.source.host || config.get('api.host'),
@@ -135,6 +135,12 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
       let request = agent.request(this.options)
 
       request.on('response', res => {
+        // If the token is not valid, we try a second time
+        // with a new one.
+        if (res.statusCode === 401 && !isRetry) {
+          return this.load(requestUrl, done, true)
+        }
+
         this.handleResponse(this.endpoint, res, done)
       })
 
@@ -150,7 +156,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
       })
 
       request.end()
-    })
+    }, isRetry)
   })
 }
 
@@ -375,7 +381,7 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
  * @param  {fn} done - callback
  * @return {void}
  */
-DadiApiProvider.prototype.getHeaders = function (done) {
+DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
   let headers = {
     'accept-encoding': 'gzip'
   }
@@ -396,20 +402,24 @@ DadiApiProvider.prototype.getHeaders = function (done) {
   // Otherwise, authenticate with the main server via bearer token
   if (this.authStrategy) {
     if (this.authStrategy.getType() === 'bearer') {
-      this.authStrategy.getToken(this.authStrategy, (err, bearerToken) => {
-        if (err) {
-          return done(err)
+      this.authStrategy.getToken(
+        this.authStrategy,
+        authenticationRetry,
+        (err, bearerToken) => {
+          if (err) {
+            return done(err)
+          }
+
+          headers['Authorization'] = 'Bearer ' + bearerToken
+
+          return done(null, { headers: headers })
         }
-
-        headers['Authorization'] = 'Bearer ' + bearerToken
-
-        return done(null, { headers: headers })
-      })
+      )
     }
   } else {
     try {
       help
-        .getToken(this.datasource)
+        .getToken(authenticationRetry)
         .then(bearerToken => {
           headers['Authorization'] = 'Bearer ' + bearerToken
 
