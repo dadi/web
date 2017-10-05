@@ -69,7 +69,7 @@
     "recursive-readdir": "^2.1.1",
     "redis": "^2.2.5",
     "request": "^2.74.0",
-    "send": "^0.15.1",
+    "send": "^0.16.0",
     "server-destroy": "1.0.1",
     "snyk": "^1.38.1",
     "through": "^2.3.8",
