@@ -295,17 +295,6 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should set `beautify` when `settings.beautify` is provided", function(
-    done
-  ) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-    schema.settings.beautify = true
-    var p = page(name, schema)
-    p.beautify.should.eql(true)
-    done()
-  })
-
   it("should set `passFilters` when `settings.passFilters` is provided", function(
     done
   ) {
@@ -500,38 +489,12 @@ describe("Page", function(done) {
     done()
   })
 
-  // it.only('should apply global config `dust.whitespace` as a fallback when no `page.keepWhitespace` is available', function (done) {
-  //   var name = 'test'
-  //   var schema = TestHelper.getPageSchema()
-  //   if (schema.settings.hasOwnProperty('keepWhitespace')) delete schema.settings.keepWhitespace
-  //   config.set('dust.whitespace', true)
-
-  //   page(name, schema).keepWhitespace.should.eql(true)
-
-  //   done()
-  // })
-
-  // it('should prioritise page config `keepWhitespace` param over global config `dust.whitespace`', function (done) {
-  //   var name = 'test'
-  //   var schema = TestHelper.getPageSchema()
-  //   schema.settings.keepWhitespace = true
-  //   config.set('dust.whitespace', false)
-  //   page(name, schema).keepWhitespace.should.eql(true)
-
-  //   done()
-  // })
-
-  // it.skip('should handle missing page config `keepWhitespace` and global config `dust.whitespace`', sinon.test(function (done) {
-  //   var name = 'test'
-  //   var schema = TestHelper.getPageSchema()
-  //   if (schema.settings.hasOwnProperty('keepWhitespace')) delete schema.settings.keepWhitespace
-
-  //   var configStub = sinon.stub(config, 'get')
-  //   configStub.withArgs('dust').returns({ cache: true, debug: false, debugLevel: 'INFO'})
-
-  //   var p = page(name, schema)
-  //   p.keepWhitespace.should.eql(true)
-
-  //   done()
-  // }))
+  it("should attach `settings.postProcessors` to page", function(done) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    schema.settings.postProcessors = ["minify-html"]
+    var p = page(name, schema)
+    p.postProcessors.should.eql(["minify-html"])
+    done()
+  })
 })
