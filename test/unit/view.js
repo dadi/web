@@ -140,7 +140,7 @@ describe("View", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     schema.template = "test.dust"
-    schema.settings.postProcess = ["replace-h1"]
+    schema.settings.postProcessors = ["replace-h1"]
 
     // load a template
     var template = "<h1>This is testing postProcessors</h1>"
