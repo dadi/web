@@ -54,7 +54,7 @@ View.prototype.render = function (done) {
               output = require(path.resolve(
                 config.get('paths.processors'),
                 script
-              ))(output)
+              ))(this.data, output)
             }
           } catch (err) {
             return done(err)
