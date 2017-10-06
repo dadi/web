@@ -21,9 +21,10 @@ const Page = function (name, schema, hostKey, templateCandidate) {
   this.requiredDatasources = schema.requiredDatasources || []
 
   this.settings = schema.settings
-  this.beautify = this.settings.hasOwnProperty('beautify')
-    ? this.settings.beautify
-    : false
+  this.postProcessors =
+    this.settings.postProcessors === false
+      ? false
+      : this.settings.postProcessors || []
   this.keepWhitespace = Boolean(this.settings.keepWhitespace)
   this.passFilters = this.settings.hasOwnProperty('passFilters')
     ? this.settings.passFilters
@@ -89,7 +90,7 @@ Page.prototype.toPath = function (params) {
     // only attempt this if the route's parameters match those passed to toPath
     let matchingKeys = Object.keys(params).every(param => {
       return keys.filter(key => {
-        key.name === param
+        return key.name === param
       })
     })
 
