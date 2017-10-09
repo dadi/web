@@ -7,16 +7,14 @@ var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 var _ = require('underscore')
 var bodyParser = require('body-parser')
 var colors = require("colors") // eslint-disable-line
-var compress = require('compression')
 var debug = require('debug')('web:server')
 var enableDestroy = require('server-destroy')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
 var path = require('path')
-var raven = require('raven')
-var serveFavicon = require('serve-favicon')
-var serveStatic = require('serve-static')
 var session = require('express-session')
+var csrf = require('csurf')
+var cookieParser = require('cookie-parser')
 var toobusy = require('toobusy-js')
 var dadiStatus = require('@dadi/status')
 
@@ -41,7 +39,9 @@ var cache = require(path.join(__dirname, '/cache'))
 var Controller = require(path.join(__dirname, '/controller'))
 var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
 var help = require(path.join(__dirname, '/help'))
+var Send = require(path.join(__dirname, '/view/send'))
 var Middleware = require(path.join(__dirname, '/middleware'))
+var servePublic = require(path.join(__dirname, '/view/public'))
 var monitor = require(path.join(__dirname, '/monitor'))
 var Page = require(path.join(__dirname, '/page'))
 var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
@@ -60,6 +60,7 @@ var Server = function (appOptions) {
   this.components = {}
   this.appOptions = appOptions
   this.monitors = {}
+  this.cacheLayer = {}
 }
 
 Server.prototype.start = function (done) {
@@ -121,12 +122,6 @@ Server.prototype.start = function (done) {
     })
   })
 
-  if (config.get('logging.sentry.dsn') !== '') {
-    app.use(
-      raven.middleware.express.requestHandler(config.get('logging.sentry.dsn'))
-    )
-  }
-
   // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
     var domain = config.get('rewrites.forceDomain')
@@ -143,62 +138,6 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.setUpRequest())
   app.use(apiMiddleware.transportSecurity())
 
-  // add gzip compression
-  if (config.get('headers.useGzipCompression')) {
-    app.use(compress())
-  }
-
-  // request logging middleware
-  app.use(log.requestLogger)
-
-  // serve static files (css,js,fonts)
-  if (options.mediaPath) {
-    app.use(serveStatic(options.mediaPath, { index: false }))
-  }
-
-  // serve static files from "public" folders
-  var initPublic = function (app, hosts, publicPath) {
-    // favicon middleware
-    app.use((req, res, next) => {
-      // attempts to serve a favicon if the current host header matches
-      // one of the host names specified when this middleware was added to the stack
-      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-        try {
-          var fn = serveFavicon(
-            (publicPath || path.join(__dirname, '/../../public')) +
-              '/favicon.ico'
-          )
-          fn(req, res, next)
-        } catch (err) {
-          // no favicon found
-          next()
-        }
-      } else {
-        next()
-      }
-    })
-
-    // static file middleware, for "public" folder
-    app.use((req, res, next) => {
-      var fn = serveStatic(publicPath, {
-        index: false,
-        maxAge: '1d',
-        setHeaders: setCustomCacheControl
-      })
-
-      // attempts to serve a static file if the current host header matches
-      // one of the host names specified when this middleware was added to the stack
-      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
-        fn(req, res, next)
-      } else {
-        next()
-      }
-    })
-  }
-
-  // init main public path
-  if (options.publicPath) initPublic(app, [], options.publicPath)
-
   // init virtual host public paths
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
     var hostConfigFile = './config/' + virtualHost.configFile
@@ -210,17 +149,23 @@ Server.prototype.start = function (done) {
       var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
       var hostOptions = this.loadPaths(hostConfig.paths)
 
-      initPublic(app, virtualHost.hostnames, hostOptions.publicPath)
+      app.use(
+        servePublic.middleware(
+          hostOptions.publicPath,
+          this.cacheLayer,
+          virtualHost.hostnames
+        )
+      )
     }
   })
 
   // add debug files to static paths
   if (config.get('debug')) {
     app.use(
-      serveStatic(
+      servePublic.middleware(
         options.workspacePath + '/debug' ||
           path.join(__dirname, '/../../workspace/debug'),
-        { index: false }
+        this.cacheLayer
       )
     )
   }
@@ -230,6 +175,9 @@ Server.prototype.start = function (done) {
   app.use(bodyParser.text())
   // parse application/x-www-form-urlencoded
   app.use(bodyParser.urlencoded({ extended: true }))
+
+  // request logging middleware
+  app.use(log.requestLogger)
 
   // session manager
   var sessionConfig = config.get('sessions')
@@ -253,19 +201,38 @@ Server.prototype.start = function (done) {
     app.use(session(sessionOptions))
   }
 
+  // use csrf protection if enabled
+  if (config.get('security.csrf')) {
+    if (sessionConfig.enabled) {
+      app.use(csrf())
+    } else {
+      app.use(cookieParser())
+      app.use(csrf({ cookie: true }))
+    }
+  }
+
   // set up cache
-  var cacheLayer = cache(this)
+  this.cacheLayer = cache(this)
 
   // handle routing & redirects
   router(this, options)
 
-  if (config.get('api.enabled')) {
-    // authentication layer
-    auth(this)
+  // init main public path for static files
+  if (options.publicPath) {
+    app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
   }
 
-  // initialise the cache
-  cacheLayer.init()
+  // initialise virtualDirectories for serving static content
+  var parent = this
+  config.get('virtualDirectories').forEach(directory => {
+    app.use(servePublic.virtualDirectories(directory, parent.cacheLayer))
+  })
+
+  // authentication layer
+  if (config.get('api.enabled')) auth(this)
+
+  // Initialise the cache
+  this.cacheLayer.init()
 
   // start listening
   var server = (this.server = app.listen())
@@ -285,7 +252,11 @@ Server.prototype.start = function (done) {
   }
 
   // load app specific routes
-  this.loadApi(options)
+  this.loadApi(options).then(() => {
+    if (typeof done === 'function') {
+      done()
+    }
+  })
 
   // load virtual host routes
   _.each(config.get('virtualHosts'), (virtualHost, key) => {
@@ -310,16 +281,6 @@ Server.prototype.start = function (done) {
 
   // preload data
   Preload().init(options)
-
-  // initialise virtualDirectories for serving static content
-  _.each(config.get('virtualDirectories'), function (directory) {
-    app.use(
-      serveStatic(path.resolve(directory.path), {
-        index: directory.index,
-        redirect: directory.forceTrailingSlash
-      })
-    )
-  })
 
   this.readyState = 1
 
@@ -351,9 +312,6 @@ Server.prototype.start = function (done) {
       })
     )
   }
-
-  // this is all sync, so callback isn't really necessary.
-  done && done()
 }
 
 Server.prototype.exitHandler = function (options, err) {
@@ -376,14 +334,6 @@ Server.prototype.exitHandler = function (options, err) {
     log.info({ module: 'server' }, 'Server stopped, process exiting.')
     process.exit()
   }
-}
-
-function setCustomCacheControl (res, path) {
-  _.each(config.get('headers.cacheControl'), (value, key) => {
-    if (serveStatic.mime.lookup(path) === key && value !== '') {
-      res.setHeader('Cache-Control', value)
-    }
-  })
 }
 
 // this is mostly needed for tests
@@ -425,7 +375,6 @@ Server.prototype.loadPaths = function (paths) {
 
   options.datasourcePath = path.resolve(paths.datasources)
   options.eventPath = path.resolve(paths.events)
-  options.mediaPath = path.resolve(paths.media)
   options.middlewarePath = path.resolve(paths.middleware)
   options.pagePath = path.resolve(paths.pages)
   options.publicPath = path.resolve(paths.public)
@@ -446,10 +395,10 @@ Server.prototype.loadApi = function (options, reload, callback) {
         help.validateRequestMethod(req, res, 'POST') &&
         help.validateRequestCredentials(req, res)
       ) {
-        return help.clearCache(req, err => {
-          help.sendBackJSON(200, res, next)(err, {
+        return help.clearCache(req, this.cacheLayer, err => {
+          Send.json(200, res, next)(err, {
             result: 'success',
-            message: 'Succeed to clear'
+            message: 'Cache cleared successfully'
           })
         })
       } else {
@@ -511,12 +460,19 @@ Server.prototype.loadApi = function (options, reload, callback) {
     })
 
     this.addMonitor(options.eventPath, eventFile => {
+      // Delete the existing cached events
+      Object.keys(require.cache).forEach(i => {
+        if (i.includes(options.eventPath)) delete require.cache[i]
+      })
+
+      // Reload
       this.updatePages(options.pagePath, options, true)
     })
 
     this.addMonitor(options.pagePath, pageFile => {
       this.updatePages(options.pagePath, options, true)
       this.compile(options)
+      templateStore.reInitialise()
     })
 
     this.addMonitor(options.routesPath, file => {
@@ -638,7 +594,13 @@ Server.prototype.addRoute = function (obj, options, reload) {
   var page = Page(obj.name, schema, options.host, options.templateCandidate)
 
   // create a handler for requests to this page
-  var controller = new Controller(page, options, schema.page, schema.engine)
+  var controller = new Controller(
+    page,
+    options,
+    schema.page,
+    schema.engine,
+    this.cacheLayer
+  )
 
   // add the component to the api by adding a route to the app and mapping
   // `req.method` to component methods
@@ -703,7 +665,7 @@ Server.prototype.addComponent = function (options, reload) {
               if (next) {
                 return next()
               } else {
-                return help.sendBackJSON(404, res, next)(
+                return Send.json(404, res, next)(
                   null,
                   require(options.filepath)
                 )
@@ -714,10 +676,7 @@ Server.prototype.addComponent = function (options, reload) {
           if (next) {
             return next()
           } else {
-            return help.sendBackJSON(404, res, next)(
-              null,
-              require(options.filepath)
-            )
+            return Send.json(404, res, next)(null, require(options.filepath))
           }
         }
       })

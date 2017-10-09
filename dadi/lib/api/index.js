@@ -5,7 +5,6 @@ var http = require('http')
 var https = require('https')
 var path = require('path')
 var pathToRegexp = require('path-to-regexp')
-var raven = require('raven')
 var url = require('url')
 
 var log = require('@dadi/logger')
@@ -22,13 +21,6 @@ var Api = function () {
   this.all = []
   this.errors = []
 
-  // Sentry error handler
-  if (config.get('logging.sentry.dsn') !== '') {
-    this.errors.push(
-      raven.middleware.express.errorHandler(config.get('logging.sentry.dsn'))
-    )
-  }
-
   // Fallthrough error handler
   this.errors.push(onError(this))
 
@@ -38,9 +30,7 @@ var Api = function () {
   this.protocol = config.get('server.protocol') || 'http'
   this.redirectPort = config.get('server.redirectPort')
 
-  if (this.protocol === 'http') {
-    this.httpInstance = http.createServer(this.listener)
-  } else if (this.protocol === 'https') {
+  if (this.protocol === 'https') {
     // Redirect http to https
     if (this.redirectPort > 0) {
       this.redirectInstance = http.createServer(this.redirectListener)
@@ -92,6 +82,8 @@ var Api = function () {
           throw new Error(exPrefix + ex.message)
       }
     }
+  } else {
+    this.httpInstance = http.createServer(this.listener)
   }
 }
 
@@ -227,7 +219,7 @@ Api.prototype.listener = function (req, res) {
         // if end of the stack, no middleware could handle the current
         // request, so get matching routes from the loaded page components and
         // add them to the stack just before the 404 handler, then continue the loop
-        // console.log(pathsLoaded, this.stack[stackIdx].name, this.stack[stackIdx+1] ? this.stack[stackIdx+1].name : 'nothing left!')
+
         if (
           this.stack[stackIdx + 1] &&
           this.stack[stackIdx + 1].name === 'notFound' &&
@@ -250,7 +242,6 @@ Api.prototype.listener = function (req, res) {
             _.each(matches, match => {
               this.stack.splice(-1, 0, match)
             })
-          } else {
           }
 
           pathsLoaded = true
@@ -289,7 +280,7 @@ Api.prototype.redirectListener = function (req, res) {
   var location = 'https://' + hostname + ':' + port + req.url
 
   res.setHeader('Location', location)
-  res.statusCode = 301
+  res.statusCode = 302
   res.end()
 }
 
@@ -354,7 +345,10 @@ function onError (api) {
       message: err.message
     }
 
-    data.stack = err.stack ? err.stack : 'Nothing to see'
+    data.stack =
+      err.stack && config.get('env') !== 'production'
+        ? err.stack
+        : 'Nothing to see'
 
     // look for a page that has been loaded
     // that matches the error code and call its handler if it exists

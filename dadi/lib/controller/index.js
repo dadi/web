@@ -18,15 +18,13 @@ var Datasource = require(path.join(__dirname, '/../datasource'))
 var Event = require(path.join(__dirname, '/../event'))
 var Providers = require(path.join(__dirname, '/../providers'))
 var View = require(path.join(__dirname, '/../view'))
-
-// helpers
-var sendBackHTML = help.sendBackHTML
-var sendBackJSON = help.sendBackJSON
+var Send = require(path.join(__dirname, '/../view/send'))
+var Cache = require(path.join(__dirname, '/../cache'))
 
 /**
  *
  */
-var Controller = function (page, options, meta, engine) {
+var Controller = function (page, options, meta, engine, cache) {
   if (!page) throw new Error('Page instance required')
 
   Controller.numInstances = (Controller.numInstances || 0) + 1
@@ -37,6 +35,7 @@ var Controller = function (page, options, meta, engine) {
   this.options = options || {}
   this.meta = meta || {}
   this.engine = engine
+  this.cacheLayer = Cache(cache)
 
   this.datasources = {}
   this.events = []
@@ -162,6 +161,10 @@ Controller.prototype.buildInitialViewData = function (req) {
   data.debug = config.get('debug')
   data.json = json || false
 
+  if (config.get('security.csrf')) {
+    data.csrfToken = req.csrfToken()
+  }
+
   delete data.query.json
   delete data.params.json
 
@@ -175,25 +178,13 @@ Controller.prototype.process = function process (req, res, next) {
   debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
-  var done
-
   var statusCode = res.statusCode || 200
-
   var data = this.buildInitialViewData(req)
-
   var view = new View(req.url, this.page, data.json)
 
-  if (data.json) {
-    done = sendBackJSON(statusCode, res, next)
-  } else {
-    done = sendBackHTML(
-      req.method,
-      statusCode,
-      this.page.contentType,
-      res,
-      next
-    )
-  }
+  var done = data.json
+    ? Send.json(statusCode, res, next)
+    : Send.html(res, req, next, statusCode, this.page.contentType)
 
   this.loadData(req, res, data, (err, data, dsResponse) => {
     // return 404 if requiredDatasources contain no data
@@ -210,7 +201,7 @@ Controller.prototype.process = function process (req, res, next) {
     // not just the data, send the whole response back
     if (dsResponse) {
       if (dsResponse.statusCode === 202) {
-        done = sendBackJSON(dsResponse.statusCode, res, next)
+        done = Send.json(dsResponse.statusCode, res, next)
         return done(null, data)
       }
     }
@@ -264,47 +255,46 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
     return done(null, data)
   }
 
-  _.each(events, (event, idx) => {
-    help.timer.start('event: ' + event.name)
+  let queue = Promise.resolve(true)
 
-    // add a random value to the data obj so we can check if an
-    // event has sent back the obj - in which case we assign it back
-    // to itself
-    var checkValue = crypto
-      .createHash('md5')
-      .update(new Date().toString())
-      .digest('hex')
+  events.forEach(event => {
+    queue = queue.then(() => {
+      return new Promise((resolve, reject) => {
+        help.timer.start('event: ' + event.name)
 
-    data.checkValue = checkValue
+        // add a random value to the data obj so we can check if an
+        // event has sent back the obj - in which case we assign it back
+        // to itself
+        var checkValue = crypto
+          .createHash('md5')
+          .update(new Date().toString())
+          .digest('hex')
 
-    // run the event
-    try {
-      event.run(req, res, data, (err, result) => {
-        help.timer.stop('event: ' + event.name)
+        data.checkValue = checkValue
 
-        if (err) {
-          return done(err, data)
-        }
+        event.run(req, res, data, (err, result) => {
+          help.timer.stop('event: ' + event.name)
 
-        // if we get data back with the same checkValue property,
-        // reassign it to our global data object to avoid circular JSON
-        if (result && result.checkValue && result.checkValue === checkValue) {
-          data = result
-        } else if (result) {
-          // add the result to our global data object
-          data[event.name] = result
-        }
+          if (err) {
+            return reject(err)
+          }
 
-        // return the data if we're at the end of the events
-        // array, we have all the responses to render the page
-        if (idx === events.length - 1) {
-          return done(null, data)
-        }
+          // if we get data back with the same checkValue property,
+          // reassign it to our global data object to avoid circular JSON
+          if (result && result.checkValue && result.checkValue === checkValue) {
+            data = result
+          } else if (result) {
+            // add the result to our global data object
+            data[event.name] = result
+          }
+
+          return resolve(data)
+        })
       })
-    } catch (err) {
-      return done(err, data)
-    }
+    })
   })
+
+  return queue.then(() => done(null, data)).catch(err => done(err))
 }
 
 Controller.prototype.loadData = function (req, res, data, done) {

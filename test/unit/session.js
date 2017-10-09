@@ -146,14 +146,18 @@ describe("Session", function(done) {
 
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
+        var sessionName = config.get("sessions.name")
 
-        client
-          .get(pages[0].routes[0].path)
-          .expect(TestHelper.shouldNotHaveHeader("Set-Cookie"))
-          .end(function(err, res) {
-            if (err) return done(err)
-            done()
-          })
+        client.get(pages[0].routes[0].path).end(function(err, res) {
+          if (err) return done(err)
+
+          var cookieHeader = res.headers["set-cookie"]
+          if (cookieHeader) {
+            cookieHeader.indexOf(sessionName).should.equal(-1)
+          }
+
+          done()
+        })
       })
     })
   })

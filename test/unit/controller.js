@@ -38,13 +38,16 @@ describe("Controller", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client.get("/not-a-page").expect(404).end((err, res) => {
-          if (err) return done(err)
+        client
+          .get("/not-a-page")
+          .expect(404)
+          .end((err, res) => {
+            if (err) return done(err)
 
-          res.text.should.eql("Page Not Found Template")
+            res.text.should.eql("Page Not Found Template")
 
-          done()
-        })
+            done()
+          })
       })
     })
   })
@@ -65,11 +68,14 @@ describe("Controller", function(done) {
 
         var client = request(connectionString)
 
-        client.get(pages[0].routes[0].path).expect(404).end(function(err, res) {
-          if (err) return done(err)
-          Controller.Controller.prototype.loadData.restore()
-          done()
-        })
+        client
+          .get(pages[0].routes[0].path)
+          .expect(404)
+          .end(function(err, res) {
+            if (err) return done(err)
+            Controller.Controller.prototype.loadData.restore()
+            done()
+          })
       })
     })
   })
@@ -105,6 +111,183 @@ describe("Controller", function(done) {
               Controller.Controller.prototype.loadData.restore()
               done()
             })
+        })
+      })
+    })
+  })
+
+  /*
+  If CSRF is used (csrf enabled in web config), then any POST requests must provide a valid token under the name _csrf, and if it either isn't present or is incorrect, then a 403 is generated, which currently gets picked up by web for the custom error page.
+
+  Also, if csrf is enabled, the csrfToken should be present on the view model.
+  */
+  describe("CSRF", function() {
+    it("should add a csrfToken to the view context", function(done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body.csrfToken)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should set a cookie with the csrf secret", function(done) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .expect(TestHelper.shouldSetCookie("_csrf"))
+              .end((err, res) => {
+                if (err) return done(err)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should return a 403 if a POST request is missing a csrf token", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["categories"]
+
+          TestHelper.startServer(pages).then(() => {
+            // provide API response
+            var results = {
+              categories: { results: [{ _id: 1, title: "books" }] }
+            }
+
+            sinon
+              .stub(Controller.Controller.prototype, "loadData")
+              .yields(null, results)
+
+            var client = request(connectionString)
+            client
+              .post(pages[0].routes[0].path + "?json=true")
+              .send()
+              .expect(403)
+              .end((err, res) => {
+                if (err) return done(err)
+                Controller.Controller.prototype.loadData.restore()
+                res.text.indexOf("invalid csrf token").should.be.above(0)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should return 403 when POST request contains an invalid csrfToken", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .expect(TestHelper.shouldSetCookie("_csrf"))
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body.csrfToken)
+
+                client
+                  .post(pages[0].routes[0].path)
+                  .set(
+                    "Cookie",
+                    "_csrf=" + TestHelper.extractCookieValue(res, "_csrf")
+                  )
+                  .send({ _csrf: "XXX" })
+                  .expect(403)
+                  .end((err, res) => {
+                    if (err) return done(err)
+                    res.text.indexOf("invalid csrf token").should.be.above(0)
+                    done()
+                  })
+              })
+          })
+        })
+      })
+    })
+
+    it("should return 200 when POST request contains a valid csrfToken", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({
+          security: {
+            csrf: true
+          }
+        }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = []
+
+          TestHelper.startServer(pages).then(() => {
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .expect(200)
+              .expect(TestHelper.shouldSetCookie("_csrf"))
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body.csrfToken)
+
+                client
+                  .post(pages[0].routes[0].path)
+                  .set(
+                    "Cookie",
+                    "_csrf=" + TestHelper.extractCookieValue(res, "_csrf")
+                  )
+                  .send({ _csrf: res.body.csrfToken.toString() })
+                  .expect(200)
+                  .end((err, res) => {
+                    if (err) return done(err)
+                    res.text.indexOf("invalid csrf token").should.equal(-1)
+                    done()
+                  })
+              })
+          })
         })
       })
     })
@@ -151,6 +334,39 @@ describe("Controller", function(done) {
 
                 res.body["b"].should.eql("I came from B")
                 res.body["a"].should.eql("Results for B found: true")
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should run events sequentially, even if they are asynchronous", function(
+      done
+    ) {
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].events = ["asyncA", "asyncB"]
+
+          TestHelper.startServer(pages).then(() => {
+            // provide event response
+            var method = sinon.spy(
+              Controller.Controller.prototype,
+              "loadEventData"
+            )
+
+            var client = request(connectionString)
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .end(function(err, res) {
+                if (err) return done(err)
+
+                Controller.Controller.prototype.loadEventData.restore()
+                method.restore()
+
+                res.body.asyncA.should.eql("Modified by A")
+                res.body.asyncB.should.eql('A said: "Modified by A"')
                 done()
               })
           })
@@ -289,9 +505,13 @@ describe("Controller", function(done) {
 
         TestHelper.setupApiIntercepts()
 
-        var scope1 = nock(host).get(endpointGlobal).reply(200, results1)
+        var scope1 = nock(host)
+          .get(endpointGlobal)
+          .reply(200, results1)
 
-        var scope2 = nock(host).get(/cars\/makes/).reply(200, results2)
+        var scope2 = nock(host)
+          .get(/cars\/makes/)
+          .reply(200, results2)
 
         var providerSpy = sinon.spy(apiProvider.prototype, "load")
 
@@ -344,9 +564,13 @@ describe("Controller", function(done) {
 
         TestHelper.setupApiIntercepts()
 
-        var scope1 = nock(host).get(endpoint1).reply(200, results1)
+        var scope1 = nock(host)
+          .get(endpoint1)
+          .reply(200, results1)
 
-        var scope2 = nock(host).get(endpoint2).reply(200, results2)
+        var scope2 = nock(host)
+          .get(endpoint2)
+          .reply(200, results2)
 
         var providerSpy = sinon.spy(apiProvider.prototype, "load")
 

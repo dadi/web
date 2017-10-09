@@ -13,9 +13,9 @@ var path = require('path')
 var perfy = require('perfy')
 
 var version = require('../../package.json').version
-var Cache = require(path.join(__dirname, '/cache'))
 var config = require(path.join(__dirname, '/../../config.js'))
 var Passport = require('@dadi/passport')
+var errorView = require(path.join(__dirname, '/view/errors'))
 
 var self = this
 
@@ -104,68 +104,6 @@ module.exports.isApiAvailable = function (done) {
   request.end()
 }
 
-// helper that sends json response
-module.exports.sendBackJSON = function (successCode, res, next) {
-  return function (err, results) {
-    if (err) return next(err)
-
-    var resBody = JSON.stringify(results, null, 2)
-
-    res.statusCode = successCode
-    res.setHeader('Content-Type', 'application/json')
-    res.setHeader('content-length', Buffer.byteLength(resBody))
-    res.end(resBody)
-  }
-}
-
-module.exports.sendBackJSONP = function (callbackName, res, next) {
-  return function (err, results) {
-    if (err) console.log(err)
-
-    // callback MUST be made up of letters only
-    if (!callbackName.match(/^[a-zA-Z]+$/)) return res.send(400)
-
-    res.statusCode = 200
-
-    var resBody = JSON.stringify(results)
-    resBody = callbackName + '(' + resBody + ');'
-    res.setHeader('Content-Type', 'text/javascript')
-    res.setHeader('content-length', resBody.length)
-    res.end(resBody)
-  }
-}
-
-// helper that sends html response
-module.exports.sendBackHTML = function (
-  method,
-  successCode,
-  contentType,
-  res,
-  next
-) {
-  return function (err, results) {
-    if (err) {
-      console.log(err)
-      return next(err)
-    }
-
-    var resBody = results
-
-    res.statusCode = successCode
-    res.setHeader('Content-Type', contentType)
-    res.setHeader('Content-Length', Buffer.byteLength(resBody))
-
-    self.addHeaders(res)
-
-    if (method.toLowerCase() === 'head') {
-      res.setHeader('Connection', 'close')
-      return res.end('')
-    } else {
-      return res.end(resBody)
-    }
-  }
-}
-
 /**
  * Checks for valid client credentials in the request body
  * @param {req} req - the HTTP request
@@ -201,26 +139,23 @@ module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   var method = req.method && req.method.toLowerCase()
   if (method !== allowedMethod.toLowerCase()) {
     res.statusCode = 405
-    res.end()
+    res.setHeader('Content-Type', 'text/html')
+    res.end(
+      errorView({
+        headline: 'Method not allowed.',
+        human: 'The method used for this request is not supported.',
+        developer: 'Did you mean to POST?',
+        stack: 'Nothing to see',
+        statusCode: 405,
+        error: 'Method not allowed',
+        server: req.headers.host
+      })
+    )
+
     return false
   }
 
   return true
-}
-
-/**
- * Adds headers defined in the configuration file to the response
- * @param {res} res - the HTTP response
- */
-module.exports.addHeaders = function (res) {
-  var headers = config.get('headers')
-
-  _.each(headers.cors, function (value, header) {
-    res.setHeader(header, value)
-    if (header === 'Access-Control-Allow-Origin' && value !== '*') {
-      res.setHeader('Vary', 'Origin')
-    }
-  })
 }
 
 // function to wrap try - catch for JSON.parse to mitigate pref losses
@@ -238,9 +173,12 @@ module.exports.parseQuery = function (queryStr) {
   return ret
 }
 
-module.exports.clearCache = function (req, callback) {
+module.exports.clearCache = function (req, Cache, callback) {
   var pathname = req.body.path
-  var modelDir = crypto.createHash('sha1').update(pathname).digest('hex')
+  var modelDir = crypto
+    .createHash('sha1')
+    .update(pathname)
+    .digest('hex')
   var cacheDir = config.get('caching.directory.path')
 
   var datasourceCachePaths = []
@@ -261,50 +199,48 @@ module.exports.clearCache = function (req, callback) {
       url: req.headers['host'] + pathname
     }
 
-    var endpoint = Cache().getEndpointMatchingRequest(endpointRequest)
+    var endpoint = Cache.getEndpointMatchingRequest(endpointRequest)
 
-    _.each(endpoint.page.datasources, datasource => {
-      var cachePrefix = crypto
-        .createHash('sha1')
-        .update(datasource)
-        .digest('hex')
+    if (endpoint && endpoint.page && endpoint.page.datasources) {
+      _.each(endpoint.page.datasources, datasource => {
+        var cachePrefix = crypto
+          .createHash('sha1')
+          .update(datasource)
+          .digest('hex')
 
-      datasourceCachePaths = _.extend(
-        datasourceCachePaths,
-        _.filter(files, file => {
-          return file.indexOf(cachePrefix) > -1
+        datasourceCachePaths = _.extend(
+          datasourceCachePaths,
+          _.filter(files, file => {
+            return file.indexOf(cachePrefix) > -1
+          })
+        )
+
+        datasourceCachePaths = _.map(datasourceCachePaths, file => {
+          return file
         })
-      )
-
-      datasourceCachePaths = _.map(datasourceCachePaths, file => {
-        return file
       })
-    })
+    }
   }
 
   // delete using Redis client
-  if (Cache().cache) {
-    Cache().cache
-      .flush(modelDir)
-      .then(() => {
-        if (datasourceCachePaths.length === 0) {
-          return callback(null)
-        }
+  Cache.cache
+    .flush(modelDir)
+    .then(() => {
+      if (datasourceCachePaths.length === 0) {
+        return callback(null)
+      }
 
-        _.each(datasourceCachePaths, (dsFile, idx) => {
-          Cache().cache.flush(dsFile).then(() => {
-            if (idx === datasourceCachePaths.length - 1) {
-              return callback(null)
-            }
-          })
+      _.each(datasourceCachePaths, (dsFile, idx) => {
+        Cache.cache.flush(dsFile).then(() => {
+          if (idx === datasourceCachePaths.length - 1) {
+            return callback(null)
+          }
         })
       })
-      .catch(err => {
-        console.log(err)
-      })
-  } else {
-    return callback(null)
-  }
+    })
+    .catch(err => {
+      console.log(err)
+    })
 }
 
 /**
@@ -354,6 +290,26 @@ module.exports.getToken = function () {
         )
     }
   })
+}
+
+/**
+ * Decides if we should add compression and what type
+ * @param {Object} reqHeaders - Request headers
+ */
+module.exports.canCompress = function (reqHeaders) {
+  var compressType = false
+
+  if (
+    (config.get('headers.useCompression') ||
+      config.get('headers.useGzipCompression')) &&
+    !config.get('debug')
+  ) {
+    var acceptEncoding = reqHeaders['accept-encoding'] || ''
+    if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'
+    if (~acceptEncoding.indexOf('br')) compressType = 'br'
+  }
+
+  return compressType
 }
 
 // creates a new function in the underscore.js namespace

@@ -789,7 +789,9 @@ describe("Data Providers", function(done) {
     it("should return data when no error is encountered", function(done) {
       var host = "https://api.twitter.com:443"
       var path = "/1.1/xxx.json"
-      var scope = nock(host).get(path).reply(200, { x: "y" })
+      var scope = nock(host)
+        .get(path)
+        .reply(200, { x: "y" })
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
@@ -917,7 +919,9 @@ describe("Data Providers", function(done) {
       var host = "https://public-api.wordpress.com"
       var path =
         "/rest/v1.1/sites/neversettleblog.wordpress.com/posts/slug:$post_slug?fields="
-      var scope = nock(host).get(path).reply(200, { x: "y" })
+      var scope = nock(host)
+        .get(path)
+        .reply(200, { x: "y" })
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
@@ -1084,9 +1088,10 @@ describe("Data Providers", function(done) {
                 res.body.markdown.results.should.be.Array
                 res.body.markdown.results[0].original.should.eql(
                   "---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n"
-                ), res.body.markdown.results[0].attributes.title.should.eql(
-                  "A Quick Brown Fox"
-                )
+                ),
+                  res.body.markdown.results[0].attributes.title.should.eql(
+                    "A Quick Brown Fox"
+                  )
                 res.body.markdown.results[0].attributes.category.should.eql(
                   "guggenheim"
                 )
@@ -1176,7 +1181,7 @@ describe("Data Providers", function(done) {
               )
               res.body.markdown.metadata.page.should.equal(1)
               res.body.markdown.metadata.limit.should.equal(1)
-              res.body.markdown.metadata.totalPages.should.be.above(1)
+              res.body.markdown.metadata.totalPages.should.equal(1)
 
               done()
             })

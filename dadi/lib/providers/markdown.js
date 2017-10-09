@@ -93,7 +93,6 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
           const page = params.page || 1
 
           let metadata = []
-          let postCount = posts.length
 
           if (search) {
             posts = _.where(posts, search)
@@ -121,6 +120,9 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
             })
           }
 
+          // Count posts
+          let postCount = posts.length
+
           // Paginate if required
           if (page && count) {
             const offset = (page - 1) * count
@@ -135,7 +137,9 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
           }
 
           if (!_.isEmpty(fields)) {
-            posts = _.chain(posts).selectFields(fields.join(',')).value()
+            posts = _.chain(posts)
+              .selectFields(fields.join(','))
+              .value()
           }
 
           done(null, { results: posts, metadata: metadata || null })
