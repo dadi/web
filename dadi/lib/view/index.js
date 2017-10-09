@@ -31,7 +31,7 @@ View.prototype.render = function (done) {
   if (this.json) return done(null, this.data)
 
   // Send the templated page
-  let templateData = Object.assign(this.data, {
+  const templateData = Object.assign({}, this.data, {
     host: this.page.hostKey
   })
 
@@ -40,11 +40,9 @@ View.prototype.render = function (done) {
       keepWhitespace: this.page.keepWhitespace
     })
     .then(output => {
-      let err = null
-
       // Post-process the output
       if (config.get('globalPostProcessors') || this.page.postProcessors) {
-        let postProcessors = config
+        const postProcessors = config
           .get('globalPostProcessors')
           .concat(this.page.postProcessors || [])
 
@@ -62,7 +60,7 @@ View.prototype.render = function (done) {
         }
       }
 
-      return done(err, output)
+      return done(null, output)
     })
     .catch(err => {
       err.statusCode = 500
