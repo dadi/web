@@ -4,6 +4,7 @@ var proxyaddr = require('proxy-addr')
 
 var config = require(path.resolve(path.join(__dirname, '/../../../config.js')))
 var log = require('@dadi/logger')
+var debug = require('debug')('web:middleware')
 
 var HTTP = 'http:'
 var HTTPS = 'https:'
@@ -133,9 +134,9 @@ middleware.transportSecurity = function () {
   }
 
   if (securityEnabled()) {
-    log.info('Transport security is enabled.')
+    debug('Transport security is enabled.')
   } else {
-    log.info('Transport security is not enabled.')
+    debug('Transport security is not enabled.')
   }
 
   return function protocolRedirect (req, res, next) {

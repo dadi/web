@@ -50,8 +50,7 @@ var Router = function (server, options) {
     delete require.cache[constraintsPath]
     this.handlers = require(constraintsPath)
   } catch (err) {
-    log.info(
-      { module: 'router' },
+    debug(
       'No route constraints loaded, file not found (' + constraintsPath + ')'
     )
   }
@@ -190,7 +189,7 @@ Router.prototype.validate = function (route, options, req, res) {
 
     // move to the next route if no match
     if (!match) {
-      return reject('')
+      return reject(new Error(''))
     }
 
     // get all the dynamic keys from the route
@@ -216,13 +215,9 @@ Router.prototype.validate = function (route, options, req, res) {
               return resolve('')
             } else {
               return reject(
-                'Parameter "' +
-                  param.param +
-                  '=' +
-                  req.params[param.param] +
-                  '" not found in preloaded data "' +
-                  param.preload.source +
-                  '"'
+                new Error(
+                  `Parameter "${param.param}=${req.params[param.param]}" not found in preloaded data "${param.preload.source}"`
+                )
               )
             }
           } else if (param.in && _.isArray(param.in)) {
@@ -233,13 +228,9 @@ Router.prototype.validate = function (route, options, req, res) {
               return resolve('')
             } else {
               return reject(
-                'Parameter "' +
-                  param.param +
-                  '=' +
-                  req.params[param.param] +
-                  '" not found in array "' +
-                  param.in +
-                  '"'
+                new Error(
+                  `Parameter "${param.param}=${req.params[param.param]}" not found in array "${param.in}"`
+                )
               )
             }
           } else if (param.fetch) {
@@ -250,14 +241,11 @@ Router.prototype.validate = function (route, options, req, res) {
               })
               .catch(err => {
                 return reject(
-                  'Parameter "' +
-                    param.param +
-                    '=' +
-                    req.params[param.param] +
-                    '" not found in datasource "' +
-                    param.fetch +
-                    '". ' +
-                    err
+                  new Error(
+                    `Parameter "${param.param}=${req.params[
+                      param.param
+                    ]}" not found in datasource "${param.fetch}". ${err}`
+                  )
                 )
               })
           }
@@ -267,17 +255,17 @@ Router.prototype.validate = function (route, options, req, res) {
 
     Promise.all(paramsPromises)
       .then(result => {
-        this.testConstraint(route.path, req, res, passed => {
+        this.testConstraint(route.path, req, res, (err, passed) => {
           if (passed) {
             return resolve('')
           } else {
-            return reject('')
+            return reject(err)
           }
         })
       })
       .catch(err => {
         log.warn(err)
-        return reject('')
+        return reject(err)
       })
   })
 }
@@ -314,7 +302,7 @@ Router.prototype.injectRequestParams = function (matchedRoute, keys, req) {
 Router.prototype.testConstraint = function (route, req, res, callback) {
   // no constraint against this route, let's use it
   if (!this.constraints[route]) {
-    return callback(true)
+    return callback(new Error(''), true)
   }
 
   // if there's a constraint handler for this route, run it
@@ -331,7 +319,7 @@ Router.prototype.testConstraint = function (route, req, res, callback) {
       return callback(result)
     })
   } else {
-    return callback(true)
+    return callback(new Error(''), true)
   }
 }
 

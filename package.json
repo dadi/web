@@ -1,14 +1,14 @@
 {
   "name": "@dadi/web",
   "version": "4.0.2",
-  "description": "Web frontend and template layer for @dadi/api",
+  "description": "DADI Web",
   "main": "main.js",
   "scripts": {
     "start": "node ./start.js",
     "test": "standard 'lib/**/*.js' | snazzy && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test",
     "posttest": "node ./scripts/coverage.js",
     "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect",
+    "prepublishOnly": "npm run snyk-protect",
     "precommit": "lint-staged",
     "commitmsg": "validate-commit-msg",
     "format": "prettier --no-semi --write '{dadi,scripts,test}/**/*.js' && standard --fix '{dadi,scripts,test}/**/*.js'"
@@ -21,6 +21,7 @@
     ]
   },
   "dependencies": {
+    "@dadi/boot": "github:dadi/boot",
     "@dadi/cache": "1.5.x",
     "@dadi/dustjs-helpers": "^1.4.2",
     "@dadi/format-error": "^1.1.0",
@@ -33,7 +34,6 @@
     "async": "^2.3.0",
     "body-parser": "^1.11.0",
     "chokidar": "^1.5.2",
-    "colors": "latest",
     "compressible": "^2.0.10",
     "connect-modrewrite": "^0.10.1",
     "connect-mongo": "latest",

@@ -12,6 +12,12 @@ log.init(config.get('logging'))
 
 require('console-stamp')(console, 'yyyy-mm-dd HH:MM:ss.l')
 
+const appName = require('./package.json').description
+const dadiBoot = require('@dadi/boot')
+
+// Console start message
+dadiBoot.start(appName)
+
 let app
 
 function createApp (options) {
