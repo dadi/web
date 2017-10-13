@@ -10,8 +10,11 @@
     "snyk-protect": "snyk protect",
     "prepublish": "npm run snyk-protect",
     "precommit": "lint-staged",
-    "commitmsg": "validate-commit-msg",
+    "commitmsg": "commitlint -e",
     "format": "prettier --no-semi --write '{dadi,scripts,test}/**/*.js' && standard --fix '{dadi,scripts,test}/**/*.js'"
+  },
+  "commitlint": {
+    "extends": ["@commitlint/config-angular"]
   },
   "lint-staged": {
     "*.js": [
@@ -78,6 +81,8 @@
     "wildcard": "~1.1.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "~4.1.1",
+    "@commitlint/config-angular": "~3.1.1",
     "env-test": "~1.0.0",
     "husky": "~0.13.3",
     "istanbul": "~0.4.5",
@@ -89,14 +94,13 @@
     "prettier": "~1.7.0",
     "should": "~13.1.0",
     "sinon": "~2.3.8",
+    "sinon-test": "~1.0.2",
     "snazzy": "~7.0.0",
     "standard": "10.0.2",
-    "sinon-test": "~1.0.2",
     "superagent": "~3.5.2",
     "superagent-mock": "~3.3.0",
     "supertest": "~3.0.0",
-    "uuid": "~3.0.1",
-    "validate-commit-msg": "~2.12.1"
+    "uuid": "~3.0.1"
   },
   "repository": {
     "type": "git",
