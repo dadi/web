@@ -15,3 +15,4 @@ branches:
 services:
   - mongodb
   - redis-server
+before_install: if [[ `npm -v` != 5* ]]; then npm i -g npm@latest; fi
