@@ -15,7 +15,7 @@ var page = require(__dirname + "/../../dadi/lib/page")
 var TestHelper = require(__dirname + "/../help")()
 var config = require(path.resolve(path.join(__dirname, "/../../config")))
 
-describe.skip("Cache", function(done) {
+describe("Cache", function(done) {
   beforeEach(function(done) {
     TestHelper.resetConfig().then(() => {
       done()
@@ -31,7 +31,7 @@ describe.skip("Cache", function(done) {
     done()
   })
 
-  it(
+  it.skip(
     "should take a server instance as an argument",
     sinon.test(function(done) {
       var server = sinon.mock(Server)
@@ -39,7 +39,7 @@ describe.skip("Cache", function(done) {
 
       var method = sinon.spy(server.object.app, "use")
       cache.reset()
-      cache(server.object).init()
+      var c = cache(server.object)
 
       method.called.should.eql(true)
       done()
@@ -59,9 +59,6 @@ describe.skip("Cache", function(done) {
           }
         }
       }
-
-      cache.reset()
-      cache(server.object).init()
 
       TestHelper.updateConfig(cacheConfig).then(() => {
         var e = cache(server.object).enabled
