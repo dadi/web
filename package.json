@@ -62,7 +62,7 @@
     "mongodb": "2.2.x",
     "path-to-regexp": "^1.2.1",
     "perfy": "^1.1.0",
-    "proxy-addr": "^1.1.2",
+    "proxy-addr": "^2.0.1",
     "purest": "^3.0.1",
     "qs": "6.4.0",
     "recursive-readdir": "^2.1.1",
