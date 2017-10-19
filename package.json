@@ -75,7 +75,7 @@
     "request": "~2.83.0",
     "send": "~0.16.0",
     "server-destroy": "~1.0.1",
-    "snyk": "~1.42.0",
+    "snyk": "~1.44.1",
     "through": "~2.3.8",
     "toobusy-js": "~0.5.1",
     "underscore": "~1.8.3",
