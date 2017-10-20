@@ -65,7 +65,7 @@
     "mkdirp": "~0.5.1",
     "moment": "~2.19.1",
     "mongodb": "~2.2.0",
-    "path-to-regexp": "~1.7.0",
+    "path-to-regexp": "~2.1.0",
     "perfy": "~1.1.2",
     "proxy-addr": "~1.1.5",
     "purest": "~3.1.0",
