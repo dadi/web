@@ -875,7 +875,7 @@ function onListening (e) {
   help.isApiAvailable((err, result) => {
     if (err) {
       dadiBoot.error(err)
-    } else {
+    } else if (config.get('env') !== 'test') {
       dadiBoot.started({
         server: `${config.get('server.protocol')}://${config.get(
           'server.host'
