@@ -90,12 +90,9 @@ module.exports.isApiAvailable = function (done) {
   }
 
   request.on('error', function (e) {
-    e.message =
-      'Error connecting to API: ' +
-      e.message +
-      ". Check the 'api' settings in config file 'config/config." +
-      config.get('env') +
-      '.json'
+    e.message = `Error connecting to API: ${e.message}. Check the 'api' settings in config file 'config/config.${config.get(
+      'env'
+    )}.json`
     e.remoteIp = options.hostname
     e.remotePort = options.port
     return done(e)
