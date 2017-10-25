@@ -6,17 +6,21 @@ const config = require('./config')
 const debug = require('debug')('web:cluster')
 const fs = require('fs')
 const path = require('path')
+const pkg = require('./package.json')
 
 const log = require('@dadi/logger')
 log.init(config.get('logging'))
 
 require('console-stamp')(console, 'yyyy-mm-dd HH:MM:ss.l')
 
-const appName = require('./package.json').description
 const dadiBoot = require('@dadi/boot')
 
 // Console start message
-dadiBoot.start(appName)
+dadiBoot.start({
+  human: pkg.description,
+  npm: pkg.name,
+  version: pkg.version
+})
 
 let app
 
