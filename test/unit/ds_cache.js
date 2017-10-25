@@ -524,9 +524,15 @@ describe("Datasource Cache", function(done) {
 
         // create a file
         var filename =
-          crypto.createHash("sha1").update(ds.name).digest("hex") +
+          crypto
+            .createHash("sha1")
+            .update(ds.name)
+            .digest("hex") +
           "_" +
-          crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
+          crypto
+            .createHash("sha1")
+            .update(ds.provider.endpoint)
+            .digest("hex")
 
         var cachepath = path.resolve(
           path.join(
@@ -577,9 +583,15 @@ describe("Datasource Cache", function(done) {
 
         // create a file
         var filename =
-          crypto.createHash("sha1").update(ds.name).digest("hex") +
+          crypto
+            .createHash("sha1")
+            .update(ds.name)
+            .digest("hex") +
           "_" +
-          crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
+          crypto
+            .createHash("sha1")
+            .update(ds.provider.endpoint)
+            .digest("hex")
         cachepath = path.resolve(
           path.join(
             ds.schema.datasource.caching.directory.path,
@@ -662,9 +674,15 @@ describe("Datasource Cache", function(done) {
 
         // create a file
         var filename =
-          crypto.createHash("sha1").update(ds.name).digest("hex") +
+          crypto
+            .createHash("sha1")
+            .update(ds.name)
+            .digest("hex") +
           "_" +
-          crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
+          crypto
+            .createHash("sha1")
+            .update(ds.provider.endpoint)
+            .digest("hex")
         cachepath = path.resolve(
           path.join(
             ds.schema.datasource.caching.directory.path,
@@ -714,9 +732,15 @@ describe("Datasource Cache", function(done) {
 
         // create a file
         var filename =
-          crypto.createHash("sha1").update(ds.name).digest("hex") +
+          crypto
+            .createHash("sha1")
+            .update(ds.name)
+            .digest("hex") +
           "_" +
-          crypto.createHash("sha1").update(ds.provider.endpoint).digest("hex")
+          crypto
+            .createHash("sha1")
+            .update(ds.provider.endpoint)
+            .digest("hex")
         cachepath = path.resolve(
           path.join(
             ds.schema.datasource.caching.directory.path,

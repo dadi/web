@@ -133,4 +133,29 @@ describe("View", function(done) {
       done()
     })
   })
+
+  it("should postProcess the HTML output of a page when set at page level", function(
+    done
+  ) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    schema.template = "test.dust"
+    schema.settings.postProcessors = ["replace-h1"]
+
+    // load a template
+    var template = "<h1>This is testing postProcessors</h1>"
+    var expected = "<h2>This is testing postProcessors</h2>"
+
+    var compiled = dust.compile(template, "test", true)
+    dust.loadSource(compiled)
+
+    var req = { url: "/test" }
+    var p = page(name, schema)
+    var v = view(req.url, p, false)
+
+    v.render(function(err, result) {
+      result.should.eql(expected)
+      done()
+    })
+  })
 })
