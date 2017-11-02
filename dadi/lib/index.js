@@ -331,6 +331,7 @@ Server.prototype.exitHandler = function (options, err) {
   if (options.exit) {
     log.info({ module: 'server' }, 'Server stopped, process exiting.')
     dadiBoot.stopped()
+    process.exit()
   }
 }
 
