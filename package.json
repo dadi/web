@@ -11,7 +11,8 @@
     "prepublish": "npm run snyk-protect",
     "precommit": "lint-staged",
     "commitmsg": "commitlint -e",
-    "format": "prettier --no-semi --write '{dadi,scripts,test}/**/*.js' && standard --fix '{dadi,scripts,test}/**/*.js'"
+    "format": "prettier --no-semi --write '{dadi,scripts,test}/**/*.js' && standard --fix '{dadi,scripts,test}/**/*.js'",
+    "prepare": "npm run snyk-protect"
   },
   "commitlint": {
     "extends": [
@@ -76,7 +77,7 @@
     "request": "~2.83.0",
     "send": "~0.16.0",
     "server-destroy": "~1.0.1",
-    "snyk": "~1.42.0",
+    "snyk": "^1.47.0",
     "through": "~2.3.8",
     "toobusy-js": "~0.5.1",
     "underscore": "~1.8.3",
