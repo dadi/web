@@ -6,7 +6,6 @@ var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
 var _ = require('underscore')
 var bodyParser = require('body-parser')
-var colors = require("colors") // eslint-disable-line
 var debug = require('debug')('web:server')
 var enableDestroy = require('server-destroy')
 var fs = require('fs')
@@ -17,6 +16,7 @@ var csrf = require('csurf')
 var cookieParser = require('cookie-parser')
 var toobusy = require('toobusy-js')
 var dadiStatus = require('@dadi/status')
+var dadiBoot = require('@dadi/boot')
 
 var MongoStore = require('connect-mongo')(session)
 var RedisStore = require('connect-redis')(session)
@@ -324,14 +324,13 @@ Server.prototype.exitHandler = function (options, err) {
   }
 
   if (err) {
-    console.log(err)
     if (err.stack) console.log(err.stack.toString())
+    dadiBoot.error(err)
   }
 
   if (options.exit) {
-    console.log()
-    console.log('Server stopped, process exiting...')
     log.info({ module: 'server' }, 'Server stopped, process exiting.')
+    dadiBoot.stopped()
     process.exit()
   }
 }
@@ -869,99 +868,50 @@ function onConnection (socket) {
 }
 
 function onListening (e) {
+  // Get list of engines used
+  var engines = Object.keys(templateStore.getEngines())
+  var enginesInfo = engines.length ? engines.join(', ') : 'None found'.red
+
   // check that our API connection is valid
   help.isApiAvailable((err, result) => {
     if (err) {
-      console.log(err)
-      console.log()
+      dadiBoot.error(err)
       process.exit(0)
-    }
-
-    var env = config.get('env')
-    var protocol = config.get('server.protocol') || 'http'
-    var redirectPort = config.get('server.redirectPort')
-    var engines = Object.keys(templateStore.getEngines())
-    var enginesInfo = engines.length ? engines.join(', ') : 'None'.red
-    var extraPadding = (redirectPort > 0 && '          ') || ''
-
-    var startText = '\n'
-    startText += '  ----------------------------\n'
-    startText += '  ' + config.get('app.name').green + '\n'
-    startText += "  Started 'DADI Web'\n"
-    startText += '  ----------------------------\n'
-
-    if (protocol === 'http') {
-      startText +=
-        '  Server:      '.green +
-        extraPadding +
-        'http://' +
-        config.get('server.host') +
-        ':' +
-        config.get('server.port') +
-        '\n'
-    } else if (protocol === 'https') {
-      if (redirectPort > 0) {
-        startText +=
-          '  Server (http > https): '.green +
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.redirectPort') +
-          '\n'
-      }
-      startText +=
-        '  Server:      '.green +
-        extraPadding +
-        'https://' +
-        config.get('server.host') +
-        ':' +
-        config.get('server.port') +
-        '\n'
-    }
-
-    startText += '  Version:     '.green + extraPadding + version + '\n'
-    startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
-    startText += '  Environment: '.green + extraPadding + env + '\n'
-    startText += '  Engine:      '.green + extraPadding + enginesInfo + '\n'
-
-    if (config.get('api.enabled') === true) {
-      startText +=
-        '  API:         '.green +
-        extraPadding +
-        config.get('api.host') +
-        ':' +
-        config.get('api.port') +
-        '\n'
-    } else {
-      startText +=
-        '  API:         '.green + extraPadding + 'Disabled'.red + '\n'
-      startText += '  ----------------------------\n'
-    }
-
-    if (env !== 'test') {
-      startText +=
-        '\n\n  Copyright ' +
-        String.fromCharCode(169) +
-        ' 2015-' +
-        new Date().getFullYear() +
-        ' DADI+ Limited (https://dadi.tech)'.white +
-        '\n'
-      console.log(startText)
+    } else if (config.get('env') !== 'test') {
+      dadiBoot.started({
+        server: `${config.get('server.protocol')}://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`,
+        header: {
+          app: config.get('app.name')
+        },
+        body: {
+          Protocol: config.get('server.protocol'),
+          Version: version,
+          'Node.js': nodeVersion,
+          Engine: enginesInfo,
+          Environment: config.get('env')
+        },
+        footer: {
+          'DADI API': config.get('api.enabled')
+            ? `${config.get('api.host')}:${config.get('api.port')}`
+            : '\u001b[31mNot enabled\u001b[39m'
+        }
+      })
     }
   })
 }
 
 function onError (err) {
   if (err.code === 'EADDRINUSE') {
-    var message =
-      "Can't connect to local address, is something already listening on port " +
-      config.get('server.port') +
-      '?'
+    let message = `Can't connect to local address, is something already listening on ${`${config.get(
+      'server.host'
+    )}:${config.get('server.port')}`.underline}?`
     err.localIp = config.get('server.host')
     err.localPort = config.get('server.port')
     err.message = message
-    console.log(err)
-    console.log()
+
+    dadiBoot.error(err)
     process.exit(0)
   }
 }

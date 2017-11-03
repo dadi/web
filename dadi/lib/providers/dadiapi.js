@@ -252,16 +252,9 @@ DadiApiProvider.prototype.processOutput = function (
     } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
       // if the error is anything other than Success or Bad Request, error
       const err = new Error()
-      err.message =
-        'Datasource "' +
-        this.datasource.name +
-        '" failed. ' +
-        res.statusMessage +
-        ' (' +
-        res.statusCode +
-        ')' +
-        ': ' +
-        this.endpoint
+      err.message = `Datasource "${this.datasource
+        .name}" failed. ${res.statusMessage} (${res.statusCode}): ${this
+        .endpoint}`
 
       if (data) err.message += '\n' + data
 

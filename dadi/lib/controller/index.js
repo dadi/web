@@ -275,9 +275,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
         event.run(req, res, data, (err, result) => {
           help.timer.stop('event: ' + event.name)
 
-          if (err) {
-            return reject(err)
-          }
+          if (err) return reject(err)
 
           // if we get data back with the same checkValue property,
           // reassign it to our global data object to avoid circular JSON

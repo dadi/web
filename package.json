@@ -1,7 +1,8 @@
 {
   "name": "@dadi/web",
   "version": "4.0.2",
-  "description": "Web frontend and template layer for @dadi/api",
+  "product": "DADI Web",
+  "description": "A schemaless templating layer that can operate as a standalone platform or with DADI API as a full stack web application.",
   "main": "main.js",
   "scripts": {
     "start": "node ./start.js",
@@ -27,6 +28,7 @@
     ]
   },
   "dependencies": {
+    "@dadi/boot": "^1.0.0",
     "@dadi/cache": "~1.5.3",
     "@dadi/dustjs-helpers": "~1.6.0",
     "@dadi/format-error": "~1.5.0",
@@ -98,7 +100,7 @@
     "should": "~13.1.0",
     "sinon": "~2.3.2",
     "snazzy": "~7.0.0",
-    "standard": "10.0.2",
+    "standard": "8.6.0",
     "sinon-test": "~1.0.2",
     "superagent": "~3.5.2",
     "superagent-mock": "~3.3.0",
