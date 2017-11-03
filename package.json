@@ -96,7 +96,7 @@
     "nodeunit": ">=0.5.1",
     "prettier": "^1.1.0",
     "should": "~13.1.0",
-    "sinon": "~2.3.2",
+    "sinon": "~4.1.1",
     "snazzy": "~7.0.0",
     "standard": "10.0.2",
     "sinon-test": "~1.0.2",
