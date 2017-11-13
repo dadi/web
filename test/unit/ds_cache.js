@@ -242,15 +242,18 @@ describe("Datasource Cache", function(done) {
             url: "/1.0/makes/ford",
             params: { make: "ford" }
           })
+
           var filename1 = dsCache.getFilename({
             name: datasource.name,
             caching: cacheConfig.caching,
             endpoint: datasource.provider.endpoint
           })
+
           datasource.processRequest(datasource.schema.datasource.key, {
             url: "/1.0/makes/mazda",
             params: { make: "mazda" }
           })
+
           var filename2 = dsCache.getFilename({
             name: datasource.name,
             caching: cacheConfig.caching,
