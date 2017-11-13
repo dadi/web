@@ -1,4 +1,5 @@
 --bail
+--timeout=8000
 --ui bdd
 --recursive
 --require=env-test
