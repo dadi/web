@@ -501,9 +501,7 @@ describe("Datasource Cache", function(done) {
     })
   })
 
-  describe.skip("getFromCache", function(done) {
-    this.timeout(4000)
-
+  describe("getFromCache", function(done) {
     it("should read data from a file", function(done) {
       var cacheConfig = {
         caching: {
