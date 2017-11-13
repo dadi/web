@@ -107,11 +107,35 @@ Controller.prototype.requiredDataPresent = function (data) {
   if (this.page.requiredDatasources.length === 0) return true
 
   return this.page.requiredDatasources.every(datasource => {
-    return (
-      data[datasource] &&
-      data[datasource].results &&
-      data[datasource].results.length
-    )
+    // data doesn't exist
+    if (!data[datasource]) return false
+
+    const content = data[datasource]
+
+    if (Array.isArray(content)) {
+      // it's an empty array
+      if (content.length === 0) {
+        return false
+      }
+    } else {
+      // it's an object with no properties
+      if (Object.keys(content).length === 0) {
+        return false
+      }
+    }
+
+    // it's an empty results array (likely from DADI API)
+    if (
+      content.results &&
+      Array.isArray(content.results) &&
+      content.results.length === 0
+    ) {
+      return false
+    }
+
+    // it's an object with properties, an array with at least one item, or
+    // an object containing a "results" array with at least one item
+    return true
   })
 }
 
