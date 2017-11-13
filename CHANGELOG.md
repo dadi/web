@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [3.1.3] - 2017-11-13
+
+## Changed
+* [#288](https://github.com/dadi/web/issues/288): fix an issue where an event returing a 404 error would cause a failure if the current page had requiredDatasources set - no data object is passed
+
 # [3.1.2] - 2017-09-22
 
 ## Changed
