@@ -396,29 +396,28 @@ describe("Datasource", function(done) {
     })
   })
 
-  it.skip(
-    "should log an error if the specified datasource file can't be found",
-    function(done) {
-      var name = "test"
-      var schema = TestHelper.getPageSchema()
-      var p = page(name, schema)
-      var dsName = "carzzz"
+  it.skip("should log an error if the specified datasource file can't be found", function(
+    done
+  ) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    var p = page(name, schema)
+    var dsName = "carzzz"
 
-      var method = sinon.spy(log, "error")
+    var method = sinon.spy(log, "error")
 
-      new Datasource(p, dsName, TestHelper.getPathOptions()).init(function(
-        err,
-        ds
-      ) {
-        method.called.should.be.true
-        log.error.restore()
+    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function(
+      err,
+      ds
+    ) {
+      method.called.should.be.true
+      log.error.restore()
 
-        // should.throws(function() { datasource(p, dsName, TestHelper.getPathOptions(), function() {}) }, Error)
+      // should.throws(function() { datasource(p, dsName, TestHelper.getPathOptions(), function() {}) }, Error)
 
-        done()
-      })
-    }
-  )
+      done()
+    })
+  })
 
   it("should load the referenced datasource file from the filesystem", function(
     done
@@ -708,6 +707,50 @@ describe("Datasource", function(done) {
       })
     })
 
+    it("should use requestParams to replace multiple placeholders in the endpoint", function(
+      done
+    ) {
+      var name = "test"
+      var schema = TestHelper.getPageSchema()
+      var p = page(name, schema)
+      var dsName = "car-makes"
+      var options = TestHelper.getPathOptions()
+      var dsSchema = TestHelper.getSchemaFromFile(
+        options.datasourcePath,
+        dsName
+      )
+
+      // modify the endpoint to give it a placeholder
+      dsSchema.datasource.source.endpoint = "1.0/makes/{name}/{edition}"
+
+      sinon
+        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .yields(null, dsSchema)
+
+      // add type
+      dsSchema.datasource.requestParams[0].type = "String"
+      dsSchema.datasource.requestParams[0].target = "endpoint"
+
+      dsSchema.datasource.requestParams.push({
+        type: "Number",
+        param: "edition",
+        field: "edition",
+        target: "endpoint"
+      })
+
+      var params = { make: "ford", edition: 2 }
+      var req = { params: params, url: "/1.0/makes/ford/2" }
+
+      new Datasource(p, dsName, options).init(function(err, ds) {
+        Datasource.Datasource.prototype.loadDatasource.restore()
+        ds.processRequest(dsName, req)
+        ds.provider.endpoint.should.eql(
+          'http://127.0.0.1:3000/1.0/makes/ford/2?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+        )
+        done()
+      })
+    })
+
     it("should use page from requestParams when constructing the endpoint", function(
       done
     ) {
@@ -866,17 +909,15 @@ describe("Datasource", function(done) {
       ) {
         ds1.processRequest("car-makes", req)
 
-        new Datasource(
-          p,
-          "car-models",
-          TestHelper.getPathOptions()
-        ).init(function(err, ds2) {
-          ds2.processRequest("car-models", req)
-          ds2.provider.endpoint.should.eql(
-            'http://127.0.0.1:3000/1.0/cars/models?count=20&page=3&filter={"name":"i3"}&fields={"name":1,"_id":0}&sort={"name":1}'
-          )
-          done()
-        })
+        new Datasource(p, "car-models", TestHelper.getPathOptions()).init(
+          function(err, ds2) {
+            ds2.processRequest("car-models", req)
+            ds2.provider.endpoint.should.eql(
+              'http://127.0.0.1:3000/1.0/cars/models?count=20&page=3&filter={"name":"i3"}&fields={"name":1,"_id":0}&sort={"name":1}'
+            )
+            done()
+          }
+        )
       })
     })
 

@@ -109,15 +109,10 @@ Datasource.prototype.loadDatasource = function (done) {
  * @param  {IncomingMessage} req - the original HTTP request
  */
 Datasource.prototype.processRequest = function (datasource, req) {
-  // console.log('> DS PROCESS REQUEST')
-  // console.log(this.schema.datasource.filter)
-  // this.schema.datasource.filter = this.originalFilter
-  // var filter = this.originalFilter || {}
-
-  var datasourceParams = _.clone(this.schema.datasource)
+  let datasourceParams = _.clone(this.schema.datasource)
   datasourceParams.filter = this.originalFilter || {}
 
-  var query = JSON.parse(JSON.stringify(url.parse(req.url, true).query))
+  let query = JSON.parse(JSON.stringify(url.parse(req.url, true).query))
 
   // handle the cache flag
   if (query.cache && query.cache === 'false') {
@@ -142,7 +137,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
     (this.page.name && datasource.indexOf(this.page.name) >= 0) ||
     this.page.passFilters
   ) {
-    var requestParamsPage = this.requestParams.find(obj => {
+    const requestParamsPage = this.requestParams.find(obj => {
       return obj.queryParam === 'page' && obj.param
     })
 
@@ -170,19 +165,18 @@ Datasource.prototype.processRequest = function (datasource, req) {
     }
 
     // URI encode each querystring value
-    _.each(query, (value, key) => {
+    Object.keys(query).forEach(key => {
       if (key === 'filter') {
-        // _.extend(this.schema.datasource.filter, JSON.parse(value))
         datasourceParams.filter = _.extend(
           datasourceParams.filter,
-          JSON.parse(value)
+          JSON.parse(query[key])
         )
       }
     })
   }
 
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
-  var paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gim
+  const paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gim
 
   // this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (match, p1, p2, p3, p4, offset, string) {
   //   if (req.params[p3]) {
@@ -214,12 +208,14 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // parameter in the querystring (and added to req.params e.g. `/car/:make/:model`) or a matching
   // placeholder in the datasource's endpoint (e.g. `/car/makes/{make}`)
 
+  let endpoint = this.schema.datasource.source.endpoint
+
   // NB don't replace filter properties that already exist
-  _.each(this.requestParams, obj => {
+  this.requestParams.forEach(obj => {
     // if the requestParam has no 'target' property, it's destined for the filter
     if (!obj.target) obj.target = 'filter'
 
-    var paramValue =
+    let paramValue =
       req.params.hasOwnProperty(obj.param) && req.params[obj.param]
 
     if (obj.field && paramValue) {
@@ -229,27 +225,23 @@ Datasource.prototype.processRequest = function (datasource, req) {
           : encodeURIComponent(paramValue)
 
       if (obj.target === 'filter') {
-        // this.schema.datasource.filter[obj.field] = paramValue
         datasourceParams.filter[obj.field] = paramValue
       } else if (obj.target === 'endpoint') {
-        var placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
-        this.source.modifiedEndpoint = this.schema.datasource.source.endpoint.replace(
-          placeholderRegex,
-          paramValue
-        )
+        const placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
+
+        endpoint = endpoint.replace(placeholderRegex, paramValue)
       }
     } else {
       if (obj.target === 'filter') {
         // param not found in request, remove it from the datasource filter
-        // if (this.schema.datasource.filter[obj.field]) {
-        //   delete this.schema.datasource.filter[obj.field]
-        // }
         if (datasourceParams.filter[obj.field]) {
           delete datasourceParams.filter[obj.field]
         }
       }
     }
   })
+
+  this.source.modifiedEndpoint = endpoint
 
   if (this.schema.datasource.filterEventResult) {
     // this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult)
