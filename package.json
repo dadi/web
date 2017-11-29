@@ -102,7 +102,7 @@
     "snazzy": "~7.0.0",
     "standard": "8.6.0",
     "sinon-test": "~1.0.2",
-    "superagent": "~3.5.2",
+    "superagent": "~3.7.0",
     "superagent-mock": "~3.3.0",
     "supertest": "~3.0.0",
     "uuid": "^3.0.1"
