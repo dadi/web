@@ -1,7 +1,6 @@
 /**
  * @module Datasource
  */
-const _ = require('underscore')
 const fs = require('fs')
 const getValue = require('get-value')
 const path = require('path')
@@ -34,7 +33,7 @@ Datasource.prototype.init = function (callback) {
     this.schema = schema
     this.source = schema.datasource.source
     this.schema.datasource.filter = this.schema.datasource.filter || {}
-    this.originalFilter = _.clone(this.schema.datasource.filter)
+    this.originalFilter = Object.assign({}, this.schema.datasource.filter)
 
     if (!this.source.type) {
       this.source.type = 'dadiapi'
@@ -112,7 +111,7 @@ Datasource.prototype.loadDatasource = function (done) {
  * @param  {IncomingMessage} req - the original HTTP request
  */
 Datasource.prototype.processRequest = function (datasource, req) {
-  let datasourceParams = _.clone(this.schema.datasource)
+  let datasourceParams = Object.assign({}, this.schema.datasource)
   datasourceParams.filter = this.originalFilter || {}
 
   let query = JSON.parse(JSON.stringify(url.parse(req.url, true).query))
@@ -163,7 +162,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
     // URI encode each querystring value
     Object.keys(query).forEach(key => {
       if (key === 'filter') {
-        datasourceParams.filter = _.extend(
+        datasourceParams.filter = Object.assign(
           datasourceParams.filter,
           JSON.parse(query[key])
         )
