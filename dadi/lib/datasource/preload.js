@@ -1,18 +1,17 @@
-var _ = require('underscore')
-var path = require('path')
+const path = require('path')
 
-var config = require(path.resolve(path.join(__dirname, '/../../../config')))
-var Datasource = require(path.join(__dirname, '/../datasource'))
-var Providers = require(path.join(__dirname, '/../providers'))
+const config = require(path.resolve(path.join(__dirname, '/../../../config')))
+const Datasource = require(path.join(__dirname, '/../datasource'))
+const Providers = require(path.join(__dirname, '/../providers'))
 
-var Preload = function () {
+const Preload = function () {
   this.data = {}
 }
 
 Preload.prototype.init = function (options) {
   this.sources = config.get('data.preload')
 
-  _.each(this.sources, source => {
+  this.sources.forEach(source => {
     new Datasource(null, source, options).init((err, datasource) => {
       if (err) {
         console.log(err)
@@ -38,7 +37,7 @@ Preload.prototype.init = function (options) {
         // TODO: simplify this, doesn't require a try/catch
         if (data) {
           try {
-            var results = data
+            const results = data
             this.data[source] = results.results ? results.results : results
           } catch (e) {
             console.log('Preload Load Error:', datasource.name)
@@ -65,7 +64,7 @@ Preload.prototype.reset = function () {
   this.sources = []
 }
 
-var instance
+let instance
 module.exports = function () {
   if (!instance) {
     instance = new Preload()
