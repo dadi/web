@@ -51,7 +51,7 @@
     "cookie-parser": "~1.4.3",
     "csurf": "~1.9.0",
     "debug": "~2.6.9",
-    "deepmerge": "~1.5.2",
+    "deepmerge": "~2.0.1",
     "dustjs-helpers": "~1.7.3",
     "dustjs-linkedin": "~2.7.5",
     "etag": "~1.8.1",
