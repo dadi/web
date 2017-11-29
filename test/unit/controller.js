@@ -8,6 +8,7 @@ var api = require(__dirname + "/../../dadi/lib/api")
 var Server = require(__dirname + "/../../dadi/lib")
 var Page = require(__dirname + "/../../dadi/lib/page")
 var Controller = require(__dirname + "/../../dadi/lib/controller")
+var Datasource = require(__dirname + "/../../dadi/lib/datasource")
 var TestHelper = require(__dirname + "/../help")()
 var config = require(__dirname + "/../../config")
 var help = require(__dirname + "/../../dadi/lib/help")
@@ -485,7 +486,7 @@ describe("Controller", function(done) {
     TestHelper.clearCache()
     this.timeout(5000)
 
-    it("should apply datasource output params to the chained datasource", function(
+    it("should inject datasource output params to a chained datasource filter", function(
       done
     ) {
       TestHelper.enableApiConfig().then(() => {
@@ -535,6 +536,55 @@ describe("Controller", function(done) {
 
               done()
             })
+          })
+          .catch(err => {
+            done(err)
+          })
+      })
+    })
+
+    it("should inject datasource output params to a chained datasource endpoint", function(
+      done
+    ) {
+      TestHelper.enableApiConfig().then(() => {
+        var pages = TestHelper.setUpPages()
+
+        pages[0].datasources = ["global", "car-makes-chained-endpoint"]
+
+        var host =
+          "http://" + config.get("api.host") + ":" + config.get("api.port")
+
+        var endpointGlobal =
+          "/1.0/system/all?count=20&page=1&filter=%7B%7D&fields=%7B%7D&sort=%7B%22name%22:1%7D"
+
+        var results1 = JSON.stringify({
+          results: [{ id: "1234", name: "Test" }]
+        })
+
+        TestHelper.setupApiIntercepts()
+
+        var scope1 = nock(host)
+          .get(endpointGlobal)
+          .reply(200, results1)
+
+        // response if everything went fine
+        var scope2 = nock(host)
+          .get("/1.0/makes/Test")
+          .reply(200, { ok: true })
+
+        TestHelper.startServer(pages)
+          .then(() => {
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body["car-makes-chained-endpoint"])
+                res.body["car-makes-chained-endpoint"].ok.should.eql(true)
+
+                done()
+              })
           })
           .catch(err => {
             done(err)
