@@ -298,8 +298,8 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 Controller.prototype.loadData = function (req, res, data, done) {
   const self = this
 
-  let primaryDatasources = {}
-  let chainedDatasources = {}
+  const primaryDatasources = {}
+  const chainedDatasources = {}
 
   debug('datasources %o', Object.keys(this.datasources))
 
