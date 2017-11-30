@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var fs = require("fs")
 var nock = require("nock")
 var path = require("path")
@@ -463,7 +462,7 @@ describe("Data Providers", function(done) {
       }
 
       dsSchema = {
-        datasource: _.extend(dsSchema.datasource, dsConfig)
+        datasource: Object.assign({}, dsSchema.datasource, dsConfig)
       }
 
       sinon
@@ -514,7 +513,7 @@ describe("Data Providers", function(done) {
       }
 
       dsSchema = {
-        datasource: _.extend(dsSchema.datasource, dsConfig)
+        datasource: Object.assign({}, dsSchema.datasource, dsConfig)
       }
 
       sinon
@@ -565,7 +564,7 @@ describe("Data Providers", function(done) {
       }
 
       dsSchema = {
-        datasource: _.extend(dsSchema.datasource, dsConfig)
+        datasource: Object.assign({}, dsSchema.datasource, dsConfig)
       }
 
       sinon

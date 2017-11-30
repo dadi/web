@@ -3,7 +3,6 @@ var api = require(__dirname + "/../../dadi/lib/api")
 var Server = require(__dirname + "/../help").Server
 var should = require("should")
 var pathToRegexp = require("path-to-regexp")
-var _ = require("underscore")
 var page = require(__dirname + "/../../dadi/lib/page")
 var TestHelper = require(__dirname + "/../help")()
 var path = require("path")
@@ -227,8 +226,10 @@ describe("Page", function(done) {
       }
     }
 
-    var component = _.find(server.object.components, function(component) {
-      return component.page.key === "test"
+    var component = Object.keys(server.object.components).map(component => {
+      if (server.object.components[component].page.key === "test") {
+        return server.object.components[component]
+      }
     })
 
     component.should.not.be.null
