@@ -1,7 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
-
 const path = require('path')
 const help = require(path.join(__dirname, '../help'))
 
@@ -48,15 +46,18 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
     // Sort by field (with date support)
     if (sort && Object.keys(sort).length > 0) {
       Object.keys(sort).forEach(field => {
-        data = _.sortBy(data, post => {
-          const value = post[field]
-          const valueAsDate = new Date(value)
-          return valueAsDate.toString() !== 'Invalid Date'
-            ? +valueAsDate
-            : value
-        })
+        data.sort(
+          help.sortBy(field, value => {
+            if (field.toLowerCase().indexOf('date') > -1) {
+              value = new Date(value)
+            }
+
+            return value
+          })
+        )
+
         if (sort[field] === -1) {
-          data = data.reverse()
+          data.reverse()
         }
       })
     }

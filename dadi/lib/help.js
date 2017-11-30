@@ -6,6 +6,7 @@
 const crypto = require('crypto')
 const debug = require('debug')('web:timer')
 const fs = require('fs')
+const getValue = require('get-value')
 const http = require('http')
 const https = require('https')
 const path = require('path')
@@ -314,12 +315,12 @@ module.exports.canCompress = function (reqHeaders) {
 }
 
 /**
- * allowing us to pluck multiple properties - used to return only the
- * fields we require from an array of objects
+ * Return a copy of the specified object filtered to only have
+ * values for the keys in the specified array
  *
- * @param {param type} name - description
- * @param {param type} name - description
- * @param {param type} name - description
+ * @param {Object} item - x
+ * @param {Array} properties - xx
+ * @returns {Object} the object containing only the properties specfied
  */
 module.exports.pick = function (item, properties) {
   let obj = {}
@@ -338,6 +339,14 @@ module.exports.pick = function (item, properties) {
   return obj
 }
 
+/**
+ * Looks through each value in "data", returning an array of all the
+ * items that contain all of the key-value pairs listed in "properties"
+ *
+ * @param {Array} data - the array to filter
+ * @param {Object} properties - the key-value pairs to match against
+ * @returns {Array} the filtered array
+ */
 module.exports.where = function (data, properties) {
   if (properties && Object.keys(properties).length > 0) {
     data = data.filter(item => {
@@ -352,6 +361,26 @@ module.exports.where = function (data, properties) {
   }
 
   return data
+}
+
+/**
+ * http://jsfiddle.net/dFNva/1/
+ *
+ * @param {string} field - description
+ * @param {Function} primer - description
+ */
+module.exports.sortBy = function (field, primer) {
+  let key = function (x) {
+    let value = getValue(x, field)
+    return primer ? primer(value) : value
+  }
+
+  return function (a, b) {
+    let A = key(a)
+    let B = key(b)
+
+    return A < B ? -1 : A > B ? 1 : 0
+  }
 }
 
 /**

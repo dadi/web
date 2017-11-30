@@ -703,11 +703,17 @@ Server.prototype.removeComponent = function (path) {
 }
 
 Server.prototype.getComponent = function (key) {
-  return Object.keys(this.components).map(component => {
+  const matches = Object.keys(this.components).map(component => {
     if (this.components[component].page.key === key) {
       return this.components[component]
     }
   })
+
+  if (matches.length > 0) {
+    return matches[0]
+  } else {
+    return null
+  }
 }
 
 Server.prototype.addMonitor = function (filepath, callback) {

@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var fs = require("fs")
 var nock = require("nock")
 var path = require("path")
@@ -129,7 +128,7 @@ describe("Cache Flush", function(done) {
           // add two routes to the page for testing specific path cache clearing
           page2.routes[0].path = "/page2"
           page2.events = []
-          //delete page2.route.constraint
+          // delete page2.route.constraint
 
           var pages = []
           pages.push(page)
@@ -184,7 +183,7 @@ describe("Cache Flush", function(done) {
   })
 
   it("should return 401 if clientId and secret are not passed", function(done) {
-    //config.set('api.enabled', true)
+    // config.set('api.enabled', true)
 
     // fake token post
     // var scope = nock('http://127.0.0.1:3000')
@@ -257,7 +256,7 @@ describe("Cache Flush", function(done) {
         // clear cache for this path
         client
           .post("/api/flush")
-          .send(_.extend({ path: "/test" }, credentials))
+          .send(Object.assign({}, { path: "/test" }, credentials))
           .expect(200)
           .end(function(err, res) {
             if (err) return done(err)
@@ -318,7 +317,7 @@ describe("Cache Flush", function(done) {
         // clear cache for this path
         client
           .post("/api/flush")
-          .send(_.extend({ path: "*" }, credentials))
+          .send(Object.assign({}, { path: "*" }, credentials))
           .expect(200)
           .end(function(err, res) {
             if (err) return done(err)
@@ -414,7 +413,7 @@ describe("Cache Flush", function(done) {
             // clear cache for page1
             client
               .post("/api/flush")
-              .send(_.extend({ path: "/test" }, credentials))
+              .send(Object.assign({}, { path: "/test" }, credentials))
               .expect(200)
               .end(function(err, res) {
                 if (err) return done(err)
@@ -509,7 +508,7 @@ describe("Cache Flush", function(done) {
         // clear cache for this path
         client
           .post("/api/flush")
-          .send(_.extend({ path: "*" }, credentials))
+          .send(Object.assign({}, { path: "*" }, credentials))
           .expect(200)
           .end(function(err, res) {
             if (err) return done(err)
