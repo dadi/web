@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const async = require('async')
 const formatError = require('@dadi/format-error')
 const fs = require('fs')
@@ -38,8 +37,14 @@ MarkdownProvider.prototype.initialise = function (datasource, schema) {
 MarkdownProvider.prototype.processSortParameter = function (obj) {
   let sort = {}
 
-  if (_.isObject(obj)) {
-    _.each(obj, (sortInteger, field) => {
+  if (
+    typeof obj !== 'undefined' &&
+    Object.keys(obj) &&
+    Object.keys(obj).length > 0
+  ) {
+    Object.keys(obj).forEach(field => {
+      const sortInteger = obj[field]
+
       if (sortInteger === -1 || sortInteger === 1) {
         sort[field] = sortInteger
       }
@@ -109,15 +114,18 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
           // Sort posts by attributes field (with date support)
           if (sort && Object.keys(sort).length > 0) {
             Object.keys(sort).forEach(field => {
-              posts = _.sortBy(posts, post => {
-                const value = post.attributes[field]
-                const valueAsDate = new Date(value)
-                return valueAsDate.toString() !== 'Invalid Date'
-                  ? +valueAsDate
-                  : value
-              })
+              posts.sort(
+                help.sortBy(field, value => {
+                  if (field.toLowerCase().indexOf('date') > -1) {
+                    value = new Date(value)
+                  }
+
+                  return value
+                })
+              )
+
               if (sort[field] === -1) {
-                posts = posts.reverse()
+                posts.reverse()
               }
             })
           }
@@ -194,7 +202,9 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
       .replace(path.normalize(this.schema.datasource.source.path), '')
       .replace(/^\/|\/$/g, '')
       .split('/')
-    attributes._path = _.isEmpty(attributes._path) ? null : attributes._path
+
+    attributes._path = attributes._path.filter(Boolean)
+    attributes._path = attributes._path.length === 0 ? null : attributes._path
 
     posts.push({
       attributes,

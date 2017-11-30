@@ -1355,7 +1355,9 @@ describe("Data Providers", function(done) {
         TestHelper.getPathOptions().datasourcePath,
         "markdown"
       )
-      dsSchema.datasource.sort.date = -1
+
+      delete dsSchema.datasource.sort.date
+      dsSchema.datasource.sort["attributes.date"] = -1
       dsSchema.datasource.count = 2
 
       sinon
