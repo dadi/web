@@ -1,7 +1,6 @@
 /**
  * @module Cache
  */
-var _ = require('underscore')
 var crypto = require('crypto')
 var debug = require('debug')('web:cache')
 var path = require('path')
@@ -80,27 +79,32 @@ Cache.prototype.cachingEnabled = function (req) {
  * @returns {object}
  */
 Cache.prototype.getEndpointMatchingRequest = function (req) {
-  var endpoints = this.server.components
-  var requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
+  const endpoints = this.server.components || {}
+  const requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
 
   // get the host key that matches the request's host header
-  var virtualHosts = config.get('virtualHosts')
+  const virtualHosts = config.get('virtualHosts')
 
-  var host =
-    _.findKey(virtualHosts, virtualHost => {
-      return _.contains(virtualHost.hostnames, req.headers.host)
+  const host =
+    Object.keys(virtualHosts).find(key => {
+      return virtualHosts.hostnames.includes(req.headers.host)
     }) || ''
 
-  // check if there is a match in the loaded routes for the current request URL
-  return _.find(endpoints, endpoint => {
-    var paths = _.pluck(endpoint.page.routes, 'path')
-    return (
-      _.contains(paths, requestUrl) &&
-      (endpoint.options && endpoint.options.host
-        ? endpoint.options.host === host
-        : true)
-    )
+  const matchKey = Object.keys(endpoints).find(key => {
+    const paths = endpoints[key].page.routes.map(route => route.path)
+
+    if (!paths.includes(requestUrl)) {
+      return false
+    }
+
+    if (endpoints[key].options && endpoints[key].options.host) {
+      return endpoints[key].options.host === host
+    }
+
+    return true
   })
+
+  return endpoints[matchKey]
 }
 
 /**
@@ -109,15 +113,19 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
  * @returns {object}
  */
 Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
-  var endpoints = this.server.components
+  const endpoints = this.server.components || {}
 
   // check if there is a match in the loaded routes for the current pages `route:
   // e.g. { paths: ['xx','yy'] }` property
-  return _.find(endpoints, endpoint => {
-    return !_.isEmpty(
-      _.intersection(_.pluck(endpoint.page.routes, 'path'), req.paths)
-    )
+  const matchKey = Object.keys(endpoints).find(key => {
+    const paths = endpoints[key].page.routes
+      .map(route => route.path)
+      .filter(path => req.paths.includes(path))
+
+    return paths.length > 0
   })
+
+  return endpoints[matchKey]
 }
 
 /**
@@ -176,11 +184,11 @@ Cache.prototype.init = function () {
     var requestUrl = url.parse(req.url, true).path
 
     // get the host key that matches the request's host header
-    var virtualHosts = config.get('virtualHosts')
+    const virtualHosts = config.get('virtualHosts')
 
-    var host =
-      _.findKey(virtualHosts, virtualHost => {
-        return _.contains(virtualHost.hostnames, req.headers.host)
+    const host =
+      Object.keys(virtualHosts).find(key => {
+        return virtualHosts.hostnames.includes(req.headers.host)
       }) || ''
 
     var filename = crypto
@@ -348,7 +356,8 @@ module.exports.delete = function (pattern, callback) {
         }
 
         var i = 0
-        _.each(cacheKeys, function (key) {
+
+        cacheKeys.forEach(key => {
           self.client().del(key, function (err, result) {
             if (err) console.log(err)
             i++
