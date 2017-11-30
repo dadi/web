@@ -2,6 +2,9 @@
 
 const _ = require('underscore')
 
+const path = require('path')
+const help = require(path.join(__dirname, '../help'))
+
 const StaticProvider = function () {}
 
 /**
@@ -36,10 +39,11 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
     const count = params.count
     const fields = params.fields || []
 
-    if (search) data = _.where(data, search)
+    // apply search
+    data = help.where(data, search)
 
-    // apply a filter
-    data = _.where(data, params.filter)
+    // apply filter
+    data = help.where(data, params.filter)
 
     // Sort by field (with date support)
     if (sort && Object.keys(sort).length > 0) {
@@ -57,9 +61,20 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
       })
     }
 
-    if (count) data = _.first(data, count)
-    if (fields && !_.isEmpty(fields)) {
-      data = _.chain(data).selectFields(fields.join(',')).value()
+    if (count) {
+      data = data.slice(0, count)
+    }
+
+    if (fields) {
+      if (Array.isArray(data)) {
+        let i = 0
+        data.forEach(document => {
+          data[i] = help.pick(data[i], fields)
+          i++
+        })
+      } else {
+        data = help.pick([data], fields)
+      }
     }
   }
 

@@ -3,19 +3,18 @@
 /**
  * @module Help
  */
-var _ = require('underscore')
-var crypto = require('crypto')
-var debug = require('debug')('web:timer')
-var fs = require('fs')
-var http = require('http')
-var https = require('https')
-var path = require('path')
-var perfy = require('perfy')
+const crypto = require('crypto')
+const debug = require('debug')('web:timer')
+const fs = require('fs')
+const http = require('http')
+const https = require('https')
+const path = require('path')
+const perfy = require('perfy')
 
-var version = require('../../package.json').version
-var config = require(path.join(__dirname, '/../../config.js'))
-var Passport = require('@dadi/passport')
-var errorView = require(path.join(__dirname, '/view/errors'))
+const version = require('../../package.json').version
+const config = require(path.join(__dirname, '/../../config.js'))
+const Passport = require('@dadi/passport')
+const errorView = require(path.join(__dirname, '/view/errors'))
 
 var self = this
 
@@ -50,7 +49,8 @@ module.exports.timer = {
   getStats: function getStats () {
     if (!this.isDebugEnabled()) return
     var stats = []
-    _.each(perfy.names(), function (key) {
+
+    perfy.names().forEach(key => {
       if (perfy.result(key)) {
         stats.push({ key: key, value: perfy.result(key).summary })
       }
@@ -199,21 +199,22 @@ module.exports.clearCache = function (req, Cache, callback) {
     var endpoint = Cache.getEndpointMatchingRequest(endpointRequest)
 
     if (endpoint && endpoint.page && endpoint.page.datasources) {
-      _.each(endpoint.page.datasources, datasource => {
+      endpoint.page.datasources.forEach(datasource => {
         var cachePrefix = crypto
           .createHash('sha1')
           .update(datasource)
           .digest('hex')
 
-        datasourceCachePaths = _.extend(
+        datasourceCachePaths = Object.assign(
+          {},
           datasourceCachePaths,
-          _.filter(files, file => {
+          files.filter(file => {
             return file.indexOf(cachePrefix) > -1
           })
         )
 
-        datasourceCachePaths = _.map(datasourceCachePaths, file => {
-          return file
+        datasourceCachePaths = Object.keys(datasourceCachePaths).map(key => {
+          return datasourceCachePaths[key]
         })
       })
     }
@@ -227,11 +228,14 @@ module.exports.clearCache = function (req, Cache, callback) {
         return callback(null)
       }
 
-      _.each(datasourceCachePaths, (dsFile, idx) => {
+      let idx = 0
+      datasourceCachePaths.forEach(dsFile => {
         Cache.cache.flush(dsFile).then(() => {
           if (idx === datasourceCachePaths.length - 1) {
             return callback(null)
           }
+
+          idx++
         })
       })
     })
@@ -309,28 +313,46 @@ module.exports.canCompress = function (reqHeaders) {
   return compressType
 }
 
-// creates a new function in the underscore.js namespace
-// allowing us to pluck multiple properties - used to return only the
-// fields we require from an array of objects
-_.mixin({
-  selectFields: function () {
-    var args = _.rest(arguments, 1)[0]
-    return _.map(arguments[0], function (item) {
-      var obj = {}
-      _.each(args.split(','), function (arg) {
-        if (arg.indexOf('.') > 0) {
-          // handle nested fields, e.g. "attributes.title"
-          var parts = arg.split('.')
-          obj[parts[0]] = obj[parts[0]] || {}
-          obj[parts[0]][parts[1]] = item[parts[0]][parts[1]]
-        } else {
-          obj[arg] = item[arg]
-        }
+/**
+ * allowing us to pluck multiple properties - used to return only the
+ * fields we require from an array of objects
+ *
+ * @param {param type} name - description
+ * @param {param type} name - description
+ * @param {param type} name - description
+ */
+module.exports.pick = function (item, properties) {
+  let obj = {}
+
+  properties.forEach(property => {
+    if (property.indexOf('.') > 0) {
+      // handle nested fields, e.g. "attributes.title"
+      const parts = property.split('.')
+      obj[parts[0]] = obj[parts[0]] || {}
+      obj[parts[0]][parts[1]] = item[parts[0]][parts[1]]
+    } else {
+      obj[property] = item[property]
+    }
+  })
+
+  return obj
+}
+
+module.exports.where = function (data, properties) {
+  if (properties && Object.keys(properties).length > 0) {
+    data = data.filter(item => {
+      let match = Object.keys(properties).every(key => {
+        return item.hasOwnProperty(key) && item[key] === properties[key]
       })
-      return obj
+
+      if (match) {
+        return item
+      }
     })
   }
-})
+
+  return data
+}
 
 /**
   * Lists all files in a directory.

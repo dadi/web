@@ -233,7 +233,7 @@ Public.prototype.deliver = function (arg) {
 module.exports = {
   middleware: function (publicPath, cache, hosts) {
     return (req, res, next) => {
-      if (!hosts || hosts.contains(req.headers.host)) {
+      if (!hosts || hosts.includes(req.headers.host)) {
         return new Public({
           req: req,
           res: res,

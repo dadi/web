@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const path = require('path')
 const request = require('request')
 const promise = Promise
@@ -8,6 +7,9 @@ const purest = require('purest')({ request, promise })
 const purestConfig = require('@purest/providers')
 const config = require(path.join(__dirname, '/../../../config.js'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
+
+const help = require(path.join(__dirname, '../help'))
+
 const TwitterProvider = function () {}
 
 /**
@@ -158,17 +160,13 @@ TwitterProvider.prototype.processFields = function processFields (data) {
     const keys = Object.keys(fields)
     // console.log('**keys'.red, keys)
 
-    // console.log(data)
-
-    if (_.isArray(data)) {
+    if (Array.isArray(data)) {
       for (let i = 0; i < data.length; i++) {
-        data[i] = _.pick(data[i], keys)
+        data[i] = help.pick(data[i], keys)
       }
     } else {
-      data = _.pick(data, keys)
+      data = help.pick(data, keys)
     }
-
-    // console.log('data', data)
   }
 
   return data

@@ -88,7 +88,7 @@ Server.prototype.start = function (done) {
 
     let host
     Object.keys(virtualHosts).forEach(key => {
-      if (virtualHosts[key].hostnames.contains(req.headers.host)) {
+      if (virtualHosts[key].hostnames.includes(req.headers.host)) {
         host = virtualHosts[key]
       }
     })
