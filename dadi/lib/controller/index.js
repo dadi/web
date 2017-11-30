@@ -346,6 +346,13 @@ Controller.prototype.loadData = function (req, res, data, done) {
         }
 
         let queue = async.queue((ds, cb) => {
+          if (ds.endpointEvent) {
+            ds.endpointEvent.run(req, res, data, (err, endpoint) => {
+              if (err) return done(err)
+              ds.schema.datasource.source.endpoint = endpoint
+            })
+          }
+
           if (ds.filterEvent) {
             ds.filterEvent.run(req, res, data, (err, filter) => {
               if (err) return done(err)

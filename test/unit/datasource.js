@@ -354,6 +354,48 @@ describe("Datasource", function(done) {
     })
   })
 
+  it("should attach specified `endpointEvent` to datasource", function(done) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    var p = page(name, schema)
+    var dsName = "car-makes"
+    var dsSchema = TestHelper.getSchemaFromFile(
+      TestHelper.getPathOptions().datasourcePath,
+      dsName
+    )
+    dsSchema.datasource.endpointEvent = "testEndpointEvent"
+
+    sinon
+      .stub(Datasource.Datasource.prototype, "loadDatasource")
+      .yields(null, dsSchema)
+
+    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function(
+      err,
+      ds
+    ) {
+      Datasource.Datasource.prototype.loadDatasource.restore()
+      ds.endpointEvent.should.exist
+      ;(typeof ds.endpointEvent).should.eql("object")
+      ds.endpointEvent.name.should.eql("testEndpointEvent")
+      done()
+    })
+  })
+
+  it("should attach null `endpointEvent` when not specified", function(done) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    var p = page(name, schema)
+    var dsName = "car-makes"
+
+    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function(
+      err,
+      ds
+    ) {
+      ;(ds.endpointEvent === null).should.eql(true)
+      done()
+    })
+  })
+
   it("should attach specified `filterEvent` to datasource", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()

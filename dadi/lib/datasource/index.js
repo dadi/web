@@ -49,9 +49,18 @@ Datasource.prototype.init = function (callback) {
     }
 
     this.provider = new providers[this.source.type]()
+    this.endpointEvent = null
     this.filterEvent = null
     this.requestParams = schema.datasource.requestParams || []
     this.chained = schema.datasource.chained || null
+
+    if (schema.datasource.endpointEvent) {
+      this.endpointEvent = new Event(
+        null,
+        schema.datasource.endpointEvent,
+        this.options
+      )
+    }
 
     if (schema.datasource.filterEvent) {
       this.filterEvent = new Event(
