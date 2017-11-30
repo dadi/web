@@ -226,11 +226,16 @@ describe("Page", function(done) {
       }
     }
 
-    var component = Object.keys(server.object.components).map(component => {
+    var component
+    const matches = Object.keys(server.object.components).map(component => {
       if (server.object.components[component].page.key === "test") {
         return server.object.components[component]
       }
     })
+
+    if (matches.length > 0) {
+      component = matches[0]
+    }
 
     component.should.not.be.null
     component.page.key.should.eql("test")
