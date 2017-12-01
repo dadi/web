@@ -17,8 +17,6 @@ const config = require(path.join(__dirname, '/../../config.js'))
 const Passport = require('@dadi/passport')
 const errorView = require(path.join(__dirname, '/view/errors'))
 
-var self = this
-
 module.exports.getVersion = function () {
   if (config.get('debug')) return version
 }
@@ -246,27 +244,13 @@ module.exports.clearCache = function (req, Cache, callback) {
 }
 
 /**
- * Creates a URL/filename friendly version (slug) of any object that implements `toString()`
- * @param {Object} input - object to be slugified
- */
-module.exports.slugify = function (input) {
-  return require('underscore.string').slugify(input.toString())
-}
-
-/**
  * Generates a filename for a token wallet file
  * @param {String} host - Issuer host
  * @param {Number} port - Issuer port
  * @param {String} clientId - Client ID
  */
 module.exports.generateTokenWalletFilename = function (host, port, clientId) {
-  return (
-    'token.' +
-    self.slugify(host + port) +
-    '.' +
-    self.slugify(clientId) +
-    '.json'
-  )
+  return `token.${host}${port}.${clientId}.json`
 }
 
 module.exports.getToken = function () {
