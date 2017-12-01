@@ -244,14 +244,8 @@ module.exports.clearCache = function (req, Cache, callback) {
 }
 
 /**
- * Generates a filename for a token wallet file
- * @param {String} host - Issuer host
- * @param {Number} port - Issuer port
- * @param {String} clientId - Client ID
+ * Uses @dadi/passport to get a token to access a DADI API
  */
-module.exports.generateTokenWalletFilename = function (host, port, clientId) {
-  return `token.${host}${port}.${clientId}.json`
-}
 
 module.exports.getToken = function () {
   return Passport({
@@ -266,14 +260,9 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path:
-        config.get('paths.tokenWallets') +
-        '/' +
-        this.generateTokenWalletFilename(
-          config.get('api.host'),
-          config.get('api.port'),
-          config.get('auth.clientId')
-        )
+      path: `${config.get('paths.tokenWallets')}/token.${config.get(
+        'api.host'
+      )}${config.get('api.port')}.${config.get('auth.clientId')}.json`
     }
   })
 }
