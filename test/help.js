@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var assert = require("assert")
 var fs = require("fs")
 var nock = require("nock")
@@ -85,14 +84,14 @@ TestHelper.prototype.enableApiConfig = function() {
 TestHelper.prototype.getConfig = function() {
   return new Promise((resolve, reject) => {
     var originalConfig = JSON.parse(this.originalConfigString)
-    return resolve(_.extend({}, originalConfig))
+    return resolve(Object.assign({}, originalConfig))
   })
 }
 
 TestHelper.prototype.updateConfig = function(configBlock) {
   return new Promise((resolve, reject) => {
     var originalConfig = JSON.parse(this.originalConfigString)
-    var newConfig = _.extend(originalConfig, configBlock)
+    var newConfig = Object.assign(originalConfig, configBlock)
 
     fs.writeFileSync(config.configPath(), JSON.stringify(newConfig, null, 2))
     config.loadFile(path.resolve(config.configPath()))
@@ -197,7 +196,7 @@ TestHelper.prototype.newPage = function(
 
 TestHelper.prototype.startServer = function(pages) {
   return new Promise((resolve, reject) => {
-    if (pages !== null && !_.isArray(pages)) {
+    if (pages !== null && !Array.isArray(pages)) {
       pages = [pages]
     }
 

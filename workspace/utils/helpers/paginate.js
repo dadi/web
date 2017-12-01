@@ -1,5 +1,4 @@
 var dust = require("dustjs-linkedin")
-var _ = require("underscore")
 
 /*
 * Paginate pages

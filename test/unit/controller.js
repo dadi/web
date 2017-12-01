@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var nock = require("nock")
 var request = require("supertest")
 var should = require("should")
