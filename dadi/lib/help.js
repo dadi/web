@@ -17,8 +17,6 @@ const config = require(path.join(__dirname, '/../../config.js'))
 const Passport = require('@dadi/passport')
 const errorView = require(path.join(__dirname, '/view/errors'))
 
-var self = this
-
 module.exports.getVersion = function () {
   if (config.get('debug')) return version
 }
@@ -91,7 +89,9 @@ module.exports.isApiAvailable = function (done) {
   }
 
   request.on('error', function (e) {
-    e.message = `Error connecting to API: ${e.message}. Check the 'api' settings in config file 'config/config.${config.get(
+    e.message = `Error connecting to API: ${
+      e.message
+    }. Check the 'api' settings in config file 'config/config.${config.get(
       'env'
     )}.json`
     e.remoteIp = options.hostname
@@ -116,15 +116,13 @@ module.exports.validateRequestCredentials = function (req, res) {
     res.statusCode = 401
     res.end()
     return false
-  }
-
-  if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
+  } else if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
     res.statusCode = 401
     res.end()
     return false
+  } else {
+    return true
   }
-
-  return true
 }
 
 /**
@@ -246,28 +244,8 @@ module.exports.clearCache = function (req, Cache, callback) {
 }
 
 /**
- * Creates a URL/filename friendly version (slug) of any object that implements `toString()`
- * @param {Object} input - object to be slugified
+ * Uses @dadi/passport to get a token to access a DADI API
  */
-module.exports.slugify = function (input) {
-  return require('underscore.string').slugify(input.toString())
-}
-
-/**
- * Generates a filename for a token wallet file
- * @param {String} host - Issuer host
- * @param {Number} port - Issuer port
- * @param {String} clientId - Client ID
- */
-module.exports.generateTokenWalletFilename = function (host, port, clientId) {
-  return (
-    'token.' +
-    self.slugify(host + port) +
-    '.' +
-    self.slugify(clientId) +
-    '.json'
-  )
-}
 
 module.exports.getToken = function () {
   return Passport({
@@ -284,12 +262,12 @@ module.exports.getToken = function () {
     walletOptions: {
       path:
         config.get('paths.tokenWallets') +
-        '/' +
-        this.generateTokenWalletFilename(
-          config.get('api.host'),
-          config.get('api.port'),
-          config.get('auth.clientId')
-        )
+        '/token.' +
+        config.get('api.host') +
+        config.get('api.port') +
+        '.' +
+        config.get('auth.clientId') +
+        '.json'
     }
   })
 }
@@ -384,16 +362,16 @@ module.exports.sortBy = function (field, primer) {
 }
 
 /**
-  * Lists all files in a directory.
-  *
-  * @param {string} directory Full directory path.
-  * @param {object} options
-  * @param {array} options.extensions A list of extensions to filter files by.
-  * @param {boolean} options.failIfNotFound Whether to throw an error if the directory doesn't exist.
-  * @param {boolean} options.recursive Whether to read sub-directories.
-  *
-  * @return {array} A list of full paths to the discovered files.
-  */
+ * Lists all files in a directory.
+ *
+ * @param {string} directory Full directory path.
+ * @param {object} options
+ * @param {array} options.extensions A list of extensions to filter files by.
+ * @param {boolean} options.failIfNotFound Whether to throw an error if the directory doesn't exist.
+ * @param {boolean} options.recursive Whether to read sub-directories.
+ *
+ * @return {array} A list of full paths to the discovered files.
+ */
 function readDirectory (directory, options) {
   options = options || {}
 
@@ -445,15 +423,15 @@ function readDirectory (directory, options) {
 module.exports.readDirectory = readDirectory
 
 /**
-  * Executes a callback for each file on a list of paths.
-  *
-  * @param {array} files The file paths.
-  * @param {object} options
-  * @param {function} options.callback The callback to be executed.
-  * @param {array} options.extensions A list of extensions to filter files by.
-  *
-  * @return {array} A Promise that resolves after all callbacks have executed.
-  */
+ * Executes a callback for each file on a list of paths.
+ *
+ * @param {array} files The file paths.
+ * @param {object} options
+ * @param {function} options.callback The callback to be executed.
+ * @param {array} options.extensions A list of extensions to filter files by.
+ *
+ * @return {array} A Promise that resolves after all callbacks have executed.
+ */
 function readFiles (files, options) {
   options = options || {}
 
