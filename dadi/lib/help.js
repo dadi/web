@@ -114,15 +114,13 @@ module.exports.validateRequestCredentials = function (req, res) {
     res.statusCode = 401
     res.end()
     return false
-  }
-
-  if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
+  } else if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
     res.statusCode = 401
     res.end()
     return false
+  } else {
+    return true
   }
-
-  return true
 }
 
 /**
