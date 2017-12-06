@@ -17,8 +17,6 @@ const config = require(path.join(__dirname, '/../../config.js'))
 const Passport = require('@dadi/passport')
 const errorView = require(path.join(__dirname, '/view/errors'))
 
-var self = this
-
 module.exports.getVersion = function () {
   if (config.get('debug')) return version
 }
@@ -116,15 +114,13 @@ module.exports.validateRequestCredentials = function (req, res) {
     res.statusCode = 401
     res.end()
     return false
-  }
-
-  if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
+  } else if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
     res.statusCode = 401
     res.end()
     return false
+  } else {
+    return true
   }
-
-  return true
 }
 
 /**
@@ -246,28 +242,8 @@ module.exports.clearCache = function (req, Cache, callback) {
 }
 
 /**
- * Creates a URL/filename friendly version (slug) of any object that implements `toString()`
- * @param {Object} input - object to be slugified
+ * Uses @dadi/passport to get a token to access a DADI API
  */
-module.exports.slugify = function (input) {
-  return require('underscore.string').slugify(input.toString())
-}
-
-/**
- * Generates a filename for a token wallet file
- * @param {String} host - Issuer host
- * @param {Number} port - Issuer port
- * @param {String} clientId - Client ID
- */
-module.exports.generateTokenWalletFilename = function (host, port, clientId) {
-  return (
-    'token.' +
-    self.slugify(host + port) +
-    '.' +
-    self.slugify(clientId) +
-    '.json'
-  )
-}
 
 module.exports.getToken = function () {
   return Passport({
@@ -284,12 +260,12 @@ module.exports.getToken = function () {
     walletOptions: {
       path:
         config.get('paths.tokenWallets') +
-        '/' +
-        this.generateTokenWalletFilename(
-          config.get('api.host'),
-          config.get('api.port'),
-          config.get('auth.clientId')
-        )
+        '/token.' +
+        config.get('api.host') +
+        config.get('api.port') +
+        '.' +
+        config.get('auth.clientId') +
+        '.json'
     }
   })
 }
