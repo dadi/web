@@ -47,7 +47,7 @@
     "connect-mongo": "~2.0.0",
     "connect-redis": "~3.3.0",
     "console-stamp": "~0.2.5",
-    "convict": "~3.0.0",
+    "convict": "~4.0.2",
     "cookie-parser": "~1.4.3",
     "csurf": "~1.9.0",
     "debug": "~2.6.9",
