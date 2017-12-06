@@ -4,7 +4,6 @@ var version = require('../../package.json').version
 var site = require('../../package.json').name
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
-var _ = require('underscore')
 var bodyParser = require('body-parser')
 var debug = require('debug')('web:server')
 var enableDestroy = require('server-destroy')
@@ -81,20 +80,25 @@ Server.prototype.start = function (done) {
 
   // override configuration variables based on request's host header
   app.use(function virtualHosts (req, res, next) {
-    var virtualHosts = config.get('virtualHosts')
+    const virtualHosts = config.get('virtualHosts')
 
-    if (_.isEmpty(virtualHosts)) {
+    if (Object.keys(virtualHosts).length === 0) {
       return next()
     }
 
-    var host = _.findKey(virtualHosts, virtualHost => {
-      return _.contains(virtualHost.hostnames, req.headers.host)
+    let host
+    Object.keys(virtualHosts).forEach(key => {
+      if (virtualHosts[key].hostnames.includes(req.headers.host)) {
+        host = virtualHosts[key]
+      }
     })
 
     // look for a default host
     if (!host) {
-      host = _.findKey(virtualHosts, virtualHost => {
-        return virtualHost.default === true
+      Object.keys(virtualHosts).forEach(key => {
+        if (virtualHosts[key].default === true) {
+          host = virtualHosts[key]
+        }
       })
     }
 
@@ -139,8 +143,9 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.transportSecurity())
 
   // init virtual host public paths
-  _.each(config.get('virtualHosts'), (virtualHost, key) => {
-    var hostConfigFile = './config/' + virtualHost.configFile
+  Object.keys(config.get('virtualHosts')).forEach(key => {
+    const virtualHost = config.get('virtualHosts')[key]
+    const hostConfigFile = './config/' + virtualHost.configFile
 
     // TODO catch err
 
@@ -259,8 +264,10 @@ Server.prototype.start = function (done) {
   })
 
   // load virtual host routes
-  _.each(config.get('virtualHosts'), (virtualHost, key) => {
-    var hostConfigFile = './config/' + virtualHost.configFile
+  const virtualHosts = config.get('virtualHosts')
+  Object.keys(virtualHosts).forEach(key => {
+    const virtualHost = virtualHosts[key]
+    const hostConfigFile = './config/' + virtualHost.configFile
 
     fs.stat(hostConfigFile, (err, stats) => {
       if (err && err.code === 'ENOENT') {
@@ -360,7 +367,7 @@ Server.prototype.stop = function (done) {
 
 Server.prototype.resolvePaths = function (paths) {
   if (Array.isArray(paths)) {
-    return _.map(paths, p => {
+    return paths.map(p => {
       return path.resolve(p)
     })
   } else {
@@ -369,7 +376,7 @@ Server.prototype.resolvePaths = function (paths) {
 }
 
 Server.prototype.loadPaths = function (paths) {
-  paths = _.extend({}, config.get('paths'), paths || {})
+  paths = Object.assign({}, config.get('paths'), paths || {})
   var options = {}
 
   options.datasourcePath = path.resolve(paths.datasources)
@@ -400,8 +407,6 @@ Server.prototype.loadApi = function (options, reload, callback) {
             message: 'Cache cleared successfully'
           })
         })
-      } else {
-        next()
       }
     })
 
@@ -492,11 +497,18 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
   var middlewares = this.loadMiddleware(directoryPath, options)
-  _.each(middlewares, middleware => {
+  middlewares.forEach(middleware => {
     middleware.init(this.app)
   })
 }
 
+/**
+ * Load Middleware modules from the specified path
+ *
+ * @param {string} directoryPath - the path to the Middleware modules
+ * @param {Object} options -
+ * @returns {Array} an array of Middleware modules
+ */
 Server.prototype.loadMiddleware = function (directoryPath, options) {
   if (!fs.existsSync(directoryPath)) return
 
@@ -558,7 +570,7 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
             name: name,
             filepath: page
           },
-          _.extend({}, options, {
+          Object.assign({}, options, {
             templateCandidate: templateCandidate
           }),
           reload
@@ -619,13 +631,13 @@ Server.prototype.addComponent = function (options, reload) {
   if (!options.routes) return
 
   if (reload) {
-    _.each(options.routes, route => {
+    options.routes.forEach(route => {
       var hostWithPath = `${options.host}${route.path}`
       this.removeComponent(hostWithPath)
     })
   }
 
-  _.each(options.routes, route => {
+  options.routes.forEach(route => {
     // only add a route once
     var hostWithPath = `${options.host}${route.path}`
 
@@ -689,9 +701,17 @@ Server.prototype.removeComponent = function (path) {
 }
 
 Server.prototype.getComponent = function (key) {
-  return _.find(this.components, function (component) {
-    return component.page.key === key
+  const matches = Object.keys(this.components).map(component => {
+    if (this.components[component].page.key === key) {
+      return this.components[component]
+    }
   })
+
+  if (matches.length > 0) {
+    return matches[0]
+  } else {
+    return null
+  }
 }
 
 Server.prototype.addMonitor = function (filepath, callback) {
@@ -783,7 +803,9 @@ Server.prototype.ensureDirectories = function (options, done) {
   // create workspace directories if they don't exist; permissions default to 0777
   var idx = 0
 
-  _.each(options, dir => {
+  Object.keys(options).forEach(key => {
+    const dir = options[key]
+
     if (Array.isArray(dir)) {
       this.ensureDirectories(dir, () => {})
     } else {

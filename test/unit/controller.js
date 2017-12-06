@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var nock = require("nock")
 var request = require("supertest")
 var should = require("should")
@@ -8,11 +7,13 @@ var api = require(__dirname + "/../../dadi/lib/api")
 var Server = require(__dirname + "/../../dadi/lib")
 var Page = require(__dirname + "/../../dadi/lib/page")
 var Controller = require(__dirname + "/../../dadi/lib/controller")
+var Datasource = require(__dirname + "/../../dadi/lib/datasource")
 var TestHelper = require(__dirname + "/../help")()
 var config = require(__dirname + "/../../config")
 var help = require(__dirname + "/../../dadi/lib/help")
 var remoteProvider = require(__dirname + "/../../dadi/lib/providers/remote")
 var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
+var rssProvider = require(__dirname + "/../../dadi/lib/providers/rss")
 
 var connectionString =
   "http://" + config.get("server.host") + ":" + config.get("server.port")
@@ -485,7 +486,7 @@ describe("Controller", function(done) {
     TestHelper.clearCache()
     this.timeout(5000)
 
-    it("should apply datasource output params to the chained datasource", function(
+    it("should inject datasource output params to a chained datasource filter", function(
       done
     ) {
       TestHelper.enableApiConfig().then(() => {
@@ -535,6 +536,55 @@ describe("Controller", function(done) {
 
               done()
             })
+          })
+          .catch(err => {
+            done(err)
+          })
+      })
+    })
+
+    it("should inject datasource output params to a chained datasource endpoint", function(
+      done
+    ) {
+      TestHelper.enableApiConfig().then(() => {
+        var pages = TestHelper.setUpPages()
+
+        pages[0].datasources = ["global", "car-makes-chained-endpoint"]
+
+        var host =
+          "http://" + config.get("api.host") + ":" + config.get("api.port")
+
+        var endpointGlobal =
+          "/1.0/system/all?count=20&page=1&filter=%7B%7D&fields=%7B%7D&sort=%7B%22name%22:1%7D"
+
+        var results1 = JSON.stringify({
+          results: [{ id: "1234", name: "Test" }]
+        })
+
+        TestHelper.setupApiIntercepts()
+
+        var scope1 = nock(host)
+          .get(endpointGlobal)
+          .reply(200, results1)
+
+        // response if everything went fine
+        var scope2 = nock(host)
+          .get("/1.0/makes/Test")
+          .reply(200, { ok: true })
+
+        TestHelper.startServer(pages)
+          .then(() => {
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?json=true")
+              .end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.body["car-makes-chained-endpoint"])
+                res.body["car-makes-chained-endpoint"].ok.should.eql(true)
+
+                done()
+              })
           })
           .catch(err => {
             done(err)
@@ -608,6 +658,90 @@ describe("Controller", function(done) {
               done()
             })
         })
+      })
+    })
+  })
+
+  describe("Datasource Endpoint Events", function(done) {
+    it("should run an attached `endpointEvent` before datasource loads", function(
+      done
+    ) {
+      var dsSchema = TestHelper.getSchemaFromFile(
+        TestHelper.getPathOptions().datasourcePath,
+        "rss"
+      )
+
+      dsSchema.datasource.endpointEvent = "test_endpoint_event"
+
+      sinon
+        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .yields(null, dsSchema)
+
+      var pages = TestHelper.setUpPages()
+      pages[0].datasources = ["rss"]
+
+      var host = "http://www.feedforall.com:80"
+
+      var endpoint1 = "/sample.json"
+
+      var feedData = `<?xml version="1.0" encoding="windows-1252"?>
+        <rss version="2.0">
+          <channel>
+            <title>FeedForAll Sample Feed</title>
+            <description>RSS</description>
+            <link>http://www.feedforall.com/industry-solutions.htm</link>
+            <category domain="www.dmoz.com">Computers/Software/Internet/Site Management/Content Management</category>
+            <copyright>Copyright 2004 NotePage, Inc.</copyright>
+            <docs>http://blogs.law.harvard.edu/tech/rss</docs>
+            <language>en-us</language>
+            <lastBuildDate>Tue, 19 Oct 2004 13:39:14 -0400</lastBuildDate>
+            <managingEditor>marketing@feedforall.com</managingEditor>
+            <pubDate>Tue, 19 Oct 2004 13:38:55 -0400</pubDate>
+            <webMaster>webmaster@feedforall.com</webMaster>
+            <generator>FeedForAll Beta1 (0.0.1.8)</generator>
+            <image>
+              <url>http://www.feedforall.com/ffalogo48x48.gif</url>
+              <title>FeedForAll Sample Feed</title>
+              <link>http://www.feedforall.com/industry-solutions.htm</link>
+              <description>FeedForAll Sample Feed</description>
+              <width>48</width>
+              <height>48</height>
+            </image>
+            <item>
+              <title>RSS Solutions for Restaurants</title>
+              <description>XXX</description>
+              <link>http://www.feedforall.com/restaurant.htm</link>
+              <category domain="www.dmoz.com">Computers/Software/Internet/Site Management/Content Management</category>
+              <comments>http://www.feedforall.com/forum</comments>
+              <pubDate>Tue, 19 Oct 2004 11:09:11 -0400</pubDate>
+            </item>
+          </channel>
+        </rss>`
+
+      var scope1 = nock(host)
+        .get(endpoint1)
+        .reply(200, feedData)
+
+      var providerSpy = sinon.spy(rssProvider.prototype, "load")
+
+      TestHelper.startServer(pages).then(() => {
+        var client = request(connectionString)
+        client
+          .get(pages[0].routes[0].path + "?json=true")
+          .end(function(err, res) {
+            if (err) return done(err)
+            providerSpy.restore()
+            Datasource.Datasource.prototype.loadDatasource.restore()
+
+            res.body.rss.should.exist
+            res.body.rss[0].title.should.eql("RSS Solutions for Restaurants")
+
+            var datasource = providerSpy.firstCall.thisValue
+
+            datasource.endpoint.should.exist
+            datasource.endpoint.should.eql(host + endpoint1)
+            done()
+          })
       })
     })
   })

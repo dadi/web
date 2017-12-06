@@ -1,27 +1,28 @@
-var _ = require('underscore')
-var debug = require('debug')('web:router')
-var es = require('event-stream')
-var fs = require('fs')
-var path = require('path')
-var pathToRegexp = require('path-to-regexp')
-var toobusy = require('toobusy-js')
-var url = require('url')
+'use strict'
 
-var config = require(path.resolve(path.join(__dirname, '/../../../config')))
-var help = require(path.join(__dirname, '/../help'))
-var log = require('@dadi/logger')
-var rewrite = require('connect-modrewrite')
+const debug = require('debug')('web:router')
+const es = require('event-stream')
+const fs = require('fs')
+const path = require('path')
+const pathToRegexp = require('path-to-regexp')
+const toobusy = require('toobusy-js')
+const url = require('url')
 
-var Datasource = require(path.join(__dirname, '/../datasource'))
-var Preload = require(path.join(__dirname, '../datasource/preload'))
-var RouteValidator = require(path.join(
+const config = require(path.resolve(path.join(__dirname, '/../../../config')))
+const help = require(path.join(__dirname, '/../help'))
+const log = require('@dadi/logger')
+const rewrite = require('connect-modrewrite')
+
+const Datasource = require(path.join(__dirname, '/../datasource'))
+const Preload = require(path.join(__dirname, '../datasource/preload'))
+const RouteValidator = require(path.join(
   __dirname,
   '../datasource/route-validator'
 ))
 
-var rewriteFunction = null
+let rewriteFunction = null
 
-var Router = function (server, options) {
+const Router = function (server, options) {
   this.data = {}
   this.params = {}
   this.constraints = {}
@@ -45,8 +46,9 @@ var Router = function (server, options) {
   }
 
   // load the route constraint specifications if they exist
+  let constraintsPath
   try {
-    var constraintsPath = path.join(options.routesPath, '/constraints.js')
+    constraintsPath = path.join(options.routesPath, '/constraints.js')
     delete require.cache[constraintsPath]
     this.handlers = require(constraintsPath)
   } catch (err) {
@@ -58,7 +60,7 @@ var Router = function (server, options) {
 }
 
 Router.prototype.loadRewrites = function (options, done) {
-  var self = this
+  let self = this
   self.rules = []
 
   if (self.rewritesDatasource && self.loadDatasourceAsFile) {
@@ -74,7 +76,7 @@ Router.prototype.loadRewrites = function (options, done) {
 
       function refreshRewrites (cb) {
         // Get redirects from API collection
-        var freshRules = []
+        let freshRules = []
         ds.provider.load(null, (err, response) => {
           if (err) {
             console.log('Error loading data in Router Rewrite module')
@@ -87,9 +89,9 @@ Router.prototype.loadRewrites = function (options, done) {
           // }
 
           if (response.results) {
-            var idx = 0
+            let idx = 0
 
-            _.each(response.results, function (rule) {
+            response.results.forEach(rule => {
               freshRules.push(
                 rule.rule +
                   ' ' +
@@ -99,7 +101,9 @@ Router.prototype.loadRewrites = function (options, done) {
                   rule.redirectType +
                   ',L]'
               )
+
               idx++
+
               if (idx === response.results.length) {
                 self.rules = freshRules
                 log.info('Loaded ' + idx + ' rewrites')
@@ -120,8 +124,8 @@ Router.prototype.loadRewrites = function (options, done) {
       refreshRewrites(done)
     })
   } else if (self.rewritesFile) {
-    var rules = []
-    var stream = fs.createReadStream(self.rewritesFile, { encoding: 'utf8' })
+    let rules = []
+    const stream = fs.createReadStream(self.rewritesFile, { encoding: 'utf8' })
 
     stream.pipe(es.split('\n')).pipe(
       es.mapSync(function (data) {
@@ -159,13 +163,13 @@ Router.prototype.constrain = function (route, constraint) {
     this.constraints[route] = this.handlers[constraint]
     debug('added route constraint function "%s" for %s', constraint, route)
   } else {
-    var error =
+    const error =
       "Route constraint '" +
       constraint +
       "' not found. Is it defined in '" +
       this.options.routesPath +
       "/constraints.js'?"
-    var err = new Error(error)
+    let err = new Error(error)
     err.name = 'Router'
     log.error({ module: 'router' }, error)
     throw err
@@ -179,9 +183,9 @@ Router.prototype.validate = function (route, options, req, res) {
   return new Promise((resolve, reject) => {
     // test the supplied url against each matched route.
     // for example: does "/test/2" match "/test/:page"?
-    var pathname = url.parse(req.url, true).pathname
-    var regex = pathToRegexp(route.path)
-    var match = regex.exec(pathname)
+    const pathname = url.parse(req.url, true).pathname
+    const regex = pathToRegexp(route.path)
+    const match = regex.exec(pathname)
 
     // don't subject 404 and 5xx to validation
     if (/(404|5[0-9]{2})/.test(res.statusCode)) {
@@ -197,22 +201,22 @@ Router.prototype.validate = function (route, options, req, res) {
     // i.e. anything that starts with ":" -> "/news/:title"
     this.injectRequestParams(match, regex.keys, req)
 
-    var paramsPromises = []
+    let paramsPromises = []
 
-    _.each(route.params, param => {
+    if (!route.params || route.params.length === 0) {
+      return resolve('')
+    }
+
+    route.params.forEach(param => {
       paramsPromises.push(
         new Promise((resolve, reject) => {
-          if (_.isEmpty(route.params)) {
-            return resolve('')
-          }
-
           if (param.preload && param.preload.source) {
-            var data = Preload().get(param.preload.source)
-            var matches = _.filter(data, record => {
+            const data = Preload().get(param.preload.source)
+            const matches = data.filter(record => {
               return record[param.preload.field] === req.params[param.param]
             })
 
-            if (!_.isEmpty(matches)) {
+            if (matches.length > 0) {
               return resolve('')
             } else {
               return reject(
@@ -225,10 +229,10 @@ Router.prototype.validate = function (route, options, req, res) {
                   '"'
               )
             }
-          } else if (param.in && _.isArray(param.in)) {
+          } else if (param.in && Array.isArray(param.in)) {
             if (
               req.params[param.param] &&
-              _.contains(param.in, req.params[param.param])
+              param.in.includes(req.params[param.param])
             ) {
               return resolve('')
             } else {
@@ -292,7 +296,7 @@ Router.prototype.injectRequestParams = function (matchedRoute, keys, req) {
   matchedRoute.forEach((property, index) => {
     // get the dynamic route key that is
     // at the same index as we are in the loop
-    var keyOpts = keys[index] || {}
+    const keyOpts = keys[index] || {}
 
     // NOTE: the value for the key is found one slot ahead of the current index, because the first property
     // was the full matched string e.g. /test/2 and the values for the keys appear next
@@ -392,7 +396,7 @@ module.exports = function (server, options) {
           throw err
         }
 
-        _.extend(ds.schema.datasource.filter, { rule: req.url })
+        ds.schema.datasource.filter = Object.assign({}, { rule: req.url })
 
         ds.provider.processRequest(ds.page.name, req)
 
@@ -405,8 +409,8 @@ module.exports = function (server, options) {
           }
 
           if (data) {
-            // var results = JSON.parse(data.toString())
-            var results = data
+            // results = JSON.parse(data.toString())
+            const results = data
 
             if (
               results &&
@@ -414,8 +418,8 @@ module.exports = function (server, options) {
               results.results.length > 0 &&
               results.results[0].rule === req.url
             ) {
-              var rule = results.results[0]
-              var location
+              const rule = results.results[0]
+              let location
               if (/:\/\//.test(rule.replacement)) {
                 location = req.url.replace(rule.rule, rule.replacement)
               } else {
@@ -426,15 +430,20 @@ module.exports = function (server, options) {
                   req.url.replace(rule.rule, rule.replacement)
               }
 
-              var headers = {
+              let headers = {
                 Location: location
               }
 
-              _.each(config.get('headers.cacheControl'), (value, key) => {
-                if (rule.redirectType.toString() === key && value !== '') {
-                  headers['Cache-Control'] = value
-                }
-              })
+              let cacheHeaders = config.get('headers.cacheControl')
+              if (Object.keys(cacheHeaders).length > 0) {
+                Object.keys(cacheHeaders).forEach(key => {
+                  const value = cacheHeaders[key]
+
+                  if (rule.redirectType.toString() === key && value !== '') {
+                    headers['Cache-Control'] = value
+                  }
+                })
+              }
 
               res.writeHead(rule.redirectType, headers)
               res.end()
@@ -452,12 +461,12 @@ module.exports = function (server, options) {
     server.app.use(function configurableRewrites (req, res, next) {
       debug('processing configurable rewrites %s', req.url)
 
-      var redirect = false
-      var location = req.url
-      var parsed = url.parse(location, true)
-      var pathname = parsed.pathname
-      var rewritesConfig = config.get('rewrites')
-      var protocol = config.get('server.protocol') || 'http'
+      let redirect = false
+      let location = req.url
+      const parsed = url.parse(location, true)
+      let pathname = parsed.pathname
+      const rewritesConfig = config.get('rewrites')
+      const protocol = config.get('server.protocol') || 'http'
 
       // force a URL to lowercase
       if (rewritesConfig.forceLowerCase) {
@@ -469,9 +478,9 @@ module.exports = function (server, options) {
       }
 
       // stripIndexPages
-      if (!_.isEmpty(rewritesConfig.stripIndexPages)) {
-        var files = rewritesConfig.stripIndexPages
-        var re = new RegExp(files.join('|'), 'gi')
+      if (rewritesConfig.stripIndexPages.length > 0) {
+        const files = rewritesConfig.stripIndexPages
+        const re = new RegExp(files.join('|'), 'gi')
 
         if (location.match(re)) {
           location = location.replace(re, '')

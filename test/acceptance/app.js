@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var nock = require("nock")
 var path = require("path")
 var request = require("supertest")
@@ -30,7 +29,9 @@ describe("Application", function() {
       .times(5)
       .reply(200, { accessToken: "xx" })
 
-    var scope1 = nock(apiHost).get("/").reply(200)
+    var scope1 = nock(apiHost)
+      .get("/")
+      .reply(200)
 
     var configUpdate = {
       server: {
@@ -135,7 +136,10 @@ describe("Application", function() {
 
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
-            client.get("/api/status").expect(405).end(done)
+            client
+              .get("/api/status")
+              .expect(405)
+              .end(done)
           })
         })
       })
@@ -158,7 +162,11 @@ describe("Application", function() {
 
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
-            client.post("/api/status").send({}).expect(401).end(done)
+            client
+              .post("/api/status")
+              .send({})
+              .expect(401)
+              .end(done)
           })
         })
       })

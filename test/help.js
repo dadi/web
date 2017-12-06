@@ -1,14 +1,11 @@
-var _ = require("underscore")
 var assert = require("assert")
 var fs = require("fs")
-var http = require("http")
 var nock = require("nock")
 var path = require("path")
 var uuid = require("uuid")
 
 var api = require(__dirname + "/../dadi/lib/api")
 var Controller = require(__dirname + "/../dadi/lib/controller")
-var Datasource = require(__dirname + "/../dadi/lib/datasource")
 var Page = require(__dirname + "/../dadi/lib/page")
 var Server = require(__dirname + "/../dadi/lib")
 
@@ -35,7 +32,7 @@ var TestHelper = function() {
   this.originalConfigString = fs
     .readFileSync(config.configPath() + ".sample")
     .toString()
-  //console.log(this)
+  // console.log(this)
   config.loadFile(path.resolve(config.configPath()))
 }
 
@@ -87,14 +84,14 @@ TestHelper.prototype.enableApiConfig = function() {
 TestHelper.prototype.getConfig = function() {
   return new Promise((resolve, reject) => {
     var originalConfig = JSON.parse(this.originalConfigString)
-    return resolve(_.extend({}, originalConfig))
+    return resolve(Object.assign({}, originalConfig))
   })
 }
 
 TestHelper.prototype.updateConfig = function(configBlock) {
   return new Promise((resolve, reject) => {
     var originalConfig = JSON.parse(this.originalConfigString)
-    var newConfig = _.extend(originalConfig, configBlock)
+    var newConfig = Object.assign(originalConfig, configBlock)
 
     fs.writeFileSync(config.configPath(), JSON.stringify(newConfig, null, 2))
     config.loadFile(path.resolve(config.configPath()))
@@ -114,7 +111,7 @@ TestHelper.prototype.resetConfig = function() {
 
 TestHelper.prototype.extractCookieValue = function(res, cookieName) {
   var cookies = res.headers["set-cookie"]
-  var cookie = cookies.find(function(cookie) {
+  var cookie = cookies.find(cookie => {
     return cookie.startsWith(cookieName + "=")
   })
   var data = cookie.split(";")[0]
@@ -127,6 +124,9 @@ TestHelper.prototype.extractCookieValue = function(res, cookieName) {
  */
 TestHelper.prototype.shouldSetCookie = function(name) {
   return function(res) {
+    console.log("***")
+    console.log("headers:", res.headers)
+    console.log("***")
     var header = cookie(res)
     assert.ok(header, "should have a cookie header")
     assert.equal(header.split("=")[0], name, "should set cookie " + name)
@@ -196,7 +196,7 @@ TestHelper.prototype.newPage = function(
 
 TestHelper.prototype.startServer = function(pages) {
   return new Promise((resolve, reject) => {
-    if (pages !== null && !_.isArray(pages)) {
+    if (pages !== null && !Array.isArray(pages)) {
       pages = [pages]
     }
 

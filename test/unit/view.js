@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var dust = require("dustjs-linkedin")
 var dustHelpers = require("dustjs-helpers")
 var fs = require("fs")

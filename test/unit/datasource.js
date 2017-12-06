@@ -354,6 +354,48 @@ describe("Datasource", function(done) {
     })
   })
 
+  it("should attach specified `endpointEvent` to datasource", function(done) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    var p = page(name, schema)
+    var dsName = "car-makes"
+    var dsSchema = TestHelper.getSchemaFromFile(
+      TestHelper.getPathOptions().datasourcePath,
+      dsName
+    )
+    dsSchema.datasource.endpointEvent = "testEndpointEvent"
+
+    sinon
+      .stub(Datasource.Datasource.prototype, "loadDatasource")
+      .yields(null, dsSchema)
+
+    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function(
+      err,
+      ds
+    ) {
+      Datasource.Datasource.prototype.loadDatasource.restore()
+      ds.endpointEvent.should.exist
+      ;(typeof ds.endpointEvent).should.eql("object")
+      ds.endpointEvent.name.should.eql("testEndpointEvent")
+      done()
+    })
+  })
+
+  it("should attach null `endpointEvent` when not specified", function(done) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    var p = page(name, schema)
+    var dsName = "car-makes"
+
+    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function(
+      err,
+      ds
+    ) {
+      ;(ds.endpointEvent === null).should.eql(true)
+      done()
+    })
+  })
+
   it("should attach specified `filterEvent` to datasource", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
@@ -741,9 +783,60 @@ describe("Datasource", function(done) {
       var params = { make: "ford", edition: 2 }
       var req = { params: params, url: "/1.0/makes/ford/2" }
 
-      new Datasource(p, dsName, options).init(function(err, ds) {
+      new Datasource(p, dsName, options).init((err, ds) => {
         Datasource.Datasource.prototype.loadDatasource.restore()
         ds.processRequest(dsName, req)
+        ds.provider.endpoint.should.eql(
+          'http://127.0.0.1:3000/1.0/makes/ford/2?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+        )
+        done()
+      })
+    })
+
+    it("should get requestParams specified in config to populate placeholders in the endpoint", function(
+      done
+    ) {
+      var name = "test"
+      var schema = TestHelper.getPageSchema()
+      var p = page(name, schema)
+      var dsName = "car-makes"
+      var options = TestHelper.getPathOptions()
+      var dsSchema = TestHelper.getSchemaFromFile(
+        options.datasourcePath,
+        dsName
+      )
+
+      // modify the endpoint to give it a placeholder
+      dsSchema.datasource.source.endpoint = "1.0/makes/{name}/{edition}"
+
+      sinon
+        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .yields(null, dsSchema)
+
+      // set a config value
+      config.set("global.vehicles", { make: "ford", edition: 2 })
+
+      // add source
+      dsSchema.datasource.requestParams[0].type = "String"
+      dsSchema.datasource.requestParams[0].source = "config"
+      dsSchema.datasource.requestParams[0].param = "global.vehicles.make"
+      dsSchema.datasource.requestParams[0].target = "endpoint"
+
+      dsSchema.datasource.requestParams.push({
+        type: "Number",
+        source: "config",
+        param: "global.vehicles.edition",
+        field: "edition",
+        target: "endpoint"
+      })
+
+      var params = { make: "xxx", edition: 0 } // these should not be used
+      var req = { params: params, url: "/1.0/makes/ford/2" }
+
+      new Datasource(p, dsName, options).init((err, ds) => {
+        Datasource.Datasource.prototype.loadDatasource.restore()
+        ds.processRequest(dsName, req)
+        config.set("global.vehicles", {})
         ds.provider.endpoint.should.eql(
           'http://127.0.0.1:3000/1.0/makes/ford/2?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
         )
@@ -909,15 +1002,17 @@ describe("Datasource", function(done) {
       ) {
         ds1.processRequest("car-makes", req)
 
-        new Datasource(p, "car-models", TestHelper.getPathOptions()).init(
-          function(err, ds2) {
-            ds2.processRequest("car-models", req)
-            ds2.provider.endpoint.should.eql(
-              'http://127.0.0.1:3000/1.0/cars/models?count=20&page=3&filter={"name":"i3"}&fields={"name":1,"_id":0}&sort={"name":1}'
-            )
-            done()
-          }
-        )
+        new Datasource(
+          p,
+          "car-models",
+          TestHelper.getPathOptions()
+        ).init(function(err, ds2) {
+          ds2.processRequest("car-models", req)
+          ds2.provider.endpoint.should.eql(
+            'http://127.0.0.1:3000/1.0/cars/models?count=20&page=3&filter={"name":"i3"}&fields={"name":1,"_id":0}&sort={"name":1}'
+          )
+          done()
+        })
       })
     })
 

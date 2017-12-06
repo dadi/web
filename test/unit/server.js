@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var path = require("path")
 var should = require("should")
 var sinon = require("sinon")

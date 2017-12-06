@@ -1,4 +1,4 @@
-var _ = require("underscore")
+var clone = require("clone")
 var exec = require("child_process").exec
 var fs = require("fs")
 var path = require("path")
@@ -213,7 +213,7 @@ describe("Datasource Cache", function(done) {
       var p = page(name, schema)
       var dsName = "car-makes"
       var options = TestHelper.getPathOptions()
-      var dsSchema = _.clone(
+      var dsSchema = clone(
         TestHelper.getSchemaFromFile(options.datasourcePath, dsName)
       )
 

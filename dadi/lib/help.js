@@ -3,21 +3,19 @@
 /**
  * @module Help
  */
-var _ = require('underscore')
-var crypto = require('crypto')
-var debug = require('debug')('web:timer')
-var fs = require('fs')
-var http = require('http')
-var https = require('https')
-var path = require('path')
-var perfy = require('perfy')
+const crypto = require('crypto')
+const debug = require('debug')('web:timer')
+const fs = require('fs')
+const getValue = require('get-value')
+const http = require('http')
+const https = require('https')
+const path = require('path')
+const perfy = require('perfy')
 
-var version = require('../../package.json').version
-var config = require(path.join(__dirname, '/../../config.js'))
-var Passport = require('@dadi/passport')
-var errorView = require(path.join(__dirname, '/view/errors'))
-
-var self = this
+const version = require('../../package.json').version
+const config = require(path.join(__dirname, '/../../config.js'))
+const Passport = require('@dadi/passport')
+const errorView = require(path.join(__dirname, '/view/errors'))
 
 module.exports.getVersion = function () {
   if (config.get('debug')) return version
@@ -50,7 +48,8 @@ module.exports.timer = {
   getStats: function getStats () {
     if (!this.isDebugEnabled()) return
     var stats = []
-    _.each(perfy.names(), function (key) {
+
+    perfy.names().forEach(key => {
       if (perfy.result(key)) {
         stats.push({ key: key, value: perfy.result(key).summary })
       }
@@ -115,15 +114,13 @@ module.exports.validateRequestCredentials = function (req, res) {
     res.statusCode = 401
     res.end()
     return false
-  }
-
-  if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
+  } else if (clientId !== authConfig.clientId || secret !== authConfig.secret) {
     res.statusCode = 401
     res.end()
     return false
+  } else {
+    return true
   }
-
-  return true
 }
 
 /**
@@ -199,21 +196,22 @@ module.exports.clearCache = function (req, Cache, callback) {
     var endpoint = Cache.getEndpointMatchingRequest(endpointRequest)
 
     if (endpoint && endpoint.page && endpoint.page.datasources) {
-      _.each(endpoint.page.datasources, datasource => {
+      endpoint.page.datasources.forEach(datasource => {
         var cachePrefix = crypto
           .createHash('sha1')
           .update(datasource)
           .digest('hex')
 
-        datasourceCachePaths = _.extend(
+        datasourceCachePaths = Object.assign(
+          {},
           datasourceCachePaths,
-          _.filter(files, file => {
+          files.filter(file => {
             return file.indexOf(cachePrefix) > -1
           })
         )
 
-        datasourceCachePaths = _.map(datasourceCachePaths, file => {
-          return file
+        datasourceCachePaths = Object.keys(datasourceCachePaths).map(key => {
+          return datasourceCachePaths[key]
         })
       })
     }
@@ -227,11 +225,14 @@ module.exports.clearCache = function (req, Cache, callback) {
         return callback(null)
       }
 
-      _.each(datasourceCachePaths, (dsFile, idx) => {
+      let idx = 0
+      datasourceCachePaths.forEach(dsFile => {
         Cache.cache.flush(dsFile).then(() => {
           if (idx === datasourceCachePaths.length - 1) {
             return callback(null)
           }
+
+          idx++
         })
       })
     })
@@ -241,28 +242,8 @@ module.exports.clearCache = function (req, Cache, callback) {
 }
 
 /**
- * Creates a URL/filename friendly version (slug) of any object that implements `toString()`
- * @param {Object} input - object to be slugified
+ * Uses @dadi/passport to get a token to access a DADI API
  */
-module.exports.slugify = function (input) {
-  return require('underscore.string').slugify(input.toString())
-}
-
-/**
- * Generates a filename for a token wallet file
- * @param {String} host - Issuer host
- * @param {Number} port - Issuer port
- * @param {String} clientId - Client ID
- */
-module.exports.generateTokenWalletFilename = function (host, port, clientId) {
-  return (
-    'token.' +
-    self.slugify(host + port) +
-    '.' +
-    self.slugify(clientId) +
-    '.json'
-  )
-}
 
 module.exports.getToken = function () {
   return Passport({
@@ -279,12 +260,12 @@ module.exports.getToken = function () {
     walletOptions: {
       path:
         config.get('paths.tokenWallets') +
-        '/' +
-        this.generateTokenWalletFilename(
-          config.get('api.host'),
-          config.get('api.port'),
-          config.get('auth.clientId')
-        )
+        '/token.' +
+        config.get('api.host') +
+        config.get('api.port') +
+        '.' +
+        config.get('auth.clientId') +
+        '.json'
     }
   })
 }
@@ -309,28 +290,74 @@ module.exports.canCompress = function (reqHeaders) {
   return compressType
 }
 
-// creates a new function in the underscore.js namespace
-// allowing us to pluck multiple properties - used to return only the
-// fields we require from an array of objects
-_.mixin({
-  selectFields: function () {
-    var args = _.rest(arguments, 1)[0]
-    return _.map(arguments[0], function (item) {
-      var obj = {}
-      _.each(args.split(','), function (arg) {
-        if (arg.indexOf('.') > 0) {
-          // handle nested fields, e.g. "attributes.title"
-          var parts = arg.split('.')
-          obj[parts[0]] = obj[parts[0]] || {}
-          obj[parts[0]][parts[1]] = item[parts[0]][parts[1]]
-        } else {
-          obj[arg] = item[arg]
-        }
+/**
+ * Return a copy of the specified object filtered to only have
+ * values for the keys in the specified array
+ *
+ * @param {Object} item - x
+ * @param {Array} properties - xx
+ * @returns {Object} the object containing only the properties specfied
+ */
+module.exports.pick = function (item, properties) {
+  let obj = {}
+
+  properties.forEach(property => {
+    if (property.indexOf('.') > 0) {
+      // handle nested fields, e.g. "attributes.title"
+      const parts = property.split('.')
+      obj[parts[0]] = obj[parts[0]] || {}
+      obj[parts[0]][parts[1]] = item[parts[0]][parts[1]]
+    } else {
+      obj[property] = item[property]
+    }
+  })
+
+  return obj
+}
+
+/**
+ * Looks through each value in "data", returning an array of all the
+ * items that contain all of the key-value pairs listed in "properties"
+ *
+ * @param {Array} data - the array to filter
+ * @param {Object} properties - the key-value pairs to match against
+ * @returns {Array} the filtered array
+ */
+module.exports.where = function (data, properties) {
+  if (properties && Object.keys(properties).length > 0) {
+    data = data.filter(item => {
+      let match = Object.keys(properties).every(key => {
+        return item.hasOwnProperty(key) && item[key] === properties[key]
       })
-      return obj
+
+      if (match) {
+        return item
+      }
     })
   }
-})
+
+  return data
+}
+
+/**
+ * http://jsfiddle.net/dFNva/1/
+ *
+ * @param {string} field - description
+ * @param {Function} primer - description
+ */
+module.exports.sortBy = function (field, primer) {
+  let key = function (x) {
+    let value = getValue(x, field)
+    return primer ? primer(value) : value
+  }
+
+  return function (a, b) {
+    let A = key(a)
+    let B = key(b)
+
+    return A < B ? -1 : A > B ? 1 : 0
+  }
+}
 
 /**
   * Lists all files in a directory.

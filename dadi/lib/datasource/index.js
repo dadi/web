@@ -1,20 +1,21 @@
 /**
  * @module Datasource
  */
-var _ = require('underscore')
-var fs = require('fs')
-var path = require('path')
-var url = require('url')
+const fs = require('fs')
+const getValue = require('get-value')
+const path = require('path')
+const url = require('url')
 
-var Event = require(path.join(__dirname, '/../event'))
-var log = require('@dadi/logger')
-var providers = require(path.join(__dirname, '/../providers'))
+const config = require(path.join(__dirname, '/../../../config.js'))
+const Event = require(path.join(__dirname, '/../event'))
+const log = require('@dadi/logger')
+const providers = require(path.join(__dirname, '/../providers'))
 
 /**
  * Represents a Datasource.
  * @constructor
  */
-var Datasource = function (page, datasource, options) {
+const Datasource = function (page, datasource, options) {
   this.page = page
   this.name = datasource
   this.options = options || {}
@@ -32,7 +33,7 @@ Datasource.prototype.init = function (callback) {
     this.schema = schema
     this.source = schema.datasource.source
     this.schema.datasource.filter = this.schema.datasource.filter || {}
-    this.originalFilter = _.clone(this.schema.datasource.filter)
+    this.originalFilter = Object.assign({}, this.schema.datasource.filter)
 
     if (!this.source.type) {
       this.source.type = 'dadiapi'
@@ -48,9 +49,18 @@ Datasource.prototype.init = function (callback) {
     }
 
     this.provider = new providers[this.source.type]()
+    this.endpointEvent = null
     this.filterEvent = null
     this.requestParams = schema.datasource.requestParams || []
     this.chained = schema.datasource.chained || null
+
+    if (schema.datasource.endpointEvent) {
+      this.endpointEvent = new Event(
+        null,
+        schema.datasource.endpointEvent,
+        this.options
+      )
+    }
 
     if (schema.datasource.filterEvent) {
       this.filterEvent = new Event(
@@ -80,11 +90,12 @@ Datasource.prototype.init = function (callback) {
  *  @public
  */
 Datasource.prototype.loadDatasource = function (done) {
-  var filepath = (this.options.datasourcePath || '') + '/' + this.name + '.json'
-  var schema
+  const filepath =
+    (this.options.datasourcePath || '') + '/' + this.name + '.json'
+  let schema
 
   try {
-    var body = fs.readFileSync(filepath, { encoding: 'utf-8' })
+    const body = fs.readFileSync(filepath, { encoding: 'utf-8' })
 
     schema = JSON.parse(body)
     done(null, schema)
@@ -109,7 +120,7 @@ Datasource.prototype.loadDatasource = function (done) {
  * @param  {IncomingMessage} req - the original HTTP request
  */
 Datasource.prototype.processRequest = function (datasource, req) {
-  let datasourceParams = _.clone(this.schema.datasource)
+  let datasourceParams = Object.assign({}, this.schema.datasource)
   datasourceParams.filter = this.originalFilter || {}
 
   let query = JSON.parse(JSON.stringify(url.parse(req.url, true).query))
@@ -142,13 +153,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
     })
 
     // handle pagination param
-    // if (this.schema.datasource.paginate) {
-    //   this.schema.datasource.page = query.page ||
-    //     (requestParamsPage && req.params[requestParamsPage]) ||
-    //     req.params.page ||
-    //     1
-    // }
-
     if (datasourceParams.paginate) {
       datasourceParams.page =
         query.page ||
@@ -167,7 +171,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
     // URI encode each querystring value
     Object.keys(query).forEach(key => {
       if (key === 'filter') {
-        datasourceParams.filter = _.extend(
+        datasourceParams.filter = Object.assign(
           datasourceParams.filter,
           JSON.parse(query[key])
         )
@@ -177,14 +181,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
   const paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gim
-
-  // this.schema.datasource.filter = JSON.parse(JSON.stringify(this.schema.datasource.filter).replace(paramRule, function (match, p1, p2, p3, p4, offset, string) {
-  //   if (req.params[p3]) {
-  //     return req.params[p3]
-  //   } else {
-  //     return match
-  //   }
-  // }))
 
   datasourceParams.filter = JSON.parse(
     JSON.stringify(datasourceParams.filter).replace(paramRule, function (
@@ -211,31 +207,25 @@ Datasource.prototype.processRequest = function (datasource, req) {
   let endpoint = this.schema.datasource.source.endpoint
 
   // NB don't replace filter properties that already exist
-  this.requestParams.forEach(obj => {
-    // if the requestParam has no 'target' property, it's destined for the filter
-    if (!obj.target) obj.target = 'filter'
+  this.requestParams.forEach(param => {
+    let value = this.getParameterValue(req, param)
 
-    let paramValue =
-      req.params.hasOwnProperty(obj.param) && req.params[obj.param]
+    // if the requestParam has no 'target' property,
+    // it's destined for the filter
+    param.target = param.target || 'filter'
 
-    if (obj.field && paramValue) {
-      paramValue =
-        obj.type === 'Number'
-          ? Number(paramValue)
-          : encodeURIComponent(paramValue)
-
-      if (obj.target === 'filter') {
-        datasourceParams.filter[obj.field] = paramValue
-      } else if (obj.target === 'endpoint') {
-        const placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
-
-        endpoint = endpoint.replace(placeholderRegex, paramValue)
+    if (param.field && value) {
+      if (param.target === 'endpoint') {
+        const placeholderRegex = new RegExp('{' + param.field + '}', 'ig')
+        endpoint = endpoint.replace(placeholderRegex, value)
+      } else {
+        datasourceParams.filter[param.field] = value
       }
     } else {
-      if (obj.target === 'filter') {
+      if (param.target === 'filter') {
         // param not found in request, remove it from the datasource filter
-        if (datasourceParams.filter[obj.field]) {
-          delete datasourceParams.filter[obj.field]
+        if (datasourceParams.filter[param.field]) {
+          delete datasourceParams.filter[param.field]
         }
       }
     }
@@ -243,9 +233,9 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   this.source.modifiedEndpoint = endpoint
 
+  // extend the existing filter with the result of a filterEvent
   if (this.schema.datasource.filterEventResult) {
-    // this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult)
-    datasourceParams.filter = _.extend(
+    datasourceParams.filter = Object.assign(
       datasourceParams.filter,
       this.schema.datasource.filterEventResult
     )
@@ -256,13 +246,44 @@ Datasource.prototype.processRequest = function (datasource, req) {
       this.provider.hasOwnProperty('processSchemaParams') &&
       this.provider.processSchemaParams === false
     ) {
-      // return this.provider.processRequest(req)
       this.provider.processRequest(req)
     } else {
-      // return this.provider.processRequest(datasourceParams)
       this.provider.processRequest(datasourceParams)
     }
   }
+}
+
+/**
+ * Gets the value of the specified parameter from the specified source
+ *
+ * @param {Object} req - the original HTTP request
+ * @param {Object} parameter - the parameter object, contains source, target, parameter key, i.e. the path to the required property
+ * @returns {String|Number} the value associated with the specified parameter, or null
+ */
+Datasource.prototype.getParameterValue = function (req, parameter) {
+  let value = null
+
+  switch (parameter.source) {
+    case 'config':
+      value = config.get(parameter.param)
+      break
+    case 'session':
+      value = req.session && getValue(req.session, parameter.param)
+      break
+    default:
+      value = req.params && req.params[parameter.param]
+      break
+  }
+
+  if (value) {
+    if (parameter.type === 'Number') {
+      value = Number(value)
+    } else {
+      value = encodeURIComponent(value)
+    }
+  }
+
+  return value
 }
 
 module.exports = function (page, datasource, options, callback) {

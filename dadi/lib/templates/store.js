@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const convict = require('convict')
 const debug = require('debug')('web:templates')
 const fs = require('fs')
@@ -145,12 +144,7 @@ TemplateStore.prototype.loadDirectory = function (directory, options) {
   return helpers.readDirectory(directory, options).then(files => {
     return this.loadFiles(
       files,
-      _.extend(
-        {
-          basePath: directory
-        },
-        options
-      )
+      Object.assign({}, { basePath: directory }, options)
     )
   })
 }
