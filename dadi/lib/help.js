@@ -260,9 +260,14 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: `${config.get('paths.tokenWallets')}/token.${config.get(
-        'api.host'
-      )}${config.get('api.port')}.${config.get('auth.clientId')}.json`
+      path:
+        config.get('paths.tokenWallets') +
+        '/token.' +
+        config.get('api.host') +
+        config.get('api.port') +
+        '.' +
+        config.get('auth.clientId') +
+        '.json'
     }
   })
 }
