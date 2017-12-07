@@ -1,3 +1,1 @@
-{
-  ;params | js | s
-}
+{params|js|s}
