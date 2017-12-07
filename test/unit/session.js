@@ -245,11 +245,11 @@ describe("Session", function(done) {
                 var data = JSON.parse(JSON.stringify(res.body))
 
                 TestHelper.resetConfig().then(() => {
-                  should.exist(data["car_makes"])
-                  should.exist(data["car_makes"].make)
-                  should.exist(data["car_makes"].edition)
-                  data["car_makes"].make.should.eql("mazda")
-                  data["car_makes"].edition.should.eql(3)
+                  should.exist(data)
+                  should.exist(data.make)
+                  should.exist(data.edition)
+                  data.make.should.eql("mazda")
+                  data.edition.should.eql(3)
                   ;(data.session_id !== null).should.eql(true)
                   done()
                 })

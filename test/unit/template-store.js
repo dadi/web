@@ -306,9 +306,9 @@ describe("Template store", function(done) {
     it("should load template engines", done => {
       templateStore.loadEngines([require("web-es6-templates")])
 
-      templateStore.engines.js.should.be.Object
-      templateStore.engines.js.factory.should.be.Function
-      templateStore.engines.js.started.should.eql(false)
+      templateStore.engines.es6.should.be.Object
+      templateStore.engines.es6.factory.should.be.Function
+      templateStore.engines.es6.started.should.eql(false)
 
       done()
     })
