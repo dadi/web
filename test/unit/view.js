@@ -83,11 +83,6 @@ describe("View", function(done) {
     var schema = TestHelper.getPageSchema()
     schema.template = "test.js"
 
-    // load a template
-    var template = "{#names}{title} {name}{~n}{/names}"
-    var compiled = webEngine.compile(template, "test", true)
-    webEngine.loadSource(compiled)
-
     var req = { url: "/test" }
     var p = page(name, schema)
     var v = view(req.url, p, true)
@@ -110,23 +105,18 @@ describe("View", function(done) {
     var schema = TestHelper.getPageSchema()
     schema.template = "test.js"
 
-    // load a template
-    var template = "{#names}{title} {name}{~n}{/names}"
-    var compiled = webEngine.compile(template, "test", true)
-    webEngine.loadSource(compiled)
-
     var req = { url: "/test" }
     var p = page(name, schema)
     var v = view(req.url, p, false)
 
     var data = {
-      title: "Sir",
-      names: [{ name: "Moe" }, { name: "Larry" }, { name: "Curly" }]
+      names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]
     }
 
     v.setData(data)
     v.render(function(err, result) {
-      var expected = "Sir Moe\nSir Larry\nSir Curly\n"
+      if (err) return done(err)
+      var expected = "Sir Moe\nSir Larry\nSir Curly"
       result.should.eql(expected)
       done()
     })
@@ -136,20 +126,27 @@ describe("View", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     schema.template = "test.js"
-    schema.settings.postProcessors = ["replace-h1"]
+    schema.settings.postProcessors = ["replace-sir"]
 
     // load a template
-    var template = "<h1>This is testing postProcessors</h1>"
-    var expected = "<h2>This is testing postProcessors</h2>"
-
-    var compiled = webEngine.compile(template, "test", true)
-    webEngine.loadSource(compiled)
+    //var template = "<h1>This is testing postProcessors</h1>"
+    //var expected = "<h2>This is testing postProcessors</h2>"
+    //var compiled = webEngine.compile(template, "test", true)
+    //webEngine.register(template, "test")
 
     var req = { url: "/test" }
     var p = page(name, schema)
     var v = view(req.url, p, false)
 
+    var data = {
+      names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]
+    }
+
+    v.setData(data)
+
     v.render(function(err, result) {
+      if (err) return done(err)
+      var expected = "Madam Moe\nMadam Larry\nMadam Curly"
       result.should.eql(expected)
       done()
     })

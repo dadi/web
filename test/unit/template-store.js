@@ -316,8 +316,8 @@ describe("Template store", function(done) {
     it("should load engine config block onto global config", done => {
       templateStore.loadEngines([require("web-es6-templates")])
 
-      const engine = templateStore.engines.js
-      const engineConfig = config.get("engines.js")
+      const engine = templateStore.engines.es6
+      const engineConfig = config.get("engines.es6")
 
       engineConfig.should.be.Object
 
@@ -342,7 +342,7 @@ describe("Template store", function(done) {
           path: "/fake/path/fakeTemplate1.js"
         })
         .then(loadedTemplate => {
-          templateStore.engines.js.started.should.eql(true)
+          templateStore.engines.es6.started.should.eql(true)
 
           done()
         })
