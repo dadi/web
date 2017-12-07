@@ -30,7 +30,7 @@ describe("Datasource Cache", function(done) {
       TestHelper.disableApiConfig().then(() => {
         new Datasource(
           page("test", TestHelper.getPageSchema()),
-          "car-makes",
+          "car_makes",
           TestHelper.getPathOptions()
         ).init(function(err, datasource) {
           ds = datasource
@@ -66,9 +66,7 @@ describe("Datasource Cache", function(done) {
       done()
     })
 
-    it("should not cache if the app's config settings don't allow", function(
-      done
-    ) {
+    it("should not cache if the app's config settings don't allow", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -106,9 +104,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should use main cache settings if the datasource doesn't provide any directory options", function(
-      done
-    ) {
+    it("should use main cache settings if the datasource doesn't provide any directory options", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -134,9 +130,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should use .json for extension if the datasource doesn't provide any options", function(
-      done
-    ) {
+    it("should use .json for extension if the datasource doesn't provide any options", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -160,9 +154,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should use datasource name as first part of cache filename", function(
-      done
-    ) {
+    it("should use datasource name as first part of cache filename", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -194,9 +186,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should use different cache filenames when datasource endpoints use placeholders", function(
-      done
-    ) {
+    it("should use different cache filenames when datasource endpoints use placeholders", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -211,7 +201,7 @@ describe("Datasource Cache", function(done) {
       var name = "test"
       var schema = TestHelper.getPageSchema()
       var p = page(name, schema)
-      var dsName = "car-makes"
+      var dsName = "car_makes"
       var options = TestHelper.getPathOptions()
       var dsSchema = clone(
         TestHelper.getSchemaFromFile(options.datasourcePath, dsName)
@@ -297,9 +287,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should merge datasource directory options with main config options", function(
-      done
-    ) {
+    it("should merge datasource directory options with main config options", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -336,9 +324,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should merge datasource redis options with main config options", function(
-      done
-    ) {
+    it("should merge datasource redis options with main config options", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -373,9 +359,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should use datasource redis options over main config options", function(
-      done
-    ) {
+    it("should use datasource redis options over main config options", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -412,9 +396,7 @@ describe("Datasource Cache", function(done) {
   })
 
   describe("cachingEnabled", function(done) {
-    it("should not cache if the datasources config settings don't allow", function(
-      done
-    ) {
+    it("should not cache if the datasources config settings don't allow", function(done) {
       var cacheConfig = {
         caching: {
           directory: {
@@ -446,9 +428,7 @@ describe("Datasource Cache", function(done) {
       })
     })
 
-    it("should not cache if the datasource endpoint has ?cache=false", function(
-      done
-    ) {
+    it("should not cache if the datasource endpoint has ?cache=false", function(done) {
       var cacheConfig = {
         caching: {
           directory: {

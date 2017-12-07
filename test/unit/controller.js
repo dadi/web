@@ -45,7 +45,7 @@ describe("Controller", function(done) {
           .end((err, res) => {
             if (err) return done(err)
 
-            res.text.should.eql("Page Not Found Template")
+            res.text.should.eql("<p>Page Not Found Template</p>")
 
             done()
           })
@@ -81,9 +81,7 @@ describe("Controller", function(done) {
     })
   })
 
-  it("should return a 200 if a page's requiredDatasources are populated", function(
-    done
-  ) {
+  it("should return a 200 if a page's requiredDatasources are populated", function(done) {
     TestHelper.disableApiConfig().then(() => {
       TestHelper.updateConfig({
         allowJsonView: true
@@ -173,9 +171,7 @@ describe("Controller", function(done) {
       })
     })
 
-    it("should return a 403 if a POST request is missing a csrf token", function(
-      done
-    ) {
+    it("should return a 403 if a POST request is missing a csrf token", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({
           security: {
@@ -211,9 +207,7 @@ describe("Controller", function(done) {
       })
     })
 
-    it("should return 403 when POST request contains an invalid csrfToken", function(
-      done
-    ) {
+    it("should return 403 when POST request contains an invalid csrfToken", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({
           security: {
@@ -252,9 +246,7 @@ describe("Controller", function(done) {
       })
     })
 
-    it("should return 200 when POST request contains a valid csrfToken", function(
-      done
-    ) {
+    it("should return 200 when POST request contains a valid csrfToken", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({
           security: {
@@ -342,9 +334,7 @@ describe("Controller", function(done) {
       })
     })
 
-    it("should run events sequentially, even if they are asynchronous", function(
-      done
-    ) {
+    it("should run events sequentially, even if they are asynchronous", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
           var pages = TestHelper.setUpPages()
@@ -486,12 +476,10 @@ describe("Controller", function(done) {
     TestHelper.clearCache()
     this.timeout(5000)
 
-    it("should inject datasource output params to a chained datasource filter", function(
-      done
-    ) {
+    it("should inject datasource output params to a chained datasource filter", function(done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["global", "car-makes"]
+        pages[0].datasources = ["global", "car_makes"]
 
         var host =
           "http://" + config.get("api.host") + ":" + config.get("api.port")
@@ -543,13 +531,11 @@ describe("Controller", function(done) {
       })
     })
 
-    it("should inject datasource output params to a chained datasource endpoint", function(
-      done
-    ) {
+    it("should inject datasource output params to a chained datasource endpoint", function(done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
 
-        pages[0].datasources = ["global", "car-makes-chained-endpoint"]
+        pages[0].datasources = ["global", "car_makes_chained_endpoint"]
 
         var host =
           "http://" + config.get("api.host") + ":" + config.get("api.port")
@@ -580,8 +566,8 @@ describe("Controller", function(done) {
               .get(pages[0].routes[0].path + "?json=true")
               .end((err, res) => {
                 if (err) return done(err)
-                should.exist(res.body["car-makes-chained-endpoint"])
-                res.body["car-makes-chained-endpoint"].ok.should.eql(true)
+                should.exist(res.body["car_makes_chained_endpoint"])
+                res.body["car_makes_chained_endpoint"].ok.should.eql(true)
 
                 done()
               })
@@ -594,12 +580,10 @@ describe("Controller", function(done) {
   })
 
   describe("Datasource Filter Events", function(done) {
-    it("should run an attached `filterEvent` before datasource loads", function(
-      done
-    ) {
+    it("should run an attached `filterEvent` before datasource loads", function(done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["car-makes-unchained", "filters"]
+        pages[0].datasources = ["car_makes_unchained", "filters"]
 
         var host =
           "http://" + config.get("api.host") + ":" + config.get("api.port")
@@ -632,7 +616,7 @@ describe("Controller", function(done) {
               if (err) return done(err)
               providerSpy.restore()
 
-              res.body["car-makes-unchained"].should.exist
+              res.body["car_makes_unchained"].should.exist
               res.body["filters"].should.exist
 
               var filterDatasource = providerSpy.thisValues[1]
@@ -663,9 +647,7 @@ describe("Controller", function(done) {
   })
 
   describe("Datasource Endpoint Events", function(done) {
-    it("should run an attached `endpointEvent` before datasource loads", function(
-      done
-    ) {
+    it("should run an attached `endpointEvent` before datasource loads", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "rss"

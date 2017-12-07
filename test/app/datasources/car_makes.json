@@ -1,6 +1,6 @@
 {
 	"datasource": {
-		"key": "car-makes",
+		"key": "car_makes",
 		"name": "Makes datasource",
 		"source": {
 			"type": "dadiapi",

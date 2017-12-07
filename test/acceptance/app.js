@@ -98,7 +98,7 @@ describe("Application", function() {
       // create page 1
       var page1 = page("page1", TestHelper.getPageSchema())
       page1.datasources = ["categories"]
-      page1.template = "test.dust"
+      page1.template = "test.js"
       page1.routes[0].path = "/categories/:category"
       page1.events = []
 
@@ -109,9 +109,9 @@ describe("Application", function() {
         TestHelper.startServer(pages).then(() => {
           client.get("/categories/Crime").end((err, res) => {
             if (err) return done(err)
-            res.text.should.eql("<h3>Crime</h3>")
             should.exist(res.headers["x-cache"])
             res.headers["x-cache"].should.eql("MISS")
+            res.text.should.eql("<h3>Crime</h3>")
 
             done()
           })
@@ -146,9 +146,7 @@ describe("Application", function() {
     })
 
     describe("POST", function() {
-      it("should return 401 error if clientId or secret aren't specified", function(
-        done
-      ) {
+      it("should return 401 error if clientId or secret aren't specified", function(done) {
         var clientHost =
           "http://" +
           config.get("server.host") +
@@ -171,9 +169,7 @@ describe("Application", function() {
         })
       })
 
-      it("should return 401 error if clientId or secret don't match config", function(
-        done
-      ) {
+      it("should return 401 error if clientId or secret don't match config", function(done) {
         var clientHost =
           "http://" +
           config.get("server.host") +
@@ -212,7 +208,7 @@ describe("Application", function() {
       // create page 1
       var page1 = page("page1", TestHelper.getPageSchema())
       page1.datasources = []
-      page1.template = "test.dust"
+      page1.template = "test.js"
       page1.routes[0].path = "/test"
       page1.events = ["test_500_error"]
 

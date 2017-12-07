@@ -108,9 +108,9 @@ module.exports.isApiAvailable = function (done) {
  * @param {res} res - the HTTP response
  */
 module.exports.validateRequestCredentials = function (req, res) {
-  var authConfig = config.get('auth')
-  var clientId = req.body.clientId
-  var secret = req.body.secret
+  const authConfig = config.get('auth')
+  const clientId = req.body.clientId
+  const secret = req.body.secret
 
   if (!clientId || !secret) {
     res.statusCode = 401

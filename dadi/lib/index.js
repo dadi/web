@@ -407,6 +407,8 @@ Server.prototype.loadApi = function (options, reload, callback) {
             message: 'Cache cleared successfully'
           })
         })
+      } else {
+        console.log('invalid')
       }
     })
 

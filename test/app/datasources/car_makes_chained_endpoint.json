@@ -1,6 +1,6 @@
 {
   "datasource": {
-    "key": "car-makes-chained-endpoint",
+    "key": "car_makes_chained_endpoint",
     "name": "Makes datasource",
     "source": {
       "type": "remote",
