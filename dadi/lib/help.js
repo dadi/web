@@ -89,7 +89,9 @@ module.exports.isApiAvailable = function (done) {
   }
 
   request.on('error', function (e) {
-    e.message = `Error connecting to API: ${e.message}. Check the 'api' settings in config file 'config/config.${config.get(
+    e.message = `Error connecting to API: ${
+      e.message
+    }. Check the 'api' settings in config file 'config/config.${config.get(
       'env'
     )}.json`
     e.remoteIp = options.hostname
@@ -106,9 +108,9 @@ module.exports.isApiAvailable = function (done) {
  * @param {res} res - the HTTP response
  */
 module.exports.validateRequestCredentials = function (req, res) {
-  var authConfig = config.get('auth')
-  var clientId = req.body.clientId
-  var secret = req.body.secret
+  const authConfig = config.get('auth')
+  const clientId = req.body.clientId
+  const secret = req.body.secret
 
   if (!clientId || !secret) {
     res.statusCode = 401
@@ -360,16 +362,16 @@ module.exports.sortBy = function (field, primer) {
 }
 
 /**
-  * Lists all files in a directory.
-  *
-  * @param {string} directory Full directory path.
-  * @param {object} options
-  * @param {array} options.extensions A list of extensions to filter files by.
-  * @param {boolean} options.failIfNotFound Whether to throw an error if the directory doesn't exist.
-  * @param {boolean} options.recursive Whether to read sub-directories.
-  *
-  * @return {array} A list of full paths to the discovered files.
-  */
+ * Lists all files in a directory.
+ *
+ * @param {string} directory Full directory path.
+ * @param {object} options
+ * @param {array} options.extensions A list of extensions to filter files by.
+ * @param {boolean} options.failIfNotFound Whether to throw an error if the directory doesn't exist.
+ * @param {boolean} options.recursive Whether to read sub-directories.
+ *
+ * @return {array} A list of full paths to the discovered files.
+ */
 function readDirectory (directory, options) {
   options = options || {}
 
@@ -421,15 +423,15 @@ function readDirectory (directory, options) {
 module.exports.readDirectory = readDirectory
 
 /**
-  * Executes a callback for each file on a list of paths.
-  *
-  * @param {array} files The file paths.
-  * @param {object} options
-  * @param {function} options.callback The callback to be executed.
-  * @param {array} options.extensions A list of extensions to filter files by.
-  *
-  * @return {array} A Promise that resolves after all callbacks have executed.
-  */
+ * Executes a callback for each file on a list of paths.
+ *
+ * @param {array} files The file paths.
+ * @param {object} options
+ * @param {function} options.callback The callback to be executed.
+ * @param {array} options.extensions A list of extensions to filter files by.
+ *
+ * @return {array} A Promise that resolves after all callbacks have executed.
+ */
 function readFiles (files, options) {
   options = options || {}
 

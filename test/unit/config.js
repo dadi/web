@@ -75,7 +75,7 @@ describe("Config", function(done) {
         var pages = TestHelper.newPage(
           "test",
           "/session",
-          "session.dust",
+          "session.js",
           [],
           ["session"]
         )

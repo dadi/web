@@ -6,7 +6,7 @@
   "main": "main.js",
   "scripts": {
     "start": "node ./start.js",
-    "test": "standard 'lib/**/*.js' | snazzy && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha test",
+    "test": "standard 'lib/**/*.js' | snazzy && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha './test/{!(app),*}/*.js'",
     "posttest": "node ./scripts/coverage.js",
     "snyk-protect": "snyk protect",
     "prepublish": "npm run snyk-protect",
@@ -21,7 +21,7 @@
     ]
   },
   "lint-staged": {
-    "*.js": [
+    "dadi/**/*.js": [
       "prettier --no-semi --write",
       "standard --fix",
       "git add"
@@ -30,13 +30,11 @@
   "dependencies": {
     "@dadi/boot": "^1.0.0",
     "@dadi/cache": "~1.5.3",
-    "@dadi/dustjs-helpers": "~1.6.0",
     "@dadi/format-error": "~1.6.0",
     "@dadi/logger": "~1.2.0",
     "@dadi/metadata": "~1.0.0",
     "@dadi/passport": "~1.5.0",
     "@dadi/status": "~1.0.0",
-    "@dadi/web-dustjs": "~1.1.1",
     "@purest/providers": "~1.0.0",
     "async": "~1.5.2",
     "body-parser": "~1.18.2",
@@ -53,8 +51,6 @@
     "csurf": "~1.9.0",
     "debug": "~2.6.9",
     "deepmerge": "~2.0.1",
-    "dustjs-helpers": "~1.7.3",
-    "dustjs-linkedin": "~2.7.5",
     "etag": "~1.8.1",
     "event-stream": "~3.3.4",
     "express-session": "~1.15.6",
@@ -68,7 +64,6 @@
     "marked": "~0.3.6",
     "mime-types": "~2.1.17",
     "mkdirp": "~0.5.1",
-    "moment": "~2.19.1",
     "mongodb": "~2.2.0",
     "path-to-regexp": "~1.7.0",
     "perfy": "~1.1.2",
@@ -83,6 +78,7 @@
     "snyk": "^1.47.0",
     "through": "~2.3.8",
     "toobusy-js": "~0.5.1",
+    "web-es6-templates": "~1.1.2",
     "wildcard": "~1.1.2"
   },
   "devDependencies": {

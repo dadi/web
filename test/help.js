@@ -10,7 +10,7 @@ var Page = require(__dirname + "/../dadi/lib/page")
 var Server = require(__dirname + "/../dadi/lib")
 
 var serverOptions = {
-  engines: [require("@dadi/web-dustjs")]
+  engines: [require("web-es6-templates")]
 }
 
 var Server = require(__dirname + "/../dadi/lib")(serverOptions)
@@ -148,7 +148,7 @@ TestHelper.prototype.shouldNotHaveHeader = function(header) {
 TestHelper.prototype.setUpPages = function() {
   // create page 1
   var page1 = Page("page1", this.getPageSchema())
-  page1.template = "test.dust"
+  page1.template = "test.js"
   page1.routes[0].path = "/test"
   page1.datasources = []
   page1.events = []
@@ -163,7 +163,7 @@ TestHelper.prototype.setUpPages = function() {
 TestHelper.prototype.setUp404Page = function() {
   var page = Page("404", this.getPageSchema())
   page.name = "404"
-  page.template = "404.dust"
+  page.template = "404.js"
   page.routes[0].path = "/404"
   page.datasources = []
   page.events = []
@@ -259,8 +259,8 @@ TestHelper.prototype.getPageSchema = function() {
       }
     ],
     contentType: "text/html",
-    template: "car-reviews.dust",
-    datasources: ["car-makes"],
+    template: "car-reviews.js",
+    datasources: ["car_makes"],
     events: ["car-reviews"]
   }
 }

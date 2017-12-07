@@ -1,3 +1,3 @@
 require('./main')({
-  engines: [require('@dadi/web-dustjs')]
+  engines: [require('web-es6-templates')]
 })

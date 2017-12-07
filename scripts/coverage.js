@@ -40,7 +40,7 @@ coberturaBadger(opts, function parsingResults(err, badgeStatus) {
       b,
       c
     ) {
-      return a + badgeUrl.replace("%", "%25") + "?style=flat-square" + c
+      return a + badgeUrl + "?style=flat-square" + c
     })
 
     console.log("Existing coverage:", existingCoverage + "%")

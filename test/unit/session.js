@@ -59,7 +59,7 @@ describe("Session", function(done) {
       var pages = TestHelper.newPage(
         "test",
         "/session",
-        "session.dust",
+        "session.js",
         [],
         ["session"]
       )
@@ -98,7 +98,7 @@ describe("Session", function(done) {
       var pages = TestHelper.newPage(
         "test",
         "/session",
-        "session.dust",
+        "session.js",
         [],
         ["session"]
       )
@@ -122,9 +122,7 @@ describe("Session", function(done) {
     })
   })
 
-  it("should get requestParams specified in session to populate placeholders in a datasource endpoint", function(
-    done
-  ) {
+  it("should get requestParams specified in session to populate placeholders in a datasource endpoint", function(done) {
     var sessionConfig = {
       sessions: {
         enabled: true,
@@ -142,12 +140,12 @@ describe("Session", function(done) {
       var pages = TestHelper.newPage(
         "test",
         "/session",
-        "session.dust",
-        ["car-makes"],
+        "session.js",
+        ["car_makes"],
         ["session"]
       )
 
-      var dsName = "car-makes"
+      var dsName = "car_makes"
       var options = TestHelper.getPathOptions()
       var dsSchema = TestHelper.getSchemaFromFile(
         options.datasourcePath,
@@ -247,11 +245,11 @@ describe("Session", function(done) {
                 var data = JSON.parse(JSON.stringify(res.body))
 
                 TestHelper.resetConfig().then(() => {
-                  should.exist(data["car-makes"])
-                  should.exist(data["car-makes"].make)
-                  should.exist(data["car-makes"].edition)
-                  data["car-makes"].make.should.eql("mazda")
-                  data["car-makes"].edition.should.eql(3)
+                  should.exist(data)
+                  should.exist(data.make)
+                  should.exist(data.edition)
+                  data.make.should.eql("mazda")
+                  data.edition.should.eql(3)
                   ;(data.session_id !== null).should.eql(true)
                   done()
                 })
@@ -261,9 +259,7 @@ describe("Session", function(done) {
     })
   })
 
-  it("should not set a session cookie if sessions are disabled", function(
-    done
-  ) {
+  it("should not set a session cookie if sessions are disabled", function(done) {
     var sessionConfig = {
       sessions: {
         enabled: false,
@@ -275,7 +271,7 @@ describe("Session", function(done) {
       var pages = TestHelper.newPage(
         "test",
         "/session",
-        "session.dust",
+        "session.js",
         [],
         ["session"]
       )
@@ -310,7 +306,8 @@ describe("Session", function(done) {
       }
 
       TestHelper.updateConfig(sessionConfig).then(() => {
-        ;(Server.getSessionStore(config.get("sessions"), "test") === null
+        ;(
+          Server.getSessionStore(config.get("sessions"), "test") === null
         ).should.eql(true)
         done()
       })
@@ -350,9 +347,7 @@ describe("Session", function(done) {
       })
     })
 
-    it("should throw error if an in-memory session store is used in production", function(
-      done
-    ) {
+    it("should throw error if an in-memory session store is used in production", function(done) {
       var sessionConfig = {
         sessions: {
           enabled: true,

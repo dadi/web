@@ -1,9 +1,9 @@
 {
   "datasource": {
-    "key": "car-makes-with-query",
+    "key": "car_makes_with_query_remote",
     "name": "Makes datasource",
     "source": {
-      "type": "dadiapi",
+      "type": "remote",
       "protocol": "http",
       "host": "127.0.0.1",
       "port": "3000",

@@ -454,45 +454,43 @@ Server.prototype.loadApi = function (options, reload, callback) {
   this.initMiddleware(options.middlewarePath, options)
 
   // Load routes
-  return this.updatePages(
-    options.pagePath,
-    options,
-    reload || false
-  ).then(() => {
-    this.addMonitor(options.datasourcePath, dsFile => {
-      this.updatePages(options.pagePath, options, true)
-    })
-
-    this.addMonitor(options.eventPath, eventFile => {
-      // Delete the existing cached events
-      Object.keys(require.cache).forEach(i => {
-        if (i.includes(options.eventPath)) delete require.cache[i]
+  return this.updatePages(options.pagePath, options, reload || false).then(
+    () => {
+      this.addMonitor(options.datasourcePath, dsFile => {
+        this.updatePages(options.pagePath, options, true)
       })
 
-      // Reload
-      this.updatePages(options.pagePath, options, true)
-    })
-
-    this.addMonitor(options.pagePath, pageFile => {
-      this.updatePages(options.pagePath, options, true)
-      this.compile(options)
-      templateStore.reInitialise()
-    })
-
-    this.addMonitor(options.routesPath, file => {
-      if (this.app.Router) {
-        this.app.Router.loadRewrites(options, () => {
-          this.app.Router.loadRewriteModule()
+      this.addMonitor(options.eventPath, eventFile => {
+        // Delete the existing cached events
+        Object.keys(require.cache).forEach(i => {
+          if (i.includes(options.eventPath)) delete require.cache[i]
         })
+
+        // Reload
+        this.updatePages(options.pagePath, options, true)
+      })
+
+      this.addMonitor(options.pagePath, pageFile => {
+        this.updatePages(options.pagePath, options, true)
+        this.compile(options)
+        templateStore.reInitialise()
+      })
+
+      this.addMonitor(options.routesPath, file => {
+        if (this.app.Router) {
+          this.app.Router.loadRewrites(options, () => {
+            this.app.Router.loadRewriteModule()
+          })
+        }
+      })
+
+      debug('load complete')
+
+      if (typeof callback === 'function') {
+        callback()
       }
-    })
-
-    debug('load complete')
-
-    if (typeof callback === 'function') {
-      callback()
     }
-  })
+  )
 }
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
@@ -665,8 +663,12 @@ Server.prototype.addComponent = function (options, reload) {
         debug('use %s', route.path)
         if (options.component[req.method.toLowerCase()]) {
           // a matching route found, validate it
-          return this.app.Router
-            .validate(route, options.component.options, req, res)
+          return this.app.Router.validate(
+            route,
+            options.component.options,
+            req,
+            res
+          )
             .then(() => {
               return options.component[req.method.toLowerCase()](req, res, next)
             })
@@ -926,9 +928,9 @@ function onListening (e) {
 
 function onError (err) {
   if (err.code === 'EADDRINUSE') {
-    let message = `Can't connect to local address, is something already listening on ${`${config.get(
-      'server.host'
-    )}:${config.get('server.port')}`.underline}?`
+    let message = `Can't connect to local address, is something already listening on ${
+      `${config.get('server.host')}:${config.get('server.port')}`.underline
+    }?`
     err.localIp = config.get('server.host')
     err.localPort = config.get('server.port')
     err.message = message
