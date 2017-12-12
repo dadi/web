@@ -66,7 +66,7 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
       data = data.slice(0, count)
     }
 
-    if (fields) {
+    if (fields && fields.length > 0) {
       if (Array.isArray(data)) {
         let i = 0
         data.forEach(document => {
