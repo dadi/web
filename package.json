@@ -64,7 +64,7 @@
     "marked": "~0.3.6",
     "mime-types": "~2.1.17",
     "mkdirp": "~0.5.1",
-    "mongodb": "~2.2.0",
+    "mongodb": "~3.0.0",
     "path-to-regexp": "~1.7.0",
     "perfy": "~1.1.2",
     "proxy-addr": "~1.1.5",
