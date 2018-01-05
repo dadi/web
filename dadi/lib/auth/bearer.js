@@ -14,11 +14,16 @@ BearerAuthStrategy.prototype.getType = function () {
   return 'bearer'
 }
 
-BearerAuthStrategy.prototype.getToken = function (authStrategy, done) {
+BearerAuthStrategy.prototype.getToken = function (
+  authStrategy,
+  forceTokenRefresh,
+  done
+) {
   var strategy = authStrategy.config
   var self = this
 
   Passport({
+    forceTokenRefresh: forceTokenRefresh,
     issuer: {
       uri: (strategy.protocol || 'http') + '://' + strategy.host,
       port: strategy.port,

@@ -386,15 +386,19 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
   if (this.authStrategy) {
     // This could eventually become a switch statement that handles different auth types
     if (this.authStrategy.getType() === 'bearer') {
-      this.authStrategy.getToken(this.authStrategy, (err, bearerToken) => {
-        if (err) {
-          return done(err)
+      this.authStrategy.getToken(
+        this.authStrategy,
+        false,
+        (err, bearerToken) => {
+          if (err) {
+            return done(err)
+          }
+
+          headers['Authorization'] = 'Bearer ' + bearerToken
+
+          return done(null, { headers: headers })
         }
-
-        headers['Authorization'] = 'Bearer ' + bearerToken
-
-        return done(null, { headers: headers })
-      })
+      )
     }
   } else {
     return done(null, { headers: headers })
