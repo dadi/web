@@ -98,17 +98,45 @@ Controller.prototype.attachEvents = function (done) {
 }
 
 /**
+ * Checks the supplied data object for results for each of the current page's "requiredDatasources"
  *
+ * @param {Object} data - the data loaded by the datasources and events
+ * @returns {Boolean} - false if at least one required datasource has no results, otherwise true
  */
 Controller.prototype.requiredDataPresent = function (data) {
+  if (!data) return false
   if (this.page.requiredDatasources.length === 0) return true
 
   return this.page.requiredDatasources.every(datasource => {
-    return (
-      data.hasOwnProperty(datasource) &&
-      data[datasource].hasOwnProperty('results') &&
-      data[datasource].results.length !== 0
-    )
+    // data doesn't exist
+    if (!data[datasource]) return false
+
+    const content = data[datasource]
+
+    if (Array.isArray(content)) {
+      // it's an empty array
+      if (content.length === 0) {
+        return false
+      }
+    } else {
+      // it's an object with no properties
+      if (Object.keys(content).length === 0) {
+        return false
+      }
+    }
+
+    // it's an empty results array (likely from DADI API)
+    if (
+      content.results &&
+      Array.isArray(content.results) &&
+      content.results.length === 0
+    ) {
+      return false
+    }
+
+    // it's an object with properties, an array with at least one item, or
+    // an object containing a "results" array with at least one item
+    return true
   })
 }
 
@@ -187,14 +215,14 @@ Controller.prototype.process = function process (req, res, next) {
     : Send.html(res, req, next, statusCode, this.page.contentType)
 
   this.loadData(req, res, data, (err, data, dsResponse) => {
-    // return 404 if requiredDatasources contain no data
-    if (!this.requiredDataPresent(data)) {
-      return next()
-    }
-
     if (err) {
       if (err.statusCode && err.statusCode === 404) return next()
       return done(err)
+    }
+
+    // return 404 if requiredDatasources contain no data
+    if (!this.requiredDataPresent(data)) {
+      return next()
     }
 
     // If we received a response back from the datasource, and
@@ -369,10 +397,10 @@ Controller.prototype.loadData = function (req, res, data, done) {
           processSearchParameters(ds.schema.datasource.key, ds, req)
 
           /**
-         * Call the data provider's load method to obtain data
-         * for this datasource
-         * @returns err, {Object} result, {Object} dsResponse
-         */
+           * Call the data provider's load method to obtain data
+           * for this datasource
+           * @returns err, {Object} result, {Object} dsResponse
+           */
           // ds.provider.load(requestUrl, function (err, result, dsResponse) {
           ds.provider.load(req.url, (err, result, dsResponse) => {
             if (err) return done(err)
