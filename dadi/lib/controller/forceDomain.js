@@ -1,11 +1,15 @@
-var _ = require('underscore')
-var url = require('url')
+const url = require('url')
 
-var forceDomain = function (options) {
+const forceDomain = function (options) {
   return function forceDomain (req, res, next) {
-    var protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
-    var newRoute = domainRedirect(protocol, req.headers.host, req.url, options)
-    var statusCode
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
+    const newRoute = domainRedirect(
+      protocol,
+      req.headers.host,
+      req.url,
+      options
+    )
+    let statusCode
 
     if (!newRoute) {
       return next()
@@ -28,21 +32,21 @@ var forceDomain = function (options) {
  * @param {string} url - the URL of the current request
  * @param {Object} options - the options passed in from the configuration block rewrites.forceDomain
  */
-var domainRedirect = function (protocol, hostHeader, url, options) {
-  var rewrittenRoute
-  var route
+const domainRedirect = function (protocol, hostHeader, url, options) {
+  let rewrittenRoute
+  let route
 
-  options = _.extend(options, {
+  options = Object.assign({}, options, {
     protocol: 'http',
     type: 'permanent'
   })
 
-  var hostHeaderParts = (hostHeader || '').split(':')
-  var hostname = hostHeaderParts[0] || ''
-  var port = hostHeaderParts[1] - 0 || 80
+  const hostHeaderParts = (hostHeader || '').split(':')
+  const hostname = hostHeaderParts[0] || ''
+  const port = hostHeaderParts[1] - 0 || 80
 
   if (options.hostname.split(':').length > 1) {
-    var hostnameParts = options.hostname.split(':')
+    const hostnameParts = options.hostname.split(':')
     options.hostname = hostnameParts[0]
     options.port = hostnameParts[1]
   }
@@ -70,8 +74,9 @@ var domainRedirect = function (protocol, hostHeader, url, options) {
 /**
  *
  */
-var domainRewrite = function (route, options) {
-  options = _.extend(
+const domainRewrite = function (route, options) {
+  options = Object.assign(
+    {},
     {
       protocol: undefined,
       hostname: undefined
@@ -79,7 +84,7 @@ var domainRewrite = function (route, options) {
     options
   )
 
-  var parsedRoute = url.parse(route)
+  let parsedRoute = url.parse(route)
   parsedRoute.host = undefined
 
   if (options.protocol) {

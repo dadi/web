@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var nock = require("nock")
 var path = require("path")
 var request = require("supertest")

@@ -23,23 +23,23 @@ beforeEach(done => {
     templateStore = new TemplateStore()
 
     directoryListing = [
-      path.resolve(config.get("paths.pages"), "page1.dust"),
-      path.resolve(config.get("paths.pages"), "page2.dust"),
-      path.resolve(config.get("paths.pages"), "sub-dir-1/page3.dust"),
-      path.resolve(config.get("paths.pages"), "partials/partial1.dust")
+      path.resolve(config.get("paths.pages"), "page1.js"),
+      path.resolve(config.get("paths.pages"), "page2.js"),
+      path.resolve(config.get("paths.pages"), "sub-dir-1/page3.js"),
+      path.resolve(config.get("paths.pages"), "partials/partial1.js")
     ]
 
     pages = [
       {
-        engine: "dust",
+        engine: "es6",
         file: directoryListing[0]
       },
       {
-        engine: "dust",
+        engine: "es6",
         file: directoryListing[1]
       },
       {
-        engine: "dust",
+        engine: "es6",
         file: directoryListing[2]
       }
     ]
@@ -67,7 +67,7 @@ describe("Template store", function(done) {
     it("throw if engine is missing a valid extensions array", done => {
       const fakeFactory = {
         metadata: {
-          extensions: ".dust"
+          extensions: ".js"
         }
       }
 
@@ -87,12 +87,12 @@ describe("Template store", function(done) {
     it("throw if engine is missing a valid handle property", done => {
       const fakeFactory1 = {
         metadata: {
-          extensions: [".dust"]
+          extensions: [".js"]
         }
       }
       const fakeFactory2 = {
         metadata: {
-          extensions: [".dust"],
+          extensions: [".js"],
           handle: 12345
         }
       }
@@ -124,8 +124,8 @@ describe("Template store", function(done) {
     it("throw if engine is missing a `getCore()` method", done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".dust"],
-          handle: "dust"
+          extensions: [".js"],
+          handle: "es6"
         }
       }
       const fakeEngine1 = {}
@@ -160,8 +160,8 @@ describe("Template store", function(done) {
     it("throw if engine is missing a `getInfo()` method", done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".dust"],
-          handle: "dust"
+          extensions: [".js"],
+          handle: "es6"
         }
       }
       const fakeEngine1 = {}
@@ -196,8 +196,8 @@ describe("Template store", function(done) {
     it("throw if engine is missing a `initialise()` method", done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".dust"],
-          handle: "dust"
+          extensions: [".js"],
+          handle: "es6"
         }
       }
       const fakeEngine1 = {}
@@ -232,8 +232,8 @@ describe("Template store", function(done) {
     it("throw if engine is missing a `register()` method", done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".dust"],
-          handle: "dust"
+          extensions: [".js"],
+          handle: "es6"
         }
       }
       const fakeEngine1 = {}
@@ -268,8 +268,8 @@ describe("Template store", function(done) {
     it("throw if engine is missing a `render()` method", done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".dust"],
-          handle: "dust"
+          extensions: [".js"],
+          handle: "es6"
         }
       }
       const fakeEngine1 = {}
@@ -304,20 +304,20 @@ describe("Template store", function(done) {
 
   describe("loadEngine", () => {
     it("should load template engines", done => {
-      templateStore.loadEngines([require("@dadi/web-dustjs")])
+      templateStore.loadEngines([require("web-es6-templates")])
 
-      templateStore.engines.dust.should.be.Object
-      templateStore.engines.dust.factory.should.be.Function
-      templateStore.engines.dust.started.should.eql(false)
+      templateStore.engines.es6.should.be.Object
+      templateStore.engines.es6.factory.should.be.Function
+      templateStore.engines.es6.started.should.eql(false)
 
       done()
     })
 
     it("should load engine config block onto global config", done => {
-      templateStore.loadEngines([require("@dadi/web-dustjs")])
+      templateStore.loadEngines([require("web-es6-templates")])
 
-      const engine = templateStore.engines.dust
-      const engineConfig = config.get("engines.dust")
+      const engine = templateStore.engines.es6
+      const engineConfig = config.get("engines.es6")
 
       engineConfig.should.be.Object
 
@@ -331,25 +331,25 @@ describe("Template store", function(done) {
 
   describe("loadTemplate", () => {
     it("should start an engine when a template that requires it is loaded", done => {
-      templateStore.loadEngines([require("@dadi/web-dustjs")])
+      templateStore.loadEngines([require("web-es6-templates")])
 
       templateStore
         .loadTemplate({
           data: "",
-          extension: ".dust",
+          extension: ".js",
           name: "fakeTemplate1",
           namespace: undefined,
-          path: "/fake/path/fakeTemplate1.dust"
+          path: "/fake/path/fakeTemplate1.js"
         })
         .then(loadedTemplate => {
-          templateStore.engines.dust.started.should.eql(true)
+          templateStore.engines.es6.started.should.eql(true)
 
           done()
         })
     })
 
     it("should throw an error when loading a template with an extension that is not supported", () => {
-      templateStore.loadEngines([require("@dadi/web-dustjs")])
+      templateStore.loadEngines([require("web-es6-templates")])
 
       should.throws(() => {
         templateStore.loadTemplate({
@@ -379,16 +379,16 @@ describe("Template store", function(done) {
       }
 
       fakeEngine.metadata = {
-        extensions: [".dust"],
-        handle: "dust"
+        extensions: [".js"],
+        handle: "es6"
       }
 
       var templateData = {
         data: "This is the content of the template",
-        extension: ".dust",
+        extension: ".js",
         name: "fakeTemplate1",
         namespace: undefined,
-        path: "/fake/path/fakeTemplate1.dust"
+        path: "/fake/path/fakeTemplate1.js"
       }
 
       templateStore.loadEngines([fakeEngine])
@@ -423,7 +423,7 @@ describe("Template store", function(done) {
         isFile: () => true
       }))
 
-      templateStore.loadEngines([require("@dadi/web-dustjs")])
+      templateStore.loadEngines([require("web-es6-templates")])
 
       templateStore.loadPages(pages, {}).then(response => {
         pages.forEach((page, index) => {

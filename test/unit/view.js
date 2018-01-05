@@ -1,6 +1,4 @@
-var _ = require("underscore")
-var dust = require("dustjs-linkedin")
-var dustHelpers = require("dustjs-helpers")
+var webEngine = require("web-es6-templates")
 var fs = require("fs")
 var path = require("path")
 var pathToRegexp = require("path-to-regexp")
@@ -54,7 +52,7 @@ describe("View", function(done) {
   it("should accept data via `setData()`", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
-    schema.template = "test.dust"
+    schema.template = "test.js"
 
     var req = { url: "/test" }
     var p = page(name, schema)
@@ -83,12 +81,7 @@ describe("View", function(done) {
   it("should return json when calling `render()`", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
-    schema.template = "test.dust"
-
-    // load a template
-    var template = "{#names}{title} {name}{~n}{/names}"
-    var compiled = dust.compile(template, "test", true)
-    dust.loadSource(compiled)
+    schema.template = "test.js"
 
     var req = { url: "/test" }
     var p = page(name, schema)
@@ -110,50 +103,50 @@ describe("View", function(done) {
   it("should return html when calling `render()`", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
-    schema.template = "test.dust"
-
-    // load a template
-    var template = "{#names}{title} {name}{~n}{/names}"
-    var compiled = dust.compile(template, "test", true)
-    dust.loadSource(compiled)
+    schema.template = "test.js"
 
     var req = { url: "/test" }
     var p = page(name, schema)
     var v = view(req.url, p, false)
 
     var data = {
-      title: "Sir",
-      names: [{ name: "Moe" }, { name: "Larry" }, { name: "Curly" }]
+      names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]
     }
 
     v.setData(data)
     v.render(function(err, result) {
-      var expected = "Sir Moe\nSir Larry\nSir Curly\n"
+      if (err) return done(err)
+      var expected = "Sir Moe\nSir Larry\nSir Curly"
       result.should.eql(expected)
       done()
     })
   })
 
-  it("should postProcess the HTML output of a page when set at page level", function(
-    done
-  ) {
+  it("should postProcess the HTML output of a page when set at page level", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
-    schema.template = "test.dust"
-    schema.settings.postProcessors = ["replace-h1"]
+    schema.template = "test.js"
+    schema.settings.postProcessors = ["replace-sir"]
 
     // load a template
-    var template = "<h1>This is testing postProcessors</h1>"
-    var expected = "<h2>This is testing postProcessors</h2>"
-
-    var compiled = dust.compile(template, "test", true)
-    dust.loadSource(compiled)
+    //var template = "<h1>This is testing postProcessors</h1>"
+    //var expected = "<h2>This is testing postProcessors</h2>"
+    //var compiled = webEngine.compile(template, "test", true)
+    //webEngine.register(template, "test")
 
     var req = { url: "/test" }
     var p = page(name, schema)
     var v = view(req.url, p, false)
 
+    var data = {
+      names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]
+    }
+
+    v.setData(data)
+
     v.render(function(err, result) {
+      if (err) return done(err)
+      var expected = "Madam Moe\nMadam Larry\nMadam Curly"
       result.should.eql(expected)
       done()
     })

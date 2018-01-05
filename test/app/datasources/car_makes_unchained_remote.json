@@ -1,9 +1,9 @@
 {
   "datasource": {
-    "key": "car-makes-unchained",
+    "key": "car_makes_unchained_remote",
     "name": "Makes datasource",
     "source": {
-      "type": "dadiapi",
+      "type": "remote",
       "protocol": "http",
       "host": "127.0.0.1",
       "port": "3000",

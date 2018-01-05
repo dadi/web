@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var nock = require("nock")
 var path = require("path")
 var request = require("supertest")
@@ -30,7 +29,9 @@ describe("Application", function() {
       .times(5)
       .reply(200, { accessToken: "xx" })
 
-    var scope1 = nock(apiHost).get("/").reply(200)
+    var scope1 = nock(apiHost)
+      .get("/")
+      .reply(200)
 
     var configUpdate = {
       server: {
@@ -97,7 +98,7 @@ describe("Application", function() {
       // create page 1
       var page1 = page("page1", TestHelper.getPageSchema())
       page1.datasources = ["categories"]
-      page1.template = "test.dust"
+      page1.template = "test.js"
       page1.routes[0].path = "/categories/:category"
       page1.events = []
 
@@ -108,9 +109,9 @@ describe("Application", function() {
         TestHelper.startServer(pages).then(() => {
           client.get("/categories/Crime").end((err, res) => {
             if (err) return done(err)
-            res.text.should.eql("<h3>Crime</h3>")
             should.exist(res.headers["x-cache"])
             res.headers["x-cache"].should.eql("MISS")
+            res.text.should.eql("<h3>Crime</h3>")
 
             done()
           })
@@ -135,16 +136,17 @@ describe("Application", function() {
 
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
-            client.get("/api/status").expect(405).end(done)
+            client
+              .get("/api/status")
+              .expect(405)
+              .end(done)
           })
         })
       })
     })
 
     describe("POST", function() {
-      it("should return 401 error if clientId or secret aren't specified", function(
-        done
-      ) {
+      it("should return 401 error if clientId or secret aren't specified", function(done) {
         var clientHost =
           "http://" +
           config.get("server.host") +
@@ -158,14 +160,16 @@ describe("Application", function() {
 
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
-            client.post("/api/status").send({}).expect(401).end(done)
+            client
+              .post("/api/status")
+              .send({})
+              .expect(401)
+              .end(done)
           })
         })
       })
 
-      it("should return 401 error if clientId or secret don't match config", function(
-        done
-      ) {
+      it("should return 401 error if clientId or secret don't match config", function(done) {
         var clientHost =
           "http://" +
           config.get("server.host") +
@@ -204,7 +208,7 @@ describe("Application", function() {
       // create page 1
       var page1 = page("page1", TestHelper.getPageSchema())
       page1.datasources = []
-      page1.template = "test.dust"
+      page1.template = "test.js"
       page1.routes[0].path = "/test"
       page1.events = ["test_500_error"]
 

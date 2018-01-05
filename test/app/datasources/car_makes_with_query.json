@@ -1,13 +1,13 @@
 {
   "datasource": {
-    "key": "car-makes-unchained-remote",
+    "key": "car_makes_with_query",
     "name": "Makes datasource",
     "source": {
-      "type": "remote",
+      "type": "dadiapi",
       "protocol": "http",
       "host": "127.0.0.1",
       "port": "3000",
-      "endpoint": "1.0/cars/makes"
+      "endpoint": "1.0/cars/makes?param=value"
     },
     "caching": {
       "ttl": 300,
