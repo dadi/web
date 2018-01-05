@@ -33,7 +33,9 @@ Datasource.prototype.init = function (callback) {
     this.schema = schema
     this.source = schema.datasource.source
     this.schema.datasource.filter = this.schema.datasource.filter || {}
-    this.originalFilter = Object.assign({}, this.schema.datasource.filter)
+    this.originalFilter = Array.isArray(this.schema.datasource.filter)
+      ? Array.from(this.schema.datasource.filter)
+      : Object.assign({}, this.schema.datasource.filter)
 
     if (!this.source.type) {
       this.source.type = 'dadiapi'
