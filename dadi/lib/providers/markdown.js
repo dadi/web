@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const async = require('async')
 const formatError = require('@dadi/format-error')
 const fs = require('fs')
@@ -9,6 +8,8 @@ const marked = require('marked')
 const meta = require('@dadi/metadata')
 const recursive = require('recursive-readdir')
 const yaml = require('js-yaml')
+
+const help = require(path.join(__dirname, '../help'))
 
 const MarkdownProvider = function () {}
 
@@ -36,8 +37,14 @@ MarkdownProvider.prototype.initialise = function (datasource, schema) {
 MarkdownProvider.prototype.processSortParameter = function (obj) {
   let sort = {}
 
-  if (_.isObject(obj)) {
-    _.each(obj, (sortInteger, field) => {
+  if (
+    typeof obj !== 'undefined' &&
+    Object.keys(obj) &&
+    Object.keys(obj).length > 0
+  ) {
+    Object.keys(obj).forEach(field => {
+      const sortInteger = obj[field]
+
       if (sortInteger === -1 || sortInteger === 1) {
         sort[field] = sortInteger
       }
@@ -94,28 +101,31 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
 
           let metadata = []
 
-          if (search) {
-            posts = _.where(posts, search)
-          }
+          // apply search
+          posts = help.where(posts, search)
 
-          if (!_.isEmpty(filter)) {
-            posts = _.filter(posts, post => {
-              return _.findWhere([post.attributes], filter)
-            })
-          }
+          // apply filter
+          posts = posts.filter(post => {
+            if (help.where([post.attributes], filter).length > 0) {
+              return post
+            }
+          })
 
           // Sort posts by attributes field (with date support)
           if (sort && Object.keys(sort).length > 0) {
             Object.keys(sort).forEach(field => {
-              posts = _.sortBy(posts, post => {
-                const value = post.attributes[field]
-                const valueAsDate = new Date(value)
-                return valueAsDate.toString() !== 'Invalid Date'
-                  ? +valueAsDate
-                  : value
-              })
+              posts.sort(
+                help.sortBy(field, value => {
+                  if (field.toLowerCase().indexOf('date') > -1) {
+                    value = new Date(value)
+                  }
+
+                  return value
+                })
+              )
+
               if (sort[field] === -1) {
-                posts = posts.reverse()
+                posts.reverse()
               }
             })
           }
@@ -136,10 +146,16 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
             metadata = meta(options, parseInt(postCount))
           }
 
-          if (!_.isEmpty(fields)) {
-            posts = _.chain(posts)
-              .selectFields(fields.join(','))
-              .value()
+          if (fields && fields.length > 0) {
+            if (Array.isArray(posts)) {
+              let i = 0
+              posts.forEach(document => {
+                posts[i] = help.pick(posts[i], fields)
+                i++
+              })
+            } else {
+              posts = help.pick(posts, fields)
+            }
           }
 
           done(null, { results: posts, metadata: metadata || null })
@@ -186,7 +202,9 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
       .replace(path.normalize(this.schema.datasource.source.path), '')
       .replace(/^\/|\/$/g, '')
       .split('/')
-    attributes._path = _.isEmpty(attributes._path) ? null : attributes._path
+
+    attributes._path = attributes._path.filter(Boolean)
+    attributes._path = attributes._path.length === 0 ? null : attributes._path
 
     posts.push({
       attributes,

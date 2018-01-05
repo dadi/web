@@ -1,0 +1,1 @@
+${typeof car_makes !== 'undefined' ? JSON.stringify(car_makes) : ''}

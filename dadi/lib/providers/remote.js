@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const debug = require('debug')('web:provider:remote')
 const url = require('url')
 const http = require('http')
@@ -121,7 +120,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
     this.getHeaders((err, headers) => {
       if (err) return done(err)
 
-      this.options = _.extend(this.options, headers)
+      this.options = Object.assign({}, this.options, headers)
 
       this.makeRequest(requestUrl, done)
     })
@@ -132,7 +131,7 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
   debug(
     'GET datasource "%s" %o',
     this.datasource.schema.datasource.key,
-    _.omit(this.options, 'agent')
+    this.options
   )
 
   this.options.agent = this.keepAliveAgent(this.options.protocol)
@@ -155,7 +154,7 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
       }
 
       var options = url.parse(res.headers.location)
-      this.options = _.extend(this.options, options)
+      this.options = Object.assign({}, this.options, options)
 
       debug('following %s redirect to %s', res.statusCode, res.headers.location)
       this.makeRequest(requestUrl, done)

@@ -1,15 +1,14 @@
-const fs = require('fs')
-const path = require('path')
-const zlib = require('zlib')
-const brotli = require('iltorb')
-const mime = require('mime-types')
-const compressible = require('compressible')
-const etag = require('etag')
-const url = require('url')
-const _ = require('underscore')
-const crypto = require('crypto')
-const through = require('through')
 const async = require('async')
+const brotli = require('iltorb')
+const compressible = require('compressible')
+const crypto = require('crypto')
+const etag = require('etag')
+const fs = require('fs')
+const mime = require('mime-types')
+const path = require('path')
+const through = require('through')
+const url = require('url')
+const zlib = require('zlib')
 
 const Cache = require(path.join(__dirname, '/../cache'))
 const config = require(path.resolve(path.join(__dirname, '/../../../config')))
@@ -234,7 +233,7 @@ Public.prototype.deliver = function (arg) {
 module.exports = {
   middleware: function (publicPath, cache, hosts) {
     return (req, res, next) => {
-      if (_.isEmpty(hosts) || _.contains(hosts, req.headers.host)) {
+      if (!hosts || hosts.includes(req.headers.host)) {
         return new Public({
           req: req,
           res: res,

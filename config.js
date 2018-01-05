@@ -316,6 +316,11 @@ var conf = convict({
     format: Array,
     default: []
   },
+  globalPostProcessors: {
+    doc: 'Post-render processors to be run on every request.',
+    format: Array,
+    default: []
+  },
   global: {
     doc: '',
     format: Object,
@@ -327,6 +332,7 @@ var conf = convict({
     default: {
       datasources: path.join(installRoot, '/workspace/datasources'),
       events: path.join(installRoot, '/workspace/events'),
+      processors: path.join(installRoot, '/workspace/processors'),
       middleware: path.join(installRoot, '/workspace/middleware'),
       pages: path.join(installRoot, '/workspace/pages'),
       public: path.join(installRoot, '/workspace/public'),
@@ -527,7 +533,7 @@ conf.updateConfigDataForDomain = function (domain) {
     fs.stat(domainConfig, (err, stats) => {
       if (err && err.code === 'ENOENT') {
         // No domain-specific configuration file
-        return reject()
+        return reject(err)
       }
 
       // no error, file exists

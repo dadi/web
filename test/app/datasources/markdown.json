@@ -9,7 +9,7 @@
     "paginate": true,
     "count": 1,
     "sort": {
-      "date": 1
+      "attributes.date": 1
     },
     "requestParams": [
       {

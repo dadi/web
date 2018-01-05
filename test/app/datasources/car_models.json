@@ -1,6 +1,6 @@
 {
 	"datasource": {
-		"key": "car-models",
+		"key": "car_models",
 		"name": "Models datasource",
 		"source": {
 			"type": "dadiapi",

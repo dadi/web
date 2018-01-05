@@ -3,28 +3,29 @@
 /**
  * @module Controller
  */
-var _ = require('underscore')
-var async = require('async')
-var crypto = require('crypto')
-var debug = require('debug')('web:controller')
-var path = require('path')
-var url = require('url')
+const async = require('async')
+const clone = require('clone')
+const crypto = require('crypto')
+const debug = require('debug')('web:controller')
+const getValue = require('get-value')
+const path = require('path')
+const url = require('url')
 
-var config = require(path.join(__dirname, '/../../../config.js'))
-var help = require(path.join(__dirname, '/../help'))
-var log = require('@dadi/logger')
+const config = require(path.join(__dirname, '/../../../config.js'))
+const help = require(path.join(__dirname, '/../help'))
+const log = require('@dadi/logger')
 
-var Datasource = require(path.join(__dirname, '/../datasource'))
-var Event = require(path.join(__dirname, '/../event'))
-var Providers = require(path.join(__dirname, '/../providers'))
-var View = require(path.join(__dirname, '/../view'))
-var Send = require(path.join(__dirname, '/../view/send'))
-var Cache = require(path.join(__dirname, '/../cache'))
+const Datasource = require(path.join(__dirname, '/../datasource'))
+const Event = require(path.join(__dirname, '/../event'))
+const Providers = require(path.join(__dirname, '/../providers'))
+const View = require(path.join(__dirname, '/../view'))
+const Send = require(path.join(__dirname, '/../view/send'))
+const Cache = require(path.join(__dirname, '/../cache'))
 
 /**
  *
  */
-var Controller = function (page, options, meta, engine, cache) {
+const Controller = function (page, options, meta, engine, cache) {
   if (!page) throw new Error('Page instance required')
 
   Controller.numInstances = (Controller.numInstances || 0) + 1
@@ -57,7 +58,7 @@ var Controller = function (page, options, meta, engine, cache) {
 Controller.prototype.attachDatasources = function (done) {
   if (this.page.datasources.length === 0) return done(null)
 
-  var i = 0
+  let i = 0
 
   this.page.datasources.forEach(datasource => {
     new Datasource(this.page, datasource, this.options).init((err, ds) => {
@@ -76,20 +77,21 @@ Controller.prototype.attachDatasources = function (done) {
  *
  */
 Controller.prototype.attachEvents = function (done) {
+  let event
   // add global events first
   config.get('globalEvents').forEach(eventName => {
-    var e = new Event(this.page.name, eventName, this.options)
-    this.preloadEvents.push(e)
+    event = new Event(this.page.name, eventName, this.options)
+    this.preloadEvents.push(event)
   })
 
   this.page.preloadEvents.forEach(eventName => {
-    var e = new Event(this.page.name, eventName, this.options)
-    this.preloadEvents.push(e)
+    event = new Event(this.page.name, eventName, this.options)
+    this.preloadEvents.push(event)
   })
 
   this.page.events.forEach(eventName => {
-    var e = new Event(this.page.name, eventName, this.options)
-    this.events.push(e)
+    event = new Event(this.page.name, eventName, this.options)
+    this.events.push(event)
   })
 
   done()
@@ -99,9 +101,9 @@ Controller.prototype.attachEvents = function (done) {
  *
  */
 Controller.prototype.requiredDataPresent = function (data) {
-  if (_.isEmpty(this.page.requiredDatasources)) return true
+  if (this.page.requiredDatasources.length === 0) return true
 
-  return _.every(this.page.requiredDatasources, function (datasource) {
+  return this.page.requiredDatasources.every(datasource => {
     return (
       data.hasOwnProperty(datasource) &&
       data[datasource].hasOwnProperty('results') &&
@@ -114,7 +116,7 @@ Controller.prototype.requiredDataPresent = function (data) {
  *
  */
 Controller.prototype.buildInitialViewData = function (req) {
-  var data = {}
+  let data = {}
 
   // data helpers
   data.has = function (node) {
@@ -125,11 +127,11 @@ Controller.prototype.buildInitialViewData = function (req) {
     return (
       this.has(node) &&
       this[node].results !== undefined &&
-      !_.isEmpty(this[node].results)
+      this[node].results.length > 0
     )
   }
 
-  var urlData = url.parse(req.url, true)
+  const urlData = url.parse(req.url, true)
 
   data.query = urlData.query
   data.params = {}
@@ -140,10 +142,8 @@ Controller.prototype.buildInitialViewData = function (req) {
   if (urlData.pathname.length) data.pathname = urlData.pathname
 
   // add request params (params from the path, e.g. /:make/:model)
-  _.extend(data.params, req.params)
-
   // add query params (params from the querystring, e.g. /reviews?page=2)
-  _.extend(data.params, data.query)
+  data.params = Object.assign({}, req.params, data.query)
 
   if (req.error) data.error = req.error
 
@@ -151,7 +151,7 @@ Controller.prototype.buildInitialViewData = function (req) {
   if (req.params.id) data.id = decodeURIComponent(req.params.id)
 
   // allow JSON view using ?json=true
-  var json =
+  let json =
     config.get('allowJsonView') &&
     urlData.query.json &&
     urlData.query.json.toString() === 'true'
@@ -178,11 +178,11 @@ Controller.prototype.process = function process (req, res, next) {
   debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
-  var statusCode = res.statusCode || 200
-  var data = this.buildInitialViewData(req)
-  var view = new View(req.url, this.page, data.json)
+  const statusCode = res.statusCode || 200
+  let data = this.buildInitialViewData(req)
+  const view = new View(req.url, this.page, data.json)
 
-  var done = data.json
+  let done = data.json
     ? Send.json(statusCode, res, next)
     : Send.html(res, req, next, statusCode, this.page.contentType)
 
@@ -265,7 +265,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
         // add a random value to the data obj so we can check if an
         // event has sent back the obj - in which case we assign it back
         // to itself
-        var checkValue = crypto
+        let checkValue = crypto
           .createHash('md5')
           .update(new Date().toString())
           .digest('hex')
@@ -275,9 +275,7 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
         event.run(req, res, data, (err, result) => {
           help.timer.stop('event: ' + event.name)
 
-          if (err) {
-            return reject(err)
-          }
+          if (err) return reject(err)
 
           // if we get data back with the same checkValue property,
           // reassign it to our global data object to avoid circular JSON
@@ -298,34 +296,27 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
 }
 
 Controller.prototype.loadData = function (req, res, data, done) {
-  var self = this
+  const self = this
 
-  var primaryDatasources = {}
-  var chainedDatasources = {}
+  const primaryDatasources = {}
+  const chainedDatasources = {}
 
-  debug(
-    'datasources %o %o',
-    _.map(self.datasources, ds => {
-      return ds.name
-    })
-  )
+  debug('datasources %o', Object.keys(this.datasources))
 
-  _.each(self.datasources, function (ds, key) {
+  Object.keys(this.datasources).forEach(key => {
+    let ds = this.datasources[key]
+
     if (ds.chained) {
-      chainedDatasources[key] = _.clone(ds)
+      chainedDatasources[key] = clone(ds)
     } else {
-      primaryDatasources[key] = _.clone(ds)
+      primaryDatasources[key] = clone(ds)
     }
   })
 
   debug(
     'loadData %o %o',
-    _.map(primaryDatasources, ds => {
-      return ds.name
-    }),
-    _.map(chainedDatasources, ds => {
-      return ds.name
-    })
+    Object.keys(primaryDatasources),
+    Object.keys(chainedDatasources)
   )
 
   help.timer.start('load data')
@@ -354,7 +345,14 @@ Controller.prototype.loadData = function (req, res, data, done) {
           callback(null)
         }
 
-        var queue = async.queue((ds, cb) => {
+        let queue = async.queue((ds, cb) => {
+          if (ds.endpointEvent) {
+            ds.endpointEvent.run(req, res, data, (err, endpoint) => {
+              if (err) return done(err)
+              ds.schema.datasource.source.endpoint = endpoint
+            })
+          }
+
           if (ds.filterEvent) {
             ds.filterEvent.run(req, res, data, (err, filter) => {
               if (err) return done(err)
@@ -409,8 +407,8 @@ Controller.prototype.loadData = function (req, res, data, done) {
         }
 
         // add each primary datasource to the queue for processing
-        _.each(primaryDatasources, datasource => {
-          queue.push(datasource)
+        Object.keys(primaryDatasources).forEach(key => {
+          queue.push(primaryDatasources[key])
         })
       },
 
@@ -444,29 +442,28 @@ Controller.prototype.processChained = function (
   req,
   done
 ) {
-  var idx = 0
-  var self = this
+  let idx = 0
 
   if (Object.keys(chainedDatasources).length === 0) {
     return done(null, data)
   }
 
-  _.each(chainedDatasources, (chainedDatasource, chainedKey) => {
-    debug(
-      'datasource (chained): %s > %s',
-      chainedDatasource.chained.datasource,
-      chainedKey
-    )
+  Object.keys(chainedDatasources).forEach(chainedKey => {
+    let chainedDatasource = chainedDatasources[chainedKey]
+    let datasourceToLocate = chainedDatasource.chained.datasource
+
+    debug('datasource (chained): %s > %s', datasourceToLocate, chainedKey)
+
     help.timer.start('datasource: ' + chainedDatasource.name + ' (chained)')
 
-    if (!data[chainedDatasource.chained.datasource]) {
-      var message =
+    if (!data[datasourceToLocate]) {
+      const message =
         "Chained datasource '" +
         chainedDatasource.name +
         "' expected to find data from datasource '" +
-        chainedDatasource.chained.datasource +
+        datasourceToLocate +
         "'."
-      var err = new Error()
+      let err = new Error()
       err.message = message
       log.warn({ module: 'controller' }, message)
       return done(err)
@@ -474,51 +471,42 @@ Controller.prototype.processChained = function (
 
     // find the value of the parameter in the returned data
     // to use in the chained datasource
-    var param = ''
-
-    try {
-      param = chainedDatasource.chained.outputParam.param
-        .split('.')
-        .reduce(function (o, x) {
-          return o ? o[x] : ''
-        }, data[chainedDatasource.chained.datasource])
-    } catch (e) {
-      return done(e)
-    }
-
-    // cast the param value if needed
-    if (
-      chainedDatasource.chained.outputParam.type &&
-      chainedDatasource.chained.outputParam.type === 'Number'
-    ) {
-      param = parseInt(param)
-    } else {
-      param = encodeURIComponent(param)
-    }
+    let outputParam = chainedDatasource.chained.outputParam
+    let param = this.getParameterValue(data[datasourceToLocate], outputParam)
 
     // does the parent page require no cache?
     if (data.query.cache === 'false') {
       chainedDatasource.schema.datasource.cache = false
     }
 
-    if (self.page.passFilters && chainedDatasource.schema.datasource.paginate) {
+    if (this.page.passFilters && chainedDatasource.schema.datasource.paginate) {
       chainedDatasource.schema.datasource.page =
         data.query.page || req.params.page || 1
     }
 
-    // if there is a field to filter on, add the new parameter value to the filters
-    if (chainedDatasource.chained.outputParam.field) {
-      chainedDatasource.schema.datasource.filter[ // eslint-disable-line
-        chainedDatasource.chained.outputParam.field
-      ] = param
+    // if the outputParam has no 'target' property,
+    // it's destined for the filter
+    outputParam.target = outputParam.target || 'filter'
+
+    let endpoint = chainedDatasource.schema.datasource.source.endpoint
+
+    if (outputParam.field && param) {
+      if (outputParam.target === 'endpoint') {
+        const placeholderRegex = new RegExp('{' + outputParam.field + '}', 'ig')
+        endpoint = endpoint.replace(placeholderRegex, param)
+      } else {
+        chainedDatasource.schema.datasource.filter[outputParam.field] = param
+      }
     }
+
+    chainedDatasource.schema.datasource.source.endpoint = endpoint
 
     // if the datasource specified a query, add it to the existing filter
     // by looking for the placeholder value
-    if (chainedDatasource.chained.outputParam.query) {
-      var placeholder = '"{' + chainedDatasource.chained.datasource + '}"'
-      var filter = JSON.stringify(chainedDatasource.schema.datasource.filter)
-      var q = JSON.stringify(chainedDatasource.chained.outputParam.query)
+    if (outputParam.query) {
+      const placeholder = '"{' + chainedDatasource.chained.datasource + '}"'
+      let filter = JSON.stringify(chainedDatasource.schema.datasource.filter)
+      let q = JSON.stringify(outputParam.query)
 
       if (typeof param !== 'number') {
         param = '"' + param + '"'
@@ -542,14 +530,12 @@ Controller.prototype.processChained = function (
       chainedDatasource.schema.datasource
     )
 
-    // debug('datasource (load): %s %s', chainedDatasource.name, requestUrl)
     debug(
       'datasource (load): %s %s',
       chainedDatasource.name,
       chainedDatasource.provider.endpoint
     )
 
-    // chainedDatasource.provider.load(requestUrl, (err, chainedData) => {
     chainedDatasource.provider.load(req.url, (err, chainedData) => {
       if (err) log.error({ module: 'controller' }, err)
 
@@ -571,6 +557,28 @@ Controller.prototype.processChained = function (
       }
     })
   })
+}
+
+/**
+ * Gets the value of the specified parameter from the specified source
+ *
+ * @param {Object} object - the object that holds the data to be searched
+ * @param {Object} parameter - contains the type and path of the required parameter
+ * @returns {String|Number} the value associated with the specified parameter, or null
+ */
+Controller.prototype.getParameterValue = function (object, parameter) {
+  let value = null
+  value = getValue(object, parameter.param)
+
+  if (value) {
+    if (parameter.type && parameter.type === 'Number') {
+      value = Number(value)
+    } else {
+      value = encodeURIComponent(value)
+    }
+  }
+
+  return value
 }
 
 function processSearchParameters (key, datasource, req) {

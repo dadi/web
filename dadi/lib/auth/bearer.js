@@ -1,6 +1,5 @@
 var path = require('path')
 var config = require(path.join(__dirname, '/../../../config.js'))
-var help = require(path.join(__dirname, '/../help'))
 var Passport = require('@dadi/passport')
 
 var BearerAuthStrategy = function (options) {
@@ -35,12 +34,12 @@ BearerAuthStrategy.prototype.getToken = function (
     walletOptions: {
       path:
         config.get('paths.tokenWallets') +
-        '/' +
-        help.generateTokenWalletFilename(
-          strategy.host,
-          strategy.port,
-          strategy.credentials.clientId
-        )
+        '/token.' +
+        strategy.host +
+        strategy.port +
+        '.' +
+        strategy.credentials.clientId +
+        '.json'
     }
   })
     .then(function (bearerToken) {

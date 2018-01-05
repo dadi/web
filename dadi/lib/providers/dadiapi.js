@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const debug = require('debug')('web:provider:dadi-api')
 const formatError = require('@dadi/format-error')
 const http = require('http')
@@ -120,7 +119,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
     this.getHeaders((err, headers) => {
       err && done(err)
 
-      this.options = _.extend(this.options, headers)
+      this.options = Object.assign({}, this.options, headers)
 
       log.info(
         { module: 'remote' },
@@ -258,16 +257,9 @@ DadiApiProvider.prototype.processOutput = function (
     } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
       // if the error is anything other than Success or Bad Request, error
       const err = new Error()
-      err.message =
-        'Datasource "' +
-        this.datasource.name +
-        '" failed. ' +
-        res.statusMessage +
-        ' (' +
-        res.statusCode +
-        ')' +
-        ': ' +
-        this.endpoint
+      err.message = `Datasource "${this.datasource
+        .name}" failed. ${res.statusMessage} (${res.statusCode}): ${this
+        .endpoint}`
 
       if (data) err.message += '\n' + data
 
@@ -366,7 +358,7 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
           query +
           key +
           '=' +
-          (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) +
+          (Object.keys(param[key]) ? JSON.stringify(param[key]) : param[key]) +
           '&'
       }
     }
@@ -395,7 +387,7 @@ DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
       this.datasource.requestHeaders['content-type'] = 'application/json'
     }
 
-    headers = _.extend(headers, this.datasource.requestHeaders)
+    headers = Object.assign({}, headers, this.datasource.requestHeaders)
   }
 
   // If the data-source has its own auth strategy, use it.
@@ -472,8 +464,8 @@ DadiApiProvider.prototype.processSortParameter = function processSortParameter (
 
   if (typeof obj !== 'object' || obj === null) return sort
 
-  if (_.isArray(obj)) {
-    _.each(obj, (value, key) => {
+  if (Array.isArray(obj)) {
+    obj.forEach(value => {
       if (
         typeof value === 'object' &&
         value.hasOwnProperty('field') &&

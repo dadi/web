@@ -1,5 +1,5 @@
-var _ = require("underscore")
 var fs = require("fs")
+var nock = require("nock")
 var path = require("path")
 var should = require("should")
 var Readable = require("stream").Readable
@@ -24,12 +24,37 @@ var markdownProvider = require(__dirname + "/../../dadi/lib/providers/markdown")
 var config = require(path.resolve(path.join(__dirname, "/../../config")))
 var controller
 
+var secureClientHost =
+  "https://" + config.get("server.host") + ":" + config.get("server.port")
+var secureClient = request(secureClientHost)
+var scope
+
 // Ignore errors around self-assigned SSL certs
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 describe("Public folder", function(done) {
   beforeEach(function(done) {
-    TestHelper.resetConfig().then(() => {
+    TestHelper.clearCache()
+
+    var apiHost =
+      "http://" + config.get("api.host") + ":" + config.get("api.port")
+    scope = nock(apiHost)
+      .post("/token")
+      .times(5)
+      .reply(200, { accessToken: "xx" })
+
+    var scope1 = nock(apiHost)
+      .get("/")
+      .reply(200)
+
+    var configUpdate = {
+      server: {
+        host: "127.0.0.1",
+        port: 5000
+      }
+    }
+
+    TestHelper.updateConfig(configUpdate).then(() => {
       TestHelper.disableApiConfig().then(() => {
         done()
       })
@@ -37,8 +62,22 @@ describe("Public folder", function(done) {
   })
 
   afterEach(function(done) {
-    TestHelper.stopServer(done)
+    TestHelper.resetConfig().then(() => {
+      TestHelper.stopServer(done)
+    })
   })
+
+  // beforeEach(function(done) {
+  //   TestHelper.resetConfig().then(() => {
+  //     TestHelper.disableApiConfig().then(() => {
+  //       done()
+  //     })
+  //   })
+  // })
+
+  // afterEach(function(done) {
+  //   TestHelper.stopServer(done)
+  // })
 
   it("should compress files in the public folder where necessary", function(
     done
@@ -90,9 +129,14 @@ describe("Public folder", function(done) {
           .get("/gzipme.css")
           .set("accept-encoding", "gzip")
           .end((err, res) => {
-            res.headers["x-cache"].should.eql("HIT")
-            res.headers["content-encoding"].should.eql("gzip")
-            done()
+            request(connectionString)
+              .get("/gzipme.css")
+              .set("accept-encoding", "gzip")
+              .end((err, res) => {
+                res.headers["x-cache"].should.eql("HIT")
+                res.headers["content-encoding"].should.eql("gzip")
+                done()
+              })
           })
       })
     })
