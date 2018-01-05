@@ -1,14 +1,14 @@
-var convict = require('convict')
-var fs = require('fs')
-var path = require('path')
+const convict = require('convict')
+const fs = require('fs')
+const path = require('path')
 
 // Set folder location differently if an npm install
-var installRoot = ~process.cwd().indexOf('node_modules')
+const installRoot = ~process.cwd().indexOf('node_modules')
   ? __dirname
   : process.cwd()
 
 // Define a schema
-var conf = convict({
+const conf = convict({
   app: {
     name: {
       doc: 'The applicaton name',
@@ -451,6 +451,23 @@ var conf = convict({
         'If true, a CSRF token will be provided, and all form submissions must include this as _csrf',
       format: '*',
       default: false
+    }
+  },
+  uploads: {
+    enabled: {
+      doc: '',
+      format: Boolean,
+      default: false
+    },
+    destinationPath: {
+      doc: '',
+      format: String,
+      default: 'workspace/uploads'
+    },
+    whitelistRoutes: {
+      doc: '',
+      format: Array,
+      default: []
     }
   },
   env: {

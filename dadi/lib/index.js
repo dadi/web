@@ -14,6 +14,9 @@ var session = require('express-session')
 var csrf = require('csurf')
 var cookieParser = require('cookie-parser')
 var toobusy = require('toobusy-js')
+var multer = require('multer')
+var pathToRegexp = require('path-to-regexp')
+
 var dadiStatus = require('@dadi/status')
 var dadiBoot = require('@dadi/boot')
 
@@ -183,6 +186,50 @@ Server.prototype.start = function (done) {
 
   // request logging middleware
   app.use(log.requestLogger)
+
+  const createTemporaryFile = destination => {
+    return multer.diskStorage({
+      destination: destination,
+      filename: (req, file, cb) => {
+        cb(null, `${file.fieldname}-${Date.now()}-${file.originalname}`)
+      }
+    })
+  }
+
+  const upload = multer({
+    storage: createTemporaryFile(config.get('uploads.destinationPath')),
+    fileFilter: (req, file, cb) => {
+      // check url whitelist
+      const routes = config.get('uploads.whitelistRoutes')
+
+      if (routes.length > 0) {
+        let matched = routes.filter(route => {
+          let regex = pathToRegexp(route)
+          let match = regex.exec(req.url)
+
+          return match !== null
+        })
+
+        return cb(null, matched.length > 0)
+      }
+
+      return cb(null, true)
+    }
+  })
+
+  if (config.get('uploads.enabled')) {
+    mkdirp(config.get('uploads.destinationPath'), (err, made) => {
+      if (err) console.log(err)
+    })
+  }
+
+  if (config.get('uploads.enabled')) {
+    app.use(upload.any(), (req, res, next) => {
+      // req.files contains uploaded files
+      // req.body contains the form's text fields
+      next()
+    })
+  }
 
   // session manager
   var sessionConfig = config.get('sessions')
