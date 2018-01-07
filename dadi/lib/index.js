@@ -14,6 +14,10 @@ var session = require('express-session')
 var csrf = require('csurf')
 var cookieParser = require('cookie-parser')
 var toobusy = require('toobusy-js')
+var multer = require('multer')
+var pathToRegexp = require('path-to-regexp')
+var crypto = require('crypto')
+
 var dadiStatus = require('@dadi/status')
 var dadiBoot = require('@dadi/boot')
 
@@ -183,6 +187,16 @@ Server.prototype.start = function (done) {
 
   // request logging middleware
   app.use(log.requestLogger)
+
+  if (config.get('uploads.enabled')) {
+    const upload = this.getUploader()
+
+    app.use(upload.any(), (req, res, next) => {
+      // req.files contains uploaded files
+      // req.body contains the form's text fields
+      next()
+    })
+  }
 
   // session manager
   var sessionConfig = config.get('sessions')
@@ -386,6 +400,10 @@ Server.prototype.loadPaths = function (paths) {
   options.publicPath = path.resolve(paths.public)
   options.routesPath = path.resolve(paths.routes)
   options.tokenWalletsPath = path.resolve(paths.tokenWallets)
+
+  if (config.get('uploads.enabled')) {
+    options.uploadPath = path.resolve(config.get('uploads.destinationPath'))
+  }
 
   this.ensureDirectories(options, () => {})
 
@@ -792,6 +810,70 @@ Server.prototype.getSessionStore = function (sessionConfig, env) {
       url: sessionConfig.store
     })
   }
+}
+
+/**
+ * Initialises the multer file upload parser. Sets up disk storage using
+ * the configured destination directory and configures a file filter that
+ * ensures files are only saved to disk if the current request URL has been
+ * whitelisted, to avoid file upload POSTS to any route.
+ *
+ * @returns {Object} - initialised multer instance
+ */
+Server.prototype.getUploader = function () {
+  return multer({
+    storage: this.createTemporaryFile(config.get('uploads.destinationPath')),
+    fileFilter: (req, file, cb) => {
+      // check url whitelist
+      const routes = config.get('uploads.whitelistRoutes')
+
+      if (routes.length > 0) {
+        let matched = routes.filter(route => {
+          let regex = pathToRegexp(route)
+          let match = regex.exec(req.url)
+
+          return match !== null
+        })
+
+        return cb(null, matched.length > 0)
+      }
+
+      return cb(null, false)
+    }
+  })
+}
+
+/**
+ * Initialises the multer disk storage module, which provides a function for
+ * renaming uploaded files based on configured options.
+ *
+ * @param {String} destination - the configured directory for file uploads
+ * @returns {Object} the initialised disk storage module
+ */
+Server.prototype.createTemporaryFile = destination => {
+  return multer.diskStorage({
+    destination: destination,
+    filename: (req, file, cb) => {
+      let filename = file.originalname
+
+      if (config.get('uploads.hashFilename')) {
+        const key = config.get('uploads.hashKey')
+        filename = crypto
+          .createHmac('sha1', key)
+          .update(filename)
+          .digest('hex')
+        filename += path.extname(file.originalname)
+      }
+
+      if (config.get('uploads.prefix') !== '') {
+        filename = `${config.get('uploads.prefix')}-${filename}`
+      } else if (config.get('uploads.prefixWithFieldName')) {
+        filename = `${file.fieldname}-${filename}`
+      }
+
+      cb(null, filename)
+    }
+  })
 }
 
 /**

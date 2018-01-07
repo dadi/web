@@ -206,16 +206,16 @@ Api.prototype.listener = function (req, res) {
           !pathsLoaded
         ) {
           // find path specific handlers
-          var hrstart = process.hrtime()
+          // var hrstart = process.hrtime()
 
           var matches = this.getMatchingRoutes(req)
 
-          var hrend = process.hrtime(hrstart)
-          debug(
-            'getMatchingRoutes execution %ds %dms',
-            hrend[0],
-            hrend[1] / 1000000
-          )
+          // var hrend = process.hrtime(hrstart)
+          // debug(
+          //   'getMatchingRoutes execution %ds %dms',
+          //   hrend[0],
+          //   hrend[1] / 1000000
+          // )
 
           if (matches.length > 0) {
             // add the matches after the cache middleware and before the final 404 handler

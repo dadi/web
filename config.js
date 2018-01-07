@@ -1,14 +1,14 @@
-var convict = require('convict')
-var fs = require('fs')
-var path = require('path')
+const convict = require('convict')
+const fs = require('fs')
+const path = require('path')
 
 // Set folder location differently if an npm install
-var installRoot = ~process.cwd().indexOf('node_modules')
+const installRoot = ~process.cwd().indexOf('node_modules')
   ? __dirname
   : process.cwd()
 
 // Define a schema
-var conf = convict({
+const conf = convict({
   app: {
     name: {
       doc: 'The applicaton name',
@@ -451,6 +451,43 @@ var conf = convict({
         'If true, a CSRF token will be provided, and all form submissions must include this as _csrf',
       format: '*',
       default: false
+    }
+  },
+  uploads: {
+    enabled: {
+      doc: 'If true, files uploaded via a form a saved to disk and added to `req.files`',
+      format: Boolean,
+      default: false
+    },
+    destinationPath: {
+      doc: 'The destination directory for uploaded files',
+      format: String,
+      default: 'workspace/uploads'
+    },
+    hashFilename: {
+      doc: 'If true, hashes the original filename using SHA1',
+      format: Boolean,
+      default: false
+    },
+    hashKey: {
+      doc: 'The key to use when hashing the filename, if `hashFilename` is true',
+      format: String,
+      default: ''
+    },
+    prefix: {
+      doc: 'If set, the uploaded file is prefixed with the specified value. Overrides "prefixWithFieldName".',
+      format: String,
+      default: ''
+    },
+    prefixWithFieldName: {
+      doc: 'If true, the uploaded file is prefixed with the form field name',
+      format: Boolean,
+      default: false
+    },
+    whitelistRoutes: {
+      doc: 'An array of routes which can accept file uploads',
+      format: Array,
+      default: []
     }
   },
   env: {
