@@ -455,17 +455,32 @@ const conf = convict({
   },
   uploads: {
     enabled: {
-      doc: '',
+      doc: 'If true, files uploaded via a form a saved to disk and added to `req.files`',
       format: Boolean,
       default: false
     },
     destinationPath: {
-      doc: '',
+      doc: 'The destination directory for uploaded files',
       format: String,
       default: 'workspace/uploads'
     },
+    hashFilename: {
+      doc: 'If true, hashes the original filename using SHA1',
+      format: Boolean,
+      default: false
+    },
+    hashKey: {
+      doc: 'The key to use when hashing the filename, if `hashFilename` is true',
+      format: String,
+      default: ''
+    },
+    prefix: {
+      doc: 'If set to "fieldName", the uploaded file is prefixed with the form field name, otherwise the specified prefix is used',
+      format: 'String',
+      default: ''
+    },
     whitelistRoutes: {
-      doc: '',
+      doc: 'An array of routes which can accept file uploads',
       format: Array,
       default: []
     }
