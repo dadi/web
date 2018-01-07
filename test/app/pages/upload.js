@@ -1,1 +1,1 @@
-${JSON.stringify(files)}
+${expectedData ? JSON.stringify(expectedData) : ''}

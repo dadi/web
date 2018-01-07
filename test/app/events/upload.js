@@ -1,8 +1,10 @@
 const Event = function (req, res, data, callback) {
-  data.files = req.files
-  data.body = req.body
-
-  console.log(data)
+  if (req.method.toLowerCase() === 'post') {
+    data.expectedData = {
+      files: req.files,
+      body: req.body
+    }
+  }
 
   callback(null)
 }
