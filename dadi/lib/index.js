@@ -838,7 +838,7 @@ Server.prototype.getUploader = function () {
         return cb(null, matched.length > 0)
       }
 
-      return cb(null, true)
+      return cb(null, false)
     }
   })
 }
