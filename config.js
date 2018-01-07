@@ -475,9 +475,14 @@ const conf = convict({
       default: ''
     },
     prefix: {
-      doc: 'If set to "fieldName", the uploaded file is prefixed with the form field name, otherwise the specified prefix is used',
-      format: 'String',
+      doc: 'If set, the uploaded file is prefixed with the specified value. Overrides "prefixWithFieldName".',
+      format: String,
       default: ''
+    },
+    prefixWithFieldName: {
+      doc: 'If true, the uploaded file is prefixed with the form field name',
+      format: Boolean,
+      default: false
     },
     whitelistRoutes: {
       doc: 'An array of routes which can accept file uploads',

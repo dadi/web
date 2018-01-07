@@ -866,11 +866,9 @@ Server.prototype.createTemporaryFile = destination => {
       }
 
       if (config.get('uploads.prefix') !== '') {
-        if (config.get('uploads.prefix') === 'fieldName') {
-          filename = `${file.fieldname}-${filename}`
-        } else {
-          filename = `${config.get('uploads.prefix')}-${filename}`
-        }
+        filename = `${config.get('uploads.prefix')}-${filename}`
+      } else if (config.get('uploads.prefixWithFieldName')) {
+        filename = `${file.fieldname}-${filename}`
       }
 
       cb(null, filename)
