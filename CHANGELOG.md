@@ -8,17 +8,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Added 
 
-[#170](https://github.com/dadi/web/issues/170): feature: file upload support
-[#253](https://github.com/dadi/web/pull/253): 📬 feature: post processors
-[#297](https://github.com/dadi/web/pull/297): feature: datasource parameter extension 
+* [#170](https://github.com/dadi/web/issues/170): feature: file upload support
+* [#253](https://github.com/dadi/web/pull/253): 📬 feature: post processors
+* [#297](https://github.com/dadi/web/pull/297): feature: datasource parameter extension 
 
 ## Changed
 
-[#193](https://github.com/dadi/web/issues/193): fix expired token datasource failure
-[#216](https://github.com/dadi/web/issues/216): construct endpoints with chained datasources
-[#288](https://github.com/dadi/web/issues/288): fix required data check fails when given no data
-[#310](https://github.com/dadi/web/pull/310): simplify start page: removes Dust.js and it's dependencies from the Web core. Instead there is a simple start page powered by the ES6 template engine (rather than the previous blog configuration)
-[#310](https://github.com/dadi/web/issues/312): alloow Mongo aggregation queries
+* [#193](https://github.com/dadi/web/issues/193): fix expired token datasource failure
+* [#216](https://github.com/dadi/web/issues/216): construct endpoints with chained datasources
+* [#288](https://github.com/dadi/web/issues/288): fix required data check fails when given no data
+* [#310](https://github.com/dadi/web/pull/310): simplify start page: removes Dust.js and it's dependencies from the Web core. Instead there is a simple start page powered by the ES6 template engine (rather than the previous blog configuration)
+* [#312](https://github.com/dadi/web/issues/312): allow Mongo aggregation queries
+* fix bug where datasource parameters would be added to the endpoint when they already exist in the endpoint
 
 
 See the full [release notes](https://github.com/dadi/web/releases/tag/v5.0.0).
