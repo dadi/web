@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [5.0.0] - 2018-01-07
+
+## Added 
+
+[#170](https://github.com/dadi/web/issues/170): feature: file upload support
+[#253](https://github.com/dadi/web/pull/253): 📬 feature: post processors
+[#297](https://github.com/dadi/web/pull/297): feature: datasource parameter extension 
+
+## Changed
+
+[#193](https://github.com/dadi/web/issues/193): fix expired token datasource failure
+[#216](https://github.com/dadi/web/issues/216): construct endpoints with chained datasources
+[#288](https://github.com/dadi/web/issues/288): fix required data check fails when given no data
+[#310](https://github.com/dadi/web/pull/310): simplify start page: removes Dust.js and it's dependencies from the Web core. Instead there is a simple start page powered by the ES6 template engine (rather than the previous blog configuration)
+[#310](https://github.com/dadi/web/issues/312): alloow Mongo aggregation queries
+
+
+See the full [release notes](https://github.com/dadi/web/releases/tag/v5.0.0).
+
+
 # [4.0.1] - 2017-09-24
 
 ## Changed
