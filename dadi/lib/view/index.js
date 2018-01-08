@@ -3,10 +3,9 @@
 /**
  * @module View
  */
-const _ = require('underscore')
-const beautifyHtml = require('js-beautify').html
 const path = require('path')
 const templateStore = require(path.join(__dirname, '/../templates/store'))
+const config = require(path.join(__dirname, '/../../../config.js'))
 
 const View = function (url, page, json) {
   this.url = url
@@ -28,40 +27,46 @@ View.prototype.setData = function (data) {
 }
 
 View.prototype.render = function (done) {
-  if (this.json) {
-    // Return the raw data
-    return done(null, this.data)
-  } else {
-    let templateData = _.extend(
-      {
-        host: this.page.hostKey
-      },
-      this.data
-    )
+  // Return the raw data
+  if (this.json) return done(null, this.data)
 
-    this.template
-      .render(templateData, {
-        keepWhitespace: this.page.keepWhitespace
-      })
-      .then(output => {
-        let err = null
+  // Send the templated page
+  const templateData = Object.assign({}, this.data, {
+    host: this.page.hostKey
+  })
 
-        if (this.page.beautify) {
+  this.template
+    .render(templateData, {
+      keepWhitespace: this.page.keepWhitespace
+    })
+    .then(output => {
+      // Post-process the output
+      if (config.get('globalPostProcessors') || this.page.postProcessors) {
+        const postProcessors = config
+          .get('globalPostProcessors')
+          .concat(this.page.postProcessors || [])
+
+        if (this.page.postProcessors !== false) {
           try {
-            output = beautifyHtml(output)
-          } catch (error) {
-            err = error
+            for (let script of postProcessors) {
+              output = require(path.resolve(
+                config.get('paths.processors'),
+                script
+              ))(this.data, output)
+            }
+          } catch (err) {
+            return done(err)
           }
         }
+      }
 
-        return done(err, output)
-      })
-      .catch(err => {
-        err.statusCode = 500
+      return done(null, output)
+    })
+    .catch(err => {
+      err.statusCode = 500
 
-        return done(err, null)
-      })
-  }
+      return done(err, null)
+    })
 }
 
 module.exports = function (url, page, json) {

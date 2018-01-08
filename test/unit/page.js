@@ -3,7 +3,6 @@ var api = require(__dirname + "/../../dadi/lib/api")
 var Server = require(__dirname + "/../help").Server
 var should = require("should")
 var pathToRegexp = require("path-to-regexp")
-var _ = require("underscore")
 var page = require(__dirname + "/../../dadi/lib/page")
 var TestHelper = require(__dirname + "/../help")()
 var path = require("path")
@@ -66,9 +65,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should attach specified `route` to page when its a string instead of an array", function(
-    done
-  ) {
+  it("should attach specified `route` to page when its a string instead of an array", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
 
@@ -82,9 +79,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should attach specified `route` to page when it is correct in the schema", function(
-    done
-  ) {
+  it("should attach specified `route` to page when it is correct in the schema", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
 
@@ -110,9 +105,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should attach specified `route constraint` to page when the `paths` is a string", function(
-    done
-  ) {
+  it("should attach specified `route constraint` to page when the `paths` is a string", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     delete schema.routes
@@ -137,9 +130,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should return correct path when using `toPath` method with multiple paths and the first matches", function(
-    done
-  ) {
+  it("should return correct path when using `toPath` method with multiple paths and the first matches", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     var p = page(name, schema)
@@ -153,9 +144,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should return correct path when using `toPath` method with multiple paths and the second matches", function(
-    done
-  ) {
+  it("should return correct path when using `toPath` method with multiple paths and the second matches", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     var p = page(name, schema)
@@ -173,9 +162,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should throw error when using `toPath` method with multiple paths and none match", function(
-    done
-  ) {
+  it("should throw error when using `toPath` method with multiple paths and none match", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     var p = page(name, schema)
@@ -190,9 +177,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should return correct path when using `toPath` method with multiple paths of the same length", function(
-    done
-  ) {
+  it("should return correct path when using `toPath` method with multiple paths of the same length", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     var p = page(name, schema)
@@ -206,9 +191,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should be possible to retrieve a page from server components by key", function(
-    done
-  ) {
+  it("should be possible to retrieve a page from server components by key", function(done) {
     var server = sinon.mock(Server)
     server.object.app = api()
 
@@ -227,9 +210,16 @@ describe("Page", function(done) {
       }
     }
 
-    var component = _.find(server.object.components, function(component) {
-      return component.page.key === "test"
+    var component
+    const matches = Object.keys(server.object.components).map(component => {
+      if (server.object.components[component].page.key === "test") {
+        return server.object.components[component]
+      }
     })
+
+    if (matches.length > 0) {
+      component = matches[0]
+    }
 
     component.should.not.be.null
     component.page.key.should.eql("test")
@@ -237,26 +227,22 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should attach default `template` to page if not specified", function(
-    done
-  ) {
+  it("should attach default `template` to page if not specified", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     delete schema.template
-    page(name, schema, undefined, "test.dust").template.should.eql("test.dust")
+    page(name, schema, undefined, "test.js").template.should.eql("test.js")
     done()
   })
 
   it("should attach specified `template` to page", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
-    page(name, schema).template.should.eql("car-reviews.dust")
+    page(name, schema).template.should.eql("car-reviews.js")
     done()
   })
 
-  it("should attach default `contentType` to page if not specified", function(
-    done
-  ) {
+  it("should attach default `contentType` to page if not specified", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     delete schema.contentType
@@ -283,9 +269,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should attach empty object when `settings` is not provided", function(
-    done
-  ) {
+  it("should attach empty object when `settings` is not provided", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     delete schema.settings
@@ -295,20 +279,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should set `beautify` when `settings.beautify` is provided", function(
-    done
-  ) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-    schema.settings.beautify = true
-    var p = page(name, schema)
-    p.beautify.should.eql(true)
-    done()
-  })
-
-  it("should set `passFilters` when `settings.passFilters` is provided", function(
-    done
-  ) {
+  it("should set `passFilters` when `settings.passFilters` is provided", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     schema.settings.passFilters = true
@@ -331,9 +302,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should not throw error if `cache` setting is not specified", function(
-    done
-  ) {
+  it("should not throw error if `cache` setting is not specified", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
 
@@ -351,13 +320,11 @@ describe("Page", function(done) {
     var schema = TestHelper.getPageSchema()
     var p = page(name, schema)
     p.datasources.should.exist
-    p.datasources.should.eql(["car-makes"])
+    p.datasources.should.eql(["car_makes"])
     done()
   })
 
-  it("should attach empty `datasources` to page when not specified", function(
-    done
-  ) {
+  it("should attach empty `datasources` to page when not specified", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     delete schema.datasources
@@ -396,9 +363,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should attach empty `preloadEvents` to page when not specified", function(
-    done
-  ) {
+  it("should attach empty `preloadEvents` to page when not specified", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     var p = page(name, schema)
@@ -417,9 +382,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should attach empty `requiredDatasources` to page when not specified", function(
-    done
-  ) {
+  it("should attach empty `requiredDatasources` to page when not specified", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     var p = page(name, schema)
@@ -428,9 +391,7 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should throw error if specified `route` is not an object", function(
-    done
-  ) {
+  it("should throw error if specified `route` is not an object", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
     delete schema.routes
@@ -500,38 +461,12 @@ describe("Page", function(done) {
     done()
   })
 
-  // it.only('should apply global config `dust.whitespace` as a fallback when no `page.keepWhitespace` is available', function (done) {
-  //   var name = 'test'
-  //   var schema = TestHelper.getPageSchema()
-  //   if (schema.settings.hasOwnProperty('keepWhitespace')) delete schema.settings.keepWhitespace
-  //   config.set('dust.whitespace', true)
-
-  //   page(name, schema).keepWhitespace.should.eql(true)
-
-  //   done()
-  // })
-
-  // it('should prioritise page config `keepWhitespace` param over global config `dust.whitespace`', function (done) {
-  //   var name = 'test'
-  //   var schema = TestHelper.getPageSchema()
-  //   schema.settings.keepWhitespace = true
-  //   config.set('dust.whitespace', false)
-  //   page(name, schema).keepWhitespace.should.eql(true)
-
-  //   done()
-  // })
-
-  // it.skip('should handle missing page config `keepWhitespace` and global config `dust.whitespace`', sinon.test(function (done) {
-  //   var name = 'test'
-  //   var schema = TestHelper.getPageSchema()
-  //   if (schema.settings.hasOwnProperty('keepWhitespace')) delete schema.settings.keepWhitespace
-
-  //   var configStub = sinon.stub(config, 'get')
-  //   configStub.withArgs('dust').returns({ cache: true, debug: false, debugLevel: 'INFO'})
-
-  //   var p = page(name, schema)
-  //   p.keepWhitespace.should.eql(true)
-
-  //   done()
-  // }))
+  it("should attach `settings.postProcessors` to page", function(done) {
+    var name = "test"
+    var schema = TestHelper.getPageSchema()
+    schema.settings.postProcessors = ["minify-html"]
+    var p = page(name, schema)
+    p.postProcessors.should.eql(["minify-html"])
+    done()
+  })
 })

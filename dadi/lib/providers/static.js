@@ -1,6 +1,7 @@
 'use strict'
 
-const _ = require('underscore')
+const path = require('path')
+const help = require(path.join(__dirname, '../help'))
 
 const StaticProvider = function () {}
 
@@ -36,30 +37,45 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
     const count = params.count
     const fields = params.fields || []
 
-    if (search) data = _.where(data, search)
+    // apply search
+    data = help.where(data, search)
 
-    // apply a filter
-    data = _.where(data, params.filter)
+    // apply filter
+    data = help.where(data, params.filter)
 
     // Sort by field (with date support)
     if (sort && Object.keys(sort).length > 0) {
       Object.keys(sort).forEach(field => {
-        data = _.sortBy(data, post => {
-          const value = post[field]
-          const valueAsDate = new Date(value)
-          return valueAsDate.toString() !== 'Invalid Date'
-            ? +valueAsDate
-            : value
-        })
+        data.sort(
+          help.sortBy(field, value => {
+            if (field.toLowerCase().indexOf('date') > -1) {
+              value = new Date(value)
+            }
+
+            return value
+          })
+        )
+
         if (sort[field] === -1) {
-          data = data.reverse()
+          data.reverse()
         }
       })
     }
 
-    if (count) data = _.first(data, count)
-    if (fields && !_.isEmpty(fields)) {
-      data = _.chain(data).selectFields(fields.join(',')).value()
+    if (count) {
+      data = data.slice(0, count)
+    }
+
+    if (fields && fields.length > 0) {
+      if (Array.isArray(data)) {
+        let i = 0
+        data.forEach(document => {
+          data[i] = help.pick(data[i], fields)
+          i++
+        })
+      } else {
+        data = help.pick([data], fields)
+      }
     }
   }
 

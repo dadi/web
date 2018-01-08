@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var fs = require("fs")
 var nock = require("nock")
 var path = require("path")
@@ -35,10 +34,10 @@ describe("Preloader", function(done) {
 
   it("should preload data when the server starts", function(done) {
     TestHelper.disableApiConfig().then(() => {
-      TestHelper.updateConfig({ data: { preload: ["car-makes"] } }).then(() => {
+      TestHelper.updateConfig({ data: { preload: ["car_makes"] } }).then(() => {
         var pages = TestHelper.setUpPages()
         pages[0].settings.cache = false
-        pages[0].datasources = ["car-makes"]
+        pages[0].datasources = ["car_makes"]
 
         // provide API response
         var results = {
@@ -57,7 +56,7 @@ describe("Preloader", function(done) {
           providerStub.called.should.eql(true)
 
           Preload()
-            .get("car-makes")
+            .get("car_makes")
             .should.eql(results.results)
 
           done()

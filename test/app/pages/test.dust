@@ -1,2 +1,0 @@
-{#names}{title} {name}{~n}{/names}
-{#categories.results}<h3>{name}</h3>{/categories.results}

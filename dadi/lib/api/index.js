@@ -1,4 +1,3 @@
-var _ = require('underscore')
 var debug = require('debug')('web:api')
 var fs = require('fs')
 var http = require('http')
@@ -135,29 +134,10 @@ Api.prototype.use = function (path, host, handler) {
  */
 Api.prototype.unuse = function (path) {
   debug('unuse %s', path)
-  var indx = 0
 
-  if (typeof path === 'function') {
-    if (path.length === 4) {
-      indx = this.errors.indexOf(path)
-      return !!~indx && this.errors.splice(indx, 1)
-    }
-
-    var functionStr = path.toString()
-    _.each(this.all, func => {
-      if (func.toString() === functionStr) {
-        return this.all.splice(indx, 1)
-      } else {
-        indx++
-      }
-    })
-
-    // indx = this.all.indexOf(path)
-    // return !!~indx && this.all.splice(indx, 1)
-  }
-
-  var existing = _.findWhere(this.paths, { path: path })
-  this.paths = _.without(this.paths, existing)
+  this.paths = this.paths.filter(item => {
+    return item.path !== path
+  })
 }
 
 /**
@@ -213,7 +193,7 @@ Api.prototype.listener = function (req, res) {
 
       // add the original params back, in case a middleware
       // has modified the current req.params
-      _.extend(req.params, originalReqParams)
+      Object.assign(req.params, originalReqParams)
 
       try {
         // if end of the stack, no middleware could handle the current
@@ -226,20 +206,20 @@ Api.prototype.listener = function (req, res) {
           !pathsLoaded
         ) {
           // find path specific handlers
-          var hrstart = process.hrtime()
+          // var hrstart = process.hrtime()
 
           var matches = this.getMatchingRoutes(req)
 
-          var hrend = process.hrtime(hrstart)
-          debug(
-            'getMatchingRoutes execution %ds %dms',
-            hrend[0],
-            hrend[1] / 1000000
-          )
+          // var hrend = process.hrtime(hrstart)
+          // debug(
+          //   'getMatchingRoutes execution %ds %dms',
+          //   hrend[0],
+          //   hrend[1] / 1000000
+          // )
 
-          if (!_.isEmpty(matches)) {
+          if (matches.length > 0) {
             // add the matches after the cache middleware and before the final 404 handler
-            _.each(matches, match => {
+            matches.forEach(match => {
               this.stack.splice(-1, 0, match)
             })
           }
@@ -297,11 +277,11 @@ Api.prototype.getMatchingRoutes = function (req) {
   // get the host key that matches the request's host header
   var virtualHosts = config.get('virtualHosts')
   var host =
-    _.findKey(virtualHosts, virtualHost => {
-      return _.contains(virtualHost.hostnames, req.headers.host)
+    Object.keys(virtualHosts).find(key => {
+      return virtualHosts[key].hostnames.includes(req.headers.host)
     }) || ''
 
-  var paths = _.filter(this.paths, path => {
+  var paths = this.paths.filter(path => {
     return path.path.indexOf(host) > -1
   })
 
@@ -425,17 +405,17 @@ function findPath (req, paths, pathString) {
   var virtualHosts = config.get('virtualHosts')
 
   var host =
-    _.findKey(virtualHosts, virtualHost => {
-      return _.contains(virtualHost.hostnames, req.headers.host)
+    Object.keys(virtualHosts).find(key => {
+      return virtualHosts[key].hostnames.includes(req.headers.host)
     }) || ''
 
-  var matchingPaths = _.filter(paths, path => {
+  var matchingPaths = paths.filter(path => {
     return path.path.indexOf(host) > -1
   })
 
   // look for a page matching the pathString that has been loaded
   // along with the rest of the API
-  return _.filter(matchingPaths, path => {
+  return matchingPaths.filter(path => {
     return path.path.indexOf(pathString) > -1
   })
 }
@@ -445,19 +425,21 @@ function routePriority (path, keys) {
 
   var staticRouteLength = 0
   if (typeof tokens[0] === 'string') {
-    staticRouteLength = _.compact(tokens[0].split('/')).length
+    staticRouteLength = tokens[0].split('/').filter(item => {
+      return item && item !== ''
+    }).length
   }
 
-  var requiredParamLength = _.filter(keys, function (key) {
+  var requiredParamLength = keys.filter(key => {
     return !key.optional
   }).length
 
-  var optionalParamLength = _.filter(keys, function (key) {
+  var optionalParamLength = keys.filter(key => {
     return key.optional
   }).length
 
   // if there is a "page" parameter in the route, give it a slightly higher priority
-  var paginationParam = _.find(keys, key => {
+  var paginationParam = keys.find(key => {
     return key.name && key.name === 'page'
   })
 

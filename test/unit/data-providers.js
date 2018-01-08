@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var fs = require("fs")
 var nock = require("nock")
 var path = require("path")
@@ -42,13 +41,11 @@ describe("Data Providers", function(done) {
   })
 
   describe("DADI API", function(done) {
-    it("should use the datasource auth block when obtaining a token", function(
-      done
-    ) {
+    it("should use the datasource auth block when obtaining a token", function(done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car-models"]
+          pages[0].datasources = ["car_models"]
 
           TestHelper.setupApiIntercepts()
 
@@ -82,12 +79,10 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return gzipped response if accept header specifies it", function(
-      done
-    ) {
+    it("should return gzipped response if accept header specifies it", function(done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["car-makes-unchained"]
+        pages[0].datasources = ["car_makes_unchained"]
 
         var text = JSON.stringify({ hello: "world!" })
 
@@ -134,12 +129,10 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return append query params if endpoint already has a querystring", function(
-      done
-    ) {
+    it("should return append query params if endpoint already has a querystring", function(done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["car-makes-with-query"]
+        pages[0].datasources = ["car_makes_with_query"]
 
         TestHelper.setupApiIntercepts()
 
@@ -186,13 +179,11 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return an errors collection when a datasource times out", function(
-      done
-    ) {
+    it("should return an errors collection when a datasource times out", function(done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car-makes-unchained"]
+          pages[0].datasources = ["car_makes_unchained"]
 
           TestHelper.setupApiIntercepts()
 
@@ -217,8 +208,8 @@ describe("Data Providers", function(done) {
             client
               .get(pages[0].routes[0].path + "?cache=false&json=true")
               .end((err, res) => {
-                should.exist(res.body["car-makes-unchained"].errors)
-                res.body["car-makes-unchained"].errors[0].title.should.eql(
+                should.exist(res.body["car_makes_unchained"].errors)
+                res.body["car_makes_unchained"].errors[0].title.should.eql(
                   "Datasource Timeout"
                 )
                 done()
@@ -228,13 +219,11 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return an errors collection when a datasource is not found", function(
-      done
-    ) {
+    it("should return an errors collection when a datasource is not found", function(done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car-makes-unchained"]
+          pages[0].datasources = ["car_makes_unchained"]
 
           TestHelper.setupApiIntercepts()
 
@@ -259,8 +248,8 @@ describe("Data Providers", function(done) {
             client
               .get(pages[0].routes[0].path + "?cache=false&json=true")
               .end((err, res) => {
-                should.exist(res.body["car-makes-unchained"].errors)
-                res.body["car-makes-unchained"].errors[0].title.should.eql(
+                should.exist(res.body["car_makes_unchained"].errors)
+                res.body["car_makes_unchained"].errors[0].title.should.eql(
                   "Datasource Not Found"
                 )
                 done()
@@ -272,13 +261,11 @@ describe("Data Providers", function(done) {
   })
 
   describe("Remote", function(done) {
-    it("should return an errors collection when a datasource times out", function(
-      done
-    ) {
+    it("should return an errors collection when a datasource times out", function(done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car-makes-unchained-remote"]
+          pages[0].datasources = ["car_makes_unchained_remote"]
 
           TestHelper.setupApiIntercepts()
 
@@ -304,9 +291,9 @@ describe("Data Providers", function(done) {
             client
               .get(pages[0].routes[0].path + "?json=true")
               .end((err, res) => {
-                should.exist(res.body["car-makes-unchained-remote"].errors)
+                should.exist(res.body["car_makes_unchained_remote"].errors)
                 res.body[
-                  "car-makes-unchained-remote"
+                  "car_makes_unchained_remote"
                 ].errors[0].title.should.eql("Datasource Timeout")
                 done()
               })
@@ -315,13 +302,11 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return an errors collection when a datasource is not found", function(
-      done
-    ) {
+    it("should return an errors collection when a datasource is not found", function(done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowJsonView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car-makes-unchained-remote"]
+          pages[0].datasources = ["car_makes_unchained_remote"]
 
           TestHelper.setupApiIntercepts()
 
@@ -347,9 +332,9 @@ describe("Data Providers", function(done) {
             client
               .get(pages[0].routes[0].path + "?cache=false&json=true")
               .end((err, res) => {
-                should.exist(res.body["car-makes-unchained-remote"].errors)
+                should.exist(res.body["car_makes_unchained_remote"].errors)
                 res.body[
-                  "car-makes-unchained-remote"
+                  "car_makes_unchained_remote"
                 ].errors[0].title.should.eql("Datasource Not Found")
                 done()
               })
@@ -405,9 +390,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should wrap the data in a `results` node before returning", function(
-      done
-    ) {
+    it("should wrap the data in a `results` node before returning", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "static"
@@ -447,9 +430,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return the number of records specified by the count property", function(
-      done
-    ) {
+    it("should return the number of records specified by the count property", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "static"
@@ -463,7 +444,7 @@ describe("Data Providers", function(done) {
       }
 
       dsSchema = {
-        datasource: _.extend(dsSchema.datasource, dsConfig)
+        datasource: Object.assign({}, dsSchema.datasource, dsConfig)
       }
 
       sinon
@@ -498,9 +479,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should only return the fields specified by the fields property", function(
-      done
-    ) {
+    it("should only return the fields specified by the fields property", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "static"
@@ -514,7 +493,7 @@ describe("Data Providers", function(done) {
       }
 
       dsSchema = {
-        datasource: _.extend(dsSchema.datasource, dsConfig)
+        datasource: Object.assign({}, dsSchema.datasource, dsConfig)
       }
 
       sinon
@@ -552,9 +531,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should only return the data matching the search property", function(
-      done
-    ) {
+    it("should only return the data matching the search property", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "static"
@@ -565,7 +542,7 @@ describe("Data Providers", function(done) {
       }
 
       dsSchema = {
-        datasource: _.extend(dsSchema.datasource, dsConfig)
+        datasource: Object.assign({}, dsSchema.datasource, dsConfig)
       }
 
       sinon
@@ -606,9 +583,7 @@ describe("Data Providers", function(done) {
   })
 
   describe("Twitter", function(done) {
-    it("should use the datasource count property when querying the API", function(
-      done
-    ) {
+    it("should use the datasource count property when querying the API", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "twitter",
@@ -624,9 +599,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the datasource filter property when querying the API", function(
-      done
-    ) {
+    it("should use the datasource filter property when querying the API", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "twitter",
@@ -642,9 +615,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should only return data matching specified datasource fields when data is an array", function(
-      done
-    ) {
+    it("should only return data matching specified datasource fields when data is an array", function(done) {
       var data = [
         {
           field1: "1",
@@ -676,9 +647,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should only return data matching specified datasource fields when data is an object", function(
-      done
-    ) {
+    it("should only return data matching specified datasource fields when data is an object", function(done) {
       var data = {
         field1: "1",
         field2: "2",
@@ -699,9 +668,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the auth details in main config if not specifed by the datasource", function(
-      done
-    ) {
+    it("should use the auth details in main config if not specifed by the datasource", function(done) {
       var authConfig = {
         twitter: {
           consumerKey: "key",
@@ -739,9 +706,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the auth details specified in the datasource config", function(
-      done
-    ) {
+    it("should use the auth details specified in the datasource config", function(done) {
       var authConfig = {
         consumer_key: "auth.key",
         consumer_secret: "auth.secret",
@@ -841,9 +806,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the datasource count property when querying the API", function(
-      done
-    ) {
+    it("should use the datasource count property when querying the API", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "wordpress",
@@ -858,9 +821,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use an array of datasource fields when querying the API", function(
-      done
-    ) {
+    it("should use an array of datasource fields when querying the API", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "wordpress",
@@ -875,9 +836,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use an object of datasource fields when querying the API", function(
-      done
-    ) {
+    it("should use an object of datasource fields when querying the API", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "wordpress",
@@ -892,9 +851,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the datasource filter property when querying the API", function(
-      done
-    ) {
+    it("should use the datasource filter property when querying the API", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "wordpress",
@@ -950,9 +907,7 @@ describe("Data Providers", function(done) {
   })
 
   describe("RSS", function(done) {
-    it("should use the datasource count property when querying the endpoint", function(
-      done
-    ) {
+    it("should use the datasource count property when querying the endpoint", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "rss",
@@ -967,9 +922,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use an array of datasource fields when querying the endpoint", function(
-      done
-    ) {
+    it("should use an array of datasource fields when querying the endpoint", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "rss",
@@ -984,9 +937,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use an object of datasource fields when querying the endpoint", function(
-      done
-    ) {
+    it("should use an object of datasource fields when querying the endpoint", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "rss",
@@ -1001,9 +952,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the datasource filter property when querying the endpoint", function(
-      done
-    ) {
+    it("should use the datasource filter property when querying the endpoint", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
         "rss",
@@ -1054,9 +1003,7 @@ describe("Data Providers", function(done) {
   })
 
   describe("Markdown", function(done) {
-    it("should process frontmatter from the files in the datasource path", function(
-      done
-    ) {
+    it("should process frontmatter from the files in the datasource path", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "markdown"
@@ -1146,9 +1093,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use the datasource requestParams to filter the results", function(
-      done
-    ) {
+    it("should use the datasource requestParams to filter the results", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "markdown"
@@ -1190,9 +1135,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return the number of records specified by the count property", function(
-      done
-    ) {
+    it("should return the number of records specified by the count property", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "markdown"
@@ -1268,9 +1211,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return an error if the source folder does not exist", function(
-      done
-    ) {
+    it("should return an error if the source folder does not exist", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "markdown"
@@ -1348,14 +1289,14 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should sort by the specified field in reverse order if set to -1", function(
-      done
-    ) {
+    it("should sort by the specified field in reverse order if set to -1", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "markdown"
       )
-      dsSchema.datasource.sort.date = -1
+
+      delete dsSchema.datasource.sort.date
+      dsSchema.datasource.sort["attributes.date"] = -1
       dsSchema.datasource.count = 2
 
       sinon
@@ -1393,9 +1334,7 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should only return the selected fields as specified by the datasource", function(
-      done
-    ) {
+    it("should only return the selected fields as specified by the datasource", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         "markdown"

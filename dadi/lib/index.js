@@ -4,9 +4,7 @@ var version = require('../../package.json').version
 var site = require('../../package.json').name
 var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
-var _ = require('underscore')
 var bodyParser = require('body-parser')
-var colors = require("colors") // eslint-disable-line
 var debug = require('debug')('web:server')
 var enableDestroy = require('server-destroy')
 var fs = require('fs')
@@ -16,7 +14,12 @@ var session = require('express-session')
 var csrf = require('csurf')
 var cookieParser = require('cookie-parser')
 var toobusy = require('toobusy-js')
+var multer = require('multer')
+var pathToRegexp = require('path-to-regexp')
+var crypto = require('crypto')
+
 var dadiStatus = require('@dadi/status')
+var dadiBoot = require('@dadi/boot')
 
 var MongoStore = require('connect-mongo')(session)
 var RedisStore = require('connect-redis')(session)
@@ -81,20 +84,25 @@ Server.prototype.start = function (done) {
 
   // override configuration variables based on request's host header
   app.use(function virtualHosts (req, res, next) {
-    var virtualHosts = config.get('virtualHosts')
+    const virtualHosts = config.get('virtualHosts')
 
-    if (_.isEmpty(virtualHosts)) {
+    if (Object.keys(virtualHosts).length === 0) {
       return next()
     }
 
-    var host = _.findKey(virtualHosts, virtualHost => {
-      return _.contains(virtualHost.hostnames, req.headers.host)
+    let host
+    Object.keys(virtualHosts).forEach(key => {
+      if (virtualHosts[key].hostnames.includes(req.headers.host)) {
+        host = virtualHosts[key]
+      }
     })
 
     // look for a default host
     if (!host) {
-      host = _.findKey(virtualHosts, virtualHost => {
-        return virtualHost.default === true
+      Object.keys(virtualHosts).forEach(key => {
+        if (virtualHosts[key].default === true) {
+          host = virtualHosts[key]
+        }
       })
     }
 
@@ -139,8 +147,9 @@ Server.prototype.start = function (done) {
   app.use(apiMiddleware.transportSecurity())
 
   // init virtual host public paths
-  _.each(config.get('virtualHosts'), (virtualHost, key) => {
-    var hostConfigFile = './config/' + virtualHost.configFile
+  Object.keys(config.get('virtualHosts')).forEach(key => {
+    const virtualHost = config.get('virtualHosts')[key]
+    const hostConfigFile = './config/' + virtualHost.configFile
 
     // TODO catch err
 
@@ -178,6 +187,16 @@ Server.prototype.start = function (done) {
 
   // request logging middleware
   app.use(log.requestLogger)
+
+  if (config.get('uploads.enabled')) {
+    const upload = this.getUploader()
+
+    app.use(upload.any(), (req, res, next) => {
+      // req.files contains uploaded files
+      // req.body contains the form's text fields
+      next()
+    })
+  }
 
   // session manager
   var sessionConfig = config.get('sessions')
@@ -259,8 +278,10 @@ Server.prototype.start = function (done) {
   })
 
   // load virtual host routes
-  _.each(config.get('virtualHosts'), (virtualHost, key) => {
-    var hostConfigFile = './config/' + virtualHost.configFile
+  const virtualHosts = config.get('virtualHosts')
+  Object.keys(virtualHosts).forEach(key => {
+    const virtualHost = virtualHosts[key]
+    const hostConfigFile = './config/' + virtualHost.configFile
 
     fs.stat(hostConfigFile, (err, stats) => {
       if (err && err.code === 'ENOENT') {
@@ -324,14 +345,13 @@ Server.prototype.exitHandler = function (options, err) {
   }
 
   if (err) {
-    console.log(err)
     if (err.stack) console.log(err.stack.toString())
+    dadiBoot.error(err)
   }
 
   if (options.exit) {
-    console.log()
-    console.log('Server stopped, process exiting...')
     log.info({ module: 'server' }, 'Server stopped, process exiting.')
+    dadiBoot.stopped()
     process.exit()
   }
 }
@@ -361,7 +381,7 @@ Server.prototype.stop = function (done) {
 
 Server.prototype.resolvePaths = function (paths) {
   if (Array.isArray(paths)) {
-    return _.map(paths, p => {
+    return paths.map(p => {
       return path.resolve(p)
     })
   } else {
@@ -370,7 +390,7 @@ Server.prototype.resolvePaths = function (paths) {
 }
 
 Server.prototype.loadPaths = function (paths) {
-  paths = _.extend({}, config.get('paths'), paths || {})
+  paths = Object.assign({}, config.get('paths'), paths || {})
   var options = {}
 
   options.datasourcePath = path.resolve(paths.datasources)
@@ -380,6 +400,10 @@ Server.prototype.loadPaths = function (paths) {
   options.publicPath = path.resolve(paths.public)
   options.routesPath = path.resolve(paths.routes)
   options.tokenWalletsPath = path.resolve(paths.tokenWallets)
+
+  if (config.get('uploads.enabled')) {
+    options.uploadPath = path.resolve(config.get('uploads.destinationPath'))
+  }
 
   this.ensureDirectories(options, () => {})
 
@@ -401,8 +425,6 @@ Server.prototype.loadApi = function (options, reload, callback) {
             message: 'Cache cleared successfully'
           })
         })
-      } else {
-        next()
       }
     })
 
@@ -450,54 +472,59 @@ Server.prototype.loadApi = function (options, reload, callback) {
   this.initMiddleware(options.middlewarePath, options)
 
   // Load routes
-  return this.updatePages(
-    options.pagePath,
-    options,
-    reload || false
-  ).then(() => {
-    this.addMonitor(options.datasourcePath, dsFile => {
-      this.updatePages(options.pagePath, options, true)
-    })
-
-    this.addMonitor(options.eventPath, eventFile => {
-      // Delete the existing cached events
-      Object.keys(require.cache).forEach(i => {
-        if (i.includes(options.eventPath)) delete require.cache[i]
+  return this.updatePages(options.pagePath, options, reload || false).then(
+    () => {
+      this.addMonitor(options.datasourcePath, dsFile => {
+        this.updatePages(options.pagePath, options, true)
       })
 
-      // Reload
-      this.updatePages(options.pagePath, options, true)
-    })
-
-    this.addMonitor(options.pagePath, pageFile => {
-      this.updatePages(options.pagePath, options, true)
-      this.compile(options)
-      templateStore.reInitialise()
-    })
-
-    this.addMonitor(options.routesPath, file => {
-      if (this.app.Router) {
-        this.app.Router.loadRewrites(options, () => {
-          this.app.Router.loadRewriteModule()
+      this.addMonitor(options.eventPath, eventFile => {
+        // Delete the existing cached events
+        Object.keys(require.cache).forEach(i => {
+          if (i.includes(options.eventPath)) delete require.cache[i]
         })
+
+        // Reload
+        this.updatePages(options.pagePath, options, true)
+      })
+
+      this.addMonitor(options.pagePath, pageFile => {
+        this.updatePages(options.pagePath, options, true)
+        this.compile(options)
+        templateStore.reInitialise()
+      })
+
+      this.addMonitor(options.routesPath, file => {
+        if (this.app.Router) {
+          this.app.Router.loadRewrites(options, () => {
+            this.app.Router.loadRewriteModule()
+          })
+        }
+      })
+
+      debug('load complete')
+
+      if (typeof callback === 'function') {
+        callback()
       }
-    })
-
-    debug('load complete')
-
-    if (typeof callback === 'function') {
-      callback()
     }
-  })
+  )
 }
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
   var middlewares = this.loadMiddleware(directoryPath, options)
-  _.each(middlewares, middleware => {
+  middlewares.forEach(middleware => {
     middleware.init(this.app)
   })
 }
 
+/**
+ * Load Middleware modules from the specified path
+ *
+ * @param {string} directoryPath - the path to the Middleware modules
+ * @param {Object} options -
+ * @returns {Array} an array of Middleware modules
+ */
 Server.prototype.loadMiddleware = function (directoryPath, options) {
   if (!fs.existsSync(directoryPath)) return
 
@@ -559,7 +586,7 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
             name: name,
             filepath: page
           },
-          _.extend({}, options, {
+          Object.assign({}, options, {
             templateCandidate: templateCandidate
           }),
           reload
@@ -620,13 +647,13 @@ Server.prototype.addComponent = function (options, reload) {
   if (!options.routes) return
 
   if (reload) {
-    _.each(options.routes, route => {
+    options.routes.forEach(route => {
       var hostWithPath = `${options.host}${route.path}`
       this.removeComponent(hostWithPath)
     })
   }
 
-  _.each(options.routes, route => {
+  options.routes.forEach(route => {
     // only add a route once
     var hostWithPath = `${options.host}${route.path}`
 
@@ -654,8 +681,12 @@ Server.prototype.addComponent = function (options, reload) {
         debug('use %s', route.path)
         if (options.component[req.method.toLowerCase()]) {
           // a matching route found, validate it
-          return this.app.Router
-            .validate(route, options.component.options, req, res)
+          return this.app.Router.validate(
+            route,
+            options.component.options,
+            req,
+            res
+          )
             .then(() => {
               return options.component[req.method.toLowerCase()](req, res, next)
             })
@@ -690,9 +721,17 @@ Server.prototype.removeComponent = function (path) {
 }
 
 Server.prototype.getComponent = function (key) {
-  return _.find(this.components, function (component) {
-    return component.page.key === key
+  const matches = Object.keys(this.components).map(component => {
+    if (this.components[component].page.key === key) {
+      return this.components[component]
+    }
   })
+
+  if (matches.length > 0) {
+    return matches[0]
+  } else {
+    return null
+  }
 }
 
 Server.prototype.addMonitor = function (filepath, callback) {
@@ -774,6 +813,70 @@ Server.prototype.getSessionStore = function (sessionConfig, env) {
 }
 
 /**
+ * Initialises the multer file upload parser. Sets up disk storage using
+ * the configured destination directory and configures a file filter that
+ * ensures files are only saved to disk if the current request URL has been
+ * whitelisted, to avoid file upload POSTS to any route.
+ *
+ * @returns {Object} - initialised multer instance
+ */
+Server.prototype.getUploader = function () {
+  return multer({
+    storage: this.createTemporaryFile(config.get('uploads.destinationPath')),
+    fileFilter: (req, file, cb) => {
+      // check url whitelist
+      const routes = config.get('uploads.whitelistRoutes')
+
+      if (routes.length > 0) {
+        let matched = routes.filter(route => {
+          let regex = pathToRegexp(route)
+          let match = regex.exec(req.url)
+
+          return match !== null
+        })
+
+        return cb(null, matched.length > 0)
+      }
+
+      return cb(null, false)
+    }
+  })
+}
+
+/**
+ * Initialises the multer disk storage module, which provides a function for
+ * renaming uploaded files based on configured options.
+ *
+ * @param {String} destination - the configured directory for file uploads
+ * @returns {Object} the initialised disk storage module
+ */
+Server.prototype.createTemporaryFile = destination => {
+  return multer.diskStorage({
+    destination: destination,
+    filename: (req, file, cb) => {
+      let filename = file.originalname
+
+      if (config.get('uploads.hashFilename')) {
+        const key = config.get('uploads.hashKey')
+        filename = crypto
+          .createHmac('sha1', key)
+          .update(filename)
+          .digest('hex')
+        filename += path.extname(file.originalname)
+      }
+
+      if (config.get('uploads.prefix') !== '') {
+        filename = `${config.get('uploads.prefix')}-${filename}`
+      } else if (config.get('uploads.prefixWithFieldName')) {
+        filename = `${file.fieldname}-${filename}`
+      }
+
+      cb(null, filename)
+    }
+  })
+}
+
+/**
  *  Create workspace directories if they don't already exist
  *
  *  @param {Object} options Object containing workspace paths
@@ -784,7 +887,9 @@ Server.prototype.ensureDirectories = function (options, done) {
   // create workspace directories if they don't exist; permissions default to 0777
   var idx = 0
 
-  _.each(options, dir => {
+  Object.keys(options).forEach(key => {
+    const dir = options[key]
+
     if (Array.isArray(dir)) {
       this.ensureDirectories(dir, () => {})
     } else {
@@ -869,99 +974,50 @@ function onConnection (socket) {
 }
 
 function onListening (e) {
+  // Get list of engines used
+  var engines = Object.keys(templateStore.getEngines())
+  var enginesInfo = engines.length ? engines.join(', ') : 'None found'.red
+
   // check that our API connection is valid
   help.isApiAvailable((err, result) => {
     if (err) {
-      console.log(err)
-      console.log()
+      dadiBoot.error(err)
       process.exit(0)
-    }
-
-    var env = config.get('env')
-    var protocol = config.get('server.protocol') || 'http'
-    var redirectPort = config.get('server.redirectPort')
-    var engines = Object.keys(templateStore.getEngines())
-    var enginesInfo = engines.length ? engines.join(', ') : 'None'.red
-    var extraPadding = (redirectPort > 0 && '          ') || ''
-
-    var startText = '\n'
-    startText += '  ----------------------------\n'
-    startText += '  ' + config.get('app.name').green + '\n'
-    startText += "  Started 'DADI Web'\n"
-    startText += '  ----------------------------\n'
-
-    if (protocol === 'http') {
-      startText +=
-        '  Server:      '.green +
-        extraPadding +
-        'http://' +
-        config.get('server.host') +
-        ':' +
-        config.get('server.port') +
-        '\n'
-    } else if (protocol === 'https') {
-      if (redirectPort > 0) {
-        startText +=
-          '  Server (http > https): '.green +
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.redirectPort') +
-          '\n'
-      }
-      startText +=
-        '  Server:      '.green +
-        extraPadding +
-        'https://' +
-        config.get('server.host') +
-        ':' +
-        config.get('server.port') +
-        '\n'
-    }
-
-    startText += '  Version:     '.green + extraPadding + version + '\n'
-    startText += '  Node.JS:     '.green + extraPadding + nodeVersion + '\n'
-    startText += '  Environment: '.green + extraPadding + env + '\n'
-    startText += '  Engine:      '.green + extraPadding + enginesInfo + '\n'
-
-    if (config.get('api.enabled') === true) {
-      startText +=
-        '  API:         '.green +
-        extraPadding +
-        config.get('api.host') +
-        ':' +
-        config.get('api.port') +
-        '\n'
-    } else {
-      startText +=
-        '  API:         '.green + extraPadding + 'Disabled'.red + '\n'
-      startText += '  ----------------------------\n'
-    }
-
-    if (env !== 'test') {
-      startText +=
-        '\n\n  Copyright ' +
-        String.fromCharCode(169) +
-        ' 2015-' +
-        new Date().getFullYear() +
-        ' DADI+ Limited (https://dadi.tech)'.white +
-        '\n'
-      console.log(startText)
+    } else if (config.get('env') !== 'test') {
+      dadiBoot.started({
+        server: `${config.get('server.protocol')}://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`,
+        header: {
+          app: config.get('app.name')
+        },
+        body: {
+          Protocol: config.get('server.protocol'),
+          Version: version,
+          'Node.js': nodeVersion,
+          Engine: enginesInfo,
+          Environment: config.get('env')
+        },
+        footer: {
+          'DADI API': config.get('api.enabled')
+            ? `${config.get('api.host')}:${config.get('api.port')}`
+            : '\u001b[31mNot enabled\u001b[39m'
+        }
+      })
     }
   })
 }
 
 function onError (err) {
   if (err.code === 'EADDRINUSE') {
-    var message =
-      "Can't connect to local address, is something already listening on port " +
-      config.get('server.port') +
-      '?'
+    let message = `Can't connect to local address, is something already listening on ${
+      `${config.get('server.host')}:${config.get('server.port')}`.underline
+    }?`
     err.localIp = config.get('server.host')
     err.localPort = config.get('server.port')
     err.message = message
-    console.log(err)
-    console.log()
+
+    dadiBoot.error(err)
     process.exit(0)
   }
 }

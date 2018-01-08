@@ -12,9 +12,7 @@ RouteValidator.prototype.get = function (route, param, options, req) {
 
     if (!datasource) {
       new Datasource(route.path, param.fetch, options).init((err, ds) => {
-        if (err) {
-          return reject(err)
-        }
+        if (err) return reject(err)
 
         this.validationDatasources[param.fetch] = datasource = ds
       })

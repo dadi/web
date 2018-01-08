@@ -1,6 +1,5 @@
 var path = require('path')
 var config = require(path.join(__dirname, '/../../../config.js'))
-var help = require(path.join(__dirname, '/../help'))
 var Passport = require('@dadi/passport')
 
 var BearerAuthStrategy = function (options) {
@@ -15,11 +14,16 @@ BearerAuthStrategy.prototype.getType = function () {
   return 'bearer'
 }
 
-BearerAuthStrategy.prototype.getToken = function (authStrategy, done) {
+BearerAuthStrategy.prototype.getToken = function (
+  authStrategy,
+  forceTokenRefresh,
+  done
+) {
   var strategy = authStrategy.config
   var self = this
 
   Passport({
+    forceTokenRefresh: forceTokenRefresh,
     issuer: {
       uri: (strategy.protocol || 'http') + '://' + strategy.host,
       port: strategy.port,
@@ -30,12 +34,12 @@ BearerAuthStrategy.prototype.getToken = function (authStrategy, done) {
     walletOptions: {
       path:
         config.get('paths.tokenWallets') +
-        '/' +
-        help.generateTokenWalletFilename(
-          strategy.host,
-          strategy.port,
-          strategy.credentials.clientId
-        )
+        '/token.' +
+        strategy.host +
+        strategy.port +
+        '.' +
+        strategy.credentials.clientId +
+        '.json'
     }
   })
     .then(function (bearerToken) {

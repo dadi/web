@@ -1,0 +1,50 @@
+{
+	"datasource": {
+		"key": "car_makes",
+		"name": "Makes datasource",
+		"source": {
+			"type": "dadiapi",
+			"protocol": "http",
+			"host": "127.0.0.1",
+			"port": "3000",
+			"endpoint": "1.0/cars/makes"
+		},
+    "caching": {
+      "ttl": 300,
+      "directory": {
+        "enabled": true,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
+    },
+    "auth": {
+      "type": "bearer",
+      "host": "127.0.0.1",
+      "port": "3000",
+      "tokenUrl": "/token",
+      "credentials": {
+        "clientId": "rosecombClient",
+        "secret": "superSecret"
+      }
+    },
+  	"paginate": true,
+  	"count": 20,
+  	"sort": { "name":1 },
+  	"search": {},
+    "filter": {},
+  	"fields": { "name": 1, "_id": 0 },
+    "chained": {
+      "datasource": "global",
+      "outputParam": {
+        "param": "results.0.id",
+        "field": "_id"
+      }
+    },
+    "requestParams": [
+      { "param": "make", "field": "name" }
+    ]
+	}
+}
