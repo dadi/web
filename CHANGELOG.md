@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * [#288](https://github.com/dadi/web/issues/288): fix required data check fails when given no data
 * [#310](https://github.com/dadi/web/pull/310): simplify start page: removes Dust.js and it's dependencies from the Web core. Instead there is a simple start page powered by the ES6 template engine (rather than the previous blog configuration)
 * [#312](https://github.com/dadi/web/issues/312): allow Mongo aggregation queries
-* fix bug where datasource parameters would be added to the endpoint when they already exist in the endpoint
+* fix bug where datasource parameters would be added to a DADI API endpoint when they already exist in the endpoint - leading to incorrect results loaded from the API 
 
 
 See the full [release notes](https://github.com/dadi/web/releases/tag/v5.0.0).
