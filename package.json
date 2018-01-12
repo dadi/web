@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "~5.2.8",
-    "@commitlint/config-angular": "~5.1.1",
+    "@commitlint/config-angular": "~6.0.2",
     "env-test": "~1.0.0",
     "husky": "~0.13.3",
     "istanbul": "^0.4.5",
