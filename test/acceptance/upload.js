@@ -253,7 +253,7 @@ describe('Upload', function (done) {
         .attach('avatar', './test/app/images/rosie.png')
         .end((err, res) => {
           const expectedData = res.body
-          expectedData.files[0].filename.should.eql(expected)
+          expectedData.files[0].filename.should.not.eql('rosie.png')
           done()
         })
       })
