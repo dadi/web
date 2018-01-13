@@ -161,6 +161,9 @@ Datasource.prototype.processRequest = function (datasource, req) {
         (requestParamsPage && req.params[requestParamsPage]) ||
         req.params.page ||
         1
+
+      datasourceParams.page =
+        ~~datasourceParams.page === 0 ? 1 : ~~datasourceParams.page
     }
 
     // add an ID filter if it was present in the querystring

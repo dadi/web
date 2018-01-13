@@ -17,6 +17,7 @@ var toobusy = require('toobusy-js')
 var multer = require('multer')
 var pathToRegexp = require('path-to-regexp')
 var crypto = require('crypto')
+var uuidv4 = require('uuid/v4')
 
 var dadiStatus = require('@dadi/status')
 var dadiBoot = require('@dadi/boot')
@@ -858,6 +859,8 @@ Server.prototype.createTemporaryFile = destination => {
 
       if (config.get('uploads.hashFilename')) {
         const key = config.get('uploads.hashKey')
+
+        filename += uuidv4()
         filename = crypto
           .createHmac('sha1', key)
           .update(filename)
@@ -866,9 +869,9 @@ Server.prototype.createTemporaryFile = destination => {
       }
 
       if (config.get('uploads.prefix') !== '') {
-        filename = `${config.get('uploads.prefix')}-${filename}`
+        filename = `${config.get('uploads.prefix')}-${Date.now()}-${filename}`
       } else if (config.get('uploads.prefixWithFieldName')) {
-        filename = `${file.fieldname}-${filename}`
+        filename = `${file.fieldname}-${Date.now()}-${filename}`
       }
 
       cb(null, filename)

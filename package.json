@@ -80,6 +80,7 @@
     "snyk": "^1.47.0",
     "through": "~2.3.8",
     "toobusy-js": "~0.5.1",
+    "uuid": "^3.1.0",
     "web-es6-templates": "~1.1.2",
     "wildcard": "~1.1.2"
   },
@@ -97,13 +98,12 @@
     "prettier": "^1.1.0",
     "should": "~13.2.0",
     "sinon": "~2.3.2",
+    "sinon-test": "~1.0.2",
     "snazzy": "~7.0.0",
     "standard": "8.6.0",
-    "sinon-test": "~1.0.2",
     "superagent": "~3.8.1",
     "superagent-mock": "~3.3.0",
-    "supertest": "~3.0.0",
-    "uuid": "^3.0.1"
+    "supertest": "~3.0.0"
   },
   "repository": {
     "type": "git",
