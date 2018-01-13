@@ -5,6 +5,7 @@ const formatError = require('@dadi/format-error')
 const http = require('http')
 const https = require('https')
 const path = require('path')
+const qs = require('query-string')
 const url = require('url')
 const zlib = require('zlib')
 
@@ -257,9 +258,9 @@ DadiApiProvider.prototype.processOutput = function (
     } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
       // if the error is anything other than Success or Bad Request, error
       const err = new Error()
-      err.message = `Datasource "${this.datasource
-        .name}" failed. ${res.statusMessage} (${res.statusCode}): ${this
-        .endpoint}`
+      err.message = `Datasource "${this.datasource.name}" failed. ${
+        res.statusMessage
+      } (${res.statusCode}): ${this.endpoint}`
 
       if (data) err.message += '\n' + data
 
@@ -336,6 +337,8 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
 
   let query = uri.indexOf('?') > 0 ? '&' : '?'
 
+  const existingParams = qs.parse(url.parse(uri).search)
+
   const params = [
     { count: datasourceParams.count || 0 },
     { skip: datasourceParams.skip },
@@ -353,7 +356,11 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
 
   params.forEach(param => {
     for (let key in param) {
-      if (param.hasOwnProperty(key) && typeof param[key] !== 'undefined') {
+      if (
+        param.hasOwnProperty(key) &&
+        typeof param[key] !== 'undefined' &&
+        !existingParams[key]
+      ) {
         query =
           query +
           key +
