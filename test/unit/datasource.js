@@ -907,13 +907,29 @@ describe('Datasource', function (done) {
       var params = { make: 'bmw', page: '3' }
       var req = { params: params, url: '/1.0/cars/makes' }
 
-      new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (
-        err,
-        ds
-      ) {
+      new Datasource(p, dsName, TestHelper.getPathOptions()).init((err, ds) => {
         ds.processRequest(dsName, req)
         ds.provider.endpoint.should.eql(
           'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=3&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}'
+        )
+        done()
+      })
+    })
+
+    it('should pass page param = 1 to the endpoint when page is not numeric', function (done) {
+      var name = 'test'
+      var schema = TestHelper.getPageSchema()
+      schema.settings.passFilters = true
+      var p = page(name, schema)
+      var dsName = 'car_makes'
+
+      var params = { make: 'bmw', page: 'x' }
+      var req = { params: params, url: '/1.0/cars/makes' }
+
+      new Datasource(p, dsName, TestHelper.getPathOptions()).init((err, ds) => {
+        ds.processRequest(dsName, req)
+        ds.provider.endpoint.should.eql(
+          'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={"name":"bmw"}&fields={"name":1,"_id":0}&sort={"name":1}'
         )
         done()
       })
