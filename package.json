@@ -88,7 +88,7 @@
     "@commitlint/cli": "~5.2.8",
     "@commitlint/config-angular": "~5.1.1",
     "env-test": "~1.0.0",
-    "husky": "~0.13.3",
+    "husky": "~0.15.0-rc.2",
     "istanbul": "^0.4.5",
     "istanbul-cobertura-badger": "^1.1.0",
     "lint-staged": "^3.4.0",
