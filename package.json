@@ -102,7 +102,7 @@
     "snazzy": "~7.0.0",
     "standard": "8.6.0",
     "superagent": "~3.8.1",
-    "superagent-mock": "~3.3.0",
+    "superagent-mock": "~3.7.0-beta.0",
     "supertest": "~3.0.0"
   },
   "repository": {
