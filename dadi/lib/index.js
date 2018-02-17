@@ -237,22 +237,8 @@ Server.prototype.start = function (done) {
   // handle routing & redirects
   router(this, options)
 
-  // init main public path for static files
-  if (options.publicPath) {
-    app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
-  }
-
-  // initialise virtualDirectories for serving static content
-  var parent = this
-  config.get('virtualDirectories').forEach(directory => {
-    app.use(servePublic.virtualDirectories(directory, parent.cacheLayer))
-  })
-
   // authentication layer
   if (config.get('api.enabled')) auth(this)
-
-  // Initialise the cache
-  this.cacheLayer.init()
 
   // start listening
   var server = (this.server = app.listen())
@@ -277,6 +263,20 @@ Server.prototype.start = function (done) {
       done()
     }
   })
+
+  // init main public path for static files
+  if (options.publicPath) {
+    app.use(servePublic.middleware(options.publicPath, this.cacheLayer))
+  }
+
+  // initialise virtualDirectories for serving static content
+  var parent = this
+  config.get('virtualDirectories').forEach(directory => {
+    app.use(servePublic.virtualDirectories(directory, parent.cacheLayer))
+  })
+
+  // Initialise the cache
+  this.cacheLayer.init()
 
   // load virtual host routes
   const virtualHosts = config.get('virtualHosts')
