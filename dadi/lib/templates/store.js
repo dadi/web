@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const convict = require('convict')
 const debug = require('debug')('web:templates')
 const fs = require('fs')
@@ -12,8 +11,8 @@ const helpers = require(path.join(__dirname, '/../help'))
 const Template = require(path.join(__dirname, 'template'))
 
 /**
-  * Builds a template store.
-  */
+ * Builds a template store.
+ */
 const TemplateStore = function () {
   this.additionalTemplates = []
   this.engines = {}
@@ -22,10 +21,10 @@ const TemplateStore = function () {
 }
 
 /**
-  * Finds a templating engine to deal with a given file extension.
-  *
-  * @return {object} The matching engine. undefined if none found.
-  */
+ * Finds a templating engine to deal with a given file extension.
+ *
+ * @return {object} The matching engine. undefined if none found.
+ */
 TemplateStore.prototype.findEngineForExtension = function (extension) {
   const engineHandle = Object.keys(this.engines).find(handle => {
     const engine = this.engines[handle]
@@ -39,10 +38,10 @@ TemplateStore.prototype.findEngineForExtension = function (extension) {
 }
 
 /**
-  * reInitialise template engines
-  *
-  * @return {Promise} Resolves when all functions finish executing.
-  */
+ * reInitialise template engines
+ *
+ * @return {Promise} Resolves when all functions finish executing.
+ */
 TemplateStore.prototype.reInitialise = function () {
   let queue = []
 
@@ -64,10 +63,10 @@ TemplateStore.prototype.reInitialise = function () {
 }
 
 /**
-  * Triggers the `finishLoading` function on all templating engines.
-  *
-  * @return {Promise} Resolves when all functions finish executing.
-  */
+ * Triggers the `finishLoading` function on all templating engines.
+ *
+ * @return {Promise} Resolves when all functions finish executing.
+ */
 TemplateStore.prototype.finishLoading = function () {
   let queue = []
 
@@ -87,30 +86,30 @@ TemplateStore.prototype.finishLoading = function () {
 }
 
 /**
-  * Retrieves a template by name.
-  *
-  * @param {string} templateName The name of the template.
-  *
-  * @return {Template} The template.
-  */
+ * Retrieves a template by name.
+ *
+ * @param {string} templateName The name of the template.
+ *
+ * @return {Template} The template.
+ */
 TemplateStore.prototype.get = function (templateName) {
   return this.templates[templateName]
 }
 
 /**
-  * Retrieves the engines object.
-  *
-  * @return {Object} The engines object.
-  */
+ * Retrieves the engines object.
+ *
+ * @return {Object} The engines object.
+ */
 TemplateStore.prototype.getEngines = function () {
   return this.engines
 }
 
 /**
-  * Computes the list of file extensions supported by all engines.
-  *
-  * @return {Array} An array of extensions.
-  */
+ * Computes the list of file extensions supported by all engines.
+ *
+ * @return {Array} An array of extensions.
+ */
 TemplateStore.prototype.getSupportedExtensions = function () {
   let extensions = []
 
@@ -128,15 +127,15 @@ TemplateStore.prototype.getSupportedExtensions = function () {
 }
 
 /**
-  * Loads all files in a directory.
-  *
-  * @param {string} directory The full path to the directory.
-  * @param {object} options Additional options.
-  * @param {boolean} options.recursive Whether to load files in sub-directories.
-  * @param {string} options.namespace A namespace for the files.
-  *
-  * @return {Promise} A Promise resolving when all files have been loaded.
-  */
+ * Loads all files in a directory.
+ *
+ * @param {string} directory The full path to the directory.
+ * @param {object} options Additional options.
+ * @param {boolean} options.recursive Whether to load files in sub-directories.
+ * @param {string} options.namespace A namespace for the files.
+ *
+ * @return {Promise} A Promise resolving when all files have been loaded.
+ */
 TemplateStore.prototype.loadDirectory = function (directory, options) {
   options = options || {}
   options.recursive = options.recursive || false
@@ -145,19 +144,14 @@ TemplateStore.prototype.loadDirectory = function (directory, options) {
   return helpers.readDirectory(directory, options).then(files => {
     return this.loadFiles(
       files,
-      _.extend(
-        {
-          basePath: directory
-        },
-        options
-      )
+      Object.assign({}, { basePath: directory }, options)
     )
   })
 }
 
 /**
-  * Loads all templating engines.
-  */
+ * Loads all templating engines.
+ */
 TemplateStore.prototype.loadEngines = function (engines) {
   const globalEngineConfig = config.get('engines')
   const enginesLoaded = engines.map(engine => {
@@ -206,13 +200,13 @@ TemplateStore.prototype.loadEngines = function (engines) {
 }
 
 /**
-  * Loads files from an array of paths.
-  *
-  * @param {array} files The absolute paths for the files to be loaded.
-  * @param {object} options Additional options.
-  *
-  * @return {Promise} A Promise resolving when all files have been loaded.
-  */
+ * Loads files from an array of paths.
+ *
+ * @param {array} files The absolute paths for the files to be loaded.
+ * @param {object} options Additional options.
+ *
+ * @return {Promise} A Promise resolving when all files have been loaded.
+ */
 TemplateStore.prototype.loadFiles = function (files, options) {
   options = options || {}
 
@@ -245,14 +239,14 @@ TemplateStore.prototype.loadFiles = function (files, options) {
 }
 
 /**
-  * Loads page templates.
-  *
-  * @param {array} pages.engines An array containing the engine for a page
-  * @param {array} pages.file An array containing the full path for a page
-  * @param {object} options Additional options.
-  *
-  * @return {Promise} A Promise resolving when all pages have been loaded.
-  */
+ * Loads page templates.
+ *
+ * @param {array} pages.engines An array containing the engine for a page
+ * @param {array} pages.file An array containing the full path for a page
+ * @param {object} options Additional options.
+ *
+ * @return {Promise} A Promise resolving when all pages have been loaded.
+ */
 TemplateStore.prototype.loadPages = function (pages, options) {
   let enginesMap = {}
 
@@ -292,14 +286,14 @@ TemplateStore.prototype.loadPages = function (pages, options) {
 }
 
 /**
-  * Loads a template into the store.
-  *
-  * @param {object} parameters The template parameters.
-  * @param {string} parameters.data The content of the template.
-  * @param {string} parameters.extension The file extension.
-  * @param {string} parameters.name The name of the template.
-  * @param {string} parameters.namespace The namespace of the template.
-  */
+ * Loads a template into the store.
+ *
+ * @param {object} parameters The template parameters.
+ * @param {string} parameters.data The content of the template.
+ * @param {string} parameters.extension The file extension.
+ * @param {string} parameters.name The name of the template.
+ * @param {string} parameters.namespace The namespace of the template.
+ */
 TemplateStore.prototype.loadTemplate = function (parameters) {
   parameters = parameters || {}
 
@@ -309,7 +303,9 @@ TemplateStore.prototype.loadTemplate = function (parameters) {
 
   if (!engine) {
     const error = new Error(
-      `Error loading template "${parameters.name}": no engine for extension ${parameters.extension}.`
+      `Error loading template "${parameters.name}": no engine for extension ${
+        parameters.extension
+      }.`
     )
 
     log.error(
@@ -375,10 +371,10 @@ TemplateStore.prototype.loadTemplate = function (parameters) {
 }
 
 /**
-  * Validates a templating engine, checking for vital lifecycle methods.
-  *
-  * @throws {Error} If the engine fails the validation.
-  */
+ * Validates a templating engine, checking for vital lifecycle methods.
+ *
+ * @throws {Error} If the engine fails the validation.
+ */
 TemplateStore.prototype.validateEngine = function (factory, engine) {
   let errors = []
 
@@ -418,9 +414,9 @@ TemplateStore.prototype.validateEngine = function (factory, engine) {
 
   if (errors.length) {
     const engineName = factory && factory.metadata && factory.metadata.name
-    const errorMessage = `Validation failed for ${engineName
-      ? engineName + ' '
-      : ''}templating engine: ${errors.join(', ')}`
+    const errorMessage = `Validation failed for ${
+      engineName ? engineName + ' ' : ''
+    }templating engine: ${errors.join(', ')}`
     const error = new Error(errorMessage)
 
     log.error({ module: 'templates' }, { err: error }, errorMessage)

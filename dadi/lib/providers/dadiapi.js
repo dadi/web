@@ -1,11 +1,11 @@
 'use strict'
 
-const _ = require('underscore')
 const debug = require('debug')('web:provider:dadi-api')
 const formatError = require('@dadi/format-error')
 const http = require('http')
 const https = require('https')
 const path = require('path')
+const qs = require('query-string')
 const url = require('url')
 const zlib = require('zlib')
 
@@ -78,7 +78,7 @@ DadiApiProvider.prototype.buildEndpoint = function (datasourceParams) {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-DadiApiProvider.prototype.load = function (requestUrl, done) {
+DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
   this.options = {
     protocol: this.datasource.source.protocol || config.get('api.protocol'),
     host: this.datasource.source.host || config.get('api.host'),
@@ -120,7 +120,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
     this.getHeaders((err, headers) => {
       err && done(err)
 
-      this.options = _.extend(this.options, headers)
+      this.options = Object.assign({}, this.options, headers)
 
       log.info(
         { module: 'remote' },
@@ -135,6 +135,12 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
       let request = agent.request(this.options)
 
       request.on('response', res => {
+        // If the token is not valid, we try a second time
+        // with a new one.
+        if (res.statusCode === 401 && !isRetry) {
+          return this.load(requestUrl, done, true)
+        }
+
         this.handleResponse(this.endpoint, res, done)
       })
 
@@ -150,7 +156,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done) {
       })
 
       request.end()
-    })
+    }, isRetry)
   })
 }
 
@@ -252,16 +258,9 @@ DadiApiProvider.prototype.processOutput = function (
     } else if (res.statusCode && !/200|400/.exec(res.statusCode)) {
       // if the error is anything other than Success or Bad Request, error
       const err = new Error()
-      err.message =
-        'Datasource "' +
-        this.datasource.name +
-        '" failed. ' +
-        res.statusMessage +
-        ' (' +
-        res.statusCode +
-        ')' +
-        ': ' +
-        this.endpoint
+      err.message = `Datasource "${this.datasource.name}" failed. ${
+        res.statusMessage
+      } (${res.statusCode}): ${this.endpoint}`
 
       if (data) err.message += '\n' + data
 
@@ -338,6 +337,8 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
 
   let query = uri.indexOf('?') > 0 ? '&' : '?'
 
+  const existingParams = qs.parse(url.parse(uri).search)
+
   const params = [
     { count: datasourceParams.count || 0 },
     { skip: datasourceParams.skip },
@@ -355,12 +356,16 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
 
   params.forEach(param => {
     for (let key in param) {
-      if (param.hasOwnProperty(key) && typeof param[key] !== 'undefined') {
+      if (
+        param.hasOwnProperty(key) &&
+        typeof param[key] !== 'undefined' &&
+        !existingParams[key]
+      ) {
         query =
           query +
           key +
           '=' +
-          (_.isObject(param[key]) ? JSON.stringify(param[key]) : param[key]) +
+          (Object.keys(param[key]) ? JSON.stringify(param[key]) : param[key]) +
           '&'
       }
     }
@@ -375,7 +380,7 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
  * @param  {fn} done - callback
  * @return {void}
  */
-DadiApiProvider.prototype.getHeaders = function (done) {
+DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
   let headers = {
     'accept-encoding': 'gzip'
   }
@@ -389,27 +394,31 @@ DadiApiProvider.prototype.getHeaders = function (done) {
       this.datasource.requestHeaders['content-type'] = 'application/json'
     }
 
-    headers = _.extend(headers, this.datasource.requestHeaders)
+    headers = Object.assign({}, headers, this.datasource.requestHeaders)
   }
 
   // If the data-source has its own auth strategy, use it.
   // Otherwise, authenticate with the main server via bearer token
   if (this.authStrategy) {
     if (this.authStrategy.getType() === 'bearer') {
-      this.authStrategy.getToken(this.authStrategy, (err, bearerToken) => {
-        if (err) {
-          return done(err)
+      this.authStrategy.getToken(
+        this.authStrategy,
+        authenticationRetry,
+        (err, bearerToken) => {
+          if (err) {
+            return done(err)
+          }
+
+          headers['Authorization'] = 'Bearer ' + bearerToken
+
+          return done(null, { headers: headers })
         }
-
-        headers['Authorization'] = 'Bearer ' + bearerToken
-
-        return done(null, { headers: headers })
-      })
+      )
     }
   } else {
     try {
       help
-        .getToken(this.datasource)
+        .getToken(authenticationRetry)
         .then(bearerToken => {
           headers['Authorization'] = 'Bearer ' + bearerToken
 
@@ -462,8 +471,8 @@ DadiApiProvider.prototype.processSortParameter = function processSortParameter (
 
   if (typeof obj !== 'object' || obj === null) return sort
 
-  if (_.isArray(obj)) {
-    _.each(obj, (value, key) => {
+  if (Array.isArray(obj)) {
+    obj.forEach(value => {
       if (
         typeof value === 'object' &&
         value.hasOwnProperty('field') &&

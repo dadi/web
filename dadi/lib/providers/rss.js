@@ -1,6 +1,5 @@
 'use strict'
 
-const _ = require('underscore')
 const path = require('path')
 const request = require('request')
 const FeedParser = require('feedparser')
@@ -44,9 +43,9 @@ RSSProvider.prototype.buildQueryParams = function buildQueryParams () {
   params.count = datasource.count
   params.fields = ''
 
-  if (_.isArray(datasource.fields)) {
+  if (Array.isArray(datasource.fields)) {
     params.fields = datasource.fields.join(',')
-  } else if (_.isObject(datasource.fields)) {
+  } else if (datasource.fields && Object.keys(datasource.fields).length) {
     params.fields = Object.keys(datasource.fields).join(',')
   }
 

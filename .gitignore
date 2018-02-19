@@ -6,6 +6,7 @@ app/*
 !test/app
 !test/app/public
 !test/workspace
+test/app/uploads/**/*
 
 # Config
 config.json

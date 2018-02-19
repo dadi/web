@@ -1,0 +1,51 @@
+{
+  "datasource": {
+    "key": "car_makes_unchained_remote",
+    "name": "Makes datasource",
+    "source": {
+      "type": "remote",
+      "protocol": "http",
+      "host": "127.0.0.1",
+      "port": "3000",
+      "endpoint": "1.0/cars/makes"
+    },
+    "caching": {
+      "ttl": 300,
+      "directory": {
+        "enabled": true,
+        "path": "./cache/web/",
+        "extension": "json"
+      },
+      "redis": {
+        "enabled": false
+      }
+    },
+    "auth": {
+      "type": "bearer",
+      "host": "127.0.0.1",
+      "port": "3000",
+      "tokenUrl": "/token",
+      "credentials": {
+        "clientId": "testClient",
+        "secret": "superSecret"
+      }
+    },
+    "paginate": true,
+    "count": 20,
+    "sort": {
+      "name": 1
+    },
+    "search": {},
+    "filter": {},
+    "fields": {
+      "name": 1,
+      "_id": 0
+    },
+    "requestParams": [
+      {
+        "param": "make",
+        "field": "name"
+      }
+    ]
+  }
+}

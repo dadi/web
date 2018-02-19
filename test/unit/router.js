@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var fs = require("fs")
 var nock = require("nock")
 var request = require("supertest")
@@ -139,9 +138,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should redirect to lowercased URL if the current request URL is not all lowercase", function(
-        done
-      ) {
+      it("should redirect to lowercased URL if the current request URL is not all lowercase", function(done) {
         var routerConfig = {
           rewrites: {
             forceLowerCase: true
@@ -151,7 +148,7 @@ describe("Router", function(done) {
         TestHelper.disableApiConfig().then(() => {
           TestHelper.updateConfig(routerConfig).then(() => {
             var pages = TestHelper.setUpPages()
-            pages[0].datasources = ["car-makes"]
+            pages[0].datasources = ["car_makes"]
 
             // provide API response
             var results = { results: [{ make: "ford" }] }
@@ -180,9 +177,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should not redirect to lowercased URL if only URL parameters are not lowercase", function(
-        done
-      ) {
+      it("should not redirect to lowercased URL if only URL parameters are not lowercase", function(done) {
         var routerConfig = {
           rewrites: {
             forceLowerCase: true
@@ -192,7 +187,7 @@ describe("Router", function(done) {
         TestHelper.disableApiConfig().then(() => {
           TestHelper.updateConfig(routerConfig).then(() => {
             var pages = TestHelper.setUpPages()
-            pages[0].datasources = ["car-makes-unchained"]
+            pages[0].datasources = ["car_makes_unchained"]
 
             // provide API response
             var results = { results: [{ make: "ford" }] }
@@ -215,9 +210,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should not lowercase URL parameters when redirecting to lowercase URL", function(
-        done
-      ) {
+      it("should not lowercase URL parameters when redirecting to lowercase URL", function(done) {
         var routerConfig = {
           rewrites: {
             forceLowerCase: true
@@ -227,7 +220,7 @@ describe("Router", function(done) {
         TestHelper.disableApiConfig().then(() => {
           TestHelper.updateConfig(routerConfig).then(() => {
             var pages = TestHelper.setUpPages()
-            pages[0].datasources = ["car-makes-unchained"]
+            pages[0].datasources = ["car_makes_unchained"]
 
             // provide API response
             var results = { results: [{ make: "ford" }] }
@@ -252,9 +245,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should add a trailing slash and redirect if the current request URL does not end with a slash", function(
-        done
-      ) {
+      it("should add a trailing slash and redirect if the current request URL does not end with a slash", function(done) {
         var routerConfig = {
           rewrites: {
             forceTrailingSlash: true
@@ -264,7 +255,7 @@ describe("Router", function(done) {
         TestHelper.disableApiConfig().then(() => {
           TestHelper.updateConfig(routerConfig).then(() => {
             var pages = TestHelper.setUpPages()
-            pages[0].datasources = ["car-makes"]
+            pages[0].datasources = ["car_makes"]
 
             // provide API response
             var results = { results: [{ make: "ford" }] }
@@ -291,9 +282,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should strip specified index pages from the current request URL", function(
-        done
-      ) {
+      it("should strip specified index pages from the current request URL", function(done) {
         var routerConfig = {
           rewrites: {
             stripIndexPages: ["index.php", "default.aspx"],
@@ -304,7 +293,7 @@ describe("Router", function(done) {
         TestHelper.disableApiConfig().then(() => {
           TestHelper.updateConfig(routerConfig).then(() => {
             var pages = TestHelper.setUpPages()
-            pages[0].datasources = ["car-makes"]
+            pages[0].datasources = ["car_makes"]
 
             // provide API response
             var results = { results: [{ make: "ford" }] }
@@ -332,9 +321,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should add a trailing slash and lowercase the URL if both settings are true", function(
-        done
-      ) {
+      it("should add a trailing slash and lowercase the URL if both settings are true", function(done) {
         var routerConfig = {
           rewrites: {
             forceTrailingSlash: true,
@@ -345,7 +332,7 @@ describe("Router", function(done) {
         TestHelper.disableApiConfig().then(() => {
           TestHelper.updateConfig(routerConfig).then(() => {
             var pages = TestHelper.setUpPages()
-            pages[0].datasources = ["car-makes"]
+            pages[0].datasources = ["car_makes"]
 
             // provide API response
             var results = { results: [{ make: "ford" }] }
@@ -374,9 +361,7 @@ describe("Router", function(done) {
       })
     })
 
-    it("should redirect to new location if the current request URL is found in a rewrites file", function(
-      done
-    ) {
+    it("should redirect to new location if the current request URL is found in a rewrites file", function(done) {
       TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {
@@ -407,9 +392,7 @@ describe("Router", function(done) {
       })
     })
 
-    it("should return 403 status if redirect rule specifies it", function(
-      done
-    ) {
+    it("should return 403 status if redirect rule specifies it", function(done) {
       TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {
@@ -437,9 +420,7 @@ describe("Router", function(done) {
       })
     })
 
-    it("should return 410 status if redirect rule specifies it", function(
-      done
-    ) {
+    it("should return 410 status if redirect rule specifies it", function(done) {
       TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {
@@ -467,9 +448,7 @@ describe("Router", function(done) {
       })
     })
 
-    it("should return content-type if redirect rule specifies it", function(
-      done
-    ) {
+    it("should return content-type if redirect rule specifies it", function(done) {
       TestHelper.setupApiIntercepts()
 
       TestHelper.disableApiConfig().then(() => {
@@ -509,7 +488,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var page1 = Page("page10", TestHelper.getPageSchema())
-          page1.template = "test.dust"
+          page1.template = "test.js"
           page1.routes[0].path = "/test/assets/images/main"
           page1.datasources = []
           page1.events = []
@@ -517,7 +496,7 @@ describe("Router", function(done) {
           pages.push(page1)
 
           var page2 = Page("page200", TestHelper.getPageSchema())
-          page2.template = "test.dust"
+          page2.template = "test.js"
           page2.routes[0].path = "/index"
           page2.datasources = []
           page2.events = []
@@ -576,9 +555,7 @@ describe("Router", function(done) {
       })
     })
 
-    it("should redirect to new location if the current request URL is found in a datasource query result", function(
-      done
-    ) {
+    it("should redirect to new location if the current request URL is found in a datasource query result", function(done) {
       var routerConfig = {
         rewrites: {
           forceLowerCase: true,
@@ -682,9 +659,7 @@ describe("Router", function(done) {
   })
 
   describe("Add Constraint", function(done) {
-    it("should add a constraint if the provided route specifies a constraint handler", function(
-      done
-    ) {
+    it("should add a constraint if the provided route specifies a constraint handler", function(done) {
       Server.app = api()
       var server = Server
 
@@ -705,9 +680,7 @@ describe("Router", function(done) {
       done()
     })
 
-    it("should throw error if the provided route specifies a missing constraint handler", function(
-      done
-    ) {
+    it("should throw error if the provided route specifies a missing constraint handler", function(done) {
       Server.app = api()
       var server = Server
 
@@ -763,9 +736,7 @@ describe("Router", function(done) {
         }
       })
 
-      it("should return 200 OK if the parameter matches one in the array", function(
-        done
-      ) {
+      it("should return 200 OK if the parameter matches one in the array", function(done) {
         TestHelper.updateConfig({ data: { preload: [] } }).then(() => {
           TestHelper.disableApiConfig().then(() => {
             TestHelper.setupApiIntercepts()
@@ -784,9 +755,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should return 404 NOT FOUND if the parameter does not match one in the array", function(
-        done
-      ) {
+      it("should return 404 NOT FOUND if the parameter does not match one in the array", function(done) {
         TestHelper.disableApiConfig().then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].routes = pageRouteConfig.routes
@@ -813,7 +782,7 @@ describe("Router", function(done) {
                 {
                   param: "make",
                   preload: {
-                    source: "car-makes",
+                    source: "car_makes",
                     field: "make"
                   }
                 }
@@ -823,11 +792,9 @@ describe("Router", function(done) {
         }
       })
 
-      it("should return 200 OK if the parameter matches preloaded data", function(
-        done
-      ) {
+      it("should return 200 OK if the parameter matches preloaded data", function(done) {
         TestHelper.updateConfig({
-          data: { preload: ["car-makes"] }
+          data: { preload: ["car_makes"] }
         }).then(() => {
           TestHelper.disableApiConfig().then(() => {
             var pages = TestHelper.setUpPages()
@@ -853,11 +820,9 @@ describe("Router", function(done) {
         })
       })
 
-      it("should return 404 NOT FOUND if the parameter does not match preloaded data", function(
-        done
-      ) {
+      it("should return 404 NOT FOUND if the parameter does not match preloaded data", function(done) {
         TestHelper.updateConfig({
-          data: { preload: ["car-makes"] }
+          data: { preload: ["car_makes"] }
         }).then(() => {
           TestHelper.disableApiConfig().then(() => {
             var pages = TestHelper.setUpPages()
@@ -892,7 +857,7 @@ describe("Router", function(done) {
               path: "/test/:make",
               params: [
                 {
-                  fetch: "car-makes-unchained"
+                  fetch: "car_makes_unchained"
                 }
               ]
             }
@@ -900,9 +865,7 @@ describe("Router", function(done) {
         }
       })
 
-      it("should return 200 OK if the parameter matches a datasource lookup", function(
-        done
-      ) {
+      it("should return 200 OK if the parameter matches a datasource lookup", function(done) {
         TestHelper.updateConfig({ data: { preload: [] } }).then(() => {
           TestHelper.disableApiConfig().then(() => {
             var pages = TestHelper.setUpPages()
@@ -928,9 +891,7 @@ describe("Router", function(done) {
         })
       })
 
-      it("should return 404 NOT FOUND if the parameter does not match a datasource lookup", function(
-        done
-      ) {
+      it("should return 404 NOT FOUND if the parameter does not match a datasource lookup", function(done) {
         TestHelper.updateConfig({ data: { preload: [] } }).then(() => {
           TestHelper.disableApiConfig().then(() => {
             var pages = TestHelper.setUpPages()
@@ -957,9 +918,7 @@ describe("Router", function(done) {
   })
 
   describe("Test Constraint", function(done) {
-    it("should return true if the route does not have a constraint", function(
-      done
-    ) {
+    it("should return true if the route does not have a constraint", function(done) {
       Server.app = api()
       var server = Server
 
@@ -981,9 +940,7 @@ describe("Router", function(done) {
       })
     })
 
-    it("should return false if the route constraint returns false", function(
-      done
-    ) {
+    it("should return false if the route constraint returns false", function(done) {
       Server.app = api()
       var server = Server
 

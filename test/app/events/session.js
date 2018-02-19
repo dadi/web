@@ -3,7 +3,14 @@
 var Event = function(req, res, data, callback) {
   if (req.session) {
     req.session.active = true
-    req.session.save(function(err) {
+
+    req.session.vehicles = {
+      make: "mazda",
+      edition: 3
+    }
+
+    req.session.save(err => {
+      if (err) console.log(err)
       // session saved
     })
 

@@ -1,4 +1,3 @@
-var _ = require("underscore")
 var fs = require("fs")
 var path = require("path")
 var should = require("should")
@@ -76,7 +75,7 @@ describe("Config", function(done) {
         var pages = TestHelper.newPage(
           "test",
           "/session",
-          "session.dust",
+          "session.js",
           [],
           ["session"]
         )
