@@ -109,12 +109,13 @@ Api.prototype.use = function (path, host, handler) {
 
   debug('use %s%s', host, path)
 
-  var regex = pathToRegexp(path)
+  var keys = []
+  var regex = pathToRegexp(path, keys)
   var hostWithPath = `${host}${path}`
 
   this.paths.push({
     path: hostWithPath,
-    order: routePriority(path, regex.keys),
+    order: routePriority(path, keys),
     handler: handler,
     regex: regex
   })
