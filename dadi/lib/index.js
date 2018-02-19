@@ -691,8 +691,7 @@ Server.prototype.addComponent = function (options, reload) {
             .then(() => {
               return options.component[req.method.toLowerCase()](req, res, next)
             })
-            .catch(err => {
-              if (err) return next(err)
+            .catch(() => {
               // try next route
               if (next) {
                 return next()

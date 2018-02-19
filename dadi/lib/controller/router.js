@@ -184,7 +184,8 @@ Router.prototype.validate = function (route, options, req, res) {
     // test the supplied url against each matched route.
     // for example: does "/test/2" match "/test/:page"?
     const pathname = url.parse(req.url, true).pathname
-    const regex = pathToRegexp(route.path)
+    const keys = []
+    const regex = pathToRegexp(route.path, keys)
     const match = regex.exec(pathname)
 
     // don't subject 404 and 5xx to validation
@@ -194,12 +195,12 @@ Router.prototype.validate = function (route, options, req, res) {
 
     // move to the next route if no match
     if (!match) {
-      return reject('')
+      return reject(new Error('no match'))
     }
 
     // get all the dynamic keys from the route
     // i.e. anything that starts with ":" -> "/news/:title"
-    this.injectRequestParams(match, regex.keys, req)
+    this.injectRequestParams(match, keys, req)
 
     let paramsPromises = []
 
@@ -220,13 +221,15 @@ Router.prototype.validate = function (route, options, req, res) {
               return resolve('')
             } else {
               return reject(
-                'Parameter "' +
-                  param.param +
-                  '=' +
-                  req.params[param.param] +
-                  '" not found in preloaded data "' +
-                  param.preload.source +
-                  '"'
+                new Error(
+                  'Parameter "' +
+                    param.param +
+                    '=' +
+                    req.params[param.param] +
+                    '" not found in preloaded data "' +
+                    param.preload.source +
+                    '"'
+                )
               )
             }
           } else if (param.in && Array.isArray(param.in)) {
@@ -237,13 +240,15 @@ Router.prototype.validate = function (route, options, req, res) {
               return resolve('')
             } else {
               return reject(
-                'Parameter "' +
-                  param.param +
-                  '=' +
-                  req.params[param.param] +
-                  '" not found in array "' +
-                  param.in +
-                  '"'
+                new Error(
+                  'Parameter "' +
+                    param.param +
+                    '=' +
+                    req.params[param.param] +
+                    '" not found in array "' +
+                    param.in +
+                    '"'
+                )
               )
             }
           } else if (param.fetch) {
@@ -254,14 +259,16 @@ Router.prototype.validate = function (route, options, req, res) {
               })
               .catch(err => {
                 return reject(
-                  'Parameter "' +
-                    param.param +
-                    '=' +
-                    req.params[param.param] +
-                    '" not found in datasource "' +
-                    param.fetch +
-                    '". ' +
-                    err
+                  new Error(
+                    'Parameter "' +
+                      param.param +
+                      '=' +
+                      req.params[param.param] +
+                      '" not found in datasource "' +
+                      param.fetch +
+                      '". ' +
+                      err
+                  )
                 )
               })
           }
@@ -271,17 +278,18 @@ Router.prototype.validate = function (route, options, req, res) {
 
     Promise.all(paramsPromises)
       .then(result => {
-        this.testConstraint(route.path, req, res, passed => {
+        this.testConstraint(route.path, req, res, (err, passed) => {
+          console.log(err)
           if (passed) {
             return resolve('')
           } else {
-            return reject('')
+            return reject(new Error('testConstraint returned false'))
           }
         })
       })
       .catch(err => {
         log.warn(err)
-        return reject('')
+        return reject(err)
       })
   })
 }
@@ -318,7 +326,7 @@ Router.prototype.injectRequestParams = function (matchedRoute, keys, req) {
 Router.prototype.testConstraint = function (route, req, res, callback) {
   // no constraint against this route, let's use it
   if (!this.constraints[route]) {
-    return callback(true)
+    return callback(null, true)
   }
 
   // if there's a constraint handler for this route, run it
@@ -330,12 +338,12 @@ Router.prototype.testConstraint = function (route, req, res, callback) {
   if (typeof this.constraints[route] === 'function') {
     help.timer.start('router constraint: ' + route)
 
-    this.constraints[route](req, res, function (result) {
+    this.constraints[route](req, res, result => {
       help.timer.stop('router constraint: ' + route)
-      return callback(result)
+      return callback(null, result)
     })
   } else {
-    return callback(true)
+    return callback(null, true)
   }
 }
 

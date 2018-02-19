@@ -1,21 +1,21 @@
-var debug = require('debug')('web:api')
-var fs = require('fs')
-var http = require('http')
-var https = require('https')
-var path = require('path')
-var pathToRegexp = require('path-to-regexp')
-var url = require('url')
+const debug = require('debug')('web:api')
+const fs = require('fs')
+const http = require('http')
+const https = require('https')
+const path = require('path')
+const pathToRegexp = require('path-to-regexp')
+const url = require('url')
 
-var log = require('@dadi/logger')
-var config = require(path.join(__dirname, '/../../../config'))
+const log = require('@dadi/logger')
+const config = require(path.join(__dirname, '/../../../config'))
 
-var errorView = require(path.join(__dirname, '/../view/errors'))
+const errorView = require(path.join(__dirname, '/../view/errors'))
 
 /**
  * Represents the main server.
  * @constructor
  */
-var Api = function () {
+const Api = function () {
   this.paths = []
   this.all = []
   this.errors = []
@@ -35,7 +35,7 @@ var Api = function () {
       this.redirectInstance = http.createServer(this.redirectListener)
     }
 
-    var readFileSyncSafe = path => {
+    const readFileSyncSafe = path => {
       try {
         return fs.readFileSync(path)
       } catch (ex) {
@@ -44,10 +44,10 @@ var Api = function () {
       return null
     }
 
-    var passphrase = config.get('server.sslPassphrase')
-    var caPath = config.get('server.sslIntermediateCertificatePath')
-    var caPaths = config.get('server.sslIntermediateCertificatePaths')
-    var serverOptions = {
+    const passphrase = config.get('server.sslPassphrase')
+    const caPath = config.get('server.sslIntermediateCertificatePath')
+    const caPaths = config.get('server.sslIntermediateCertificatePaths')
+    const serverOptions = {
       key: readFileSyncSafe(config.get('server.sslPrivateKeyPath')),
       cert: readFileSyncSafe(config.get('server.sslCertificatePath'))
     }
@@ -59,7 +59,7 @@ var Api = function () {
     if (caPaths && caPaths.length > 0) {
       serverOptions.ca = []
       caPaths.forEach(path => {
-        var data = readFileSyncSafe(path)
+        const data = readFileSyncSafe(path)
         data && serverOptions.ca.push(data)
       })
     } else if (caPath && caPath.length > 0) {
@@ -71,7 +71,7 @@ var Api = function () {
     try {
       this.httpsInstance = https.createServer(serverOptions, this.listener)
     } catch (ex) {
-      var exPrefix = 'error starting https server: '
+      const exPrefix = 'error starting https server: '
       switch (ex.message) {
         case 'error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt':
           throw new Error(exPrefix + 'incorrect ssl passphrase')
@@ -109,12 +109,13 @@ Api.prototype.use = function (path, host, handler) {
 
   debug('use %s%s', host, path)
 
-  var regex = pathToRegexp(path)
-  var hostWithPath = `${host}${path}`
+  const keys = []
+  const regex = pathToRegexp(path, keys)
+  const hostWithPath = `${host}${path}`
 
   this.paths.push({
     path: hostWithPath,
-    order: routePriority(path, regex.keys),
+    order: routePriority(path, keys),
     handler: handler,
     regex: regex
   })
@@ -148,9 +149,9 @@ Api.prototype.unuse = function (path) {
  *  @api public
  */
 Api.prototype.listen = function (backlog, done) {
-  var port = config.get('server.port')
-  var host = config.get('server.host')
-  var redirectPort = config.get('server.redirectPort')
+  const port = config.get('server.port')
+  const host = config.get('server.host')
+  const redirectPort = config.get('server.redirectPort')
 
   // If http only, return the http instance
   if (this.httpInstance) {
@@ -184,10 +185,10 @@ Api.prototype.listener = function (req, res) {
   req.params = {}
   req.paths = []
 
-  var originalReqParams = req.params
-  var pathsLoaded = false
+  const originalReqParams = req.params
+  let pathsLoaded = false
 
-  var doStack = stackIdx => {
+  const doStack = stackIdx => {
     return err => {
       if (err) return errStack(0)(err)
 
@@ -208,7 +209,7 @@ Api.prototype.listener = function (req, res) {
           // find path specific handlers
           // var hrstart = process.hrtime()
 
-          var matches = this.getMatchingRoutes(req)
+          const matches = this.getMatchingRoutes(req)
 
           // var hrend = process.hrtime(hrstart)
           // debug(
@@ -254,10 +255,10 @@ Api.prototype.listener = function (req, res) {
  *  @return undefined
  *  @api public
  */
-Api.prototype.redirectListener = function (req, res) {
-  var port = config.get('server.port')
-  var hostname = req.headers.host.split(':')[0]
-  var location = 'https://' + hostname + ':' + port + req.url
+Api.prototype.redirectListener = (req, res) => {
+  const port = config.get('server.port')
+  const hostname = req.headers.host.split(':')[0]
+  const location = 'https://' + hostname + ':' + port + req.url
 
   res.setHeader('Location', location)
   res.statusCode = 302
@@ -271,24 +272,24 @@ Api.prototype.redirectListener = function (req, res) {
  *  @api private
  */
 Api.prototype.getMatchingRoutes = function (req) {
-  var path = url.parse(req.url).pathname
-  var handlers = []
+  const path = url.parse(req.url).pathname
+  const handlers = []
 
   // get the host key that matches the request's host header
-  var virtualHosts = config.get('virtualHosts')
-  var host =
+  const virtualHosts = config.get('virtualHosts')
+  const host =
     Object.keys(virtualHosts).find(key => {
       return virtualHosts[key].hostnames.includes(req.headers.host)
     }) || ''
 
-  var paths = this.paths.filter(path => {
+  const paths = this.paths.filter(path => {
     return path.path.indexOf(host) > -1
   })
 
-  for (var idx = 0; idx < paths.length; idx++) {
+  for (let idx = 0; idx < paths.length; idx++) {
     // test the supplied url against each loaded route.
-    // for example: does "/test/2" match "/test/:page"?
-    var match = paths[idx].regex.exec(path)
+    // for example: does '/test/2' match '/test/:page'?
+    const match = paths[idx].regex.exec(path)
 
     // move to the next route if no match
     if (!match) {
@@ -298,7 +299,7 @@ Api.prototype.getMatchingRoutes = function (req) {
     req.paths.push(paths[idx].path)
 
     // get all the dynamic keys from the route
-    // i.e. anything that starts with ":" -> "/news/:title"
+    // i.e. anything that starts with ':' -> '/news/:title'
     // var keys = paths[idx].regex.keys
 
     // add this route's controller
@@ -309,7 +310,7 @@ Api.prototype.getMatchingRoutes = function (req) {
 }
 
 function onError (api) {
-  return function (err, req, res, next) {
+  return (err, req, res, next) => {
     if (res.finished) return
 
     if (config.get('env') === 'development') {
@@ -319,7 +320,7 @@ function onError (api) {
 
     log.error({ module: 'api' }, err)
 
-    var data = {
+    const data = {
       statusCode: err.statusCode || 500,
       code: err.name,
       message: err.message
@@ -332,7 +333,7 @@ function onError (api) {
 
     // look for a page that has been loaded
     // that matches the error code and call its handler if it exists
-    var path = findPath(req, api.paths, data.statusCode)
+    let path = findPath(req, api.paths, data.statusCode)
 
     // fallback to a generic /error path
     if (!path) {
@@ -370,7 +371,7 @@ function notFound (api, req, res) {
 
     // look for a 404 page that has been loaded
     // and call its handler if it exists
-    var path = findPath(req, api.paths, '404')
+    const path = findPath(req, api.paths, '404')
 
     if (path && Array.isArray(path) && path[0]) {
       path[0].handler(req, res)
@@ -402,14 +403,14 @@ function notFound (api, req, res) {
  */
 function findPath (req, paths, pathString) {
   // get the host key that matches the request's host header
-  var virtualHosts = config.get('virtualHosts')
+  const virtualHosts = config.get('virtualHosts')
 
-  var host =
+  const host =
     Object.keys(virtualHosts).find(key => {
       return virtualHosts[key].hostnames.includes(req.headers.host)
     }) || ''
 
-  var matchingPaths = paths.filter(path => {
+  const matchingPaths = paths.filter(path => {
     return path.path.indexOf(host) > -1
   })
 
@@ -421,29 +422,29 @@ function findPath (req, paths, pathString) {
 }
 
 function routePriority (path, keys) {
-  var tokens = pathToRegexp.parse(path)
+  const tokens = pathToRegexp.parse(path)
 
-  var staticRouteLength = 0
+  let staticRouteLength = 0
   if (typeof tokens[0] === 'string') {
     staticRouteLength = tokens[0].split('/').filter(item => {
       return item && item !== ''
     }).length
   }
 
-  var requiredParamLength = keys.filter(key => {
+  const requiredParamLength = keys.filter(key => {
     return !key.optional
   }).length
 
-  var optionalParamLength = keys.filter(key => {
+  const optionalParamLength = keys.filter(key => {
     return key.optional
   }).length
 
-  // if there is a "page" parameter in the route, give it a slightly higher priority
-  var paginationParam = keys.find(key => {
+  // if there is a 'page' parameter in the route, give it a slightly higher priority
+  const paginationParam = keys.find(key => {
     return key.name && key.name === 'page'
   })
 
-  var order =
+  let order =
     staticRouteLength * 5 +
     requiredParamLength * 2 +
     optionalParamLength +

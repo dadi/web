@@ -85,7 +85,8 @@ Page.prototype.toPath = function (params) {
   let url
 
   this.routes.forEach(route => {
-    let keys = pathToRegexp(route.path).keys
+    let keys = []
+    pathToRegexp(route.path, keys)
 
     // only attempt this if the route's parameters match those passed to toPath
     let matchingKeys = Object.keys(params).every(param => {
