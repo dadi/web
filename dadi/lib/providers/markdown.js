@@ -87,7 +87,9 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
       async.map(filepaths, this.readFileAsync, (err, readResults) => {
         if (err) return done(err, null)
 
-        this.parseRawDataAsync(readResults, posts => {
+        this.parseRawDataAsync(readResults, (err, posts) => {
+          if (err) return done(err)
+
           const params = this.datasourceParams
             ? this.datasourceParams
             : this.schema.datasource
@@ -189,32 +191,42 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
 
   for (let i = 0; i < data.length; i++) {
     const bits = yamlRegex.exec(data[i]._contents)
-    const attributes = yaml.safeLoad(bits[1] || '')
-    const contentText = bits[2] || ''
-    const contentHtml = marked(contentText)
-    const parsedPath = path.parse(data[i]._name)
+    let attributes = []
 
-    // Some info about the file
-    attributes._id = parsedPath.name
-    attributes._ext = parsedPath.ext
-    attributes._loc = data[i]._name
-    attributes._path = parsedPath.dir
-      .replace(path.normalize(this.schema.datasource.source.path), '')
-      .replace(/^\/|\/$/g, '')
-      .split('/')
+    try {
+      attributes = yaml.safeLoad(bits[1] || '')
+    } catch (err) {
+      err.message = `Error in file '${data[i]._name}': ${err.message}`
+      callback(err)
+    }
 
-    attributes._path = attributes._path.filter(Boolean)
-    attributes._path = attributes._path.length === 0 ? null : attributes._path
+    if (attributes) {
+      const contentText = bits[2] || ''
+      const contentHtml = marked(contentText)
+      const parsedPath = path.parse(data[i]._name)
 
-    posts.push({
-      attributes,
-      original: data[i]._contents,
-      contentText,
-      contentHtml
-    })
+      // Some info about the file
+      attributes._id = parsedPath.name
+      attributes._ext = parsedPath.ext
+      attributes._loc = data[i]._name
+      attributes._path = parsedPath.dir
+        .replace(path.normalize(this.schema.datasource.source.path), '')
+        .replace(/^\/|\/$/g, '')
+        .split('/')
+
+      attributes._path = attributes._path.filter(Boolean)
+      attributes._path = attributes._path.length === 0 ? null : attributes._path
+
+      posts.push({
+        attributes,
+        original: data[i]._contents,
+        contentText,
+        contentHtml
+      })
+    }
   }
 
-  callback(posts)
+  callback(null, posts)
 }
 
 module.exports = MarkdownProvider

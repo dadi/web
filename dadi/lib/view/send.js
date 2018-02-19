@@ -19,10 +19,13 @@ module.exports.json = function (successCode, res, next) {
 
     var resBody = JSON.stringify(results, null, 2)
 
-    res.statusCode = successCode
-    res.setHeader('Content-Type', 'application/json')
-    res.setHeader('Content-Length', Buffer.byteLength(resBody))
-    res.end(resBody)
+    // Only if nothing else has responsed e.g., errorView
+    if (!res.headersSent) {
+      res.statusCode = successCode
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Content-Length', Buffer.byteLength(resBody))
+      res.end(resBody)
+    }
   }
 }
 
