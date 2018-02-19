@@ -930,12 +930,10 @@ describe("Router", function(done) {
       var page = Page("test", schema)
 
       var req = {},
-        res = {}
+          res = {}
 
-      server.app.Router.testConstraint(page.routes[0].path, req, res, function(
-        result
-      ) {
-        result.should.eql(true)
+      server.app.Router.testConstraint(page.routes[0].path, req, res, function(err, passed) {
+        passed.should.eql(true)
         done()
       })
     })
@@ -960,10 +958,8 @@ describe("Router", function(done) {
       var req = { url: "/test" },
         res = {}
 
-      server.app.Router.testConstraint(page.routes[0].path, req, res, function(
-        result
-      ) {
-        result.should.eql(false)
+      server.app.Router.testConstraint(page.routes[0].path, req, res, function(err, passed) {
+        passed.should.eql(false)
         done()
       })
     })
