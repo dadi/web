@@ -200,7 +200,7 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
       callback(err)
     }
 
-    if (attributes.length > 0) {
+    if (attributes) {
       const contentText = bits[2] || ''
       const contentHtml = marked(contentText)
       const parsedPath = path.parse(data[i]._name)
