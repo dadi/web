@@ -81,7 +81,7 @@
     "through": "~2.3.8",
     "toobusy-js": "~0.5.1",
     "uuid": "^3.1.0",
-    "web-es6-templates": "~1.1.2",
+    "web-es6-templates": "^1.1.4",
     "wildcard": "~1.1.2"
   },
   "devDependencies": {
