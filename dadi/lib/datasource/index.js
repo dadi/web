@@ -214,6 +214,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // parameter in the querystring (and added to req.params e.g. `/car/:make/:model`) or a matching
   // placeholder in the datasource's endpoint (e.g. `/car/makes/{make}`)
 
+  var endpoint = this.schema.datasource.source.endpoint
+
   // NB don't replace filter properties that already exist
   _.each(this.requestParams, obj => {
     // if the requestParam has no 'target' property, it's destined for the filter
@@ -229,27 +231,22 @@ Datasource.prototype.processRequest = function (datasource, req) {
           : encodeURIComponent(paramValue)
 
       if (obj.target === 'filter') {
-        // this.schema.datasource.filter[obj.field] = paramValue
         datasourceParams.filter[obj.field] = paramValue
       } else if (obj.target === 'endpoint') {
         var placeholderRegex = new RegExp('{' + obj.field + '}', 'ig')
-        this.source.modifiedEndpoint = this.schema.datasource.source.endpoint.replace(
-          placeholderRegex,
-          paramValue
-        )
+        endpoint = endpoint.replace(placeholderRegex, paramValue)
       }
     } else {
       if (obj.target === 'filter') {
         // param not found in request, remove it from the datasource filter
-        // if (this.schema.datasource.filter[obj.field]) {
-        //   delete this.schema.datasource.filter[obj.field]
-        // }
         if (datasourceParams.filter[obj.field]) {
           delete datasourceParams.filter[obj.field]
         }
       }
     }
   })
+
+  this.source.modifiedEndpoint = endpoint
 
   if (this.schema.datasource.filterEventResult) {
     // this.schema.datasource.filter = _.extend(this.schema.datasource.filter, this.schema.datasource.filterEventResult)

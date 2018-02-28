@@ -30,7 +30,9 @@ describe("Application", function() {
       .times(5)
       .reply(200, { accessToken: "xx" })
 
-    var scope1 = nock(apiHost).get("/").reply(200)
+    var scope1 = nock(apiHost)
+      .get("/")
+      .reply(200)
 
     var configUpdate = {
       server: {
@@ -135,16 +137,17 @@ describe("Application", function() {
 
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
-            client.get("/api/status").expect(405).end(done)
+            client
+              .get("/api/status")
+              .expect(405)
+              .end(done)
           })
         })
       })
     })
 
     describe("POST", function() {
-      it("should return 401 error if clientId or secret aren't specified", function(
-        done
-      ) {
+      it("should return 401 error if clientId or secret aren't specified", function(done) {
         var clientHost =
           "http://" +
           config.get("server.host") +
@@ -158,14 +161,16 @@ describe("Application", function() {
 
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
-            client.post("/api/status").send({}).expect(401).end(done)
+            client
+              .post("/api/status")
+              .send({})
+              .expect(401)
+              .end(done)
           })
         })
       })
 
-      it("should return 401 error if clientId or secret don't match config", function(
-        done
-      ) {
+      it("should return 401 error if clientId or secret don't match config", function(done) {
         var clientHost =
           "http://" +
           config.get("server.host") +

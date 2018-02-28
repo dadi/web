@@ -29,5 +29,13 @@
     "media": "test/app/media",
     "public": "test/app/public",
     "routes": "test/app/routes"
+  },
+  "engines": {
+    "dust": {
+      "cache": true,
+      "debug": false,
+      "debugLevel": "WARN",
+      "whitespace": false
+    }
   }
 }
