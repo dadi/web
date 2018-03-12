@@ -331,4 +331,22 @@ describe('Public folder', function (done) {
       })
     })
   })
+
+  it('should respond to a range header from the client with the specified partial of the file', function (done) {
+    var pages = TestHelper.setUpPages()
+
+    TestHelper.startServer(pages).then(() => {
+      var connectionString =
+        'http://' + config.get('server.host') + ':' + config.get('server.port')
+      var client = request(connectionString)
+
+      client
+        .get('/blank1second.mp4')
+        .set('range', 'bytes=0-1')
+        .end((err, res) => {
+          res.headers['content-range'].should.eql('bytes 0-1/15023')
+          done()
+      })
+    })
+  })
 })

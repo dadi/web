@@ -132,7 +132,34 @@ Public.prototype.process = function (arg) {
 }
 
 Public.prototype.openStream = function (arg) {
-  if (!arg.rs) arg.rs = fs.createReadStream(arg.file.path)
+  // If a byte range requested e.g., video, audio file
+  let rsOpts = {}
+
+  if (!arg.rs && arg.req.headers.range) {
+    try {
+      const stats = fs.statSync(arg.file.path)
+      const parts = arg.req.headers.range.replace(/bytes=/, '').split('-')
+
+      rsOpts = {
+        start: parseInt(parts[0], 10),
+        end: parts[1] ? parseInt(parts[1], 10) : stats.size - 1
+      }
+
+      const chunkSize = rsOpts.end - rsOpts.start + 1
+
+      arg.headers['Content-Range'] = `bytes ${rsOpts.start}-${rsOpts.end}/${
+        stats.size
+      }`
+      arg.headers['Accept-Ranges'] = 'bytes'
+      arg.headers['Content-Length'] = chunkSize
+      arg.res.statusCode = 206 // partial content
+    } catch (err) {
+      return arg.next()
+    }
+  }
+
+  // Create a readstream if it hasn't been passed from the cache
+  if (!arg.rs) arg.rs = fs.createReadStream(arg.file.path, rsOpts)
 
   // Try to load a folder index, if nothing found
   arg.rs.on('error', () => {
@@ -167,7 +194,9 @@ Public.prototype.openStream = function (arg) {
       // Extra headers from fstat
       arg.headers['ETag'] = etag(stats)
       arg.headers['Last-Modified'] = stats.mtime.toUTCString()
-      arg.headers['Content-Length'] = stats.size
+      if (!arg.headers['Content-Length'] && !arg.req.headers.range) {
+        arg.headers['Content-Length'] = stats.size
+      }
 
       // Delivery
       this.deliver({
