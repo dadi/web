@@ -16,6 +16,7 @@ const version = require('../../package.json').version
 const config = require(path.join(__dirname, '/../../config.js'))
 const Passport = require('@dadi/passport')
 const errorView = require(path.join(__dirname, '/view/errors'))
+const Send = require(path.join(__dirname, '/view/send'))
 
 module.exports.getVersion = function () {
   if (config.get('debug')) return version
@@ -134,9 +135,8 @@ module.exports.validateRequestCredentials = function (req, res) {
 module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   var method = req.method && req.method.toLowerCase()
   if (method !== allowedMethod.toLowerCase()) {
-    res.statusCode = 405
-    res.setHeader('Content-Type', 'text/html')
-    res.end(
+    Send.html(res, req, null, 405, 'text/html')(
+      null,
       errorView({
         headline: 'Method not allowed.',
         human: 'The method used for this request is not supported.',

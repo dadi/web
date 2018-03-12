@@ -458,12 +458,8 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
         dadiStatus(params, (err, data) => {
           if (err) return next(err)
-          var resBody = JSON.stringify(data, null, 2)
 
-          res.statusCode = 200
-          res.setHeader('Content-Type', 'application/json')
-          res.setHeader('content-length', Buffer.byteLength(resBody))
-          res.end(resBody)
+          Send.json(200, res, next)(null, data)
         })
       }
     })
