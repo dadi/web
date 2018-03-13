@@ -51,8 +51,13 @@ const Router = function (server, options) {
     constraintsPath = path.join(options.routesPath, '/constraints.js')
     delete require.cache[constraintsPath]
     this.handlers = require(constraintsPath)
-  } catch (err) {
+
     log.info(
+      { module: 'router' },
+      'Route constraints loaded (' + constraintsPath + ')'
+    )
+  } catch (err) {
+    log.debug(
       { module: 'router' },
       'No route constraints loaded, file not found (' + constraintsPath + ')'
     )
