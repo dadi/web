@@ -556,6 +556,11 @@ const conf = convict({
     doc: 'Engine-specific configuration parameters',
     format: Object,
     default: {}
+  },
+  status: {
+    doc: '@dadi/status module options',
+    format: Object,
+    default: {}
   }
 })
 
