@@ -124,9 +124,9 @@ TestHelper.prototype.extractCookieValue = function(res, cookieName) {
  */
 TestHelper.prototype.shouldSetCookie = function(name) {
   return function(res) {
-    console.log("***")
-    console.log("headers:", res.headers)
-    console.log("***")
+    //console.log("***")
+    //console.log("headers:", res.headers)
+    //console.log("***")
     var header = cookie(res)
     assert.ok(header, "should have a cookie header")
     assert.equal(header.split("=")[0], name, "should set cookie " + name)
