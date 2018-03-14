@@ -772,7 +772,14 @@ describe("Datasource Cache", function(done) {
         var redisClient = redis.createClient(
           config.get("caching.redis.port"),
           config.get("caching.redis.host"),
-          { detect_buffers: true, max_attempts: 3 }
+          { detect_buffers: true, retry_strategy: (options) => {
+            if (options.times_connected >= 3) {
+              // End reconnecting after a specific number of tries and flush all commands with a individual error
+              return new Error('Retry attempts exhausted');
+            }
+            // reconnect after
+            return 1000;
+          }}
         )
 
         redisClient.set = function set(key, chunk, done) {}
