@@ -10,7 +10,7 @@ const log = require('@dadi/logger')
 const config = require(path.join(__dirname, '/../../../config'))
 
 const Send = require(path.join(__dirname, '/../view/send'))
-const errorView = require(path.join(__dirname, '/../view/errors'))
+const errorView = require(path.join(__dirname, '/../debug/views')).error
 
 /**
  * Represents the main server.
@@ -347,7 +347,7 @@ function onError (api) {
       path[0].handler(req, res)
     } else {
       // no user error page found for this statusCode, use default error template
-      Send.html(res, req, next, data.statusCode, 'text/html')(
+      Send.html(req, res, next, data.statusCode, 'text/html')(
         null,
         errorView({
           headline: 'Something went wrong.',
@@ -377,7 +377,7 @@ function notFound (api, req, res) {
       path[0].handler(req, res)
     } else {
       // otherwise, respond with default message
-      Send.html(res, req, null, 404, 'text/html')(
+      Send.html(req, res, null, 404, 'text/html')(
         null,
         errorView({
           headline: 'Page not found.',

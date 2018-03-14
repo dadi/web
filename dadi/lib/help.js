@@ -15,7 +15,7 @@ const perfy = require('perfy')
 const version = require('../../package.json').version
 const config = require(path.join(__dirname, '/../../config.js'))
 const Passport = require('@dadi/passport')
-const errorView = require(path.join(__dirname, '/view/errors'))
+const errorView = require(path.join(__dirname, '/debug/views')).error
 const Send = require(path.join(__dirname, '/view/send'))
 
 module.exports.getVersion = function () {
@@ -135,7 +135,7 @@ module.exports.validateRequestCredentials = function (req, res) {
 module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   var method = req.method && req.method.toLowerCase()
   if (method !== allowedMethod.toLowerCase()) {
-    Send.html(res, req, null, 405, 'text/html')(
+    Send.html(req, res, null, 405, 'text/html')(
       null,
       errorView({
         headline: 'Method not allowed.',
