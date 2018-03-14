@@ -514,6 +514,11 @@ const conf = convict({
     format: Boolean,
     default: false
   },
+  allowDebugView: {
+    doc: 'If true, allows appending ?debug= to the querystring to view how the page is constructed,',
+    format: Boolean,
+    default: false
+  },
   toobusy: {
     enabled: {
       doc:

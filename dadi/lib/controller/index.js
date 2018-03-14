@@ -19,6 +19,7 @@ const Datasource = require(path.join(__dirname, '/../datasource'))
 const Event = require(path.join(__dirname, '/../event'))
 const Providers = require(path.join(__dirname, '/../providers'))
 const View = require(path.join(__dirname, '/../view'))
+const DebugView = require(path.join(__dirname, '/../debug'))
 const Send = require(path.join(__dirname, '/../view/send'))
 const Cache = require(path.join(__dirname, '/../cache'))
 
@@ -178,16 +179,33 @@ Controller.prototype.buildInitialViewData = function (req) {
   // add id component from the request
   if (req.params.id) data.id = decodeURIComponent(req.params.id)
 
-  // allow JSON view using ?json=true
-  let json =
+  // allow debug view using ?debug=
+  let debugView = false
+
+  console.log(urlData)
+
+  if (
+    config.get('allowDebugView') &&
+    typeof urlData.query.debug !== 'undefined'
+  ) {
+    debugView = urlData.query.debug || true
+
+    console.log('###############')
+    console.log(debugView)
+  }
+
+  // Depricate this eventually
+  if (
     config.get('allowJsonView') &&
-    urlData.query.json &&
-    urlData.query.json.toString() === 'true'
+    typeof urlData.query.json !== 'undefined'
+  ) {
+    debugView = 'json'
+  }
 
   data.title = this.page.name
   data.global = config.has('global') ? config.get('global') : {} // global values from config
   data.debug = config.get('debug')
-  data.json = json || false
+  data.debugView = debugView
 
   if (config.get('security.csrf')) {
     data.csrfToken = req.csrfToken()
@@ -195,6 +213,8 @@ Controller.prototype.buildInitialViewData = function (req) {
 
   delete data.query.json
   delete data.params.json
+  delete data.query.debug
+  delete data.params.debug
 
   return data
 }
@@ -206,13 +226,14 @@ Controller.prototype.process = function process (req, res, next) {
   debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
-  const statusCode = res.statusCode || 200
   let data = this.buildInitialViewData(req)
+
+  const statusCode = res.statusCode || 200
   const view = new View(req.url, this.page, data.json)
 
-  let done = data.json
-    ? Send.json(statusCode, res, next)
-    : Send.html(res, req, next, statusCode, this.page.contentType)
+  let done = data.debugView
+    ? DebugView(req, res, next, data, this.page)
+    : Send.html(req, res, next, statusCode, this.page.contentType)
 
   this.loadData(req, res, data, (err, data, dsResponse) => {
     if (err) {
@@ -227,23 +248,20 @@ Controller.prototype.process = function process (req, res, next) {
 
     // If we received a response back from the datasource, and
     // not just the data, send the whole response back
-    if (dsResponse) {
-      if (dsResponse.statusCode === 202) {
-        done = Send.json(dsResponse.statusCode, res, next)
-        return done(null, data)
-      }
+    if (dsResponse && dsResponse.statusCode === 202) {
+      done = Send.json(dsResponse.statusCode, res, next)
+      return done(null, data)
     }
 
     help.timer.stop(req.method.toLowerCase())
     if (data) data.stats = help.timer.getStats()
-
     if (data) data.version = help.getVersion()
 
-    view.setData(data)
-
-    if (data.json) {
+    if (data.debugView === 'json') {
       return done(null, data)
     }
+
+    view.setData(data)
 
     view.render((err, result) => {
       if (err) return next(err)
