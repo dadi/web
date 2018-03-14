@@ -182,16 +182,11 @@ Controller.prototype.buildInitialViewData = function (req) {
   // allow debug view using ?debug=
   let debugView = false
 
-  console.log(urlData)
-
   if (
     config.get('allowDebugView') &&
     typeof urlData.query.debug !== 'undefined'
   ) {
     debugView = urlData.query.debug || true
-
-    console.log('###############')
-    console.log(debugView)
   }
 
   // Depricate this eventually
@@ -232,7 +227,7 @@ Controller.prototype.process = function process (req, res, next) {
   const view = new View(req.url, this.page, data.json)
 
   let done = data.debugView
-    ? DebugView(req, res, next, data, this.page)
+    ? DebugView(req, res, next, data, this)
     : Send.html(req, res, next, statusCode, this.page.contentType)
 
   this.loadData(req, res, data, (err, data, dsResponse) => {
@@ -265,7 +260,9 @@ Controller.prototype.process = function process (req, res, next) {
 
     view.render((err, result) => {
       if (err) return next(err)
-      return done(null, result)
+      return data.debugView
+        ? done(null, result, dsResponse)
+        : done(null, result.processed)
     })
   })
 }

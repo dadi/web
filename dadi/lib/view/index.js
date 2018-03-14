@@ -39,8 +39,10 @@ View.prototype.render = function (done) {
     .render(templateData, {
       keepWhitespace: this.page.keepWhitespace
     })
-    .then(output => {
+    .then(raw => {
       // Post-process the output
+      let processed = raw
+
       if (config.get('globalPostProcessors') || this.page.postProcessors) {
         const postProcessors = config
           .get('globalPostProcessors')
@@ -49,10 +51,10 @@ View.prototype.render = function (done) {
         if (this.page.postProcessors !== false) {
           try {
             for (let script of postProcessors) {
-              output = require(path.resolve(
+              processed = require(path.resolve(
                 config.get('paths.processors'),
                 script
-              ))(this.data, output)
+              ))(this.data, raw)
             }
           } catch (err) {
             return done(err)
@@ -60,7 +62,7 @@ View.prototype.render = function (done) {
         }
       }
 
-      return done(null, output)
+      return done(null, { raw, processed })
     })
     .catch(err => {
       err.statusCode = 500

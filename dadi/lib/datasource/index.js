@@ -136,10 +136,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
     delete datasourceParams.cache
   }
 
-  // if (req.headers && req.headers.referer) {
-  //   this.schema.datasource.referer = encodeURIComponent(req.headers.referer)
-  // }
-
   if (this.page.passHeaders) {
     this.requestHeaders = req.headers
   }
