@@ -227,7 +227,7 @@ Controller.prototype.process = function process (req, res, next) {
   const view = new View(req.url, this.page, data.json)
 
   let done = data.debugView
-    ? DebugView(req, res, next, data, this)
+    ? DebugView(req, res, next, view.template, data, this)
     : Send.html(req, res, next, statusCode, this.page.contentType)
 
   this.loadData(req, res, data, (err, data, dsResponse) => {
@@ -260,9 +260,7 @@ Controller.prototype.process = function process (req, res, next) {
 
     view.render((err, result) => {
       if (err) return next(err)
-      return data.debugView
-        ? done(null, result, dsResponse)
-        : done(null, result.processed)
+      return data.debugView ? done(null, result) : done(null, result.processed)
     })
   })
 }

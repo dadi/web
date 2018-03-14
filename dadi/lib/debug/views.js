@@ -19,3 +19,80 @@ module.exports.error = function (error) {
     error.server
   }</p></main></body></html>`
 }
+
+module.exports.debug = function (output) {
+  return `<!DOCTYPE html><html lang="en"><head> <meta charset="utf-8"> <title>DADI Web</title>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/ace.js"></script>  
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/theme-cobalt.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor.min.css">
+
+
+  <style type="text/css"> *{padding: 0; margin: 0;}html{height: 100%;}body{background: #f4f4f4; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; text-align: center; font-size: 17px; line-height: 23px; min-height: 100%;} .code {
+    float: left;
+    width: 33.333% !important;
+    border: 0;
+    box-sizing: border-box;
+    display: block;
+    height: 100vh;}
+
+    div.jsoneditor,
+    div.jsoneditor-menu {
+      border: 0;
+      background: none;
+    }
+
+    div.jsoneditor-menu>button {
+      background-color: #002240 !important;
+    }
+
+    div.jsoneditor tr:hover {
+    background: #fff;
+}
+    </style>
+  </head><body>
+
+   <div class="code" id="data"></div>
+   <div class="code" id="template">${output.template
+     .replace(/&/g, '&amp;')
+     .replace(/</g, '&lt;')
+     .replace(/>/g, '&gt;')}</div>
+   <div class="code" id="html">${output.html
+     .replace(/&/g, '&amp;')
+     .replace(/</g, '&lt;')
+     .replace(/>/g, '&gt;')}</div>
+
+   <script>
+   var data = new JSONEditor(document.getElementById('data'), {theme: 'ace/theme/cobalt', mode: 'view', navigationBar: false}, ${
+     output.data
+   })
+
+
+   var options = {
+    readOnly: true,
+    tabSize: 2,
+    wrap: true,
+    indentedSoftWrap: true,
+    foldStyle: 'markbegin',
+    theme: 'ace/theme/cobalt',
+    showPrintMargin: false
+   };
+
+   /*options.mode = 'ace/mode/json';
+   ace.edit("data").setOptions(options);*/
+
+   options.mode = 'ace/mode/handlebars';
+   ace.edit("template").setOptions(options);
+
+   options.mode = 'ace/mode/html';
+   ace.edit("html").setOptions(options);
+
+   </script> 
+
+  </body></html>`
+}

@@ -1,18 +1,22 @@
 const url = require('url')
 const path = require('path')
 const Send = require(path.join(__dirname, '/../view/send'))
+const views = require('./views')
 const CircularJSON = require('circular-json')
 
-module.exports = function (req, res, next, data, context) {
+module.exports = function (req, res, next, template, data, context) {
   // Traditional JSON view
   if (data.debugView === 'json') return Send.json(200, res, next)
 
-  return function (err, result, dsResponse) {
+  return function (err, result) {
     if (err) return next(err)
 
-    console.log(context)
-
     switch (data.debugView) {
+      case 'template':
+        delete template.engine
+
+        Send.json(200, res, next)(null, template)
+        break
       case 'page':
         Send.json(200, res, next)(null, context.page)
         break
@@ -52,7 +56,13 @@ module.exports = function (req, res, next, data, context) {
         res.end(result.processed)
         break
       default:
-        res.end('debug view')
+        res.end(
+          views.debug({
+            data: CircularJSON.stringify(data, null, 2),
+            template: template.data,
+            html: result.raw
+          })
+        )
         break
     }
   }

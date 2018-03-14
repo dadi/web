@@ -753,9 +753,15 @@ Server.prototype.compile = function (options) {
   // Get a list of templates to render based on the registered components
   const componentTemplates = Object.keys(this.components).map(route => {
     if (this.components[route].options.host === options.host) {
+      const resolvedTemplate = path.join(
+        templatePath,
+        this.components[route].page.template
+      )
+      this.components[route].page.resolvedTemplate = resolvedTemplate
+
       return {
         engine: this.components[route].engine,
-        file: path.join(templatePath, this.components[route].page.template)
+        file: resolvedTemplate
       }
     }
   })
