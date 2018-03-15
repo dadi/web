@@ -76,13 +76,16 @@ module.exports.debug = function (output) {
       border-radius: 3px;
     }
 
-    div.jsoneditor-menu>button,
-    div.jsoneditor tr:hover {
+    div.jsoneditor-menu>button {
       background-color: none !important;
     }
 
     div.jsoneditor tr:hover {
       background: #0b0e14;
+    }
+
+    table.jsoneditor-search div.jsoneditor-frame table tr:hover {
+      background: none;
     }
 
     div.jsoneditor-value.jsoneditor-string,
@@ -100,7 +103,7 @@ module.exports.debug = function (output) {
     </style>
   </head><body>
 
-  
+
 
 
    <div class="code" id="data"></div>

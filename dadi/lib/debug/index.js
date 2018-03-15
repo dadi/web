@@ -4,34 +4,34 @@ const Send = require(path.join(__dirname, '/../view/send'))
 const views = require('./views')
 const CircularJSON = require('circular-json')
 
-module.exports = function (req, res, next, template, data, context) {
-  // Traditional JSON view
-  if (data.debugView === 'json') return Send.json(200, res, next)
-
+module.exports = function (req, res, next, view, page) {
   return function (err, result) {
     if (err) return next(err)
 
-    switch (data.debugView) {
+    switch (view.data.debugView) {
       case 'template':
-        delete template.engine
+        // delete template.engine
 
-        Send.json(200, res, next)(null, template)
+        Send.json(200, res, next)(null, view.template)
+        break
+      case 'json':
+        Send.json(200, res, next)(null, view.data)
         break
       case 'page':
-        Send.json(200, res, next)(null, context.page)
+        Send.json(200, res, next)(null, page.page)
         break
       case 'headers':
         Send.json(200, res, next)(null, req.headers)
         break
       case 'datasources':
         // Remove page info
-        Object.keys(context.datasources).forEach(key => {
-          delete context.datasources[key].page
-          delete context.datasources[key].options
+        Object.keys(page.datasources).forEach(key => {
+          delete page.datasources[key].page
+          delete page.datasources[key].options
         })
 
         res.setHeader('Content-Type', 'application/json')
-        res.end(CircularJSON.stringify(context.datasources, null, 2))
+        res.end(CircularJSON.stringify(page.datasources, null, 2))
         break
       case 'url':
         res.setHeader('Content-Type', 'application/json')
@@ -39,28 +39,24 @@ module.exports = function (req, res, next, template, data, context) {
           CircularJSON.stringify(
             {
               url: url.parse(`${req.protocol}://${req.headers.host}${req.url}`),
-              params: data.params,
-              query: data.query
+              params: view.data.params,
+              query: view.data.query
             },
             null,
             2
           )
         )
         break
-      case 'raw':
+      case 'html':
         res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-        res.end(result.raw)
-        break
-      case 'output':
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-        res.end(result.processed)
+        res.end(result)
         break
       default:
         res.end(
           views.debug({
-            data: CircularJSON.stringify(data, null, 2),
-            template: template.data,
-            html: result.raw
+            data: CircularJSON.stringify(view.data, null, 2),
+            template: view.template.data,
+            html: result
           })
         )
         break

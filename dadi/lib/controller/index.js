@@ -180,34 +180,23 @@ Controller.prototype.buildInitialViewData = function (req) {
   if (req.params.id) data.id = decodeURIComponent(req.params.id)
 
   // allow debug view using ?debug=
-  let debugView = false
+  data.debugView = false
 
   if (
     config.get('allowDebugView') &&
     typeof urlData.query.debug !== 'undefined'
   ) {
-    debugView = urlData.query.debug || true
-  }
-
-  // Depricate this eventually
-  if (
-    config.get('allowJsonView') &&
-    typeof urlData.query.json !== 'undefined'
-  ) {
-    debugView = 'json'
+    data.debugView = urlData.query.debug || true
   }
 
   data.title = this.page.name
   data.global = config.has('global') ? config.get('global') : {} // global values from config
   data.debug = config.get('debug')
-  data.debugView = debugView
 
   if (config.get('security.csrf')) {
     data.csrfToken = req.csrfToken()
   }
 
-  delete data.query.json
-  delete data.params.json
   delete data.query.debug
   delete data.params.debug
 
@@ -224,20 +213,18 @@ Controller.prototype.process = function process (req, res, next) {
   let data = this.buildInitialViewData(req)
 
   const statusCode = res.statusCode || 200
-  const view = new View(req.url, this.page, data.json)
+  const view = new View(req.url, this.page)
 
-  let done = data.debugView
-    ? DebugView(req, res, next, view.template, data, this)
-    : Send.html(req, res, next, statusCode, this.page.contentType)
+  let done = Send.html(req, res, next, statusCode, this.page.contentType)
 
-  this.loadData(req, res, data, (err, data, dsResponse) => {
+  this.loadData(req, res, data, (err, loadedData, dsResponse) => {
     if (err) {
       if (err.statusCode && err.statusCode === 404) return next()
       return done(err)
     }
 
     // return 404 if requiredDatasources contain no data
-    if (!this.requiredDataPresent(data)) {
+    if (!this.requiredDataPresent(loadedData)) {
       return next()
     }
 
@@ -245,22 +232,23 @@ Controller.prototype.process = function process (req, res, next) {
     // not just the data, send the whole response back
     if (dsResponse && dsResponse.statusCode === 202) {
       done = Send.json(dsResponse.statusCode, res, next)
-      return done(null, data)
+      return done(null, loadedData)
     }
 
     help.timer.stop(req.method.toLowerCase())
-    if (data) data.stats = help.timer.getStats()
-    if (data) data.version = help.getVersion()
+    if (loadedData) loadedData.stats = help.timer.getStats()
+    if (loadedData) loadedData.version = help.getVersion()
 
-    if (data.debugView === 'json') {
-      return done(null, data)
-    }
-
-    view.setData(data)
+    view.setData(loadedData)
 
     view.render((err, result) => {
       if (err) return next(err)
-      return data.debugView ? done(null, result) : done(null, result.processed)
+
+      if (data.debugView) {
+        return DebugView(req, res, next, view, this)(null, result)
+      } else {
+        return done(null, result)
+      }
     })
   })
 }

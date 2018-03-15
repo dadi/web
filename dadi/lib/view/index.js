@@ -7,10 +7,9 @@ const path = require('path')
 const templateStore = require(path.join(__dirname, '/../templates/store'))
 const config = require(path.join(__dirname, '/../../../config.js'))
 
-const View = function (url, page, json) {
+const View = function (url, page) {
   this.url = url
   this.page = page
-  this.json = json
   this.data = {}
 
   this.templateName =
@@ -27,9 +26,6 @@ View.prototype.setData = function (data) {
 }
 
 View.prototype.render = function (done) {
-  // Return the raw data
-  if (this.json) return done(null, this.data)
-
   // Send the templated page
   const templateData = Object.assign({}, this.data, {
     host: this.page.hostKey
@@ -39,11 +35,12 @@ View.prototype.render = function (done) {
     .render(templateData, {
       keepWhitespace: this.page.keepWhitespace
     })
-    .then(raw => {
+    .then(output => {
       // Post-process the output
-      let processed = raw
-
-      if (config.get('globalPostProcessors') || this.page.postProcessors) {
+      if (
+        (config.get('globalPostProcessors') || this.page.postProcessors) &&
+        !templateData.debugView
+      ) {
         const postProcessors = config
           .get('globalPostProcessors')
           .concat(this.page.postProcessors || [])
@@ -51,10 +48,10 @@ View.prototype.render = function (done) {
         if (this.page.postProcessors !== false) {
           try {
             for (let script of postProcessors) {
-              processed = require(path.resolve(
+              output = require(path.resolve(
                 config.get('paths.processors'),
                 script
-              ))(this.data, raw)
+              ))(this.data, output)
             }
           } catch (err) {
             return done(err)
@@ -62,7 +59,7 @@ View.prototype.render = function (done) {
         }
       }
 
-      return done(null, { raw, processed })
+      return done(null, output)
     })
     .catch(err => {
       err.statusCode = 500

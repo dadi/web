@@ -171,7 +171,7 @@ describe('Upload', function (done) {
       security: {
         csrf: true
       },
-      allowJsonView: true,
+      allowDebugView: true,
       uploads: {
         enabled: true,
         destinationPath: './test/app/uploads',
@@ -188,7 +188,7 @@ describe('Upload', function (done) {
         const client = request(connectionString)
 
         client
-        .get('/allowed-upload-route/?json=true')
+        .get('/allowed-upload-route/?debug=json')
         .end((err, res) => {
           const token = res.body.csrfToken
 
