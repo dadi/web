@@ -43,6 +43,9 @@ const Controller = function (page, options, meta, engine, cache) {
   this.events = []
   this.preloadEvents = []
 
+  this.page.globalPostProcessors = config.get('globalPostProcessors') || []
+  this.page.globalEvents = config.get('globalEvents')
+
   this.attachDatasources(err => {
     if (err) {
       log.error({ module: 'controller' }, err)
@@ -80,7 +83,7 @@ Controller.prototype.attachDatasources = function (done) {
 Controller.prototype.attachEvents = function (done) {
   let event
   // add global events first
-  config.get('globalEvents').forEach(eventName => {
+  this.page.globalEvents.forEach(eventName => {
     event = new Event(this.page.name, eventName, this.options)
     this.preloadEvents.push(event)
   })

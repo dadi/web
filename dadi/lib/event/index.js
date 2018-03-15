@@ -1,20 +1,19 @@
 /**
  * @module Event
  */
-var fs = require('fs')
-var path = require('path')
+const fs = require('fs')
+const path = require('path')
 
-var log = require('@dadi/logger')
+const log = require('@dadi/logger')
 
-var Event = function (pageName, eventName, options) {
-  // if (!pageName) throw new Error('Page name required')
+const Event = function (pageName, eventName, options) {
   this.page = pageName
   this.name = eventName
   this.options = options || {}
 }
 
 Event.prototype.loadEvent = function () {
-  var filepath = path.join(this.options.eventPath, this.name + '.js')
+  const filepath = path.join(this.options.eventPath, this.name + '.js')
 
   if (filepath && !fs.existsSync(filepath)) {
     throw new Error(

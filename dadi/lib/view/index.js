@@ -39,22 +39,20 @@ View.prototype.render = function (done) {
       let processed = raw
 
       // Post-process the output
-      if (config.get('globalPostProcessors') || this.page.postProcessors) {
-        const postProcessors = config
-          .get('globalPostProcessors')
-          .concat(this.page.postProcessors || [])
+      const postProcessors = this.page.postProcessors.concat(
+        this.page.globalPostProcessors
+      )
 
-        if (this.page.postProcessors !== false) {
-          try {
-            for (let script of postProcessors) {
-              processed = require(path.resolve(
-                config.get('paths.processors'),
-                script
-              ))(this.data, raw)
-            }
-          } catch (err) {
-            return done(err)
+      if (postProcessors.length > 0 && this.page.postProcessors !== false) {
+        try {
+          for (let script of postProcessors) {
+            processed = require(path.resolve(
+              config.get('paths.processors'),
+              script
+            ))(this.data, raw)
           }
+        } catch (err) {
+          return done(err)
         }
       }
 
