@@ -229,9 +229,10 @@ module.exports.debug = function (debug) {
    <script>
    ${
      debug.data
-       ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view', navigationBar: false}, ${
-           debug.data
-         })`
+       ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view', navigationBar: false}, ${debug.data
+           .replace(/&/g, '&amp;')
+           .replace(/</g, '&lt;')
+           .replace(/>/g, '&gt;')})`
        : ''
    }
 
