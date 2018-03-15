@@ -241,11 +241,11 @@ Controller.prototype.process = function process (req, res, next) {
 
     view.setData(loadedData)
 
-    view.render((err, result) => {
+    view.render((err, result, unprocessed) => {
       if (err) return next(err)
 
       if (data.debugView) {
-        return DebugView(req, res, next, view, this)(null, result)
+        return DebugView(req, res, next, view, this)(null, result, unprocessed)
       } else {
         return done(null, result)
       }

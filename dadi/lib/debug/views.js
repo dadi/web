@@ -20,7 +20,7 @@ module.exports.error = function (error) {
   }</p></main></body></html>`
 }
 
-module.exports.debug = function (output) {
+module.exports.debug = function (debug) {
   return `<!DOCTYPE html><html lang="en"><head> <meta charset="utf-8"> <title>DADI Web</title>
 
 
@@ -140,33 +140,33 @@ module.exports.debug = function (output) {
   <nav>
   <ul>
     <li><a href="?debug" ${
-      output.mode === 'main' ? `class="active"` : ''
+      debug.mode === 'main' ? `class="active"` : ''
     }>View</a></li>
     <li><a href="?debug=page" ${
-      output.mode === 'page' ? `class="active"` : ''
+      debug.mode === 'page' ? `class="active"` : ''
     }>Page</a></li>
     <li><a href="?debug=ds" ${
-      output.mode === 'ds' ? `class="active"` : ''
+      debug.mode === 'ds' ? `class="active"` : ''
     }>Datasources</a></li>
     <li><a href="?debug=data" ${
-      output.mode === 'data' ? `class="active"` : ''
+      debug.mode === 'data' ? `class="active"` : ''
     }>Data</a></li>
     <li><a href="?debug=result" ${
-      output.mode === 'result' ? `class="active"` : ''
+      debug.mode === 'result' ? `class="active"` : ''
     }>Result</a></li>
   </ul>
   <ol>
     <li><a href="https://github.com/nodejs/Release#release-schedule">Node.js ${Number(
       process.version.match(/^v(\d+\.\d+)/)[1]
     )}</a></li>
-    <li><a href="https://dadi.cloud/web">v.${output.version}</a></li>
+    <li><a href="https://dadi.cloud/web">v.${debug.version}</a></li>
   </ol>
   </nav>
 
-   ${output.data ? `<div class="code" id="data"></div>` : ''}
+   ${debug.data ? `<div class="code" id="data"></div>` : ''}
    ${
-     output.template
-       ? `<div class="code" id="template">${output.template
+     debug.template
+       ? `<div class="code" id="template">${debug.template
            .replace(/&/g, '&amp;')
            .replace(/</g, '&lt;')
            .replace(/>/g, '&gt;')}</div>`
@@ -174,8 +174,17 @@ module.exports.debug = function (output) {
    }
    
    ${
-     output.html
-       ? `<div class="code" id="html">${output.html
+     debug.output
+       ? `<div class="code" id="output">${debug.output
+           .replace(/&/g, '&amp;')
+           .replace(/</g, '&lt;')
+           .replace(/>/g, '&gt;')}</div>`
+       : ''
+   }
+
+   ${
+     debug.output2
+       ? `<div class="code" id="output2">${debug.output2
            .replace(/&/g, '&amp;')
            .replace(/</g, '&lt;')
            .replace(/>/g, '&gt;')}</div>`
@@ -184,9 +193,9 @@ module.exports.debug = function (output) {
 
    <script>
    ${
-     output.data
+     debug.data
        ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view', navigationBar: false}, ${
-           output.data
+           debug.data
          })`
        : ''
    }
@@ -205,14 +214,16 @@ module.exports.debug = function (output) {
    ace.edit("data").setOptions(options);*/
 
    ${
-     output.template
+     debug.template
        ? `options.mode = 'ace/mode/handlebars';
    ace.edit("template").setOptions(options);`
        : ''
    }
 
-   options.mode = 'ace/mode/${output.type}';
-   ace.edit("html").setOptions(options);
+   options.mode = 'ace/mode/${debug.type}';
+   ace.edit("output").setOptions(options);
+
+   ${debug.output2 ? `ace.edit("output2").setOptions(options);` : ''}
 
    </script> 
 

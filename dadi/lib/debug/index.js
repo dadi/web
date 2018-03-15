@@ -7,7 +7,7 @@ const help = require(path.join(__dirname, '/../help'))
 const CircularJSON = require('circular-json')
 
 module.exports = function (req, res, next, view, page) {
-  return function (err, result) {
+  return function (err, result, unprocessed) {
     if (err) return next(err)
 
     const version = help.getVersion()
@@ -76,7 +76,8 @@ module.exports = function (req, res, next, view, page) {
             version,
             mode,
             type: page.page.contentType.split('/')[1],
-            html: result
+            output: result,
+            output2: unprocessed
           })
         )
         break
@@ -97,7 +98,7 @@ module.exports = function (req, res, next, view, page) {
             data: CircularJSON.stringify(view.data, null, 2),
             template: view.template.data,
             type: page.page.contentType.split('/')[1],
-            html: result
+            output: unprocessed
           })
         )
         break
