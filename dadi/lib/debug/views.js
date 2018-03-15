@@ -26,36 +26,82 @@ module.exports.debug = function (output) {
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/ace.js"></script>  
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/theme-cobalt.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor-minimalist.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor.min.css">
 
 
-  <style type="text/css"> *{padding: 0; margin: 0;}html{height: 100%;}body{background: #f4f4f4; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; text-align: center; font-size: 17px; line-height: 23px; min-height: 100%;} .code {
-    float: left;
-    width: 33.333% !important;
-    border: 0;
-    box-sizing: border-box;
-    display: block;
-    height: 100vh;}
+  <style type="text/css"> *{padding: 0; margin: 0;}html{height: 100%;}
+  body{-webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; background: #191E24; font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; text-align: center; min-height: 100%;}
+    .code {
+      float: left;
+      width: 33.333% !important;
+      border: 0;
+      box-sizing: border-box;
+      display: block;
+      height: 100vh;
+      background: #191E24 !important;
+    }
+
+    div.jsoneditor,
+    div.jsoneditor-value,
+    div.jsoneditor-field,
+    div.jsoneditor td,
+    .code {
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    div.jsoneditor-field {
+      color: #fff;
+    }
 
     div.jsoneditor,
     div.jsoneditor-menu {
       border: 0;
       background: none;
+      color: #fff
     }
 
-    div.jsoneditor-menu>button {
-      background-color: #002240 !important;
+    div.jsoneditor-tree button {
+      height: 21px;
+    }
+
+    div.jsoneditor td {
+      color: inherit;
+    }
+
+    table.jsoneditor-search div.jsoneditor-frame {
+      border-radius: 3px;
+    }
+
+    div.jsoneditor-menu>button,
+    div.jsoneditor tr:hover {
+      background-color: none !important;
     }
 
     div.jsoneditor tr:hover {
-    background: #fff;
-}
+      background: #0b0e14;
+    }
+
+    div.jsoneditor-value.jsoneditor-string,
+    a.jsoneditor-value.jsoneditor-url, div.jsoneditor-value.jsoneditor-url {
+      color: #39d902;
+    }
+
+    .ace_gutter {
+      background: none !important;
+      border-left: 1px solid #1D2733;
+    }
+    .ace_gutter-cell {
+      font-size: 11px;
+    }
     </style>
   </head><body>
+
+  
+
 
    <div class="code" id="data"></div>
    <div class="code" id="template">${output.template
@@ -68,7 +114,7 @@ module.exports.debug = function (output) {
      .replace(/>/g, '&gt;')}</div>
 
    <script>
-   var data = new JSONEditor(document.getElementById('data'), {theme: 'ace/theme/cobalt', mode: 'view', navigationBar: false}, ${
+   var data = new JSONEditor(document.getElementById('data'), {mode: 'view', navigationBar: false}, ${
      output.data
    })
 
