@@ -34,13 +34,35 @@ module.exports.debug = function (debug) {
   <style type="text/css"> *{padding: 0; margin: 0;}html{height: 100%;}
   body{-webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale; background: #191E24; font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; text-align: center; min-height: 100%; display: -webkit-flex; display: -ms-flexbox; display: flex;}
-    .code {
+    .view {
       display flex;
       flex: 1;
+      position: relative;
+    }
+    .code {
       border: 0;
       box-sizing: border-box;
       background: #191E24 !important;
       max-height: 100vh;
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+    }
+    .info {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      z-index: 1000;
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+      color: #ccc;
+      padding: 10px 20px;
+      text-align: right;
+      background: -moz-linear-gradient(top, rgba(21,26,31,0) 0%, rgba(21,26,31,1) 50%);
+      background: -webkit-linear-gradient(top, rgba(21,26,31,0) 0%,rgba(21,26,31,1) 50%);
+      background: linear-gradient(to bottom, rgba(21,26,31,0) 0%,rgba(21,26,31,1) 50%);
+      border-left: 1px solid #1D2733;
     }
 
     div.jsoneditor,
@@ -101,19 +123,19 @@ module.exports.debug = function (debug) {
     }
 
     nav {
-          background: #101417;
- position: relative;
-    z-index: 100;
-    text-align: left;
-    border-top: 1px solid #1e2833;
+      background: #101417;
+      position: relative;
+      z-index: 100;
+      text-align: left;
+      border-top: 1px solid #1e2833;
     }
 
     nav ol {
-          position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: right;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      text-align: right;
     }
 
     nav li {
@@ -131,7 +153,7 @@ module.exports.debug = function (debug) {
     }
     nav li a.active {
      background: #326ff4;
-    color: #fff;
+      color: #fff;
     }
     </style>
   </head><body>
@@ -163,31 +185,44 @@ module.exports.debug = function (debug) {
   </ol>
   </nav>
 
-   ${debug.data ? `<div class="code" id="data"></div>` : ''}
+   ${
+     debug.data
+       ? `<div class="view"><div class="info">${
+           debug.pane1 ? debug.pane1 : ''
+         }</div><div class="code" id="data"></div></div>`
+       : ''
+   }
    ${
      debug.template
-       ? `<div class="code" id="template">${debug.template
-           .replace(/&/g, '&amp;')
-           .replace(/</g, '&lt;')
-           .replace(/>/g, '&gt;')}</div>`
+       ? `<div class="view">
+            <div class="info">${debug.pane2 ? debug.pane2 : ''}</div>
+            <div class="code" id="template">${debug.template
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')}
+            </div>
+          </div>
+        `
        : ''
    }
    
    ${
      debug.output
-       ? `<div class="code" id="output">${debug.output
+       ? `<div class="view"><div class="info">${
+           debug.pane3 ? debug.pane3 : ''
+         }</div><div class="code" id="output">${debug.output
            .replace(/&/g, '&amp;')
            .replace(/</g, '&lt;')
-           .replace(/>/g, '&gt;')}</div>`
+           .replace(/>/g, '&gt;')}</div></div>`
        : ''
    }
 
    ${
      debug.output2
-       ? `<div class="code" id="output2">${debug.output2
+       ? `<div class="view"><div class="code" id="output2">${debug.output2
            .replace(/&/g, '&amp;')
            .replace(/</g, '&lt;')
-           .replace(/>/g, '&gt;')}</div>`
+           .replace(/>/g, '&gt;')}</div></div>`
        : ''
    }
 

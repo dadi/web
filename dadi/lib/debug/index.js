@@ -76,8 +76,9 @@ module.exports = function (req, res, next, view, page) {
             version,
             mode,
             type: page.page.contentType.split('/')[1],
-            output: result,
-            output2: unprocessed
+            output: unprocessed,
+            pane3: 'Before post-process events',
+            output2: result
           })
         )
         break
@@ -98,7 +99,12 @@ module.exports = function (req, res, next, view, page) {
             data: CircularJSON.stringify(view.data, null, 2),
             template: view.template.data,
             type: page.page.contentType.split('/')[1],
-            output: unprocessed
+            output: unprocessed,
+            pane1: 'JSON',
+            pane2: `${page.page.template} (${
+              view.template.getEngineInfo().engine
+            } ${view.template.getEngineInfo().version})`,
+            pane3: 'Output'
           })
         )
         break
