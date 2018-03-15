@@ -33,15 +33,14 @@ module.exports.debug = function (output) {
 
   <style type="text/css"> *{padding: 0; margin: 0;}html{height: 100%;}
   body{-webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale; background: #191E24; font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; text-align: center; min-height: 100%;}
+  -moz-osx-font-smoothing: grayscale; background: #191E24; font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; text-align: center; min-height: 100%; display: -webkit-flex; display: -ms-flexbox; display: flex;}
     .code {
-      float: left;
-      width: 33.333% !important;
+      display flex;
+      flex: 1;
       border: 0;
       box-sizing: border-box;
-      display: block;
-      height: 100vh;
       background: #191E24 !important;
+      max-height: 100vh;
     }
 
     div.jsoneditor,
@@ -100,27 +99,97 @@ module.exports.debug = function (output) {
     .ace_gutter-cell {
       font-size: 11px;
     }
+
+    nav {
+          background: #101417;
+ position: relative;
+    z-index: 100;
+    text-align: left;
+    border-top: 1px solid #1e2833;
+    }
+
+    nav ol {
+          position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: right;
+    }
+
+    nav li {
+      list-style: none;
+    }
+    nav li a {
+      display: block;
+      color: #fff;
+      font-size: 12px;
+      padding: 9px 13px;
+      text-decoration: none;
+    }
+    nav li a:hover {
+      color: #326ff4;
+    }
+    nav li a.active {
+     background: #326ff4;
+    color: #fff;
+    }
     </style>
   </head><body>
 
 
+  <nav>
+  <ul>
+    <li><a href="?debug" ${
+      output.mode === 'main' ? `class="active"` : ''
+    }>View</a></li>
+    <li><a href="?debug=page" ${
+      output.mode === 'page' ? `class="active"` : ''
+    }>Page</a></li>
+    <li><a href="?debug=ds" ${
+      output.mode === 'ds' ? `class="active"` : ''
+    }>Datasources</a></li>
+    <li><a href="?debug=data" ${
+      output.mode === 'data' ? `class="active"` : ''
+    }>Data</a></li>
+    <li><a href="?debug=result" ${
+      output.mode === 'result' ? `class="active"` : ''
+    }>Result</a></li>
+  </ul>
+  <ol>
+    <li><a href="https://github.com/nodejs/Release#release-schedule">Node.js ${Number(
+      process.version.match(/^v(\d+\.\d+)/)[1]
+    )}</a></li>
+    <li><a href="https://dadi.cloud/web">v.${output.version}</a></li>
+  </ol>
+  </nav>
 
-
-   <div class="code" id="data"></div>
-   <div class="code" id="template">${output.template
-     .replace(/&/g, '&amp;')
-     .replace(/</g, '&lt;')
-     .replace(/>/g, '&gt;')}</div>
-   <div class="code" id="html">${output.html
-     .replace(/&/g, '&amp;')
-     .replace(/</g, '&lt;')
-     .replace(/>/g, '&gt;')}</div>
+   ${output.data ? `<div class="code" id="data"></div>` : ''}
+   ${
+     output.template
+       ? `<div class="code" id="template">${output.template
+           .replace(/&/g, '&amp;')
+           .replace(/</g, '&lt;')
+           .replace(/>/g, '&gt;')}</div>`
+       : ''
+   }
+   
+   ${
+     output.html
+       ? `<div class="code" id="html">${output.html
+           .replace(/&/g, '&amp;')
+           .replace(/</g, '&lt;')
+           .replace(/>/g, '&gt;')}</div>`
+       : ''
+   }
 
    <script>
-   var data = new JSONEditor(document.getElementById('data'), {mode: 'view', navigationBar: false}, ${
+   ${
      output.data
-   })
-
+       ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view', navigationBar: false}, ${
+           output.data
+         })`
+       : ''
+   }
 
    var options = {
     readOnly: true,
@@ -135,10 +204,14 @@ module.exports.debug = function (output) {
    /*options.mode = 'ace/mode/json';
    ace.edit("data").setOptions(options);*/
 
-   options.mode = 'ace/mode/handlebars';
-   ace.edit("template").setOptions(options);
+   ${
+     output.template
+       ? `options.mode = 'ace/mode/handlebars';
+   ace.edit("template").setOptions(options);`
+       : ''
+   }
 
-   options.mode = 'ace/mode/html';
+   options.mode = 'ace/mode/${output.type}';
    ace.edit("html").setOptions(options);
 
    </script> 

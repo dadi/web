@@ -20,7 +20,7 @@ const View = function (url, page) {
 }
 
 View.prototype.setData = function (data) {
-  data.templatingEngine = this.template.getEngineInfo()
+  // data.templatingEngine = this.template.getEngineInfo()
 
   this.data = data
 }

@@ -19,7 +19,7 @@ const errorView = require(path.join(__dirname, '/debug/views')).error
 const Send = require(path.join(__dirname, '/view/send'))
 
 module.exports.getVersion = function () {
-  if (config.get('debug')) return version
+  return version
 }
 
 module.exports.htmlEncode = function (input) {
