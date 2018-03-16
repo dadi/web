@@ -28,26 +28,14 @@ RouteValidator.prototype.get = function (route, param, options, req) {
     return datasource.provider.load(req.url, (err, data) => {
       if (err) return reject(err)
 
-      if (datasource.provider && datasource.provider.destroy) {
-        datasource.provider.destroy()
-      }
-
       datasource.provider = null
 
-      // TODO: simplify this, doesn't require a try/catch
       if (data) {
-        try {
-          var results = data // JSON.parse(data.toString())
+        var results = data
 
-          if (results.results && results.results.length > 0) {
-            return resolve('')
-          } else {
-            return reject('')
-          }
-        } catch (e) {
-          console.log('RouteValidator Load Error:', datasource.name, req.url)
-          console.log(e)
-
+        if (results.results && results.results.length > 0) {
+          return resolve('')
+        } else {
           return reject('')
         }
       }

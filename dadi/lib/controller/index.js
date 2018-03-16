@@ -5,7 +5,6 @@
  */
 const async = require('async')
 const clone = require('clone')
-const crypto = require('crypto')
 const debug = require('debug')('web:controller')
 const getValue = require('get-value')
 const path = require('path')
@@ -28,9 +27,6 @@ const Cache = require(path.join(__dirname, '/../cache'))
  */
 const Controller = function (page, options, meta, engine, cache) {
   if (!page) throw new Error('Page instance required')
-
-  Controller.numInstances = (Controller.numInstances || 0) + 1
-  // console.log('Controller:', Controller.numInstances)
 
   this.page = page
 
@@ -170,6 +166,7 @@ Controller.prototype.buildInitialViewData = function (req) {
   data.pathname = ''
   data.host = req.headers.host
   data.page = this.meta
+  data.page.name = this.page.name
 
   if (urlData.pathname.length) data.pathname = urlData.pathname
 
@@ -192,7 +189,6 @@ Controller.prototype.buildInitialViewData = function (req) {
     data.debugView = urlData.query.debug || true
   }
 
-  data.title = this.page.name
   data.global = config.has('global') ? config.get('global') : {} // global values from config
   data.debug = config.get('debug')
 
@@ -297,21 +293,20 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
         // add a random value to the data obj so we can check if an
         // event has sent back the obj - in which case we assign it back
         // to itself
-        let checkValue = crypto
-          .createHash('md5')
-          .update(new Date().toString())
-          .digest('hex')
-
-        data.checkValue = checkValue
+        data.timestamp = new Date().getTime()
 
         event.run(req, res, data, (err, result) => {
           help.timer.stop('event: ' + event.name)
 
           if (err) return reject(err)
 
-          // if we get data back with the same checkValue property,
+          // if we get data back with the same timestamp property,
           // reassign it to our global data object to avoid circular JSON
-          if (result && result.checkValue && result.checkValue === checkValue) {
+          if (
+            result &&
+            result.timestamp &&
+            result.timestamp === data.timestamp
+          ) {
             data = result
           } else if (result) {
             // add the result to our global data object
@@ -405,29 +400,16 @@ Controller.prototype.loadData = function (req, res, data, done) {
            * for this datasource
            * @returns err, {Object} result, {Object} dsResponse
            */
-          // ds.provider.load(requestUrl, function (err, result, dsResponse) {
           ds.provider.load(req.url, (err, result, dsResponse) => {
             if (err) return done(err)
 
             help.timer.stop('datasource: ' + ds.name)
 
-            if (ds.provider.destroy) {
-              ds.provider.destroy()
-            }
-
             ds.provider = null
 
             if (dsResponse) return done(null, result, dsResponse)
 
-            // TODO: simplify this, doesn't require a try/catch
-            if (result) {
-              try {
-                data[ds.schema.datasource.key] = result
-              } catch (e) {
-                console.log('Provider Load Error:', ds.name, req.url)
-                console.log(e)
-              }
-            }
+            if (result) data[ds.schema.datasource.key] = result
 
             cb()
           })

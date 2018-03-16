@@ -19,9 +19,6 @@ const Datasource = function (page, datasource, options) {
   this.page = page
   this.name = datasource
   this.options = options || {}
-
-  Datasource.numInstances = (Datasource.numInstances || 0) + 1
-  // console.log('Datasource:', Datasource.numInstances, datasource)
 }
 
 Datasource.prototype.init = function (callback) {
