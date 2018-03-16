@@ -31,7 +31,7 @@ module.exports.htmlEncode = function (input) {
 
 module.exports.timer = {
   isDebugEnabled: function isDebugEnabled () {
-    return config.get('debug')
+    return config.get('allowDebugView')
   },
 
   start: function start (key) {
