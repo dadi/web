@@ -101,6 +101,23 @@ module.exports.debug = function (debug) {
       background-color: none !important;
     }
 
+    div.jsoneditor-navigation-bar {
+      border: 0;
+      background: none;
+      text-align: left;
+      overflow: hidden;
+      position: absolute;
+      bottom: 5px; left: 0; right: 0;
+      z-index: 1000;
+      display: inline-block;
+    }
+    div.jsoneditor-treepath {
+      padding: 0 15px;
+    }
+    div.jsoneditor-navigation-bar.nav-bar-empty:after {
+      display: none;
+    }
+
     div.jsoneditor tr:hover {
       background: #0b0e14;
     }
@@ -150,6 +167,7 @@ module.exports.debug = function (debug) {
     }
     nav li a:hover {
       color: #326ff4;
+      background: #191e24;
     }
     nav li a.active {
      background: #326ff4;
@@ -176,6 +194,9 @@ module.exports.debug = function (debug) {
     <li><a href="?debug=result" ${
       debug.mode === 'result' ? `class="active"` : ''
     }>Result</a></li>
+    <li><a href="?debug=stats" ${
+      debug.mode === 'stats' ? `class="active"` : ''
+    }>Stats</a></li>
   </ul>
   <ol>
     <li><a href="https://github.com/nodejs/Release#release-schedule">Node.js ${Number(
@@ -229,7 +250,7 @@ module.exports.debug = function (debug) {
    <script>
    ${
      debug.data
-       ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view', navigationBar: false}, ${debug.data
+       ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, ${debug.data
            .replace(/&/g, '&amp;')
            .replace(/</g, '&lt;')
            .replace(/>/g, '&gt;')})`

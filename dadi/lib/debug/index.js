@@ -1,4 +1,3 @@
-const url = require('url')
 const path = require('path')
 const Send = require(path.join(__dirname, '/../view/send'))
 const views = require('./views')
@@ -11,19 +10,26 @@ module.exports = function (req, res, next, view, page) {
     if (err) return next(err)
 
     const version = help.getVersion()
+
     const mode = view.data.debugView
     delete view.data.debugView
 
     switch (mode) {
-      case 'template':
-        // delete template.engine
-
-        Send.json(200, res, next)(null, view.template)
-        break
       case 'json':
         Send.json(200, res, next)(null, view.data)
         break
+      case 'stats':
+        res.setHeader('Content-Type', 'text/html')
+        res.end(
+          views.debug({
+            version,
+            mode,
+            data: CircularJSON.stringify(help.timer.getStats(), null, 2)
+          })
+        )
+        break
       case 'page':
+        res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
             version,
@@ -31,9 +37,6 @@ module.exports = function (req, res, next, view, page) {
             data: CircularJSON.stringify(page.page, null, 2)
           })
         )
-        break
-      case 'headers':
-        Send.json(200, res, next)(null, req.headers)
         break
       case 'ds':
         let dss = {}
@@ -48,6 +51,7 @@ module.exports = function (req, res, next, view, page) {
           }
         }
 
+        res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
             version,
@@ -56,33 +60,24 @@ module.exports = function (req, res, next, view, page) {
           })
         )
         break
-      case 'url':
-        res.setHeader('Content-Type', 'application/json')
-        res.end(
-          CircularJSON.stringify(
-            {
-              url: url.parse(`${req.protocol}://${req.headers.host}${req.url}`),
-              params: view.data.params,
-              query: view.data.query
-            },
-            null,
-            2
-          )
-        )
-        break
       case 'result':
+        res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
             version,
             mode,
             type: page.page.contentType.split('/')[1],
             output: unprocessed,
-            pane3: 'Before post-process events',
-            output2: result
+            pane3:
+              result === unprocessed
+                ? 'No post-process events used'
+                : 'Before post-process events',
+            output2: result === unprocessed ? null : result
           })
         )
         break
       case 'data':
+        res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
             version,
@@ -92,6 +87,7 @@ module.exports = function (req, res, next, view, page) {
         )
         break
       default:
+        res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
             version,

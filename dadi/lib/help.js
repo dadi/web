@@ -48,13 +48,21 @@ module.exports.timer = {
 
   getStats: function getStats () {
     if (!this.isDebugEnabled()) return
-    var stats = []
+    var stats = {}
 
     perfy.names().forEach(key => {
       if (perfy.result(key)) {
-        stats.push({ key: key, value: perfy.result(key).summary })
+        stats[key] = perfy.result(key)
+        delete stats[key].name
+        delete stats[key].summary
       }
     })
+
+    stats.total =
+      Object.keys(stats)
+        .reduce((total, current) => total + stats[current].time, 0)
+        .toFixed(3) + ' seconds'
+
     perfy.destroyAll()
     return stats
   }
