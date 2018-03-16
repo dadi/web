@@ -144,7 +144,6 @@ module.exports.debug = function (debug) {
       position: relative;
       z-index: 100;
       text-align: left;
-      border-top: 1px solid #1e2833;
     }
 
     nav ol {
@@ -266,9 +265,6 @@ module.exports.debug = function (debug) {
     theme: 'ace/theme/cobalt',
     showPrintMargin: false
    };
-
-   /*options.mode = 'ace/mode/json';
-   ace.edit("data").setOptions(options);*/
 
    ${
      debug.template
