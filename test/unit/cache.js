@@ -31,22 +31,7 @@ describe("Cache", function(done) {
     done()
   })
 
-  it.skip(
-    "should take a server instance as an argument",
-    sinon.test(function(done) {
-      var server = sinon.mock(Server)
-      server.object.app = api()
-
-      var method = sinon.spy(server.object.app, "use")
-      cache.reset()
-      var c = cache(server.object)
-
-      method.called.should.eql(true)
-      done()
-    })
-  )
-
-  it.skip(
+  it(
     "should cache if the app's config settings allow",
     sinon.test(function(done) {
       var server = sinon.mock(Server)
