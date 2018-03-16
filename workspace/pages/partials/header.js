@@ -15,6 +15,6 @@
 
   <header>
     <img src="/logo.png" alt="Site logo" width="60">
-    <h1>Welcome to DADI Web ${version}</h1>
+    <h1>Welcome to DADI Web</h1>
     <p>DADI Web is a schemaless templating layer that can operate as a standalone platform or with API as a full stack web application.</p>
   </header>

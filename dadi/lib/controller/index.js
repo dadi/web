@@ -236,7 +236,6 @@ Controller.prototype.process = function process (req, res, next) {
 
     help.timer.stop(req.method.toLowerCase())
     // if (loadedData) loadedData.stats = help.timer.getStats()
-    // if (loadedData) loadedData.version = help.getVersion()
 
     view.setData(loadedData)
 

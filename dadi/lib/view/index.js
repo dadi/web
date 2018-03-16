@@ -20,8 +20,6 @@ const View = function (url, page) {
 }
 
 View.prototype.setData = function (data) {
-  // data.templatingEngine = this.template.getEngineInfo()
-
   this.data = data
 }
 
@@ -40,7 +38,7 @@ View.prototype.render = function (done) {
 
       // Post-process the output
       const postProcessors = this.page.postProcessors.concat(
-        this.page.globalPostProcessors
+        this.page.globalPostProcessors || []
       )
 
       if (postProcessors.length > 0 && this.page.postProcessors !== false) {
@@ -65,8 +63,8 @@ View.prototype.render = function (done) {
     })
 }
 
-module.exports = function (url, page, json) {
-  return new View(url, page, json)
+module.exports = function (url, page) {
+  return new View(url, page)
 }
 
 module.exports.View = View
