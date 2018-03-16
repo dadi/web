@@ -106,9 +106,6 @@ describe("Controller", function(done) {
             .expect(200)
             .end((err, res) => {
               if (err) return done(err)
-
-              console.log(res.body)
-
               should.exist(res.body.categories)
               res.body.categories.results.length.should.be.above(0)
               Controller.Controller.prototype.loadData.restore()
@@ -432,8 +429,8 @@ describe("Controller", function(done) {
 
           TestHelper.startServer(pages).then(() => {
             controller = Controller(pages[0], TestHelper.getPathOptions())
-            controller.preloadEvents.should.exist
-            controller.preloadEvents[0].name.should.eql("test_global_event")
+            controller.events.should.exist
+            controller.events[0].name.should.eql("test_global_event")
             done()
           })
         })
