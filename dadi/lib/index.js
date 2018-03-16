@@ -450,10 +450,11 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
         var protocol = config.get('server.protocol') || 'http'
         if (protocol === 'https') {
-          var httpsHost = config.get('server.host')
-          var httpsPort = config.get('server.port')
-          var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
-          params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
+          params.healthCheck.baseUrl = `https://${config.get('server.host')}${
+            config.get('server.port') !== 443
+              ? `:${config.get('server.port')}`
+              : ''
+          }`
         }
 
         dadiStatus(params, (err, data) => {
