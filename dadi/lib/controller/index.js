@@ -78,15 +78,15 @@ Controller.prototype.attachDatasources = function (done) {
  */
 Controller.prototype.attachEvents = function (done) {
   let event
-  // add global events first
-  this.page.globalEvents.forEach(eventName => {
-    event = new Event(this.page.name, eventName, this.options)
-    this.preloadEvents.push(event)
-  })
 
   this.page.preloadEvents.forEach(eventName => {
     event = new Event(this.page.name, eventName, this.options)
     this.preloadEvents.push(event)
+  })
+
+  this.page.globalEvents.forEach(eventName => {
+    event = new Event(this.page.name, eventName, this.options)
+    this.events.push(event)
   })
 
   this.page.events.forEach(eventName => {
@@ -159,16 +159,25 @@ Controller.prototype.buildInitialViewData = function (req) {
     )
   }
 
-  const urlData = url.parse(req.url, true)
+  const urlData = url.parse(
+    `${req.protocol}://${req.headers.host}${req.url}`,
+    true
+  )
 
   data.query = urlData.query
   data.params = {}
-  data.pathname = ''
-  data.host = req.headers.host
   data.page = this.meta
   data.page.name = this.page.name
 
-  if (urlData.pathname.length) data.pathname = urlData.pathname
+  data.url = {
+    protocol: urlData.protocol,
+    hostname: urlData.hostname,
+    host: urlData.host,
+    port: urlData.port,
+    path: urlData.path,
+    pathname: urlData.pathname,
+    href: urlData.href
+  }
 
   // add request params (params from the path, e.g. /:make/:model)
   // add query params (params from the querystring, e.g. /reviews?page=2)
