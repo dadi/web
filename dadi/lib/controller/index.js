@@ -40,7 +40,7 @@ const Controller = function (page, options, meta, engine, cache) {
   this.preloadEvents = []
 
   this.page.globalPostProcessors = config.get('globalPostProcessors') || []
-  this.page.globalEvents = config.get('globalEvents')
+  this.page.globalEvents = config.get('globalEvents') || []
 
   this.attachDatasources(err => {
     if (err) {
@@ -84,12 +84,7 @@ Controller.prototype.attachEvents = function (done) {
     this.preloadEvents.push(event)
   })
 
-  this.page.globalEvents.forEach(eventName => {
-    event = new Event(this.page.name, eventName, this.options)
-    this.events.push(event)
-  })
-
-  this.page.events.forEach(eventName => {
+  this.page.events.concat(this.page.globalEvents).forEach(eventName => {
     event = new Event(this.page.name, eventName, this.options)
     this.events.push(event)
   })
