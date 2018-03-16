@@ -29,9 +29,8 @@ describe("Help", done => {
       var stats = helpers.timer.getStats()
 
       helpers.timer.isDebugEnabled.restore()
-
-      stats[0].key.should.eql(key)
-      should.exist(stats[0].value)
+      
+      should.exist(stats[key].time)
       done()
     })
   })
