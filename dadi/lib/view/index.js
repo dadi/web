@@ -16,6 +16,7 @@ const View = function (url, page) {
     this.page.hostKey +
     this.page.template.slice(0, this.page.template.indexOf('.'))
 
+  this.templateEngineSettings = this.page.settings.engine || {}
   this.template = templateStore.get(this.templateName)
 }
 
@@ -29,10 +30,11 @@ View.prototype.render = function (done) {
     host: this.page.hostKey
   })
 
+  console.log('#####################')
+  console.log(this.templateEngineSettings)
+
   this.template
-    .render(templateData, {
-      keepWhitespace: this.page.keepWhitespace
-    })
+    .render(templateData, this.templateEngineSettings)
     .then(raw => {
       let processed = raw
 

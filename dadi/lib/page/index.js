@@ -25,7 +25,6 @@ const Page = function (name, schema, hostKey, templateCandidate) {
     this.settings.postProcessors === false
       ? false
       : this.settings.postProcessors || []
-  this.keepWhitespace = Boolean(this.settings.keepWhitespace)
   this.passFilters = this.settings.hasOwnProperty('passFilters')
     ? this.settings.passFilters
     : false
