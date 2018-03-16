@@ -30,9 +30,6 @@ View.prototype.render = function (done) {
     host: this.page.hostKey
   })
 
-  console.log('#####################')
-  console.log(this.templateEngineSettings)
-
   this.template
     .render(templateData, this.templateEngineSettings)
     .then(raw => {
