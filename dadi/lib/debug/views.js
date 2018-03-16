@@ -172,6 +172,28 @@ module.exports.debug = function (debug) {
      background: #326ff4;
       color: #fff;
     }
+
+    .inputRoute,
+    #inputPath {
+      background: none;
+      color: #fff;
+      border: none;
+      border-bottom: 1px solid #1e2833;
+      padding: 20px;
+      font-size: 13px;
+      width: 100%;
+      box-sizing: border-box;
+      outline: none;
+      font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    }
+    #inputPath {
+      background: #1e2833;
+      font-size: 16px;
+    }
+    .inputRoute.match {
+      background: #88c34b;
+      color: #fff;
+    }
     </style>
   </head><body>
 
@@ -181,21 +203,24 @@ module.exports.debug = function (debug) {
     <li><a href="?debug" ${
       debug.mode === 'main' ? `class="active"` : ''
     }>View</a></li>
+    <li><a href="?debug=data" ${
+      debug.mode === 'data' ? `class="active"` : ''
+    }>Data</a></li>
     <li><a href="?debug=page" ${
       debug.mode === 'page' ? `class="active"` : ''
     }>Page</a></li>
     <li><a href="?debug=ds" ${
       debug.mode === 'ds' ? `class="active"` : ''
     }>Datasources</a></li>
-    <li><a href="?debug=data" ${
-      debug.mode === 'data' ? `class="active"` : ''
-    }>Data</a></li>
     <li><a href="?debug=result" ${
       debug.mode === 'result' ? `class="active"` : ''
     }>Result</a></li>
     <li><a href="?debug=stats" ${
       debug.mode === 'stats' ? `class="active"` : ''
     }>Stats</a></li>
+    <li><a href="?debug=route" ${
+      debug.mode === 'route' ? `class="active"` : ''
+    }>Route</a></li>
   </ul>
   <ol>
     <li><a href="https://github.com/nodejs/Release#release-schedule">Node.js ${Number(
@@ -246,6 +271,8 @@ module.exports.debug = function (debug) {
        : ''
    }
 
+   ${debug.view ? `<div class="view">${debug.view}</div>` : ''}
+
    <script>
    ${
      debug.data
@@ -273,8 +300,14 @@ module.exports.debug = function (debug) {
        : ''
    }
 
+   ${
+     debug.output
+       ? `
    options.mode = 'ace/mode/${debug.type}';
    ace.edit("output").setOptions(options);
+   `
+       : ''
+   }
 
    ${debug.output2 ? `ace.edit("output2").setOptions(options);` : ''}
 

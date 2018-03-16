@@ -1,9 +1,21 @@
 const path = require('path')
+const fs = require('fs')
 const Send = require(path.join(__dirname, '/../view/send'))
 const views = require('./views')
 const help = require(path.join(__dirname, '/../help'))
 
+const pathToRegexp = require.resolve('path-to-regexp')
+
 const CircularJSON = require('circular-json')
+
+function formatBytes (a, b) {
+  if (a === 0) return '0 Bytes'
+  var c = 1024
+  var d = b || 2
+  var e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  var f = Math.floor(Math.log(a) / Math.log(c))
+  return parseFloat((a / Math.pow(c, f)).toFixed(d)) + ' ' + e[f]
+}
 
 module.exports = function (req, res, next, view, page) {
   return function (err, result, unprocessed) {
@@ -19,12 +31,18 @@ module.exports = function (req, res, next, view, page) {
         Send.json(200, res, next)(null, view.data)
         break
       case 'stats':
+        const stats = Object.assign(
+          {},
+          help.timer.getStats(),
+          { 'Data size': formatBytes(Buffer.byteLength(view.data, 'utf8'), 3) },
+          { 'Result size': formatBytes(Buffer.byteLength(result, 'utf8'), 3) }
+        )
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
             version,
             mode,
-            data: CircularJSON.stringify(help.timer.getStats(), null, 2)
+            data: CircularJSON.stringify(stats, null, 2)
           })
         )
         break
@@ -83,6 +101,77 @@ module.exports = function (req, res, next, view, page) {
             version,
             mode,
             data: CircularJSON.stringify(view.data, null, 2)
+          })
+        )
+        break
+      case 'route':
+        let router = fs.readFileSync(pathToRegexp, 'utf8')
+
+        var re = new RegExp(/module\.exports(.*)?/, 'g')
+        router = router.replace(re, '')
+
+        res.setHeader('Content-Type', 'text/html')
+        res.end(
+          views.debug({
+            version,
+            mode,
+            view: `
+
+<input type="text" id="inputPath" placeholder="/path/value/" value="${
+              view.data.url.pathname
+            }"><br>
+
+${page.page.routes
+              .map(
+                (i, idx) => `
+<input type="text" class="inputRoute" readonly id="ir_${idx}" placeholder="/path/:key/" value="${
+                  i.path
+                }"><br>
+`
+              )
+              .join('')}
+
+
+<script>
+
+${router}
+
+
+var _ = document.querySelectorAll.bind(document)
+
+var inputRoutes = _('.inputRoute');
+
+function update() {
+  var path = _('#inputPath')[0].value
+
+  for (var ir = 0; ir < inputRoutes.length; ++ir) {
+    var input = inputRoutes[ir];
+
+    var keys = []
+    var regexp
+
+    if (input.value) {
+      try {
+        regexp = pathToRegexp(input.value, keys)
+      } catch (e) {
+        console.log(e.message)
+        return
+      }
+    }
+
+    inputRoutes[ir].classList.remove('match');
+
+    if (regexp && regexp.test(path)) {
+      input.classList.add('match')
+    }
+  }
+  
+}
+
+_('#inputPath')[0].addEventListener('input', update, false)
+update()
+
+          </script>`
           })
         )
         break
