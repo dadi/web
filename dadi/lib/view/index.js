@@ -36,7 +36,8 @@ View.prototype.render = function (done) {
       let processed = raw
 
       // Post-process the output
-      const postProcessors = this.page.postProcessors.concat(
+      const postProcessors = [].concat(
+        this.page.postProcessors || [],
         this.page.globalPostProcessors || []
       )
 
