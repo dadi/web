@@ -47,7 +47,6 @@ describe("Cache", function(done) {
 
       TestHelper.updateConfig(cacheConfig).then(() => {
         var e = cache(server.object).enabled
-        console.log(e)
         e.should.eql(true)
         done()
       })

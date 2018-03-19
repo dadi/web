@@ -192,6 +192,8 @@ describe('Upload', function (done) {
         .end((err, res) => {
           const token = res.body.csrfToken
 
+          should.exist(res)
+
           client
           .post('/allowed-upload-route/')
           .set(

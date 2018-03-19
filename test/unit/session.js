@@ -242,7 +242,8 @@ describe("Session", function(done) {
               .expect("content-type", pages[0].contentType)
               .end((err, res) => {
                 if (err) return done(err)
-                var data = JSON.parse(JSON.stringify(res.body))
+                  console.log(res)
+                var data = JSON.parse(res.text)
 
                 TestHelper.resetConfig().then(() => {
                   should.exist(data)
