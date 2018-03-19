@@ -117,7 +117,7 @@ module.exports = function (req, res, next, view, page) {
       case 'result':
         let results = []
         results[0] = {
-          title: 'Unprocessed',
+          title: 'No postProcessors',
           id: 'unprocessed',
           output: unprocessed,
           type: page.page.contentType.split('/')[1]
@@ -125,7 +125,7 @@ module.exports = function (req, res, next, view, page) {
 
         if (result !== unprocessed) {
           results[1] = {
-            title: 'processed',
+            title: 'postProcessors applied',
             id: 'processed',
             output: result,
             type: page.page.contentType.split('/')[1]
