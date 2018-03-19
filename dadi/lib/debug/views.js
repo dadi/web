@@ -1,3 +1,6 @@
+const path = require('path')
+const help = require(path.join(__dirname, '/../help'))
+
 /**
  * @module: Error HTML output
  */
@@ -21,297 +24,100 @@ module.exports.error = function (error) {
 }
 
 module.exports.debug = function (debug) {
-  return `<!DOCTYPE html><html lang="en"><head> <meta charset="utf-8"> <title>DADI Web</title>
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/ace.js"></script>  
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor-minimalist.min.js"></script>
-
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor.min.css">
-
-
-  <style type="text/css"> *{padding: 0; margin: 0;}html{height: 100%;}
-  body{-webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale; background: #191E24; font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace; text-align: center; min-height: 100%; display: -webkit-flex; display: -ms-flexbox; display: flex;}
-    .view {
-      display flex;
-      flex: 1;
-      position: relative;
-    }
-    .code {
-      border: 0;
-      box-sizing: border-box;
-      background: #191E24 !important;
-      max-height: 100vh;
-      position: absolute;
-      top: 0; right: 0; bottom: 0; left: 0;
-    }
-    .info {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      left: 0;
-      z-index: 1000;
-      color: #fff;
-      font-size: 12px;
-      font-weight: bold;
-      color: #ccc;
-      padding: 10px 20px;
-      text-align: right;
-      background: -moz-linear-gradient(top, rgba(21,26,31,0) 0%, rgba(21,26,31,1) 50%);
-      background: -webkit-linear-gradient(top, rgba(21,26,31,0) 0%,rgba(21,26,31,1) 50%);
-      background: linear-gradient(to bottom, rgba(21,26,31,0) 0%,rgba(21,26,31,1) 50%);
-      border-left: 1px solid #1D2733;
-    }
-
-    div.jsoneditor,
-    div.jsoneditor-value,
-    div.jsoneditor-field,
-    div.jsoneditor td,
-    .code {
-      font-size: 12px;
-      line-height: 18px;
-    }
-
-    div.jsoneditor-field {
-      color: #fff;
-    }
-
-    div.jsoneditor,
-    div.jsoneditor-menu {
-      border: 0;
-      background: none;
-      color: #fff
-    }
-
-    div.jsoneditor-tree button {
-      height: 21px;
-    }
-
-    div.jsoneditor td {
-      color: inherit;
-    }
-
-    table.jsoneditor-search div.jsoneditor-frame {
-      border-radius: 3px;
-    }
-
-    div.jsoneditor-menu>button {
-      background-color: none !important;
-    }
-
-    div.jsoneditor-navigation-bar {
-      border: 0;
-      background: none;
-      text-align: left;
-      overflow: hidden;
-      position: absolute;
-      bottom: 5px; left: 0; right: 0;
-      z-index: 1000;
-      display: inline-block;
-    }
-    div.jsoneditor-treepath {
-      padding: 0 15px;
-    }
-    div.jsoneditor-navigation-bar.nav-bar-empty:after {
-      display: none;
-    }
-
-    div.jsoneditor tr:hover {
-      background: #0b0e14;
-    }
-
-    table.jsoneditor-search div.jsoneditor-frame table tr:hover {
-      background: none;
-    }
-
-    div.jsoneditor-value.jsoneditor-string,
-    a.jsoneditor-value.jsoneditor-url, div.jsoneditor-value.jsoneditor-url {
-      color: #39d902;
-    }
-
-    .ace_gutter {
-      background: none !important;
-      border-left: 1px solid #1D2733;
-    }
-    .ace_gutter-cell {
-      font-size: 11px;
-    }
-
-    nav {
-      background: #101417;
-      position: relative;
-      z-index: 100;
-      text-align: left;
-    }
-
-    nav ol {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      text-align: right;
-    }
-
-    nav li {
-      list-style: none;
-    }
-    nav li a {
-      display: block;
-      color: #fff;
-      font-size: 12px;
-      padding: 9px 13px;
-      text-decoration: none;
-    }
-    nav li a:hover {
-      color: #326ff4;
-      background: #191e24;
-    }
-    nav li a.active {
-     background: #326ff4;
-      color: #fff;
-    }
-
-    .inputRoute,
-    #inputPath {
-      background: none;
-      color: #fff;
-      border: none;
-      border-bottom: 1px solid #1e2833;
-      padding: 20px;
-      font-size: 13px;
-      width: 100%;
-      box-sizing: border-box;
-      outline: none;
-      font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    }
-    #inputPath {
-      background: #1e2833;
-      font-size: 16px;
-    }
-    .inputRoute.match {
-      background: #88c34b;
-      color: #fff;
-    }
-    </style>
+  return `<!DOCTYPE html><html lang="en"><head> <meta charset="utf-8"><title>DADI Web</title><script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/ace.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor-minimalist.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor.min.css">
+  <style type="text/css">#inputPath,.inputRoute,body{font-family:Monaco,Menlo,"Ubuntu Mono",Consolas,source-code-pro,monospace}*{padding:0;margin:0}html{height:100%}body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:#191E24;text-align:center;min-height:100%;display:-webkit-flex;display:-ms-flexbox;display:flex}.view{flex:1;position:relative}.code,.info,div.jsoneditor-navigation-bar,nav ol{position:absolute;left:0;right:0}.code{border:0;box-sizing:border-box;background:#191E24!important;max-height:100vh;top:0;bottom:0}.info{bottom:0;z-index:1000;font-size:12px;font-weight:700;color:#ccc;padding:10px 20px;text-align:right;background:-moz-linear-gradient(top,rgba(21,26,31,0) 0,rgba(21,26,31,1) 50%);background:-webkit-linear-gradient(top,rgba(21,26,31,0) 0,rgba(21,26,31,1) 50%);background:linear-gradient(to bottom,rgba(21,26,31,0) 0,rgba(21,26,31,1) 50%);border-left:1px solid #1D2733}.code,div.jsoneditor,div.jsoneditor td,div.jsoneditor-field,div.jsoneditor-value{font-size:12px;line-height:18px}div.jsoneditor-field{color:#fff}div.jsoneditor,div.jsoneditor-menu{border:0;background:0 0;color:#fff}div.jsoneditor-tree button{height:21px}div.jsoneditor td{color:inherit}table.jsoneditor-search div.jsoneditor-frame{border-radius:3px}div.jsoneditor-menu>button{background-color:none!important}div.jsoneditor-navigation-bar{border:0;background:0 0;text-align:left;overflow:hidden;bottom:5px;z-index:1000;display:inline-block}div.jsoneditor-treepath{padding:0 15px}div.jsoneditor-navigation-bar.nav-bar-empty:after{display:none}div.jsoneditor tr:hover{background:#0b0e14}table.jsoneditor-search div.jsoneditor-frame table tr:hover{background:0 0}a.jsoneditor-value.jsoneditor-url,div.jsoneditor-value.jsoneditor-string,div.jsoneditor-value.jsoneditor-url{color:#39d902}.ace_gutter{background:0 0!important;border-left:1px solid #1D2733}.ace_gutter-cell{font-size:11px}nav{background:#101417;position:relative;z-index:100;text-align:left}nav ol{bottom:0;text-align:right}nav li{list-style:none}nav li a{display:block;color:#fff;font-size:12px;padding:9px 13px;text-decoration:none}nav li a:hover{color:#326ff4;background:#191e24}nav li a.active{background:#326ff4;color:#fff}#inputPath,.inputRoute{background:0 0;color:#fff;border:none;border-bottom:1px solid #1e2833;padding:20px;font-size:13px;width:100%;box-sizing:border-box;outline:0}#inputPath{background:#1e2833;font-size:16px}.inputRoute.match{background:#88c34b;color:#fff}</style>
   </head><body>
 
-
   <nav>
-  <ul>
-    <li><a href="?debug" ${
-      debug.mode === 'main' ? `class="active"` : ''
-    }>View</a></li>
-    <li><a href="?debug=data" ${
-      debug.mode === 'data' ? `class="active"` : ''
-    }>Data</a></li>
-    <li><a href="?debug=page" ${
-      debug.mode === 'page' ? `class="active"` : ''
-    }>Page</a></li>
-    <li><a href="?debug=ds" ${
-      debug.mode === 'ds' ? `class="active"` : ''
-    }>Datasources</a></li>
-    <li><a href="?debug=result" ${
-      debug.mode === 'result' ? `class="active"` : ''
-    }>Result</a></li>
-    <li><a href="?debug=stats" ${
-      debug.mode === 'stats' ? `class="active"` : ''
-    }>Stats</a></li>
-    <li><a href="?debug=route" ${
-      debug.mode === 'route' ? `class="active"` : ''
-    }>Route</a></li>
-  </ul>
-  <ol>
-    <li><a href="https://github.com/nodejs/Release#release-schedule">Node.js ${Number(
-      process.version.match(/^v(\d+\.\d+)/)[1]
-    )}</a></li>
-    <li><a href="https://dadi.cloud/web">v.${debug.version}</a></li>
-  </ol>
+    <ul>
+      <li><a href="?debug" ${
+        debug.mode === 'main' ? `class="active"` : ''
+      }>View</a></li>
+      <li><a href="?debug=data" ${
+        debug.mode === 'data' ? `class="active"` : ''
+      }>Data</a></li>
+      <li><a href="?debug=page" ${
+        debug.mode === 'page' ? `class="active"` : ''
+      }>Page</a></li>
+      <li><a href="?debug=ds" ${
+        debug.mode === 'ds' ? `class="active"` : ''
+      }>Datasources</a></li>
+      <li><a href="?debug=result" ${
+        debug.mode === 'result' ? `class="active"` : ''
+      }>Result</a></li>
+      <li><a href="?debug=stats" ${
+        debug.mode === 'stats' ? `class="active"` : ''
+      }>Stats</a></li>
+      <li><a href="?debug=route" ${
+        debug.mode === 'route' ? `class="active"` : ''
+      }>Route</a></li>
+      <li><a href="?debug=headers" ${
+        debug.mode === 'headers' ? `class="active"` : ''
+      }>Headers</a></li>
+    </ul>
+    <ol>
+      <li><a href="https://github.com/nodejs/Release#release-schedule">Node.js ${Number(
+        process.version.match(/^v(\d+\.\d+)/)[1]
+      )}</a></li>
+      <li><a href="https://dadi.cloud/web">v.${help.getVersion()}</a></li>
+    </ol>
   </nav>
 
-   ${
-     debug.data
-       ? `<div class="view"><div class="info">${
-           debug.pane1 ? debug.pane1 : ''
-         }</div><div class="code" id="data"></div></div>`
-       : ''
-   }
-   ${
-     debug.template
-       ? `<div class="view">
-            <div class="info">${debug.pane2 ? debug.pane2 : ''}</div>
-            <div class="code" id="template">${debug.template
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')}
-            </div>
-          </div>
+  ${debug.view
+    .map(
+      (i, idx) => `
+    <div class="view">   
+      ${
+        i.raw
+          ? `${i.raw}`
+          : `  
+        <div class="info">${i.title}</div><div class="code" id="${i.id}">${
+              i.output ? encode(i.output) : ''
+            }</div>
+      `
+      } 
+
+      <script type="text/javascript">
+        ${
+          i.json
+            ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, ${encode(
+                i.json
+              )}); ${i.expand ? `data.expandAll();` : ''}`
+            : ''
+        }
+
+        ${
+          i.output
+            ? `
+          var options = {
+            readOnly: true,
+            tabSize: 2,
+            wrap: true,
+            indentedSoftWrap: true,
+            foldStyle: 'markbegin',
+            theme: 'ace/theme/cobalt',
+            showPrintMargin: false,
+            mode: 'ace/mode/${debug.type || 'handlebars'}'
+          };
+
+          ace.edit("${i.id}").setOptions(options);
         `
-       : ''
-   }
-   
-   ${
-     debug.output
-       ? `<div class="view"><div class="info">${
-           debug.pane3 ? debug.pane3 : ''
-         }</div><div class="code" id="output">${debug.output
-           .replace(/&/g, '&amp;')
-           .replace(/</g, '&lt;')
-           .replace(/>/g, '&gt;')}</div></div>`
-       : ''
-   }
-
-   ${
-     debug.output2
-       ? `<div class="view"><div class="code" id="output2">${debug.output2
-           .replace(/&/g, '&amp;')
-           .replace(/</g, '&lt;')
-           .replace(/>/g, '&gt;')}</div></div>`
-       : ''
-   }
-
-   ${debug.view ? `<div class="view">${debug.view}</div>` : ''}
-
-   <script>
-   ${
-     debug.data
-       ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, ${debug.data
-           .replace(/&/g, '&amp;')
-           .replace(/</g, '&lt;')
-           .replace(/>/g, '&gt;')})`
-       : ''
-   }
-
-   var options = {
-    readOnly: true,
-    tabSize: 2,
-    wrap: true,
-    indentedSoftWrap: true,
-    foldStyle: 'markbegin',
-    theme: 'ace/theme/cobalt',
-    showPrintMargin: false
-   };
-
-   ${
-     debug.template
-       ? `options.mode = 'ace/mode/handlebars';
-   ace.edit("template").setOptions(options);`
-       : ''
-   }
-
-   ${
-     debug.output
-       ? `
-   options.mode = 'ace/mode/${debug.type}';
-   ace.edit("output").setOptions(options);
-   `
-       : ''
-   }
-
-   ${debug.output2 ? `ace.edit("output2").setOptions(options);` : ''}
-
-   </script> 
+            : ''
+        }
+      </script>
+    </div>
+  `
+    )
+    .join('')}
 
   </body></html>`
+}
+
+function encode (data) {
+  data =
+    typeof data === 'object' ? JSON.stringify(data, null, 2) : data.toString()
+  return data
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 }

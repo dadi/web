@@ -1,27 +1,13 @@
 const path = require('path')
 const fs = require('fs')
+const http = require('http')
 const Send = require(path.join(__dirname, '/../view/send'))
 const views = require('./views')
 const help = require(path.join(__dirname, '/../help'))
 
-const pathToRegexp = require.resolve('path-to-regexp')
-
-const CircularJSON = require('circular-json')
-
-function formatBytes (a, b) {
-  if (a === 0) return '0 Bytes'
-  var c = 1024
-  var d = b || 2
-  var e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-  var f = Math.floor(Math.log(a) / Math.log(c))
-  return parseFloat((a / Math.pow(c, f)).toFixed(d)) + ' ' + e[f]
-}
-
 module.exports = function (req, res, next, view, page) {
   return function (err, result, unprocessed) {
     if (err) return next(err)
-
-    const version = help.getVersion()
 
     const mode = view.data.debugView
     delete view.data.debugView
@@ -37,22 +23,67 @@ module.exports = function (req, res, next, view, page) {
           { 'Data size': formatBytes(Buffer.byteLength(view.data, 'utf8'), 3) },
           { 'Result size': formatBytes(Buffer.byteLength(result, 'utf8'), 3) }
         )
+
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
-            version,
             mode,
-            data: CircularJSON.stringify(stats, null, 2)
+            view: [
+              {
+                title: 'Statistics',
+                id: 'data',
+                json: stats
+              }
+            ]
           })
         )
+        break
+      case 'headers':
+        let headers = {}
+
+        headers.request = req.headers
+
+        var options = {
+          host: view.data.url.hostname,
+          port: view.data.url.port,
+          path: view.data.url.pathname,
+          method: 'GET'
+        }
+
+        var newReq = http.request(options, newRes => {
+          headers.response = newRes.headers
+
+          res.setHeader('Content-Type', 'text/html')
+          res.end(
+            views.debug({
+              mode,
+              view: [
+                {
+                  title: 'Headers',
+                  id: 'data',
+                  json: headers,
+                  expand: true
+                }
+              ]
+            })
+          )
+        })
+
+        newReq.end()
+
         break
       case 'page':
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
-            version,
             mode,
-            data: CircularJSON.stringify(page.page, null, 2)
+            view: [
+              {
+                title: 'Page',
+                id: 'data',
+                json: page.page
+              }
+            ]
           })
         )
         break
@@ -72,25 +103,40 @@ module.exports = function (req, res, next, view, page) {
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
-            version,
             mode,
-            data: CircularJSON.stringify(dss, null, 2)
+            view: [
+              {
+                title: 'Datasources',
+                id: 'data',
+                json: dss
+              }
+            ]
           })
         )
         break
       case 'result':
+        let results = []
+        results[0] = {
+          title: 'Unprocessed',
+          id: 'unprocessed',
+          output: unprocessed,
+          type: page.page.contentType.split('/')[1]
+        }
+
+        if (result !== unprocessed) {
+          results[1] = {
+            title: 'processed',
+            id: 'processed',
+            output: result,
+            type: page.page.contentType.split('/')[1]
+          }
+        }
+
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
-            version,
             mode,
-            type: page.page.contentType.split('/')[1],
-            output: unprocessed,
-            pane3:
-              result === unprocessed
-                ? 'No post-process events used'
-                : 'Before post-process events',
-            output2: result === unprocessed ? null : result
+            view: results
           })
         )
         break
@@ -98,14 +144,19 @@ module.exports = function (req, res, next, view, page) {
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
-            version,
             mode,
-            data: CircularJSON.stringify(view.data, null, 2)
+            view: [
+              {
+                title: 'Page',
+                id: 'data',
+                json: view.data
+              }
+            ]
           })
         )
         break
       case 'route':
-        let router = fs.readFileSync(pathToRegexp, 'utf8')
+        let router = fs.readFileSync(require.resolve('path-to-regexp'), 'utf8')
 
         var re = new RegExp(/module\.exports(.*)?/, 'g')
         router = router.replace(re, '')
@@ -113,65 +164,61 @@ module.exports = function (req, res, next, view, page) {
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
-            version,
             mode,
-            view: `
-
-<input type="text" id="inputPath" placeholder="/path/value/" value="${
-              view.data.url.pathname
-            }"><br>
-
-${page.page.routes
-              .map(
-                (i, idx) => `
-<input type="text" class="inputRoute" readonly id="ir_${idx}" placeholder="/path/:key/" value="${
-                  i.path
+            view: [
+              {
+                title: 'Page routes',
+                raw: `
+                <input type="text" id="inputPath" placeholder="/path/value/" value="${
+                  view.data.url.pathname
                 }"><br>
-`
-              )
-              .join('')}
+                ${page.page.routes
+                  .map(
+                    (i, idx) =>
+                      `<input type="text" class="inputRoute" readonly id="ir_${idx}" placeholder="/path/:key/" value="${
+                        i.path
+                      }"><br>`
+                  )
+                  .join('')}
 
+                  <script>
+                    ${router}
 
-<script>
+                    var _ = document.querySelectorAll.bind(document)
 
-${router}
+                    var inputRoutes = _('.inputRoute');
 
+                    function update() {
+                      var path = _('#inputPath')[0].value
 
-var _ = document.querySelectorAll.bind(document)
+                      for (var ir = 0; ir < inputRoutes.length; ++ir) {
+                        var input = inputRoutes[ir];
 
-var inputRoutes = _('.inputRoute');
+                        var keys = []
+                        var regexp
 
-function update() {
-  var path = _('#inputPath')[0].value
+                        if (input.value) {
+                          try {
+                            regexp = pathToRegexp(input.value, keys)
+                          } catch (e) {
+                            console.log(e.message)
+                            return
+                          }
+                        }
 
-  for (var ir = 0; ir < inputRoutes.length; ++ir) {
-    var input = inputRoutes[ir];
+                        inputRoutes[ir].classList.remove('match');
 
-    var keys = []
-    var regexp
+                        if (regexp && regexp.test(path)) {
+                          input.classList.add('match')
+                        }
+                      }
+                      
+                    }
 
-    if (input.value) {
-      try {
-        regexp = pathToRegexp(input.value, keys)
-      } catch (e) {
-        console.log(e.message)
-        return
-      }
-    }
-
-    inputRoutes[ir].classList.remove('match');
-
-    if (regexp && regexp.test(path)) {
-      input.classList.add('match')
-    }
-  }
-  
-}
-
-_('#inputPath')[0].addEventListener('input', update, false)
-update()
-
-          </script>`
+                    _('#inputPath')[0].addEventListener('input', update, false)
+                    update()</script>`
+              }
+            ]
           })
         )
         break
@@ -179,20 +226,43 @@ update()
         res.setHeader('Content-Type', 'text/html')
         res.end(
           views.debug({
-            version,
             mode: 'main',
-            data: CircularJSON.stringify(view.data, null, 2),
-            template: view.template.data,
-            type: page.page.contentType.split('/')[1],
-            output: unprocessed,
-            pane1: 'JSON',
-            pane2: `${page.page.template} (${
-              view.template.getEngineInfo().engine
-            } ${view.template.getEngineInfo().version})`,
-            pane3: 'Output'
+            view: [
+              {
+                title: 'Data',
+                id: 'data',
+                json: view.data
+              },
+              {
+                title: `${page.page.template} (${
+                  view.template.getEngineInfo().engine
+                } ${view.template.getEngineInfo().version})`,
+                id: 'template',
+                output: view.template.data
+              },
+              {
+                title: 'Output',
+                id: 'result',
+                output: unprocessed,
+                type: page.page.contentType.split('/')[1]
+              }
+            ]
           })
         )
         break
     }
   }
+}
+
+/*
+Helper for formatting bytes to human readable size
+*/
+
+function formatBytes (a, b) {
+  if (a === 0) return '0 Bytes'
+  let c = 1024
+  let d = b || 2
+  let e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  let f = Math.floor(Math.log(a) / Math.log(c))
+  return parseFloat((a / Math.pow(c, f)).toFixed(d)) + ' ' + e[f]
 }
