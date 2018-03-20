@@ -122,31 +122,4 @@ describe("View", function(done) {
       done()
     })
   })
-
-  it("should postProcess the HTML output of a page when set at global level", function(done) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-    schema.template = "test.js"
-
-    var req = { url: "/test" }
-    var p = page(name, schema)
-    var v = view(req.url, p)
-
-    var data = {
-      names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]
-    }
-
-    TestHelper.updateConfig({
-      globalPostProcessors: ["replace-sir"]
-    }).then(() => {
-        v.setData(data)
-
-        v.render(function(err, result) {
-          if (err) return done(err)
-          var expected = "Madam Moe\nMadam Larry\nMadam Curly"
-          result.should.eql(expected)
-          done()
-        })
-    })
-  })
 })

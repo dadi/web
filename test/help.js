@@ -211,7 +211,7 @@ TestHelper.prototype.startServer = function(pages) {
 
     Server.start(() => {
       var idx = 0
-      setTimeout(() => {
+      //setTimeout(() => {
         pages.forEach(page => {
           var controller = Controller(page, options)
 
@@ -229,17 +229,17 @@ TestHelper.prototype.startServer = function(pages) {
             return resolve(Server.compile(options).then(() => Server))
           }
         })
-      }, 100)
+      //}, 100)
     })
   })
 }
 
 TestHelper.prototype.stopServer = function(done) {
-  if (!Server.readyState) return done()
+  //if (!Server.readyState) return done()
   Server.stop(function() {
-    setTimeout(function() {
+    //setTimeout(function() {
       done()
-    }, 100)
+    //}, 100)
   })
 }
 

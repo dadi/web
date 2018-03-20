@@ -27,7 +27,16 @@ describe("Debug view", function(done) {
   })
 
   afterEach(function(done) {
-    TestHelper.stopServer(done)
+    
+      TestHelper.resetConfig().then(() => {
+        TestHelper.stopServer(() => {
+          setTimeout(function(){
+        //TestHelper.disableApiConfig().then(() => {
+          done()
+        //})
+      },200)
+      })
+    })
   })
 
   it('should enable the debug view if specified in the config', function (
@@ -235,7 +244,61 @@ describe("Debug view", function(done) {
     })
   })
 
-   it('should return both rendered page outputs if ?debug=result and a post-processor used', function (
+  it('should return stats if ?debug=stats', function (
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    TestHelper.updateConfig({
+      allowDebugView: true
+    }).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
+        var client = request(connectionString)
+
+        client
+          .get(pages[0].routes[0].path + '?debug=stats')
+          .end((err, res) => {
+            const $ = cheerio.load(res.text)
+
+            $('#template').length.should.eql(0)
+
+            $('.view > script').html().toString().trim().should.startWith("var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {\n  \"get\"")
+      
+            done()
+          })
+      })
+    })
+  })
+
+  it('should return stats if ?debug=ds', function (
+    done
+  ) {
+    var pages = TestHelper.setUpPages()
+
+    TestHelper.updateConfig({
+      allowDebugView: true
+    }).then(() => {
+      TestHelper.startServer(pages).then(() => {
+        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
+        var client = request(connectionString)
+
+        client
+          .get(pages[0].routes[0].path + '?debug=ds')
+          .end((err, res) => {
+            const $ = cheerio.load(res.text)
+
+            $('#template').length.should.eql(0)
+
+            $('.view > script').html().toString().trim().should.startWith("var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {}")
+      
+            done()
+          })
+      })
+    })
+  })
+
+  it('should return both rendered page outputs if ?debug=result and a post-processor used', function (
     done
   ) {
     var pages = TestHelper.setUpPages()
