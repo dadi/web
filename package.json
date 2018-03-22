@@ -32,7 +32,7 @@
     "@dadi/cache": "~1.5.3",
     "@dadi/format-error": "~1.6.0",
     "@dadi/logger": "~1.2.0",
-    "@dadi/metadata": "~1.0.0",
+    "@dadi/metadata": "~2.0.0",
     "@dadi/passport": "~1.5.0",
     "@dadi/status": "~1.0.0",
     "@purest/providers": "~1.0.0",
