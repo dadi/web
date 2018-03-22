@@ -9,7 +9,6 @@ const zlib = require('zlib')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
 const log = require('@dadi/logger')
-const BearerAuthStrategy = require(path.join(__dirname, '/../auth/bearer'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const RemoteProvider = function () {
@@ -26,7 +25,6 @@ const RemoteProvider = function () {
 RemoteProvider.prototype.initialise = function (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
-  this.setAuthStrategy()
   this.buildEndpoint()
   this.redirects = 0
 }
@@ -408,16 +406,6 @@ RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
   return protocol.indexOf('https') > -1
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
-}
-
-/**
- * setAuthStrategy
- *
- * @return {void}
- */
-RemoteProvider.prototype.setAuthStrategy = function setAuthStrategy () {
-  if (!this.schema.datasource.auth) return null
-  this.authStrategy = new BearerAuthStrategy(this.schema.datasource.auth)
 }
 
 module.exports = RemoteProvider

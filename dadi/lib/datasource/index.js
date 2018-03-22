@@ -28,13 +28,36 @@ Datasource.prototype.init = function (callback) {
     }
 
     this.schema = schema
-    this.source = schema.datasource.source
     this.schema.datasource.filter = this.schema.datasource.filter || {}
     this.originalFilter = Array.isArray(this.schema.datasource.filter)
       ? Array.from(this.schema.datasource.filter)
       : Object.assign({}, this.schema.datasource.filter)
 
+    // Allow for credentials alias
+    if (schema.datasource.source.credentials) {
+      this.source = Object.assign(
+        {},
+        schema.datasource.source,
+        config.get('credentials')[schema.datasource.source.credentials]
+      )
+    } else {
+      this.source = schema.datasource.source
+    }
+
+    // Default to dadiapi if no type specified, and use first dadiapi creds we see or the first with no type defined
     if (!this.source.type) {
+      let apiInfo = {}
+
+      Object.keys(config.get('credentials')).map(i => {
+        if (
+          config.get('credentials')[i].type === 'dadiapi' ||
+          !config.get('credentials')[i].type
+        ) {
+          apiInfo = config.get('credentials')[i]
+        }
+      })
+
+      this.source = Object.assign({}, apiInfo, this.source)
       this.source.type = 'dadiapi'
     }
 

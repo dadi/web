@@ -128,6 +128,11 @@ const conf = convict({
       env: 'AUTH_TOKEN_SECRET'
     }
   },
+  "credentials": {
+    doc: 'Any credentials for use in datasources.',
+    format: Object,
+    default: {}
+  },
   aws: {
     accessKeyId: {
       doc: '',

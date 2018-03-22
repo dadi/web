@@ -7,7 +7,6 @@ var cheerio = require('cheerio')
 var sinon = require("sinon")
 
 var api = require(__dirname + '/../../dadi/lib/api')
-var Bearer = require(__dirname + '/../../dadi/lib/auth/bearer')
 var Controller = require(__dirname + '/../../dadi/lib/controller')
 var Datasource = require(__dirname + '/../../dadi/lib/datasource')
 var help = require(__dirname + '/../../dadi/lib/help')

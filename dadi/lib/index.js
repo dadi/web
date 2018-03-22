@@ -38,7 +38,6 @@ fs.stat(devConfigPath, (err, stats) => {
 
 var api = require(path.join(__dirname, '/api'))
 var apiMiddleware = require(path.join(__dirname, '/api/middleware'))
-var auth = require(path.join(__dirname, '/auth'))
 var cache = require(path.join(__dirname, '/cache'))
 var Controller = require(path.join(__dirname, '/controller'))
 var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
@@ -236,9 +235,6 @@ Server.prototype.start = function (done) {
 
   // handle routing & redirects
   router(this, options)
-
-  // authentication layer
-  if (config.get('api.enabled')) auth(this)
 
   // start listening
   var server = (this.server = app.listen())
@@ -989,6 +985,13 @@ function onListening (e) {
       dadiBoot.error(err)
       process.exit(0)
     } else if (config.get('env') !== 'test') {
+      let footer = {}
+      for (let api in config.get('credentials')) {
+        footer[api === 'dadiapi' ? 'DADI API' : api] =
+          config.get('credentials')[api].host ||
+          config.get('credentials')[api].type
+      }
+
       dadiBoot.started({
         server: `${config.get('server.protocol')}://${config.get(
           'server.host'
@@ -1003,11 +1006,7 @@ function onListening (e) {
           Engine: enginesInfo,
           Environment: config.get('env')
         },
-        footer: {
-          'DADI API': config.get('api.enabled')
-            ? `${config.get('api.host')}:${config.get('api.port')}`
-            : '\u001b[31mNot enabled\u001b[39m'
-        }
+        footer
       })
     }
   })
