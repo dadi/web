@@ -38,7 +38,7 @@ Datasource.prototype.init = function (callback) {
       this.source = Object.assign(
         {},
         schema.datasource.source,
-        config.get('credentials')[schema.datasource.source.credentials]
+        config.get('apis')[schema.datasource.source.credentials]
       )
     } else {
       this.source = schema.datasource.source
@@ -48,12 +48,12 @@ Datasource.prototype.init = function (callback) {
     if (!this.source.type) {
       let apiInfo = {}
 
-      Object.keys(config.get('credentials')).map(i => {
+      Object.keys(config.get('apis')).map(i => {
         if (
-          config.get('credentials')[i].type === 'dadiapi' ||
-          !config.get('credentials')[i].type
+          config.get('apis')[i].type === 'dadiapi' ||
+          !config.get('apis')[i].type
         ) {
-          apiInfo = config.get('credentials')[i]
+          apiInfo = config.get('apis')[i]
         }
       })
 

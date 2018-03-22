@@ -128,10 +128,21 @@ const conf = convict({
       env: 'AUTH_TOKEN_SECRET'
     }
   },
-  "credentials": {
-    doc: 'Any credentials for use in datasources.',
+  "apis": {
+    doc: 'Any apis and their auth for use in datasources.',
     format: Object,
-    default: {}
+    default: {
+      "dadiapi": {
+        "enabled": true,
+        "host": "127.0.0.1",
+        "port": 3000,
+        "auth": {
+          "tokenUrl": "/token",
+          "clientId": "your-client-id",
+          "secret": "your-secret"
+        }
+      }
+    }
   },
   aws: {
     accessKeyId: {
@@ -151,40 +162,6 @@ const conf = convict({
       format: String,
       default: '',
       env: 'AWS_REGION'
-    }
-  },
-  twitter: {
-    consumerKey: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_CONSUMER_KEY'
-    },
-    consumerSecret: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_CONSUMER_SECRET'
-    },
-    accessTokenKey: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_ACCESS_TOKEN_KEY'
-    },
-    accessTokenSecret: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_ACCESS_TOKEN_SECRET'
-    }
-  },
-  wordpress: {
-    bearerToken: {
-      doc: 'A pregenerated oauth access bearer token',
-      format: String,
-      default: '',
-      env: 'WORDPRESS_BEARER_TOKEN'
     }
   },
   caching: {

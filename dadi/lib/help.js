@@ -7,8 +7,6 @@ const crypto = require('crypto')
 const debug = require('debug')('web:timer')
 const fs = require('fs')
 const getValue = require('get-value')
-const http = require('http')
-const https = require('https')
 const path = require('path')
 const perfy = require('perfy')
 
@@ -66,49 +64,6 @@ module.exports.timer = {
     perfy.destroyAll()
     return stats
   }
-}
-
-module.exports.isApiAvailable = function (done) {
-  if (config.get('api.enabled') === false) {
-    return done(null, true)
-  }
-
-  var options = {
-    hostname: config.get('api.host'),
-    port: config.get('api.port'),
-    path: '/',
-    method: 'GET'
-  }
-
-  var request
-
-  if (config.get('api.protocol') === 'https') {
-    options.protocol = 'https:'
-    request = https.request(options, function (res) {
-      if (/200|401|404/.exec(res.statusCode)) {
-        return done(null, true)
-      }
-    })
-  } else {
-    request = http.request(options, function (res) {
-      if (/200|401|404/.exec(res.statusCode)) {
-        return done(null, true)
-      }
-    })
-  }
-
-  request.on('error', function (e) {
-    e.message = `Error connecting to API: ${
-      e.message
-    }. Check the 'api' settings in config file 'config/config.${config.get(
-      'env'
-    )}.json`
-    e.remoteIp = options.hostname
-    e.remotePort = options.port
-    return done(e)
-  })
-
-  request.end()
 }
 
 /**

@@ -979,44 +979,37 @@ function onListening (e) {
   var engines = Object.keys(templateStore.getEngines())
   var enginesInfo = engines.length ? engines.join(', ') : 'None found'.red
 
-  // check that our API connection is valid
-  help.isApiAvailable((err, result) => {
-    if (err) {
-      dadiBoot.error(err)
-      process.exit(0)
-    } else if (config.get('env') !== 'test') {
-      let footer = {}
-      for (let api in config.get('credentials')) {
-        footer[api === 'dadiapi' ? 'DADI API' : api] =
-          config.get('credentials')[api].host ||
-          config.get('credentials')[api].type
-      }
-
-      // Old api config options
-      if (config.get('api')) {
-        log.error(
-          `Please provide a 'credentials' block in the config file: the 'api' and 'auth' blocks will be removed from future versions of DADI Web. For more information, please visit https://docs.dadi.tech/web.`
-        )
-      }
-
-      dadiBoot.started({
-        server: `${config.get('server.protocol')}://${config.get(
-          'server.host'
-        )}:${config.get('server.port')}`,
-        header: {
-          app: config.get('app.name')
-        },
-        body: {
-          Protocol: config.get('server.protocol'),
-          Version: version,
-          'Node.js': nodeVersion,
-          Engine: enginesInfo,
-          Environment: config.get('env')
-        },
-        footer
-      })
+  if (config.get('env') !== 'test') {
+    let footer = {}
+    for (let api in config.get('apis')) {
+      footer[api === 'dadiapi' ? 'DADI API' : api] =
+        config.get('apis')[api].host || config.get('apis')[api].type
     }
-  })
+
+    // Old api config options
+    if (config.get('api')) {
+      log.error(
+        `Please provide a 'credentials' block in the config file: the 'api' and 'auth' blocks will be removed from future versions of DADI Web. For more information, please visit https://docs.dadi.tech/web.`
+      )
+    }
+
+    dadiBoot.started({
+      server: `${config.get('server.protocol')}://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`,
+      header: {
+        app: config.get('app.name')
+      },
+      body: {
+        Protocol: config.get('server.protocol'),
+        Version: version,
+        'Node.js': nodeVersion,
+        Engine: enginesInfo,
+        Environment: config.get('env')
+      },
+      footer
+    })
+  }
 }
 
 function onError (err) {
