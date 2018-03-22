@@ -61,6 +61,21 @@ Datasource.prototype.init = function (callback) {
       this.source.type = 'dadiapi'
     }
 
+    // Adapt old auth method to new
+    if (this.source.type === 'dadiapi') {
+      if (!this.source.auth) {
+        this.source.auth = {
+          clientId: config.get('auth.clientId'),
+          secret: config.get('auth.secret')
+        }
+      }
+      if (!this.source.protocol) {
+        this.source.protocol = config.get('api.protocol')
+      }
+      if (!this.source.port) this.source.port = config.get('api.port')
+      if (!this.source.host) this.source.host = config.get('api.host')
+    }
+
     if (!providers[this.source.type]) {
       err = new Error(
         `no provider available for datasource type ${this.source.type}`,

@@ -992,6 +992,13 @@ function onListening (e) {
           config.get('credentials')[api].type
       }
 
+      // Old api config options
+      if (config.get('api')) {
+        log.error(
+          `Please provide a 'credentials' block in the config file: the 'api' and 'auth' blocks will be removed from future versions of DADI Web. For more information, please visit https://docs.dadi.tech/web.`
+        )
+      }
+
       dadiBoot.started({
         server: `${config.get('server.protocol')}://${config.get(
           'server.host'

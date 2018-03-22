@@ -30,14 +30,11 @@ DadiApiProvider.prototype.initialise = function (datasource, schema) {
   this.schema = schema
 
   this.options = {
-    protocol: this.datasource.source.protocol || config.get('api.protocol'),
-    host: this.datasource.source.host || config.get('api.host'),
-    port: this.datasource.source.port || config.get('api.port'),
-    tokenUrl: this.datasource.source.tokenUrl || config.get('auth.tokenUrl'),
-    credentials: this.datasource.source.auth || {
-      clientId: config.get('auth.clientId'),
-      secret: config.get('auth.secret')
-    },
+    protocol: this.datasource.source.protocol,
+    host: this.datasource.source.host,
+    port: this.datasource.source.port,
+    tokenUrl: this.datasource.source.tokenUrl || '/token',
+    credentials: this.datasource.source.auth,
     method: 'GET'
   }
 
