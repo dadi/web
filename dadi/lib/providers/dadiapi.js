@@ -11,8 +11,7 @@ const zlib = require('zlib')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
 const log = require('@dadi/logger')
-const help = require(path.join(__dirname, '/../help'))
-const BearerAuthStrategy = require(path.join(__dirname, '/../auth/bearer'))
+const Passport = require('@dadi/passport')
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const DadiApiProvider = function () {
@@ -29,8 +28,24 @@ const DadiApiProvider = function () {
 DadiApiProvider.prototype.initialise = function (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
-  this.setAuthStrategy()
+
+  this.options = {
+    protocol: this.datasource.source.protocol || config.get('api.protocol'),
+    host: this.datasource.source.host || config.get('api.host'),
+    port: this.datasource.source.port || config.get('api.port'),
+    tokenUrl: this.datasource.source.tokenUrl || config.get('auth.tokenUrl'),
+    credentials: this.datasource.source.auth || {
+      clientId: config.get('auth.clientId'),
+      secret: config.get('auth.secret')
+    },
+    method: 'GET'
+  }
+
+  this.options.agent = this.keepAliveAgent(this.options.protocol)
+
   this.buildEndpoint()
+  this.setAuthStrategy()
+  this.options.path = url.parse(this.endpoint).path
 }
 
 /**
@@ -43,12 +58,11 @@ DadiApiProvider.prototype.buildEndpoint = function (datasourceParams) {
     datasourceParams = this.schema.datasource
   }
 
-  const apiConfig = config.get('api')
-  const source = datasourceParams.source || this.datasource.source
+  const source = datasourceParams.source || this.options
 
-  const protocol = source.protocol || 'http'
-  const host = source.host || apiConfig.host
-  const port = source.port || apiConfig.port
+  const protocol = source.protocol || this.options.protocol
+  const host = source.host || this.options.host
+  const port = source.port || this.options.port
 
   const uri = [
     protocol,
@@ -60,7 +74,6 @@ DadiApiProvider.prototype.buildEndpoint = function (datasourceParams) {
     this.datasource.source.modifiedEndpoint || source.endpoint
   ].join('')
 
-  // return this.processDatasourceParameters(datasourceParams, uri)
   this.endpoint = this.processDatasourceParameters(datasourceParams, uri)
 }
 
@@ -72,21 +85,9 @@ DadiApiProvider.prototype.buildEndpoint = function (datasourceParams) {
  * @return {void}
  */
 DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
-  this.options = {
-    protocol: this.datasource.source.protocol || config.get('api.protocol'),
-    host: this.datasource.source.host || config.get('api.host'),
-    port: this.datasource.source.port || config.get('api.port'),
-    path: url.parse(this.endpoint).path,
-    method: 'GET'
-  }
-
-  this.options.agent = this.keepAliveAgent(this.options.protocol)
-  this.options.protocol = this.options.protocol + ':'
-
   var cacheOptions = {
     name: this.datasource.name,
     caching: this.schema.datasource.caching,
-    // endpoint: requestUrl
     endpoint: this.endpoint
   }
 
@@ -123,9 +124,12 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
           decodeURIComponent(this.endpoint)
       )
 
+      let agentOpts = Object.assign({}, this.options)
+      agentOpts.protocol = agentOpts.protocol + ':'
+
       const agent = this.options.protocol === 'https' ? https : http
 
-      let request = agent.request(this.options)
+      let request = agent.request(agentOpts)
 
       request.on('response', res => {
         // If the token is not valid, we try a second time
@@ -374,6 +378,8 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
  * @return {void}
  */
 DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
+  var self = this
+
   let headers = {
     'accept-encoding': 'gzip'
   }
@@ -392,51 +398,22 @@ DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
 
   // If the data-source has its own auth strategy, use it.
   // Otherwise, authenticate with the main server via bearer token
-  if (this.authStrategy) {
-    if (this.authStrategy.getType() === 'bearer') {
-      this.authStrategy.getToken(
-        this.authStrategy,
-        authenticationRetry,
-        (err, bearerToken) => {
-          if (err) {
-            return done(err)
-          }
+  this.authStrategy
+    .then(bearerToken => {
+      headers['Authorization'] = 'Bearer ' + bearerToken
 
-          headers['Authorization'] = 'Bearer ' + bearerToken
+      return done(null, { headers: headers })
+    })
+    .catch(errorData => {
+      var err = new Error()
+      err.name = errorData.title
+      err.message = errorData.detail
+      err.remoteIp = self.options.host
+      err.remotePort = self.options.port
+      err.path = self.options.tokenUrl
 
-          return done(null, { headers: headers })
-        }
-      )
-    }
-  } else {
-    try {
-      help
-        .getToken(authenticationRetry)
-        .then(bearerToken => {
-          headers['Authorization'] = 'Bearer ' + bearerToken
-
-          help.timer.stop('auth')
-          return done(null, { headers: headers })
-        })
-        .catch(errorData => {
-          const err = new Error()
-          err.name = errorData.title
-          err.message = errorData.detail
-          err.remoteIp = config.get('api.host')
-          err.remotePort = config.get('api.port')
-          err.path = config.get('auth.tokenUrl')
-
-          if (errorData.stack) {
-            console.log(errorData.stack)
-          }
-
-          help.timer.stop('auth')
-          return done(err)
-        })
-    } catch (err) {
-      console.log(err.stack)
-    }
-  }
+      return done(err, null)
+    })
 }
 
 /**
@@ -483,14 +460,30 @@ DadiApiProvider.prototype.processSortParameter = function processSortParameter (
   return sort
 }
 
+DadiApiProvider.prototype.getToken = function (strategy) {
+  return Passport({
+    issuer: {
+      uri: (strategy.protocol || 'http') + '://' + strategy.host,
+      port: strategy.port,
+      endpoint: strategy.tokenUrl
+    },
+    credentials: strategy.credentials,
+    wallet: 'file',
+    walletOptions: {
+      path: `${config.get('paths.tokenWallets')}/token.${strategy.host}.${
+        strategy.port
+      }.${strategy.credentials.clientId}.json`
+    }
+  })
+}
+
 /**
  * setAuthStrategy
  *
  * @return {void}
  */
 DadiApiProvider.prototype.setAuthStrategy = function setAuthStrategy () {
-  if (!this.schema.datasource.auth) return null
-  this.authStrategy = new BearerAuthStrategy(this.schema.datasource.auth)
+  this.authStrategy = this.getToken(this.options)
 }
 
 module.exports = DadiApiProvider
