@@ -88,6 +88,15 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
     endpoint: this.endpoint
   }
 
+  var requestOpts = {
+    protocol: this.datasource.source.protocol + ':',
+    host: this.datasource.source.host,
+    port: this.datasource.source.port,
+    path: url.parse(this.endpoint).path,
+    agent: this.keepAliveAgent(this.datasource.source.protocol + ':'),
+    method: 'GET'
+  }
+
   this.dataCache.getFromCache(cacheOptions, cachedData => {
     // data found in the cache, parse into JSON
     // and return to whatever called load()
@@ -97,7 +106,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
         return done(null, cachedData)
       } catch (err) {
         log.error(
-          'Remote: cache data incomplete, making HTTP request: ' +
+          'dadiapi: cache data incomplete, making HTTP request: ' +
             err +
             '(' +
             cacheOptions.endpoint +
@@ -111,22 +120,18 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
     this.getHeaders((err, headers) => {
       err && done(err)
 
-      this.options = Object.assign({}, this.options, headers)
-
       log.info(
-        { module: 'remote' },
+        { module: 'dadiapi' },
         'GET datasource "' +
           this.datasource.schema.datasource.key +
           '": ' +
           decodeURIComponent(this.endpoint)
       )
 
-      let agentOpts = Object.assign({}, this.options)
-      agentOpts.protocol = agentOpts.protocol + ':'
+      requestOpts.headers = headers
 
-      const agent = this.options.protocol === 'https' ? https : http
-
-      let request = agent.request(agentOpts)
+      let httpProvider = requestOpts.protocol === 'https:' ? https : http
+      let request = httpProvider.request(requestOpts)
 
       request.on('response', res => {
         // If the token is not valid, we try a second time
@@ -327,7 +332,7 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
   datasourceParams,
   uri
 ) {
-  debug('processDatasourceParameters %s', uri)
+  debug('start processDatasourceParameters %s', uri)
 
   let query = uri.indexOf('?') > 0 ? '&' : '?'
 
@@ -364,6 +369,8 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
       }
     }
   })
+
+  debug('end processDatasourceParameters %s', uri + query.slice(0, -1))
 
   return uri + query.slice(0, -1)
 }
@@ -420,7 +427,7 @@ DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
  * @return {module} http|https
  */
 DadiApiProvider.prototype.keepAliveAgent = function (protocol) {
-  return protocol === 'https'
+  return protocol === 'https:'
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
 }
