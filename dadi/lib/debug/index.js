@@ -236,7 +236,7 @@ module.exports = function (req, res, next, view, page) {
               {
                 title: `${page.page.template} (${
                   view.template.getEngineInfo().engine
-                } ${view.template.getEngineInfo().version})`,
+                } ${view.template.getEngineInfo().version || ''})`,
                 id: 'template',
                 output: view.template.data
               },
