@@ -7,16 +7,14 @@
     "port": 5000
   },
   "cluster": false,
-  "credentials": { 
-    "dadiapi": {   
-      "enabled": true,
-      "host": "127.0.0.1",
-      "port": 3000,
-      "auth": {
-        "tokenUrl": "/token",
-        "clientId": "your-client-id",
-        "secret": "your-secret"
-      }
+  "api": { 
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 3000,
+    "auth": {
+      "tokenUrl": "/token",
+      "clientId": "your-client-id",
+      "secret": "your-secret"
     }
   },
   "global" : {
