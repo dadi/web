@@ -3,15 +3,8 @@
     "key": "twitter",
     "name": "twitter datasource",
     "source": {
-      "type": "twitter",
+      "api": "twitter",
       "endpoint": "xxx"
-    },
-    "endpointParams": [
-      {
-        "param": "slug",
-        "field": "post_slug"
-      }
-    ],
-    "requestParams": []
+    }
   }
 }

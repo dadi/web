@@ -235,7 +235,7 @@ TestHelper.prototype.startServer = function(pages) {
 }
 
 TestHelper.prototype.stopServer = function(done) {
-  //if (!Server.readyState) return done()
+  if (!Server.readyState) return done()
   Server.stop(function() {
     //setTimeout(function() {
       done()
