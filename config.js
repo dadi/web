@@ -82,28 +82,6 @@ const conf = convict({
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
     }
   },
-  api: {
-    host: {
-      doc: 'The IP address the DADI API application runs on',
-      format: '*',
-      default: '0.0.0.0'
-    },
-    protocol: {
-      doc: 'The protocol to use for the DADI API application',
-      format: String,
-      default: 'http'
-    },
-    port: {
-      doc: 'The port for the DADI API application',
-      format: 'port',
-      default: 8080
-    },
-    enabled: {
-      doc: 'Determines whether this web instance requires access to the API',
-      format: Boolean,
-      default: false
-    }
-  },
   auth: {
     tokenUrl: {
       doc: '',
@@ -128,21 +106,10 @@ const conf = convict({
       env: 'AUTH_TOKEN_SECRET'
     }
   },
-  "apis": {
+  api: {
     doc: 'Any apis and their auth for use in datasources.',
     format: Object,
-    default: {
-      "dadiapi": {
-        "enabled": true,
-        "host": "127.0.0.1",
-        "port": 3000,
-        "auth": {
-          "tokenUrl": "/token",
-          "clientId": "your-client-id",
-          "secret": "your-secret"
-        }
-      }
-    }
+    default: {}
   },
   aws: {
     accessKeyId: {

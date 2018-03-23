@@ -33,35 +33,48 @@ Datasource.prototype.init = function (callback) {
       ? Array.from(this.schema.datasource.filter)
       : Object.assign({}, this.schema.datasource.filter)
 
-    // Allow for credentials alias
-    if (schema.datasource.source.credentials) {
+    // Allow for api config alias
+    if (schema.datasource.source && schema.datasource.source.api) {
       this.source = Object.assign(
         {},
         schema.datasource.source,
-        config.get('apis')[schema.datasource.source.credentials]
+        config.get('api')[schema.datasource.source.api]
       )
     } else {
       this.source = schema.datasource.source
     }
 
-    // Default to dadiapi if no type specified, and use first dadiapi creds we see or the first with no type defined
-    if (!this.source.type) {
+    // Default options if not provided
+    if (!this.source) {
       let apiInfo = {}
 
-      Object.keys(config.get('apis')).map(i => {
-        if (
-          config.get('apis')[i].type === 'dadiapi' ||
-          !config.get('apis')[i].type
-        ) {
-          apiInfo = config.get('apis')[i]
-        }
-      })
+      // If there is only one config in the api block
+      if (
+        config.get('api').host ||
+        config.get('api').port ||
+        config.get('api').auth
+      ) {
+        apiInfo = config.get('api')
+      } else {
+        // Else, it's probably an object of configs so use first 'type=dadiapi' creds we see or the first with no type defined
+        Object.keys(config.get('api')).map(i => {
+          if (
+            config.get('api')[i].type === 'dadiapi' ||
+            !config.get('api')[i].type
+          ) {
+            apiInfo = config.get('api')[i]
+          }
+        })
+      }
 
-      this.source = Object.assign({}, apiInfo, this.source)
+      this.source = Object.assign({}, apiInfo, this.source) // Allow the DS source to override
+    }
+
+    if (!this.source.type) {
       this.source.type = 'dadiapi'
     }
 
-    // Adapt old auth method to new
+    // Set defaults
     if (this.source.type === 'dadiapi') {
       if (!this.source.auth) {
         this.source.auth = {
@@ -70,10 +83,19 @@ Datasource.prototype.init = function (callback) {
         }
       }
       if (!this.source.protocol) {
-        this.source.protocol = config.get('api.protocol')
+        this.source.protocol = config.get('api').protocol || 'http'
       }
-      if (!this.source.port) this.source.port = config.get('api.port')
-      if (!this.source.host) this.source.host = config.get('api.host')
+      if (!this.source.port) this.source.port = config.get('api').port
+      if (!this.source.host) this.source.host = config.get('api').host
+      if (!this.source.tokenUrl) {
+        this.source.tokenUrl = config.get('api').tokenUrl || '/token'
+      }
+    }
+
+    // DEPRECATE THIS: Legacy config block (now moved into source)
+    if (this.auth) {
+      this.source.auth = this.auth
+      delete this.auth
     }
 
     if (!providers[this.source.type]) {
