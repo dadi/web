@@ -88,14 +88,8 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
     endpoint: this.endpoint
   }
 
-  var requestOpts = {
-    protocol: this.datasource.source.protocol + ':',
-    host: this.datasource.source.host,
-    port: this.datasource.source.port,
-    path: url.parse(this.endpoint).path,
-    agent: this.keepAliveAgent(this.datasource.source.protocol + ':'),
-    method: 'GET'
-  }
+  this.options.path = url.parse(this.endpoint).path
+  this.options.agent = this.keepAliveAgent(this.options.protocol + ':')
 
   this.dataCache.getFromCache(cacheOptions, cachedData => {
     // data found in the cache, parse into JSON
@@ -128,10 +122,10 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
           decodeURIComponent(this.endpoint)
       )
 
-      requestOpts.headers = headers
+      this.options.headers = headers
 
-      let httpProvider = requestOpts.protocol === 'https:' ? https : http
-      let request = httpProvider.request(requestOpts)
+      let httpProvider = this.options.protocol === 'https:' ? https : http
+      let request = httpProvider.request(this.options)
 
       request.on('response', res => {
         // If the token is not valid, we try a second time
@@ -342,7 +336,6 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
     { count: datasourceParams.count || 0 },
     { skip: datasourceParams.skip },
     { page: datasourceParams.page || 1 },
-    // { referer: schema.datasource.referer },
     { filter: datasourceParams.filter || {} },
     { fields: datasourceParams.fields || {} },
     { sort: this.processSortParameter(datasourceParams.sort) }
