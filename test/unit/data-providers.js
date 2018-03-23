@@ -16,9 +16,8 @@ var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
 var remoteProvider = require(__dirname + "/../../dadi/lib/providers/remote")
 var Server = require(__dirname + "/../../dadi/lib")
 var TestHelper = require(__dirname + "/../help")()
-var twitterProvider = require(__dirname + "/../../dadi/lib/providers/twitter")
-var wordpressProvider = require(__dirname +
-  "/../../dadi/lib/providers/wordpress")
+//var twitterProvider = require(__dirname + "/../../dadi/lib/providers/twitter")
+//var wordpressProvider = require(__dirname + "/../../dadi/lib/providers/wordpress")
 var markdownProvider = require(__dirname + "/../../dadi/lib/providers/markdown")
 
 var config = require(path.resolve(path.join(__dirname, "/../../config")))
@@ -581,7 +580,7 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("Twitter", function(done) {
+  /*describe("Twitter", function(done) {
     it("should use the datasource count property when querying the API", function(done) {
       new Datasource(
         Page("test", TestHelper.getPageSchema()),
@@ -903,7 +902,7 @@ describe("Data Providers", function(done) {
         })
       })
     })
-  })
+  })*/
 
   describe("RSS", function(done) {
     it("should use the datasource count property when querying the endpoint", function(done) {
