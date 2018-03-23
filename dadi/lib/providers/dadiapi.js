@@ -33,7 +33,7 @@ DadiApiProvider.prototype.initialise = function (datasource, schema) {
     protocol: this.datasource.source.protocol,
     host: this.datasource.source.host,
     port: this.datasource.source.port,
-    tokenUrl: this.datasource.source.tokenUrl || '/token',
+    tokenUrl: this.datasource.source.tokenUrl,
     credentials: this.datasource.source.auth,
     method: 'GET'
   }
@@ -89,7 +89,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
   }
 
   this.options.path = url.parse(this.endpoint).path
-  this.options.agent = this.keepAliveAgent(this.options.protocol + ':')
+  this.options.agent = this.keepAliveAgent(this.options.protocol)
 
   this.dataCache.getFromCache(cacheOptions, cachedData => {
     // data found in the cache, parse into JSON
@@ -125,7 +125,11 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
       this.options.headers = headers
 
       let httpProvider = this.options.protocol === 'https:' ? https : http
-      let request = httpProvider.request(this.options)
+      let request = httpProvider.request(
+        Object.assign({}, this.options, {
+          protocol: this.options.protocol + ':'
+        })
+      )
 
       request.on('response', res => {
         // If the token is not valid, we try a second time
@@ -420,7 +424,7 @@ DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
  * @return {module} http|https
  */
 DadiApiProvider.prototype.keepAliveAgent = function (protocol) {
-  return protocol === 'https:'
+  return protocol === 'https'
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
 }
