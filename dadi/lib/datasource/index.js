@@ -45,7 +45,7 @@ Datasource.prototype.init = function (callback) {
     }
 
     // Default options if not provided
-    if (!this.source) {
+    if (!this.source.host) {
       let apiInfo = {}
 
       // If there is only one config in the api block
