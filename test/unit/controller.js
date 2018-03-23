@@ -483,7 +483,7 @@ describe("Controller", function(done) {
         pages[0].datasources = ["global", "car_makes"]
 
         var host =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          "http://" + config.get('api').host + ":" + config.get('api').port
 
         var endpointGlobal =
           "/1.0/system/all?count=20&page=1&filter=%7B%7D&fields=%7B%7D&sort=%7B%22name%22:1%7D"
@@ -539,7 +539,7 @@ describe("Controller", function(done) {
         pages[0].datasources = ["global", "car_makes_chained_endpoint"]
 
         var host =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          "http://" + config.get('api').host + ":" + config.get('api').port
 
         var endpointGlobal =
           "/1.0/system/all?count=20&page=1&filter=%7B%7D&fields=%7B%7D&sort=%7B%22name%22:1%7D"
@@ -587,7 +587,7 @@ describe("Controller", function(done) {
         pages[0].datasources = ["car_makes_unchained", "filters"]
 
         var host =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          "http://" + config.get('api').host + ":" + config.get('api').port
 
         var endpoint1 =
           "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"

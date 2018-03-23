@@ -19,7 +19,7 @@ var Helper = require(__dirname + "/../../dadi/lib/help")
 
 var clientHost =
   "http://" + config.get("server.host") + ":" + config.get("server.port")
-var apiHost = "http://" + config.get("api.host") + ":" + config.get("api.port")
+var apiHost = "http://" + config.get('api').host + ":" + config.get('api').port
 var credentials = {
   clientId: config.get("auth.clientId"),
   secret: config.get("auth.secret")

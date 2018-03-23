@@ -74,7 +74,7 @@ describe("Routing", function(done) {
           config.get("server.port")
 
         apiHost =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          "http://" + config.get('api').host + ":" + config.get('api').port
         credentials = {
           clientId: config.get("auth.clientId"),
           secret: config.get("auth.secret")
