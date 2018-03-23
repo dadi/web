@@ -23,9 +23,7 @@ const Datasource = function (page, datasource, options) {
 
 Datasource.prototype.init = function (callback) {
   this.loadDatasource((err, schema) => {
-    if (err) {
-      return callback(err)
-    }
+    if (err) return callback(err)
 
     this.schema = schema
     this.schema.datasource.filter = this.schema.datasource.filter || {}
@@ -35,11 +33,21 @@ Datasource.prototype.init = function (callback) {
 
     // Allow for api config alias
     if (schema.datasource.source && schema.datasource.source.api) {
-      this.source = Object.assign(
-        {},
-        schema.datasource.source,
-        config.get('api')[schema.datasource.source.api]
-      )
+      if (!config.get('api')[schema.datasource.source.api]) {
+        callback(
+          new Error(
+            `Settings for API '${
+              schema.datasource.source.api
+            }'' not found in configuration file!`
+          )
+        )
+      } else {
+        this.source = Object.assign(
+          {},
+          schema.datasource.source,
+          config.get('api')[schema.datasource.source.api]
+        )
+      }
     } else {
       this.source = schema.datasource.source
     }
