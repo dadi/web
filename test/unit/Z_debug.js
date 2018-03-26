@@ -16,6 +16,8 @@ var TestHelper = require(__dirname + '/../help')()
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
+const connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
+
 describe("Debug view", function(done) {
   beforeEach(function(done) {
     TestHelper.resetConfig().then(() => {
@@ -26,14 +28,11 @@ describe("Debug view", function(done) {
   })
 
   afterEach(function(done) {
-    
-      TestHelper.resetConfig().then(() => {
-        TestHelper.stopServer(() => {
-          setTimeout(function(){
-        //TestHelper.disableApiConfig().then(() => {
+    TestHelper.resetConfig().then(() => {
+      TestHelper.stopServer(() => {
+        setTimeout(function(){
           done()
-        //})
-      },200)
+        },200)
       })
     })
   })
@@ -47,7 +46,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -70,7 +68,6 @@ describe("Debug view", function(done) {
       allowDebugView: false
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -92,7 +89,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -119,7 +115,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -144,7 +139,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -171,7 +165,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -198,7 +191,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -225,7 +217,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -246,18 +237,30 @@ describe("Debug view", function(done) {
   it('should return stats if ?debug=stats', function (
     done
   ) {
+    // create page 1
     var pages = TestHelper.setUpPages()
+    pages[0].routes[0].path = "/statstest"
+    pages[0].datasources = ["markdown"]
+
+   var dsSchema = TestHelper.getSchemaFromFile(
+      TestHelper.getPathOptions().datasourcePath,
+      "markdown"
+    )
+
+    sinon
+      .stub(Datasource.Datasource.prototype, "loadDatasource")
+      .yields(null, dsSchema)
 
     TestHelper.updateConfig({
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
           .get(pages[0].routes[0].path + '?debug=stats')
           .end((err, res) => {
+            if (err) done(err)
             const $ = cheerio.load(res.text)
 
             $('#template').length.should.eql(0)
@@ -279,7 +282,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client
@@ -317,7 +319,6 @@ describe("Debug view", function(done) {
       allowDebugView: true
     }).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
         var client = request(connectionString)
 
         client

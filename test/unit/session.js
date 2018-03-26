@@ -191,7 +191,7 @@ describe("Session", function(done) {
         target: "endpoint"
       })
 
-      sinon
+      var stubby = sinon
         .stub(Datasource.Datasource.prototype, "loadDatasource")
         .yields(null, dsSchema)
 
@@ -251,6 +251,9 @@ describe("Session", function(done) {
                   data.make.should.eql("mazda")
                   data.edition.should.eql(3)
                   ;(data.session_id !== null).should.eql(true)
+
+                  stubby.restore()
+
                   done()
                 })
               })

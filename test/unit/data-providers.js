@@ -35,7 +35,9 @@ describe("Data Providers", function(done) {
   afterEach(function(done) {
     nock.cleanAll()
     TestHelper.stopServer(function() {})
-    done()
+    TestHelper.resetConfig().then(() => {
+      done()
+    })
   })
 
   describe("DADI API", function(done) {
