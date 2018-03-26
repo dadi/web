@@ -2,10 +2,11 @@
 
 const path = require('path')
 const request = require('request')
-const promise = Promise
-const purest = require('purest')({ request, promise })
+const purest = require('purest')({ request })
 const purestConfig = require('@purest/providers')
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
+
+const log = require('@dadi/logger')
 
 const help = require(path.join(__dirname, '../help'))
 
@@ -47,6 +48,11 @@ RestApi.prototype.initialise = function initialise (datasource, schema) {
  * @return {void}
  */
 RestApi.prototype.load = function load (requestUrl, done) {
+  log.info(
+    { module: 'restapi' },
+    'GET datasource "' + this.datasource.schema.datasource.key + '"'
+  )
+
   try {
     const endpoint = this.schema.datasource.source.endpoint
     const query = this.schema.datasource.query
@@ -80,12 +86,27 @@ RestApi.prototype.load = function load (requestUrl, done) {
         }
       }
 
+      var self = this
+
       this.purest
         .select(endpoint)
         .where(query)
-        .request()
-        .catch(err => done(err, null))
-        .then(result => this.processOutput(result[0], result[1], done))
+        .request(function (err, res, body) {
+          if (err) done(err, null)
+
+          log.info(
+            { module: 'restapi' },
+            'GOT datasource "' +
+              self.datasource.schema.datasource.key +
+              '": ' +
+              decodeURIComponent(res.request.href) +
+              ' (HTTP 200, ' +
+              require('humanize-plus').fileSize(Buffer.byteLength(body)) +
+              ')'
+          )
+
+          self.processOutput(body[0], body[1], done)
+        })
     })
   } catch (ex) {
     done(ex, null)
@@ -104,10 +125,10 @@ RestApi.prototype.processOutput = function processOutput (res, data, done) {
   // if the error is anything other than Success or Bad Request, error
   if (res.statusCode && !/200|400/.exec(res.statusCode)) {
     const err = new Error()
-    const info = `${res.statusMessage} (${res.statusCode}): ${this.endpoint}`
+    const info = `${res.statusMessage} (${res.statusCode}): ${
+      this.schema.datasource.source.endpoint
+    }`
 
-    err.remoteIp = this.options.host
-    err.remotePort = this.options.port
     err.message = `Datasource "${this.datasource.name}" failed. ${info}`
     if (data) err.message += '\n' + data
 
