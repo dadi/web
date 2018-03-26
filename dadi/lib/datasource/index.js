@@ -38,7 +38,7 @@ Datasource.prototype.init = function (callback) {
           new Error(
             `Settings for API '${
               schema.datasource.source.api
-            }'' not found in configuration file!`
+            }' not found in configuration file!`
           )
         )
       } else {
@@ -52,8 +52,13 @@ Datasource.prototype.init = function (callback) {
       this.source = schema.datasource.source
     }
 
-    // Default options if not provided
-    if (!this.source.host) {
+    // Default to dadiapi
+    if (!this.source.type) {
+      this.source.type = 'dadiapi'
+    }
+
+    // Default options if not provided for dadiapi
+    if (!this.source.host && this.source.type === 'dadiapi') {
       let apiInfo = {}
 
       // If there is only one config in the api block
@@ -76,10 +81,6 @@ Datasource.prototype.init = function (callback) {
       }
 
       this.source = Object.assign({}, apiInfo, this.source) // Allow the DS source to override
-    }
-
-    if (!this.source.type) {
-      this.source.type = 'dadiapi'
     }
 
     // Set defaults
