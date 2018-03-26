@@ -1,5 +1,6 @@
 'use strict'
 
+const url = require('url')
 const path = require('path')
 const request = require('request')
 const purest = require('purest')({ request })
@@ -53,6 +54,10 @@ RestApi.prototype.load = function load (requestUrl, done) {
     'GET datasource "' + this.datasource.schema.datasource.key + '"'
   )
 
+  // allow query string param to bypass cache
+  var query = url.parse(requestUrl, true).query
+  var noCache = query.cache && query.cache.toString().toLowerCase() === 'false'
+
   try {
     const endpoint = this.schema.datasource.source.endpoint
     const query = this.schema.datasource.query
@@ -71,7 +76,7 @@ RestApi.prototype.load = function load (requestUrl, done) {
     }
 
     this.dataCache.getFromCache(cacheOptions, cachedData => {
-      if (cachedData) {
+      if (cachedData && !noCache) {
         try {
           cachedData = JSON.parse(cachedData.toString())
           return done(null, cachedData)
@@ -92,20 +97,18 @@ RestApi.prototype.load = function load (requestUrl, done) {
         .select(endpoint)
         .where(query)
         .request(function (err, res, body) {
-          if (err) done(err, null)
-
           log.info(
             { module: 'restapi' },
             'GOT datasource "' +
               self.datasource.schema.datasource.key +
               '": ' +
-              decodeURIComponent(res.request.href) +
+              decodeURIComponent(res ? res.request.href : '') +
               ' (HTTP 200, ' +
               require('humanize-plus').fileSize(Buffer.byteLength(body)) +
               ')'
           )
 
-          self.processOutput(body[0], body[1], done)
+          self.processOutput(res, err, body, noCache, done)
         })
     })
   } catch (ex) {
@@ -121,20 +124,13 @@ RestApi.prototype.load = function load (requestUrl, done) {
  * @param  {fn} done
  * @return {void}
  */
-RestApi.prototype.processOutput = function processOutput (res, data, done) {
-  // if the error is anything other than Success or Bad Request, error
-  if (res.statusCode && !/200|400/.exec(res.statusCode)) {
-    const err = new Error()
-    const info = `${res.statusMessage} (${res.statusCode}): ${
-      this.schema.datasource.source.endpoint
-    }`
-
-    err.message = `Datasource "${this.datasource.name}" failed. ${info}`
-    if (data) err.message += '\n' + data
-
-    return done(err)
-  }
-
+RestApi.prototype.processOutput = function processOutput (
+  res,
+  error,
+  data,
+  noCache,
+  done
+) {
   if (res.statusCode === 200) {
     data = this.processFields(data)
 
@@ -144,9 +140,64 @@ RestApi.prototype.processOutput = function processOutput (res, data, done) {
       cacheKey: this.cacheKey
     }
 
-    this.dataCache.cacheResponse(cacheOptions, JSON.stringify(data), () => {
-      //
-    })
+    if (!noCache) {
+      this.dataCache.cacheResponse(cacheOptions, JSON.stringify(data), () => {
+        //
+      })
+    }
+  }
+
+  if (res.statusCode === 404) {
+    data = {
+      results: [],
+      errors: [
+        {
+          code: 'WEB-0004',
+          title: 'Datasource Not Found',
+          details:
+            'Datasource "' +
+            this.datasource.name +
+            '" failed. ' +
+            res.statusMessage +
+            ' (' +
+            res.statusCode +
+            ')' +
+            ': ' +
+            res.request.href
+        }
+      ]
+    }
+  }
+
+  // if the error is anything other than Success or Bad Request, error
+  if (res.statusCode === 500) {
+    data = {
+      results: [],
+      errors: [
+        {
+          code: 'WEB-0004',
+          title: 'Datasource Internal Server Error',
+          details:
+            'Datasource "' +
+            this.datasource.name +
+            '" failed. ' +
+            res.statusMessage +
+            ' (' +
+            res.statusCode +
+            ')' +
+            ': ' +
+            res.request.href
+        }
+      ]
+    }
+  }
+
+  if (Buffer.isBuffer(data)) {
+    data = data.toString()
+  }
+
+  if (typeof data === 'string') {
+    data = JSON.parse(data)
   }
 
   return done(null, data)

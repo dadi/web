@@ -33,7 +33,7 @@ describe("Data Providers", function(done) {
   })
 
   afterEach(function(done) {
-    nock.cleanAll()
+  nock.cleanAll()
     TestHelper.stopServer(function() {})
     TestHelper.resetConfig().then(() => {
       done()
@@ -605,6 +605,109 @@ describe("Data Providers", function(done) {
           ds.source.provider.should.eql('twitter')
 
           done()
+        })
+      })
+    })
+
+    it("should load data from the specified api", function(done) {
+      var host = "https://api.twitter.com"
+      var path = "/1.1/statuses/show.json?id=972581771681386497"
+
+      var scope = nock(host)
+        .get(path)
+        .replyWithFile(200, __dirname + "/../twitter-api-response.json")
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["twitter-status"]
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString =
+              "http://" +
+              config.get("server.host") +
+              ":" +
+              config.get("server.port")
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?debug=json")
+              .end((err, res) => {
+                should.exist(res.body.twitterstatus)
+                should.exist(res.body.twitterstatus.user.screen_name)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should fail gracefully if the api is unavailable", function(done) {
+      var host = "https://api.twitter.com"
+      var path = "/1.1/statuses/show.json?id=972581771681386498"
+
+      var scope2 = nock(host)
+        .get(path)
+        .reply(404, "Not found")
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["twitter-status-two"]
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString =
+              "http://" +
+              config.get("server.host") +
+              ":" +
+              config.get("server.port")
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?debug=json")
+              .end((err, res) => {
+                should.exist(res.body.twitterstatus.errors)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should filter specified fields from the output", function(done) {
+      var host = "https://api.twitter.com"
+      var path = "/1.1/statuses/show.json?id=972581771681386498"
+
+      var scope = nock(host)
+        .get(path)
+        .replyWithFile(200, __dirname + "/../twitter-api-response.json")
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["twitter-status-filtered"]
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString =
+              "http://" +
+              config.get("server.host") +
+              ":" +
+              config.get("server.port")
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?cache=false&debug=json")
+              .end((err, res) => {
+                should.exist(res.body.twitterstatus.user)
+                should.exist(res.body.twitterstatus.user.screen_name)
+                should.exist(res.body.twitterstatus.text)
+
+                Object.keys(res.body.twitterstatus).length.should.eql(2)
+                
+
+                done()
+              })
+          })
         })
       })
     })
