@@ -12,19 +12,11 @@ const perfy = require('perfy')
 
 const version = require('../../package.json').version
 const config = require(path.join(__dirname, '/../../config.js'))
-const Passport = require('@dadi/passport')
 const errorView = require(path.join(__dirname, '/debug/views')).error
 const Send = require(path.join(__dirname, '/view/send'))
 
 module.exports.getVersion = function () {
   return version
-}
-
-module.exports.htmlEncode = function (input) {
-  var encodedStr = input.replace(/[\u00A0-\u9999<>&]/gim, function (i) {
-    return '&#' + i.charCodeAt(0) + ';'
-  })
-  return encodedStr
 }
 
 module.exports.timer = {
@@ -117,21 +109,6 @@ module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   return true
 }
 
-// function to wrap try - catch for JSON.parse to mitigate pref losses
-module.exports.parseQuery = function (queryStr) {
-  var ret
-  try {
-    // strip leading zeroes from querystring before attempting to parse
-    ret = JSON.parse(queryStr.replace(/\b0(\d+)/, '$1'))
-  } catch (e) {
-    ret = {}
-  }
-
-  // handle case where queryStr is "null" or some other malicious string
-  if (typeof ret !== 'object' || ret === null) ret = {}
-  return ret
-}
-
 module.exports.clearCache = function (req, Cache, callback) {
   var pathname = req.body.path
   var modelDir = crypto
@@ -204,36 +181,6 @@ module.exports.clearCache = function (req, Cache, callback) {
     .catch(err => {
       console.log(err)
     })
-}
-
-/**
- * Uses @dadi/passport to get a token to access a DADI API
- */
-
-module.exports.getToken = function (forceTokenRefresh) {
-  return Passport({
-    forceTokenRefresh: forceTokenRefresh,
-    issuer: {
-      uri: config.get('api.protocol') + '://' + config.get('api.host'),
-      port: config.get('api.port'),
-      endpoint: config.get('auth.tokenUrl')
-    },
-    credentials: {
-      clientId: config.get('auth.clientId'),
-      secret: config.get('auth.secret')
-    },
-    wallet: 'file',
-    walletOptions: {
-      path:
-        config.get('paths.tokenWallets') +
-        '/token.' +
-        config.get('api.host') +
-        config.get('api.port') +
-        '.' +
-        config.get('auth.clientId') +
-        '.json'
-    }
-  })
 }
 
 /**
