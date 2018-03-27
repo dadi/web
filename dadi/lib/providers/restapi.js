@@ -104,7 +104,7 @@ RestApi.prototype.load = function load (requestUrl, done) {
               '": ' +
               decodeURIComponent(res ? res.request.href : '') +
               ' (HTTP 200, ' +
-              require('humanize-plus').fileSize(Buffer.byteLength(body)) +
+              help.formatBytes(Buffer.byteLength(body)) +
               ')'
           )
 
@@ -212,11 +212,8 @@ RestApi.prototype.processOutput = function processOutput (
 RestApi.prototype.processFields = function processFields (data) {
   const fields = this.schema.datasource.fields
 
-  // console.log('**fields'.red, fields)
-
   if (fields && Object.keys(fields).length) {
     const keys = Object.keys(fields)
-    // console.log('**keys'.red, keys)
 
     if (Array.isArray(data)) {
       for (let i = 0; i < data.length; i++) {

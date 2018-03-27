@@ -14,6 +14,8 @@ const log = require('@dadi/logger')
 const Passport = require('@dadi/passport')
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
+const help = require(path.join(__dirname, '../help'))
+
 const DadiApiProvider = function () {
   this.dataCache = new DatasourceCache()
 }
@@ -282,7 +284,7 @@ DadiApiProvider.prototype.processOutput = function (
           '": ' +
           decodeURIComponent(this.endpoint) +
           ' (HTTP 200, ' +
-          require('humanize-plus').fileSize(Buffer.byteLength(data)) +
+          help.formatBytes(Buffer.byteLength(data)) +
           ')'
       )
 

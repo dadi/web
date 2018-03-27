@@ -375,3 +375,21 @@ function readFiles (files, options) {
 }
 
 module.exports.readFiles = readFiles
+
+/**
+ * Formats bytes to a more human readable size
+ *
+ * @param {string} the size of the item in bytes
+ * @param {string} the decimal places to round the figure by
+ *
+ * @return {string} the formatted figure e.g, 2 GB
+ */
+
+module.exports.formatBytes = function (a, b) {
+  if (a === 0) return '0 Bytes'
+  let c = 1024
+  let d = b || 2
+  let e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  let f = Math.floor(Math.log(a) / Math.log(c))
+  return parseFloat((a / Math.pow(c, f)).toFixed(d)) + ' ' + e[f]
+}

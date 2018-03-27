@@ -10,6 +10,8 @@ const zlib = require('zlib')
 const log = require('@dadi/logger')
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
+const help = require(path.join(__dirname, '../help'))
+
 const RemoteProvider = function () {
   this.dataCache = new DatasourceCache()
 }
@@ -311,7 +313,7 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
           '": ' +
           decodeURIComponent(this.endpoint) +
           ' (HTTP 200, ' +
-          require('humanize-plus').fileSize(Buffer.byteLength(data)) +
+          help.formatBytes(Buffer.byteLength(data)) +
           ')'
       )
 

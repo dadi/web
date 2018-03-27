@@ -58,7 +58,6 @@
     "fs-extra": "~4.0.3",
     "get-value": "~2.0.6",
     "html-minifier": "^3.5.10",
-    "humanize-plus": "~1.8.2",
     "iltorb": "~2.0.3",
     "js-yaml": "~3.10.0",
     "kinesis": "~1.2.2",
