@@ -8,7 +8,6 @@ var bodyParser = require('body-parser')
 var debug = require('debug')('web:server')
 var enableDestroy = require('server-destroy')
 var fs = require('fs')
-var mkdirp = require('mkdirp')
 var path = require('path')
 var session = require('express-session')
 var csrf = require('csurf')
@@ -402,8 +401,6 @@ Server.prototype.loadPaths = function (paths) {
     options.uploadPath = path.resolve(config.get('uploads.destinationPath'))
   }
 
-  this.ensureDirectories(options, () => {})
-
   return options
 }
 
@@ -506,7 +503,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
 }
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
-  var middlewares = this.loadMiddleware(directoryPath, options)
+  var middlewares = this.loadMiddleware(directoryPath, options) || []
   middlewares.forEach(middleware => {
     middleware.init(this.app)
   })
@@ -873,40 +870,6 @@ Server.prototype.createTemporaryFile = destination => {
       }
 
       cb(null, filename)
-    }
-  })
-}
-
-/**
- *  Create workspace directories if they don't already exist
- *
- *  @param {Object} options Object containing workspace paths
- *  @return
- *  @api public
- */
-Server.prototype.ensureDirectories = function (options, done) {
-  // create workspace directories if they don't exist; permissions default to 0777
-  var idx = 0
-
-  Object.keys(options).forEach(key => {
-    const dir = options[key]
-
-    if (Array.isArray(dir)) {
-      this.ensureDirectories(dir, () => {})
-    } else {
-      mkdirp(dir, {}, (err, made) => {
-        if (err) {
-          log.error({ module: 'server' }, err)
-        }
-
-        if (made) {
-          debug('Created directory %s', made)
-        }
-
-        idx++
-
-        if (idx === Object.keys(options).length) return done()
-      })
     }
   })
 }
