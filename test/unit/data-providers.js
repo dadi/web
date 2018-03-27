@@ -581,7 +581,15 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("RestAPI", function(done) {
+  describe("Rest API", function(done) {
+    it("should use a custom purest config if passed", function(done) {
+      new Datasource(Page("test", TestHelper.getPageSchema()), "youtube", TestHelper.getPathOptions()).init(function(err, ds) {
+        if (err) done(err)
+        should.exist(ds.source.provider.google)
+        done()
+      })
+    })
+
     it("should use the datasource alias property when querying the endpoint", function(done) {
       TestHelper.updateConfig({
         api: {

@@ -1,0 +1,35 @@
+{
+  "datasource": {
+    "key": "youtube",
+    "name": "youtube datasource",
+    "source": {
+      "type": "restapi",
+      "provider": {
+        "google": {
+          "https://www.googleapis.com": {
+            "__domain": {
+              "auth": {
+                "auth": {"bearer": "[0]"}
+              }
+            },
+            "{endpoint}": {
+              "__path": {
+                "alias": "__default"
+              }
+            },
+            "youtube/[version]/{endpoint}": {
+              "__path": {
+                "alias": "youtube",
+                "version": "v3"
+              }
+            }
+          }
+        }
+      },
+      "endpoint": "channels"
+    }
+  },
+  "query": {
+    "forUsername": "CaseyNeistat"
+  }
+}
