@@ -60,7 +60,7 @@ RestApi.prototype.load = function load (requestUrl, done) {
 
   try {
     const endpoint = this.schema.datasource.source.endpoint
-    const query = this.schema.datasource.query
+    const query = this.query
 
     this.cacheKey = [
       endpoint,
@@ -230,11 +230,11 @@ RestApi.prototype.processFields = function processFields (data) {
 /**
  * processRequest - called on every request, rebuild buildEndpoint
  *
- * @param  {obj} req - web request object
+ * @param  {obj} datasourceParams
  * @return {void}
  */
-RestApi.prototype.processRequest = function processRequest (req) {
-  // not used
+RestApi.prototype.processRequest = function processRequest (datasourceParams) {
+  this.query = datasourceParams.query
 }
 
 module.exports = RestApi

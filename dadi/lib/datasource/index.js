@@ -286,7 +286,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
         const placeholderRegex = new RegExp('{' + param.field + '}', 'ig')
         endpoint = endpoint.replace(placeholderRegex, value)
       } else {
-        datasourceParams.filter[param.field] = value
+        datasourceParams[param.target] = datasourceParams[param.target] || {}
+        datasourceParams[param.target][param.field] = value
       }
     } else {
       if (param.target === 'filter') {
