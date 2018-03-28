@@ -195,10 +195,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // handle the cache flag
   if (query.cache && query.cache === 'false') {
-    // this.schema.datasource.cache = false
     datasourceParams.cache = false
   } else {
-    // delete this.schema.datasource.cache
     delete datasourceParams.cache
   }
 
@@ -231,7 +229,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
     // add an ID filter if it was present in the querystring
     // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
     if (req.params.id || query.id) {
-      //  this.schema.datasource.filter['_id'] = req.params.id || query.id
       delete query.id
     }
 
