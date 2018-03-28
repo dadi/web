@@ -5,6 +5,7 @@ const fs = require('fs')
 const getValue = require('get-value')
 const path = require('path')
 const url = require('url')
+const debug = require('debug')('web:datasource')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
 const Event = require(path.join(__dirname, '/../event'))
@@ -137,6 +138,8 @@ Datasource.prototype.init = function (callback) {
         this.options
       )
     }
+
+    debug(`initialise datasource '${this.name}'`)
 
     this.provider.initialise(this, schema)
 

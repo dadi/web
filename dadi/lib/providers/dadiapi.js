@@ -486,7 +486,7 @@ DadiApiProvider.prototype.getToken = function (strategy) {
  * @return {void}
  */
 DadiApiProvider.prototype.setAuthStrategy = function setAuthStrategy () {
-  this.authStrategy = this.getToken(this.options)
+  this.authStrategy = this.options.host ? this.getToken(this.options) : null
 }
 
 module.exports = DadiApiProvider
