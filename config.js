@@ -238,11 +238,6 @@ const conf = convict({
     }
   },
   headers: {
-    useGzipCompression: {
-      doc: 'Depricated: use `useCompression` instead.',
-      format: Boolean,
-      default: true
-    },
     useCompression: {
       doc:
         "If true, uses br or gzip compression where available and adds a 'Content-Encoding: [br|gzip]' header to the response.",
