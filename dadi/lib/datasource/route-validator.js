@@ -30,14 +30,10 @@ RouteValidator.prototype.get = function (route, param, options, req) {
 
       datasource.provider = null
 
-      if (data) {
-        var results = data
-
-        if (results.results && results.results.length > 0) {
-          return resolve('')
-        } else {
-          return reject('')
-        }
+      if (data && data.results && data.results.length > 0) {
+        return resolve('')
+      } else {
+        return reject('')
       }
     })
   })
