@@ -55,7 +55,6 @@
     "event-stream": "~3.3.4",
     "express-session": "~1.15.6",
     "feedparser": "~2.2.2",
-    "fs-extra": "~4.0.3",
     "get-value": "~2.0.6",
     "iltorb": "~2.1.0",
     "js-yaml": "~3.10.0",
@@ -68,19 +67,16 @@
     "perfy": "~1.1.2",
     "proxy-addr": "~1.1.5",
     "purest": "~3.1.0",
-    "qs": "~6.4.0",
     "query-string": "^5.0.1",
     "recursive-readdir": "~2.2.1",
     "redis": "~2.8.0",
     "request": "~2.83.0",
-    "send": "~0.16.0",
     "server-destroy": "~1.0.1",
     "snyk": "^1.47.0",
     "through": "~2.3.8",
     "toobusy-js": "~0.5.1",
     "uuid": "^3.1.0",
-    "web-es6-templates": "~1.1.5",
-    "wildcard": "~1.1.2"
+    "web-es6-templates": "~1.1.5"
   },
   "devDependencies": {
     "@commitlint/cli": "~5.2.8",
