@@ -944,9 +944,15 @@ function onListening (e) {
 
   if (config.get('env') !== 'test') {
     let footer = {}
-    for (let api in config.get('api')) {
-      footer[api === 'dadiapi' ? 'DADI API' : api] =
-        config.get('api')[api].host || config.get('api')[api].type
+
+    if (config.get('api').host) {
+      let apiKey = config.get('api').type ? config.get('api') : 'DADI API'
+      footer[apiKey] = config.get('api').host
+    } else {
+      for (let api in config.get('api')) {
+        footer[api === 'dadiapi' ? 'DADI API' : api] =
+          config.get('api')[api].host || config.get('api')[api].type
+      }
     }
 
     dadiBoot.started({
