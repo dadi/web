@@ -183,7 +183,7 @@ Controller.prototype.buildInitialViewData = function (req) {
   // add id component from the request
   if (req.params.id) data.id = decodeURIComponent(req.params.id)
 
-  // allow debug view using ?debug=
+  // allow debug view using ?debug
   data.debugView = false
 
   if (
@@ -191,6 +191,11 @@ Controller.prototype.buildInitialViewData = function (req) {
     typeof urlData.query.debug !== 'undefined'
   ) {
     data.debugView = urlData.query.debug || true
+  }
+
+  // Legacy ?json=true
+  if (config.get('allowDebugView') && urlData.query.json) {
+    data.debugView = 'json'
   }
 
   data.global = config.has('global') ? config.get('global') : {} // global values from config
