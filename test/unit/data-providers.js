@@ -43,7 +43,7 @@ describe("Data Providers", function(done) {
   describe("DADI API", function(done) {
     it("should use the datasource auth block when obtaining a token", function(done) {
       TestHelper.enableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["car_models"]
 
@@ -72,7 +72,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&json=true")
+              .get(pages[0].routes[0].path + "?cache=false&debug=json")
               .end((err, res) => {})
           })
         })
@@ -181,7 +181,7 @@ describe("Data Providers", function(done) {
 
     it("should return an errors collection when a datasource times out", function(done) {
       TestHelper.enableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["car_makes_unchained"]
 
@@ -206,7 +206,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&json=true")
+              .get(pages[0].routes[0].path + "?cache=false&debug=json")
               .end((err, res) => {
                 should.exist(res.body["car_makes_unchained"].errors)
                 res.body["car_makes_unchained"].errors[0].title.should.eql(
@@ -221,7 +221,7 @@ describe("Data Providers", function(done) {
 
     it("should return an errors collection when a datasource is not found", function(done) {
       TestHelper.enableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["car_makes_unchained"]
 
@@ -246,7 +246,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&json=true")
+              .get(pages[0].routes[0].path + "?cache=false&debug=json")
               .end((err, res) => {
                 should.exist(res.body["car_makes_unchained"].errors)
                 res.body["car_makes_unchained"].errors[0].title.should.eql(
@@ -263,7 +263,7 @@ describe("Data Providers", function(done) {
   describe("Remote", function(done) {
     it("should return an errors collection when a datasource times out", function(done) {
       TestHelper.enableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["car_makes_unchained_remote"]
 
@@ -289,7 +289,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 should.exist(res.body["car_makes_unchained_remote"].errors)
                 res.body[
@@ -304,7 +304,7 @@ describe("Data Providers", function(done) {
 
     it("should return an errors collection when a datasource is not found", function(done) {
       TestHelper.enableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["car_makes_unchained_remote"]
 
@@ -330,7 +330,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&json=true")
+              .get(pages[0].routes[0].path + "?cache=false&debug=json")
               .end((err, res) => {
                 should.exist(res.body["car_makes_unchained_remote"].errors)
                 res.body[
@@ -358,7 +358,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["static"]
 
@@ -371,7 +371,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -404,7 +404,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["static"]
 
@@ -417,7 +417,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -452,7 +452,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["static"]
 
@@ -465,7 +465,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -501,7 +501,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["static"]
 
@@ -514,7 +514,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -550,7 +550,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["static"]
 
@@ -563,7 +563,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -759,7 +759,7 @@ describe("Data Providers", function(done) {
         .reply(200, { x: "y" })
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["twitter"]
 
@@ -772,7 +772,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 should.exist(res.body.twitter)
                 res.body.twitter.should.eql({ x: "y" })
@@ -881,7 +881,7 @@ describe("Data Providers", function(done) {
         .reply(200, { x: "y" })
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["wordpress"]
 
@@ -894,10 +894,10 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
             console.log(pages[0].routes[0].path)
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
-                should.exist(res.body["wordpress-post"])
-                res.body["wordpress-post"].should.eql({ x: "y" })
+                should.exist(res.body["wordpress_post"])
+                res.body["wordpress_post"].should.eql({ x: "y" })
                 done()
               })
           })
@@ -977,7 +977,7 @@ describe("Data Providers", function(done) {
         .replyWithFile(200, __dirname + "/../rss.xml")
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["rss"]
 
@@ -990,7 +990,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 should.exist(res.body.rss)
                 should.exist(res.body.rss[0].title)
@@ -1014,7 +1014,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1027,7 +1027,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -1064,7 +1064,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1077,7 +1077,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -1104,7 +1104,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
           pages[0].routes[0].path = "/test/:category?"
@@ -1117,7 +1117,7 @@ describe("Data Providers", function(done) {
               config.get("server.port")
             var client = request(connectionString)
 
-            client.get("/test/sports?json=true").end((err, res) => {
+            client.get("/test/sports?debug=json").end((err, res) => {
               Datasource.Datasource.prototype.loadDatasource.restore()
 
               res.body.params["category"].should.equal("sports")
@@ -1146,7 +1146,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1159,7 +1159,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.markdown.results)
@@ -1183,7 +1183,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1196,7 +1196,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.markdown.results)
@@ -1223,7 +1223,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1236,7 +1236,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.markdown.errors)
@@ -1262,7 +1262,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1275,7 +1275,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.markdown.results)
@@ -1304,7 +1304,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1317,7 +1317,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.markdown.results)
@@ -1347,7 +1347,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1360,7 +1360,7 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.markdown.results)

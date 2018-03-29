@@ -1,6 +1,6 @@
 {
   "datasource": {
-    "key": "wordpress-post",
+    "key": "wordpress_post",
     "name": "WordPress single post datasource",
     "source": {
       "type": "wordpress",

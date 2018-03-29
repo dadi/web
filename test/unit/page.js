@@ -288,20 +288,6 @@ describe("Page", function(done) {
     done()
   })
 
-  it("should throw error if `cache` setting is incorrect", function(done) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-
-    schema.page.cache = schema.settings.cache
-    delete schema.settings.cache
-
-    should.throws(function() {
-      page(name, schema)
-    }, Error)
-
-    done()
-  })
-
   it("should not throw error if `cache` setting is not specified", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
@@ -388,19 +374,6 @@ describe("Page", function(done) {
     var p = page(name, schema)
     p.requiredDatasources.should.exist
     p.requiredDatasources.should.eql([])
-    done()
-  })
-
-  it("should throw error if specified `route` is not an object", function(done) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-    delete schema.routes
-    schema.route = "/test"
-
-    should.throws(function() {
-      page(name, schema)
-    }, Error)
-
     done()
   })
 

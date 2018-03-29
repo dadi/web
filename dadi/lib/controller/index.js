@@ -5,7 +5,6 @@
  */
 const async = require('async')
 const clone = require('clone')
-const crypto = require('crypto')
 const debug = require('debug')('web:controller')
 const getValue = require('get-value')
 const path = require('path')
@@ -19,6 +18,7 @@ const Datasource = require(path.join(__dirname, '/../datasource'))
 const Event = require(path.join(__dirname, '/../event'))
 const Providers = require(path.join(__dirname, '/../providers'))
 const View = require(path.join(__dirname, '/../view'))
+const DebugView = require(path.join(__dirname, '/../debug'))
 const Send = require(path.join(__dirname, '/../view/send'))
 const Cache = require(path.join(__dirname, '/../cache'))
 
@@ -27,9 +27,6 @@ const Cache = require(path.join(__dirname, '/../cache'))
  */
 const Controller = function (page, options, meta, engine, cache) {
   if (!page) throw new Error('Page instance required')
-
-  Controller.numInstances = (Controller.numInstances || 0) + 1
-  // console.log('Controller:', Controller.numInstances)
 
   this.page = page
 
@@ -41,6 +38,9 @@ const Controller = function (page, options, meta, engine, cache) {
   this.datasources = {}
   this.events = []
   this.preloadEvents = []
+
+  this.page.globalPostProcessors = config.get('globalPostProcessors') || []
+  this.page.globalEvents = config.get('globalEvents') || []
 
   this.attachDatasources(err => {
     if (err) {
@@ -78,18 +78,13 @@ Controller.prototype.attachDatasources = function (done) {
  */
 Controller.prototype.attachEvents = function (done) {
   let event
-  // add global events first
-  config.get('globalEvents').forEach(eventName => {
-    event = new Event(this.page.name, eventName, this.options)
-    this.preloadEvents.push(event)
-  })
 
   this.page.preloadEvents.forEach(eventName => {
     event = new Event(this.page.name, eventName, this.options)
     this.preloadEvents.push(event)
   })
 
-  this.page.events.forEach(eventName => {
+  this.page.events.concat(this.page.globalEvents).forEach(eventName => {
     event = new Event(this.page.name, eventName, this.options)
     this.events.push(event)
   })
@@ -159,15 +154,25 @@ Controller.prototype.buildInitialViewData = function (req) {
     )
   }
 
-  const urlData = url.parse(req.url, true)
+  const urlData = url.parse(
+    `${req.protocol}://${req.headers.host}${req.url}`,
+    true
+  )
 
   data.query = urlData.query
   data.params = {}
-  data.pathname = ''
-  data.host = req.headers.host
   data.page = this.meta
+  data.page.name = this.page.name
 
-  if (urlData.pathname.length) data.pathname = urlData.pathname
+  data.url = {
+    protocol: urlData.protocol,
+    hostname: urlData.hostname,
+    host: urlData.host,
+    port: urlData.port,
+    path: urlData.path,
+    pathname: urlData.pathname,
+    href: urlData.href
+  }
 
   // add request params (params from the path, e.g. /:make/:model)
   // add query params (params from the querystring, e.g. /reviews?page=2)
@@ -178,23 +183,30 @@ Controller.prototype.buildInitialViewData = function (req) {
   // add id component from the request
   if (req.params.id) data.id = decodeURIComponent(req.params.id)
 
-  // allow JSON view using ?json=true
-  let json =
-    config.get('allowJsonView') &&
-    urlData.query.json &&
-    urlData.query.json.toString() === 'true'
+  // allow debug view using ?debug
+  data.debugView = false
 
-  data.title = this.page.name
+  if (
+    config.get('allowDebugView') &&
+    typeof urlData.query.debug !== 'undefined'
+  ) {
+    data.debugView = urlData.query.debug || true
+  }
+
+  // Legacy ?json=true
+  if (config.get('allowDebugView') && urlData.query.json) {
+    data.debugView = 'json'
+  }
+
   data.global = config.has('global') ? config.get('global') : {} // global values from config
   data.debug = config.get('debug')
-  data.json = json || false
 
   if (config.get('security.csrf')) {
     data.csrfToken = req.csrfToken()
   }
 
-  delete data.query.json
-  delete data.params.json
+  delete data.query.debug
+  delete data.params.debug
 
   return data
 }
@@ -206,48 +218,43 @@ Controller.prototype.process = function process (req, res, next) {
   debug('%s %s', req.method, req.url)
   help.timer.start(req.method.toLowerCase())
 
-  const statusCode = res.statusCode || 200
   let data = this.buildInitialViewData(req)
-  const view = new View(req.url, this.page, data.json)
 
-  let done = data.json
-    ? Send.json(statusCode, res, next)
-    : Send.html(res, req, next, statusCode, this.page.contentType)
+  const statusCode = res.statusCode || 200
+  const view = new View(req.url, this.page)
 
-  this.loadData(req, res, data, (err, data, dsResponse) => {
+  let done = Send.html(req, res, next, statusCode, this.page.contentType)
+
+  this.loadData(req, res, data, (err, loadedData, dsResponse) => {
     if (err) {
       if (err.statusCode && err.statusCode === 404) return next()
       return done(err)
     }
 
     // return 404 if requiredDatasources contain no data
-    if (!this.requiredDataPresent(data)) {
+    if (!this.requiredDataPresent(loadedData)) {
       return next()
     }
 
     // If we received a response back from the datasource, and
     // not just the data, send the whole response back
-    if (dsResponse) {
-      if (dsResponse.statusCode === 202) {
-        done = Send.json(dsResponse.statusCode, res, next)
-        return done(null, data)
-      }
+    if (dsResponse && dsResponse.statusCode === 202) {
+      done = Send.json(dsResponse.statusCode, res, next)
+      return done(null, loadedData)
     }
 
     help.timer.stop(req.method.toLowerCase())
-    if (data) data.stats = help.timer.getStats()
 
-    if (data) data.version = help.getVersion()
+    view.setData(loadedData)
 
-    view.setData(data)
-
-    if (data.json) {
-      return done(null, data)
-    }
-
-    view.render((err, result) => {
+    view.render((err, result, unprocessed) => {
       if (err) return next(err)
-      return done(null, result)
+
+      if (data.debugView) {
+        return DebugView(req, res, next, view, this)(null, result, unprocessed)
+      } else {
+        return done(null, result)
+      }
     })
   })
 }
@@ -293,21 +300,20 @@ Controller.prototype.loadEventData = function (events, req, res, data, done) {
         // add a random value to the data obj so we can check if an
         // event has sent back the obj - in which case we assign it back
         // to itself
-        let checkValue = crypto
-          .createHash('md5')
-          .update(new Date().toString())
-          .digest('hex')
-
-        data.checkValue = checkValue
+        data.timestamp = new Date().getTime()
 
         event.run(req, res, data, (err, result) => {
           help.timer.stop('event: ' + event.name)
 
           if (err) return reject(err)
 
-          // if we get data back with the same checkValue property,
+          // if we get data back with the same timestamp property,
           // reassign it to our global data object to avoid circular JSON
-          if (result && result.checkValue && result.checkValue === checkValue) {
+          if (
+            result &&
+            result.timestamp &&
+            result.timestamp === data.timestamp
+          ) {
             data = result
           } else if (result) {
             // add the result to our global data object
@@ -401,29 +407,16 @@ Controller.prototype.loadData = function (req, res, data, done) {
            * for this datasource
            * @returns err, {Object} result, {Object} dsResponse
            */
-          // ds.provider.load(requestUrl, function (err, result, dsResponse) {
           ds.provider.load(req.url, (err, result, dsResponse) => {
             if (err) return done(err)
 
             help.timer.stop('datasource: ' + ds.name)
 
-            if (ds.provider.destroy) {
-              ds.provider.destroy()
-            }
-
             ds.provider = null
 
             if (dsResponse) return done(null, result, dsResponse)
 
-            // TODO: simplify this, doesn't require a try/catch
-            if (result) {
-              try {
-                data[ds.schema.datasource.key] = result
-              } catch (e) {
-                console.log('Provider Load Error:', ds.name, req.url)
-                console.log(e)
-              }
-            }
+            if (result) data[ds.schema.datasource.key] = result
 
             cb()
           })

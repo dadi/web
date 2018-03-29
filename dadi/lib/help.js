@@ -15,11 +15,11 @@ const perfy = require('perfy')
 const version = require('../../package.json').version
 const config = require(path.join(__dirname, '/../../config.js'))
 const Passport = require('@dadi/passport')
-const errorView = require(path.join(__dirname, '/view/errors'))
+const errorView = require(path.join(__dirname, '/debug/views')).error
 const Send = require(path.join(__dirname, '/view/send'))
 
 module.exports.getVersion = function () {
-  if (config.get('debug')) return version
+  return version
 }
 
 module.exports.htmlEncode = function (input) {
@@ -31,7 +31,7 @@ module.exports.htmlEncode = function (input) {
 
 module.exports.timer = {
   isDebugEnabled: function isDebugEnabled () {
-    return config.get('debug')
+    return config.get('allowDebugView')
   },
 
   start: function start (key) {
@@ -48,13 +48,21 @@ module.exports.timer = {
 
   getStats: function getStats () {
     if (!this.isDebugEnabled()) return
-    var stats = []
+    var stats = {}
 
     perfy.names().forEach(key => {
       if (perfy.result(key)) {
-        stats.push({ key: key, value: perfy.result(key).summary })
+        stats[key] = perfy.result(key)
+        delete stats[key].name
+        delete stats[key].summary
       }
     })
+
+    stats.total =
+      Object.keys(stats)
+        .reduce((total, current) => total + stats[current].time, 0)
+        .toFixed(3) + ' seconds'
+
     perfy.destroyAll()
     return stats
   }
@@ -135,7 +143,7 @@ module.exports.validateRequestCredentials = function (req, res) {
 module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   var method = req.method && req.method.toLowerCase()
   if (method !== allowedMethod.toLowerCase()) {
-    Send.html(res, req, null, 405, 'text/html')(
+    Send.html(req, res, null, 405, 'text/html')(
       null,
       errorView({
         headline: 'Method not allowed.',

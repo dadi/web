@@ -19,9 +19,6 @@ const Datasource = function (page, datasource, options) {
   this.page = page
   this.name = datasource
   this.options = options || {}
-
-  Datasource.numInstances = (Datasource.numInstances || 0) + 1
-  // console.log('Datasource:', Datasource.numInstances, datasource)
 }
 
 Datasource.prototype.init = function (callback) {
@@ -135,10 +132,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
     // delete this.schema.datasource.cache
     delete datasourceParams.cache
   }
-
-  // if (req.headers && req.headers.referer) {
-  //   this.schema.datasource.referer = encodeURIComponent(req.headers.referer)
-  // }
 
   if (this.page.passHeaders) {
     this.requestHeaders = req.headers

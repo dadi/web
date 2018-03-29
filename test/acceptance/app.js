@@ -47,17 +47,6 @@ describe("Application", function() {
     })
   })
 
-  //   TestHelper.resetConfig().then(() => {
-  //     var apiHost = "http://" + config.get("api.host") + ":" + config.get("api.port")
-  //     scope = nock(apiHost)
-  //       .post("/token")
-  //       .times(5)
-  //       .reply(200, { accessToken: "xx" })
-  //     var scope1 = nock(apiHost).get("/").times(5).reply(200)
-  //     done()
-  //   })
-  // })
-
   afterEach(function(done) {
     TestHelper.resetConfig().then(() => {
       TestHelper.stopServer(done)
@@ -191,6 +180,40 @@ describe("Application", function() {
               })
               .expect(401)
               .end(done)
+          })
+        })
+      })
+
+      it("should return status information if correct credentials posted", function(done) {
+        this.timeout(10000)
+
+        var clientHost =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var apiHost =
+          "http://" + config.get("api.host") + ":" + config.get("api.port")
+        var client = request(clientHost)
+
+        var pages = TestHelper.setUpPages()
+
+        TestHelper.enableApiConfig().then(() => {
+          TestHelper.updateConfig({
+            status: {
+              routes: [{
+                route: '/test'
+              }]
+            }
+          }).then(() => {
+            TestHelper.startServer(pages).then(() => {
+              client
+                .post('/api/status')
+                .set('content-type', 'application/json')
+                .send({"secret": config.get("auth.secret"), "clientId": config.get("auth.clientId")})
+                .expect(200)
+                .end(done)
+            })
           })
         })
       })

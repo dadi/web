@@ -94,7 +94,7 @@ describe("Router", function(done) {
     var routerConfig = {
       rewrites: {
         forceLowerCase: true,
-        allowJsonView: true,
+        allowDebugView: true,
         loadDatasourceAsFile: false,
         path: "test/app/routes/rewrites.txt"
       }
@@ -115,7 +115,7 @@ describe("Router", function(done) {
           var routerConfig = {
             rewrites: {
               forceLowerCase: true,
-              allowJsonView: true,
+              allowDebugView: true,
               loadDatasourceAsFile: false,
               path: ""
             }
@@ -559,7 +559,7 @@ describe("Router", function(done) {
       var routerConfig = {
         rewrites: {
           forceLowerCase: true,
-          allowJsonView: true,
+          allowDebugView: true,
           loadDatasourceAsFile: false,
           datasource: "redirects"
         }
@@ -611,7 +611,7 @@ describe("Router", function(done) {
         },
         rewrites: {
           forceLowerCase: true,
-          allowJsonView: true,
+          allowDebugView: true,
           loadDatasourceAsFile: false,
           datasource: "redirects"
         }
@@ -708,7 +708,7 @@ describe("Router", function(done) {
         rewrites: {
           forceTrailingSlash: false,
           forceLowerCase: true,
-          allowJsonView: true,
+          allowDebugView: true,
           loadDatasourceAsFile: false,
           datasource: ""
         }

@@ -84,7 +84,7 @@ describe("Controller", function(done) {
   it("should return a 200 if a page's requiredDatasources are populated", function(done) {
     TestHelper.disableApiConfig().then(() => {
       TestHelper.updateConfig({
-        allowJsonView: true
+        allowDebugView: true
       }).then(() => {
         var pages = TestHelper.setUpPages()
         pages[0].datasources = ["categories"]
@@ -93,7 +93,8 @@ describe("Controller", function(done) {
         TestHelper.startServer(pages).then(() => {
           // provide API response
           var results = {
-            categories: { results: [{ _id: 1, title: "books" }] }
+            debugView: 'json',
+            categories: { results: [{ _id: 1, name: "books" }] }
           }
           sinon
             .stub(Controller.Controller.prototype, "loadData")
@@ -101,7 +102,7 @@ describe("Controller", function(done) {
 
           var client = request(connectionString)
           client
-            .get(pages[0].routes[0].path + "?json=true")
+            .get(pages[0].routes[0].path + "?debug=json")
             .expect(200)
             .end((err, res) => {
               if (err) return done(err)
@@ -134,7 +135,7 @@ describe("Controller", function(done) {
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .expect(200)
               .end((err, res) => {
                 if (err) return done(err)
@@ -159,7 +160,7 @@ describe("Controller", function(done) {
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .expect(200)
               .expect(TestHelper.shouldSetCookie("_csrf"))
               .end((err, res) => {
@@ -193,7 +194,7 @@ describe("Controller", function(done) {
 
             var client = request(connectionString)
             client
-              .post(pages[0].routes[0].path + "?json=true")
+              .post(pages[0].routes[0].path + "?debug=json")
               .send()
               .expect(403)
               .end((err, res) => {
@@ -220,7 +221,7 @@ describe("Controller", function(done) {
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .expect(200)
               .expect(TestHelper.shouldSetCookie("_csrf"))
               .end((err, res) => {
@@ -259,7 +260,7 @@ describe("Controller", function(done) {
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .expect(200)
               .expect(TestHelper.shouldSetCookie("_csrf"))
               .end((err, res) => {
@@ -302,7 +303,7 @@ describe("Controller", function(done) {
 
     it("should run events in the order they are specified", function(done) {
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].events = ["b", "a"]
 
@@ -315,7 +316,7 @@ describe("Controller", function(done) {
 
             var client = request(connectionString)
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end(function(err, res) {
                 if (err) return done(err)
 
@@ -336,7 +337,7 @@ describe("Controller", function(done) {
 
     it("should run events sequentially, even if they are asynchronous", function(done) {
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].events = ["asyncA", "asyncB"]
 
@@ -349,7 +350,7 @@ describe("Controller", function(done) {
 
             var client = request(connectionString)
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end(function(err, res) {
                 if (err) return done(err)
 
@@ -384,7 +385,7 @@ describe("Controller", function(done) {
 
     it("should run preloadEvents within the get request", function(done) {
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowJsonView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].events = ["test_event"]
           pages[0].preloadEvents = ["test_preload_event"]
@@ -400,7 +401,7 @@ describe("Controller", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end(function(err, res) {
                 if (err) return done(err)
                 method.restore()
@@ -428,8 +429,8 @@ describe("Controller", function(done) {
 
           TestHelper.startServer(pages).then(() => {
             controller = Controller(pages[0], TestHelper.getPathOptions())
-            controller.preloadEvents.should.exist
-            controller.preloadEvents[0].name.should.eql("test_global_event")
+            controller.events.should.exist
+            controller.events[0].name.should.eql("test_global_event")
             done()
           })
         })
@@ -439,7 +440,7 @@ describe("Controller", function(done) {
     it("should run globalEvents within the get request", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({
-          allowJsonView: true,
+          allowDebugView: true,
           globalEvents: ["test_global_event"]
         }).then(() => {
           var pages = TestHelper.setUpPages()
@@ -455,7 +456,7 @@ describe("Controller", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end(function(err, res) {
                 if (err) return done(err)
                 method.restore()
@@ -563,7 +564,7 @@ describe("Controller", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?json=true")
+              .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
                 if (err) return done(err)
                 should.exist(res.body["car_makes_chained_endpoint"])
@@ -611,7 +612,7 @@ describe("Controller", function(done) {
         TestHelper.startServer(pages).then(() => {
           var client = request(connectionString)
           client
-            .get(pages[0].routes[0].path + "?json=true")
+            .get(pages[0].routes[0].path + "?debug=json")
             .end(function(err, res) {
               if (err) return done(err)
               providerSpy.restore()
@@ -709,7 +710,7 @@ describe("Controller", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
         client
-          .get(pages[0].routes[0].path + "?json=true")
+          .get(pages[0].routes[0].path + "?debug=json")
           .end(function(err, res) {
             if (err) return done(err)
             providerSpy.restore()

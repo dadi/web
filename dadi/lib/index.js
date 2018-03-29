@@ -447,10 +447,11 @@ Server.prototype.loadApi = function (options, reload, callback) {
 
         var protocol = config.get('server.protocol') || 'http'
         if (protocol === 'https') {
-          var httpsHost = config.get('server.host')
-          var httpsPort = config.get('server.port')
-          var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
-          params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
+          params.healthCheck.baseUrl = `https://${config.get('server.host')}${
+            config.get('server.port') !== 443
+              ? `:${config.get('server.port')}`
+              : ''
+          }`
         }
 
         dadiStatus(params, (err, data) => {
@@ -750,9 +751,15 @@ Server.prototype.compile = function (options) {
   // Get a list of templates to render based on the registered components
   const componentTemplates = Object.keys(this.components).map(route => {
     if (this.components[route].options.host === options.host) {
+      const resolvedTemplate = path.join(
+        templatePath,
+        this.components[route].page.template
+      )
+      this.components[route].page.resolvedTemplate = resolvedTemplate
+
       return {
         engine: this.components[route].engine,
-        file: path.join(templatePath, this.components[route].page.template)
+        file: resolvedTemplate
       }
     }
   })

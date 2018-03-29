@@ -57,6 +57,7 @@
     "feedparser": "~2.2.2",
     "fs-extra": "~4.0.3",
     "get-value": "~2.0.6",
+    "html-minifier": "^3.5.10",
     "humanize-plus": "~1.8.2",
     "iltorb": "~2.1.0",
     "js-yaml": "~3.10.0",
@@ -86,6 +87,7 @@
   "devDependencies": {
     "@commitlint/cli": "~5.2.8",
     "@commitlint/config-angular": "~5.1.1",
+    "cheerio": "^1.0.0-rc.2",
     "env-test": "~1.0.0",
     "husky": "~0.13.3",
     "istanbul": "^0.4.5",

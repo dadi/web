@@ -14,13 +14,6 @@ const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const RemoteProvider = function () {
   this.dataCache = new DatasourceCache()
-
-  RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) + 1
-  // console.log('RemoteProvider:', RemoteProvider.numInstances)
-}
-
-RemoteProvider.prototype.destroy = function () {
-  RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) - 1
 }
 
 /**

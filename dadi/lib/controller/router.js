@@ -84,14 +84,14 @@ Router.prototype.loadRewrites = function (options, done) {
         let freshRules = []
         ds.provider.load(null, (err, response) => {
           if (err) {
-            console.log('Error loading data in Router Rewrite module')
-            console.log(err)
+            log.error(
+              { module: 'router' },
+              'Error loading rewrite datasource "' +
+                ds.name +
+                '" in Router Rewrite module'
+            )
             return cb(null)
           }
-
-          // if (response) {
-          //   response = JSON.parse(response)
-          // }
 
           if (response.results) {
             let idx = 0
@@ -417,7 +417,12 @@ module.exports = function (server, options) {
 
         ds.provider.load(req.url, function (err, data) {
           if (err) {
-            console.log('Error loading data in Router Rewrite module')
+            log.error(
+              { module: 'router' },
+              'Error loading datasource "' +
+                ds.name +
+                '" in Router Rewrite module'
+            )
             return next(err)
           }
 

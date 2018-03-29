@@ -50,7 +50,7 @@ module.exports = function (server) {
 Cache.prototype.cachingEnabled = function (req) {
   // Check it is not a json view
   var query = url.parse(req.url, true).query
-  if (query.json && query.json !== 'false') return false
+  if ((query.json && query.json !== 'false') || query.debug) return false
 
   // Disable cache for debug mode
   if (config.get('debug')) return false

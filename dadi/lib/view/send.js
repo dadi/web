@@ -13,7 +13,7 @@ var self = this
  * @param {res} res - the HTTP response
  * @param {req} req - the HTTP request
  */
-module.exports.json = function (successCode, res, next) {
+module.exports.json = function (statusCode, res, next) {
   return function (err, results) {
     if (err) return next(err)
 
@@ -21,7 +21,7 @@ module.exports.json = function (successCode, res, next) {
 
     // Only if nothing else has responsed e.g., errorView
     if (!res.headersSent) {
-      res.statusCode = successCode
+      res.statusCode = statusCode
       res.setHeader('Content-Type', 'application/json')
       res.setHeader('Content-Length', Buffer.byteLength(resBody))
       res.end(resBody)
@@ -34,7 +34,7 @@ module.exports.json = function (successCode, res, next) {
  * @param {res} res - the HTTP response
  * @param {req} req - the HTTP request
  */
-module.exports.html = function (res, req, next, statusCode, contentType) {
+module.exports.html = function (req, res, next, statusCode, contentType) {
   return function (err, results) {
     if (err) return next(err)
 

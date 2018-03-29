@@ -17,13 +17,6 @@ const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 
 const DadiApiProvider = function () {
   this.dataCache = new DatasourceCache()
-
-  DadiApiProvider.numInstances = (DadiApiProvider.numInstances || 0) + 1
-  // console.log('DadiApiProvider:', DadiApiProvider.numInstances)
-}
-
-DadiApiProvider.prototype.destroy = function () {
-  DadiApiProvider.numInstances = (DadiApiProvider.numInstances || 0) - 1
 }
 
 /**
