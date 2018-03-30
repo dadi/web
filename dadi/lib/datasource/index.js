@@ -339,7 +339,9 @@ Datasource.prototype.getParameterValue = function (req, parameter) {
       value = req.session && getValue(req.session, parameter.param)
       break
     default:
-      value = req.params && req.params[parameter.param]
+      value =
+        (req.params && req.params[parameter.param]) ||
+        (req.query && req.query[parameter.param])
       break
   }
 
