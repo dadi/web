@@ -535,9 +535,6 @@ conf.updateConfigDataForDomain = function (domain) {
   })
 }
 
-// Perform validation
-conf.validate()
-
 module.exports = conf
 module.exports.configPath = function () {
   var env = conf.get('env') || process.env['NODE_ENV']
