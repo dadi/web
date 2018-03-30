@@ -1,4 +1,5 @@
 const path = require('path')
+const CircularJSON = require('circular-json')
 const help = require(path.join(__dirname, '/../help'))
 
 /**
@@ -115,7 +116,9 @@ module.exports.debug = function (debug) {
 
 function encode (data) {
   data =
-    typeof data === 'object' ? JSON.stringify(data, null, 2) : data.toString()
+    typeof data === 'object'
+      ? CircularJSON.stringify(data, null, 2)
+      : data.toString()
   return data
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
