@@ -226,7 +226,14 @@ Server.prototype.start = function (done) {
       app.use(csrf())
     } else {
       app.use(cookieParser())
-      app.use(csrf({ cookie: true }))
+      app.use(
+        csrf({
+          cookie: {
+            httpOnly: true,
+            secure: true
+          }
+        })
+      )
     }
   }
 
