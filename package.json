@@ -127,7 +127,8 @@
   "greenkeeper": {
     "ignore": [
       "sinon",
-      "mocha"
+      "mocha",
+      "lint-staged"
     ]
   },
   "author": "DADI <team@dadi.tech>",
