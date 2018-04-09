@@ -950,8 +950,9 @@ function onListening (e) {
       footer[apiKey] = config.get('api').host
     } else {
       for (let api in config.get('api')) {
-        footer[api === 'dadiapi' ? 'DADI API' : api] =
-          config.get('api')[api].host || config.get('api')[api].type
+        let key = api === 'dadiapi' ? 'DADI API' : api
+
+        footer[key] = config.get('api')[api].host || config.get('api')[api].type
       }
     }
 
