@@ -60,6 +60,7 @@ Datasource.prototype.init = function (callback) {
 
     // Default options if not provided for dadiapi
     if (!this.source.host && this.source.type === 'dadiapi') {
+      let apis = config.get('api')
       let apiInfo = {}
 
       // If there is only one config in the api block
@@ -68,20 +69,17 @@ Datasource.prototype.init = function (callback) {
         config.get('api').port ||
         config.get('api').auth
       ) {
-        apiInfo = config.get('api')
+        apiInfo = apis
       } else {
         // Else, it's probably an object of configs
         // If there is a config blocked explicitally called 'dadiapi'
-        if (config.get('api')['dadiapi']) {
-          apiInfo = config.get('api')['dadiapi']
+        if (apis['dadiapi']) {
+          apiInfo = apis['dadiapi']
         } else {
           // Else, find the fist one with type 'type=dadiapi' or the first with no type defined
-          for (const key in config.get('api')) {
-            if (
-              config.get('api')[key].type === 'dadiapi' ||
-              !config.get('api')[key].type
-            ) {
-              apiInfo = config.get('api')[key]
+          for (const key in apis) {
+            if (apis[key].type === 'dadiapi' || !apis[key].type) {
+              apiInfo = apis[key]
               break
             }
           }
