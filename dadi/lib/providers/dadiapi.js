@@ -381,8 +381,6 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
  * @return {void}
  */
 DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
-  var self = this
-
   let headers = {
     'accept-encoding': 'gzip'
   }
@@ -408,12 +406,12 @@ DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
       return done(null, { headers: headers })
     })
     .catch(errorData => {
-      var err = new Error()
+      let err = new Error()
       err.name = errorData.title
       err.message = errorData.detail
-      err.remoteIp = self.options.host
-      err.remotePort = self.options.port
-      err.path = self.options.tokenUrl
+      err.remoteIp = this.options.host
+      err.remotePort = this.options.port
+      err.path = this.options.tokenUrl
 
       return done(err, null)
     })

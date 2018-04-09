@@ -91,16 +91,14 @@ RestApi.prototype.load = function load (requestUrl, done) {
         }
       }
 
-      var self = this
-
       this.purest
         .select(endpoint)
         .where(query)
-        .request(function (err, res, body) {
+        .request((err, res, body) => {
           log.info(
             { module: 'restapi' },
             'GOT datasource "' +
-              self.datasource.schema.datasource.key +
+              this.datasource.schema.datasource.key +
               '": ' +
               decodeURIComponent(res ? res.request.href : '') +
               ' (HTTP 200, ' +
@@ -108,7 +106,7 @@ RestApi.prototype.load = function load (requestUrl, done) {
               ')'
           )
 
-          self.processOutput(res, err, body, noCache, done)
+          this.processOutput(res, err, body, noCache, done)
         })
     })
   } catch (ex) {
@@ -211,10 +209,9 @@ RestApi.prototype.processOutput = function processOutput (
  */
 RestApi.prototype.processFields = function processFields (data) {
   const fields = this.schema.datasource.fields
+  const keys = fields && Object.keys(fields)
 
-  if (fields && Object.keys(fields).length) {
-    const keys = Object.keys(fields)
-
+  if (keys && keys.length) {
     if (Array.isArray(data)) {
       for (let i = 0; i < data.length; i++) {
         data[i] = help.pick(data[i], keys)

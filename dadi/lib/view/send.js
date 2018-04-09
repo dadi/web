@@ -7,8 +7,6 @@ const CircularJSON = require('circular-json')
 const config = require(path.join(__dirname, '/../../../config.js'))
 const help = require(path.join(__dirname, '/../help'))
 
-const self = this
-
 /**
  * Sends back JSON
  * @param {res} res - the HTTP response
@@ -43,7 +41,9 @@ module.exports.html = function (req, res, next, statusCode, contentType) {
 
     res.statusCode = statusCode
     res.setHeader('Content-Type', contentType)
-    self.addHeaders(res)
+
+    // Add headers
+    module.exports.addHeaders(res)
 
     // Compression
     const shouldCompress = compressible(contentType)
