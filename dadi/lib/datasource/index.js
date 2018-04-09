@@ -70,18 +70,26 @@ Datasource.prototype.init = function (callback) {
       ) {
         apiInfo = config.get('api')
       } else {
-        // Else, it's probably an object of configs so use first 'type=dadiapi' creds we see or the first with no type defined
-        Object.keys(config.get('api')).map(i => {
-          if (
-            config.get('api')[i].type === 'dadiapi' ||
-            !config.get('api')[i].type
-          ) {
-            apiInfo = config.get('api')[i]
+        // Else, it's probably an object of configs
+        // If there is a config blocked explicitally called 'dadiapi'
+        if (config.get('api')['dadiapi']) {
+          apiInfo = config.get('api')['dadiapi']
+        } else {
+          // Else, find the fist one with type 'type=dadiapi' or the first with no type defined
+          for (const key in config.get('api')) {
+            if (
+              config.get('api')[key].type === 'dadiapi' ||
+              !config.get('api')[key].type
+            ) {
+              apiInfo = config.get('api')[key]
+              break
+            }
           }
-        })
+        }
       }
 
-      this.source = Object.assign({}, apiInfo, this.source) // Allow the DS source to override
+      // Allow the DS source to override the above
+      this.source = Object.assign({}, apiInfo, this.source)
     }
 
     // Set defaults
