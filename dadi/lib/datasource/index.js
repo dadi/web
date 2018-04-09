@@ -64,15 +64,11 @@ Datasource.prototype.init = function (callback) {
       let apiInfo = {}
 
       // If there is only one config in the api block
-      if (
-        config.get('api').host ||
-        config.get('api').port ||
-        config.get('api').auth
-      ) {
+      if (apis.host || apis.port || apis.auth) {
         apiInfo = apis
       } else {
         // Else, it's probably an object of configs
-        // If there is a config blocked explicitally called 'dadiapi'
+        // If there is a config blocked explicitly called 'dadiapi'
         if (apis['dadiapi']) {
           apiInfo = apis['dadiapi']
         } else {
