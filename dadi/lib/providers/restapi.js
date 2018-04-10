@@ -138,6 +138,11 @@ RestApi.prototype.processOutput = function processOutput (
       cacheKey: this.cacheKey
     }
 
+    // Count variable from datasource
+    if (this.count) {
+      data = data.slice(0, this.count)
+    }
+
     if (!noCache) {
       this.dataCache.cacheResponse(cacheOptions, JSON.stringify(data), () => {
         //
@@ -232,6 +237,7 @@ RestApi.prototype.processFields = function processFields (data) {
  */
 RestApi.prototype.processRequest = function processRequest (datasourceParams) {
   this.query = datasourceParams.query
+  this.count = datasourceParams.count
 }
 
 module.exports = RestApi
