@@ -12,7 +12,7 @@
     "prepublishOnly": "npm run snyk-protect",
     "precommit": "lint-staged",
     "commitmsg": "commitlint -e",
-    "format": "prettier --no-semi --write '{dadi,scripts,test}/**/*.js' && standard --fix '{dadi,scripts,test}/**/*.js'",
+    "format": "prettier-standard --no-semi '{dadi,scripts,test}/**/*.js' && standard --fix '{dadi,scripts,test}/**/*.js'",
     "prepare": "npm run snyk-protect"
   },
   "commitlint": {
@@ -22,7 +22,7 @@
   },
   "lint-staged": {
     "dadi/**/*.js": [
-      "prettier --no-semi --write",
+      "prettier-standard --no-semi",
       "standard --fix",
       "git add"
     ]
@@ -91,7 +91,7 @@
     "mocha": "~3.2.0",
     "nock": "^9.1.10",
     "nodeunit": ">=0.5.1",
-    "prettier": "^1.1.0",
+    "prettier-standard": "^8.0.1",
     "should": "~13.2.0",
     "sinon": "~2.3.2",
     "sinon-test": "~1.0.2",
