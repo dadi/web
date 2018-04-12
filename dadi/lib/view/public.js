@@ -43,7 +43,7 @@ Public.prototype.init = function (arg) {
   if (filteredFiles.length) {
     this.files = filteredFiles
     return async.each(filteredFiles, file =>
-      this.process({ req: arg.req, res: arg.res, next: arg.next, file: file })
+      this.process({ req: arg.req, res: arg.res, next: arg.next, file })
     )
   } else {
     return arg.next()
@@ -102,7 +102,7 @@ Public.prototype.process = function (arg) {
           file: arg.file,
           next: arg.next,
           rs: cacheReadStream,
-          headers: headers
+          headers
         })
       })
       .catch(() => {
@@ -114,9 +114,9 @@ Public.prototype.process = function (arg) {
           req: arg.req,
           file: arg.file,
           next: arg.next,
-          headers: headers,
-          shouldCompress: shouldCompress,
-          cacheInfo: cacheInfo
+          headers,
+          shouldCompress,
+          cacheInfo
         })
       })
   } else {
@@ -125,8 +125,8 @@ Public.prototype.process = function (arg) {
       req: arg.req,
       file: arg.file,
       next: arg.next,
-      headers: headers,
-      shouldCompress: shouldCompress
+      headers,
+      shouldCompress
     })
   }
 }
@@ -264,13 +264,13 @@ module.exports = {
     return (req, res, next) => {
       if (!hosts || hosts.includes(req.headers.host)) {
         return new Public({
-          req: req,
-          res: res,
-          next: next,
+          req,
+          res,
+          next,
           files: [req.url],
-          publicPath: publicPath,
+          publicPath,
           isMiddleware: true,
-          cache: cache
+          cache
         })
       }
     }
@@ -280,26 +280,26 @@ module.exports = {
       if (!Array.isArray(directory.index)) directory.index = [directory.index]
 
       return new Public({
-        req: req,
-        res: res,
-        next: next,
+        req,
+        res,
+        next,
         files: [req.url],
         publicPath: path.resolve(directory.path),
         isMiddleware: true,
-        cache: cache,
+        cache,
         index: directory.index
       })
     }
   },
   process: function (req, res, next, files, publicPath, isMiddleware, cache) {
     return new Public({
-      req: req,
-      res: res,
-      next: next,
-      files: files,
-      publicPath: publicPath,
+      req,
+      res,
+      next,
+      files,
+      publicPath,
       isMiddleware: false,
-      cache: cache
+      cache
     })
   }
 }

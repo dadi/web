@@ -179,8 +179,8 @@ TemplateStore.prototype.loadEngines = function (engines) {
         typeof this.engines[handle] === 'undefined'
       ) {
         this.engines[handle] = {
-          extensions: extensions,
-          handle: handle,
+          extensions,
+          handle,
           factory: engine,
           started: false
         }
@@ -190,7 +190,7 @@ TemplateStore.prototype.loadEngines = function (engines) {
     } catch (err) {
       log.error(
         { module: 'templates' },
-        { err: err },
+        { err },
         `Error initialising templating engine "${engine}".`
       )
     }
@@ -224,9 +224,9 @@ TemplateStore.prototype.loadFiles = function (files, options) {
 
           return resolve(
             this.loadTemplate({
-              data: data,
-              engine: engine,
-              extension: extension,
+              data,
+              engine,
+              extension,
               name: templateName,
               namespace: options.namespace,
               path: file
@@ -336,8 +336,8 @@ TemplateStore.prototype.loadTemplate = function (parameters) {
 
     engine.handler = new EngineConstructor({
       additionalTemplates: additionalTemplatesForEngine,
-      config: config,
-      helpers: helpers,
+      config,
+      helpers,
       pagesPath: this.pagesPath,
       templates: this.templates
     })

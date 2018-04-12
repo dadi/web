@@ -117,8 +117,8 @@ Api.prototype.use = function (path, host, handler) {
   this.paths.push({
     path: hostWithPath,
     order: routePriority(path, keys),
-    handler: handler,
-    regex: regex
+    handler,
+    regex
   })
 
   debug('loaded %s%s', host, path)

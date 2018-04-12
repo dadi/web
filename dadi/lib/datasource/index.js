@@ -175,7 +175,7 @@ Datasource.prototype.loadDatasource = function (done) {
   } catch (err) {
     log.error(
       { module: 'datasource' },
-      { err: err },
+      { err },
       'Error loading datasource schema "' + filepath + '". Is it valid JSON?'
     )
     done(err)

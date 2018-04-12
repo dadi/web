@@ -439,9 +439,9 @@ Server.prototype.loadApi = function (options, reload, callback) {
         help.validateRequestCredentials(req, res)
       ) {
         const params = {
-          site: site,
+          site,
           package: '@dadi/web',
-          version: version,
+          version,
           healthCheck: {
             baseUrl:
               'http://' +
@@ -585,11 +585,11 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
 
         this.addRoute(
           {
-            name: name,
+            name,
             filepath: page
           },
           Object.assign({}, options, {
-            templateCandidate: templateCandidate
+            templateCandidate
           }),
           reload
         )
@@ -612,7 +612,7 @@ Server.prototype.addRoute = function (obj, options, reload) {
   } catch (err) {
     log.error(
       { module: 'server' },
-      { err: err },
+      { err },
       'Error loading page schema "' + obj.filepath + '". Is it valid JSON?'
     )
     throw err
@@ -859,7 +859,7 @@ Server.prototype.getUploader = function () {
  */
 Server.prototype.createTemporaryFile = destination => {
   return multer.diskStorage({
-    destination: destination,
+    destination,
     filename: (req, file, cb) => {
       let filename = file.originalname
 

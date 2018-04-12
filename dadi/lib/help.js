@@ -311,7 +311,7 @@ function readDirectory (directory, options) {
         } else if (stats.isDirectory() && recursive) {
           queue.push(
             readDirectory(absolutePath, {
-              extensions: extensions,
+              extensions,
               recursive: true
             }).then(childFiles => {
               matchingFiles = matchingFiles.concat(childFiles)

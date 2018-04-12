@@ -372,7 +372,7 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
     'accept-encoding': 'gzip'
   }
 
-  return done(null, { headers: headers })
+  return done(null, { headers })
 }
 
 /**

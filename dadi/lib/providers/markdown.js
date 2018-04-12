@@ -70,9 +70,7 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
       if (err && err.code === 'ENOENT') {
         const data = {
           results: [],
-          errors: [
-            formatError.createWebError('0006', { sourcePath: sourcePath })
-          ]
+          errors: [formatError.createWebError('0006', { sourcePath })]
         }
 
         return done(null, data)
