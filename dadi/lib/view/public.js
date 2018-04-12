@@ -14,248 +14,252 @@ const Cache = require(path.join(__dirname, '/../cache'))
 const config = require(path.resolve(path.join(__dirname, '/../../../config')))
 const help = require(path.join(__dirname, '/../help'))
 
-const Public = function (arg) {
-  this.cacheInstance = Cache(arg.cache)
-  this.publicPath = arg.publicPath
-  this.isMiddleware = arg.isMiddleware
-  this.files = []
-  this.endpoint = this.cacheInstance.getEndpoint(arg.req)
-  this.index = arg.index || []
-  this.loadAttempts = 0
-  this.originalPath = ''
+class Public {
+  constructor (arg) {
+    this.cacheInstance = Cache(arg.cache)
+    this.publicPath = arg.publicPath
+    this.isMiddleware = arg.isMiddleware
+    this.files = []
+    this.endpoint = this.cacheInstance.getEndpoint(arg.req)
+    this.index = arg.index || []
+    this.loadAttempts = 0
+    this.originalPath = ''
 
-  // Make it so
-  this.init({ req: arg.req, res: arg.res, next: arg.next, files: arg.files })
-}
-
-Public.prototype.init = function (arg) {
-  const filteredFiles = arg.files
-    .map(i => url.parse(i).pathname.replace(/\/+$/, ''))
-    .filter(i => i.length)
-    .map(i => ({
-      url: i,
-      path: [...new Set([...this.publicPath.split('/'), ...i.split('/')])].join(
-        '/'
-      ),
-      ext: path.extname(i)
-    }))
-
-  if (filteredFiles.length) {
-    this.files = filteredFiles
-    return async.each(filteredFiles, file =>
-      this.process({ req: arg.req, res: arg.res, next: arg.next, file })
-    )
-  } else {
-    return arg.next()
-  }
-}
-
-Public.prototype.process = function (arg) {
-  const contentType = mime.lookup(arg.file.url)
-  const shouldCompress = compressible(contentType)
-    ? help.canCompress(arg.req.headers)
-    : false
-
-  // Cache
-  const cacheExt =
-    compressible(contentType) && help.canCompress(arg.req.headers)
-      ? `.${help.canCompress(arg.req.headers)}`
-      : null
-
-  const cacheInfo = {
-    name: crypto
-      .createHash('sha1')
-      .update(arg.file.url)
-      .digest('hex'),
-    opts: {
-      directory: {
-        extension: mime.extension(contentType) + cacheExt
-      }
-    }
+    // Make it so
+    this.init({ req: arg.req, res: arg.res, next: arg.next, files: arg.files })
   }
 
-  // Headers
-  const headers = {
-    'Cache-Control':
-      config.get('headers.cacheControl')[contentType] ||
-      'public, max-age=86400',
-    'Content-Type': contentType
-  }
+  init (arg) {
+    const filteredFiles = arg.files
+      .map(i => url.parse(i).pathname.replace(/\/+$/, ''))
+      .filter(i => i.length)
+      .map(i => ({
+        url: i,
+        path: [
+          ...new Set([...this.publicPath.split('/'), ...i.split('/')])
+        ].join('/'),
+        ext: path.extname(i)
+      }))
 
-  if (shouldCompress) headers['Content-Encoding'] = shouldCompress
-
-  // If it's compressible, it's cachable so check the cache or create a new cache file
-  if (
-    compressible(contentType) &&
-    config.get('caching.directory.enabled') &&
-    !config.get('debug')
-  ) {
-    this.cacheInstance.cache
-      .get(cacheInfo.name, cacheInfo.opts)
-      .then(cacheReadStream => {
-        headers['X-Cache-Lookup'] = 'HIT'
-        headers['X-Cache'] = 'HIT'
-
-        return this.openStream({
-          res: arg.res,
-          req: arg.req,
-          file: arg.file,
-          next: arg.next,
-          rs: cacheReadStream,
-          headers
-        })
-      })
-      .catch(() => {
-        headers['X-Cache'] = 'MISS'
-        headers['X-Cache-Lookup'] = 'MISS'
-
-        return this.openStream({
-          res: arg.res,
-          req: arg.req,
-          file: arg.file,
-          next: arg.next,
-          headers,
-          shouldCompress,
-          cacheInfo
-        })
-      })
-  } else {
-    return this.openStream({
-      res: arg.res,
-      req: arg.req,
-      file: arg.file,
-      next: arg.next,
-      headers,
-      shouldCompress
-    })
-  }
-}
-
-Public.prototype.openStream = function (arg) {
-  // If a byte range requested e.g., video, audio file
-  let rsOpts = {}
-
-  if (!arg.rs && arg.req.headers.range) {
-    try {
-      const stats = fs.statSync(arg.file.path)
-      const parts = arg.req.headers.range.replace(/bytes=/, '').split('-')
-
-      rsOpts = {
-        start: parseInt(parts[0], 10),
-        end: parts[1] ? parseInt(parts[1], 10) : stats.size - 1
-      }
-
-      const chunkSize = rsOpts.end - rsOpts.start + 1
-
-      arg.headers['Content-Range'] = `bytes ${rsOpts.start}-${rsOpts.end}/${
-        stats.size
-      }`
-      arg.headers['Accept-Ranges'] = 'bytes'
-      arg.headers['Content-Length'] = chunkSize
-      arg.res.statusCode = 206 // partial content
-    } catch (err) {
-      return arg.next()
-    }
-  }
-
-  // Create a readstream if it hasn't been passed from the cache
-  if (!arg.rs) arg.rs = fs.createReadStream(arg.file.path, rsOpts)
-
-  // Try to load a folder index, if nothing found
-  arg.rs.on('error', () => {
-    if (this.loadAttempts === 0) this.originalPath = arg.file.path
-
-    if (this.index[this.loadAttempts]) {
-      this.process({
-        req: arg.req,
-        res: arg.res,
-        next: arg.next,
-        file: {
-          url: arg.file.url,
-          ext: arg.file.ext,
-          path: path.join(
-            this.originalPath,
-            this.index[this.loadAttempts] || ''
-          )
-        }
-      })
+    if (filteredFiles.length) {
+      this.files = filteredFiles
+      return async.each(filteredFiles, file =>
+        this.process({ req: arg.req, res: arg.res, next: arg.next, file })
+      )
     } else {
       return arg.next()
     }
+  }
 
-    this.loadAttempts++
-  })
+  process (arg) {
+    const contentType = mime.lookup(arg.file.url)
+    const shouldCompress = compressible(contentType)
+      ? help.canCompress(arg.req.headers)
+      : false
 
-  // Pipe if the file opens & handle compression
-  arg.rs.on('open', fd => {
-    fs.fstat(fd, (err, stats) => {
-      if (err && this.isMiddleware) return arg.next()
+    // Cache
+    const cacheExt =
+      compressible(contentType) && help.canCompress(arg.req.headers)
+        ? `.${help.canCompress(arg.req.headers)}`
+        : null
 
-      // Extra headers from fstat
-      arg.headers['ETag'] = etag(stats)
-      arg.headers['Last-Modified'] = stats.mtime.toUTCString()
-      if (!arg.headers['Content-Length'] && !arg.req.headers.range) {
-        arg.headers['Content-Length'] = stats.size
+    const cacheInfo = {
+      name: crypto
+        .createHash('sha1')
+        .update(arg.file.url)
+        .digest('hex'),
+      opts: {
+        directory: {
+          extension: mime.extension(contentType) + cacheExt
+        }
+      }
+    }
+
+    // Headers
+    const headers = {
+      'Cache-Control':
+        config.get('headers.cacheControl')[contentType] ||
+        'public, max-age=86400',
+      'Content-Type': contentType
+    }
+
+    if (shouldCompress) headers['Content-Encoding'] = shouldCompress
+
+    // If it's compressible, it's cachable so check the cache or create a new cache file
+    if (
+      compressible(contentType) &&
+      config.get('caching.directory.enabled') &&
+      !config.get('debug')
+    ) {
+      this.cacheInstance.cache
+        .get(cacheInfo.name, cacheInfo.opts)
+        .then(cacheReadStream => {
+          headers['X-Cache-Lookup'] = 'HIT'
+          headers['X-Cache'] = 'HIT'
+
+          return this.openStream({
+            res: arg.res,
+            req: arg.req,
+            file: arg.file,
+            next: arg.next,
+            rs: cacheReadStream,
+            headers
+          })
+        })
+        .catch(() => {
+          headers['X-Cache'] = 'MISS'
+          headers['X-Cache-Lookup'] = 'MISS'
+
+          return this.openStream({
+            res: arg.res,
+            req: arg.req,
+            file: arg.file,
+            next: arg.next,
+            headers,
+            shouldCompress,
+            cacheInfo
+          })
+        })
+    } else {
+      return this.openStream({
+        res: arg.res,
+        req: arg.req,
+        file: arg.file,
+        next: arg.next,
+        headers,
+        shouldCompress
+      })
+    }
+  }
+
+  openStream (arg) {
+    // If a byte range requested e.g., video, audio file
+    let rsOpts = {}
+
+    if (!arg.rs && arg.req.headers.range) {
+      try {
+        const stats = fs.statSync(arg.file.path)
+        const parts = arg.req.headers.range.replace(/bytes=/, '').split('-')
+
+        rsOpts = {
+          start: parseInt(parts[0], 10),
+          end: parts[1] ? parseInt(parts[1], 10) : stats.size - 1
+        }
+
+        const chunkSize = rsOpts.end - rsOpts.start + 1
+
+        arg.headers['Content-Range'] = `bytes ${rsOpts.start}-${rsOpts.end}/${
+          stats.size
+        }`
+        arg.headers['Accept-Ranges'] = 'bytes'
+        arg.headers['Content-Length'] = chunkSize
+        arg.res.statusCode = 206 // partial content
+      } catch (err) {
+        return arg.next()
+      }
+    }
+
+    // Create a readstream if it hasn't been passed from the cache
+    if (!arg.rs) arg.rs = fs.createReadStream(arg.file.path, rsOpts)
+
+    // Try to load a folder index, if nothing found
+    arg.rs.on('error', () => {
+      if (this.loadAttempts === 0) this.originalPath = arg.file.path
+
+      if (this.index[this.loadAttempts]) {
+        this.process({
+          req: arg.req,
+          res: arg.res,
+          next: arg.next,
+          file: {
+            url: arg.file.url,
+            ext: arg.file.ext,
+            path: path.join(
+              this.originalPath,
+              this.index[this.loadAttempts] || ''
+            )
+          }
+        })
+      } else {
+        return arg.next()
       }
 
-      // Delivery
-      this.deliver({
-        res: arg.res,
-        rs: arg.rs,
-        shouldCompress: arg.shouldCompress,
-        cacheInfo: arg.cacheInfo,
-        headers: arg.headers
+      this.loadAttempts++
+    })
+
+    // Pipe if the file opens & handle compression
+    arg.rs.on('open', fd => {
+      fs.fstat(fd, (err, stats) => {
+        if (err && this.isMiddleware) return arg.next()
+
+        // Extra headers from fstat
+        arg.headers['ETag'] = etag(stats)
+        arg.headers['Last-Modified'] = stats.mtime.toUTCString()
+        if (!arg.headers['Content-Length'] && !arg.req.headers.range) {
+          arg.headers['Content-Length'] = stats.size
+        }
+
+        // Delivery
+        this.deliver({
+          res: arg.res,
+          rs: arg.rs,
+          shouldCompress: arg.shouldCompress,
+          cacheInfo: arg.cacheInfo,
+          headers: arg.headers
+        })
       })
     })
-  })
-}
+  }
 
-Public.prototype.deliver = function (arg) {
-  const parent = this
-  const data = []
+  deliver (arg) {
+    const parent = this
+    const data = []
 
-  const extras = through(
-    function write (chunk) {
-      if (chunk) data.push(chunk)
+    const extras = through(
+      function write (chunk) {
+        if (chunk) data.push(chunk)
 
-      // Update header with the compressed size
-      if (arg.shouldCompress) arg.headers['Content-Length'] = data.byteLength
+        // Update header with the compressed size
+        if (arg.shouldCompress) arg.headers['Content-Length'] = data.byteLength
 
-      // Set headers
-      try {
-        Object.keys(arg.headers).map(i => arg.res.setHeader(i, arg.headers[i]))
-      } catch (e) {
-        // silence
+        // Set headers
+        try {
+          Object.keys(arg.headers).map(i =>
+            arg.res.setHeader(i, arg.headers[i])
+          )
+        } catch (e) {
+          // silence
+        }
+
+        // Pass data through
+        this.queue(chunk)
+      },
+      function end () {
+        // Set cache if needed
+        if (arg.cacheInfo) {
+          parent.cacheInstance.cache
+            .set(arg.cacheInfo.name, Buffer.concat(data), arg.cacheInfo.opts)
+            .then(() => {})
+        }
+
+        this.emit('end')
       }
+    )
 
-      // Pass data through
-      this.queue(chunk)
-    },
-    function end () {
-      // Set cache if needed
-      if (arg.cacheInfo) {
-        parent.cacheInstance.cache
-          .set(arg.cacheInfo.name, Buffer.concat(data), arg.cacheInfo.opts)
-          .then(() => {})
-      }
-
-      this.emit('end')
+    // Compress
+    if (arg.shouldCompress === 'br') {
+      arg.rs
+        .pipe(brotli.compressStream())
+        .pipe(extras)
+        .pipe(arg.res)
+    } else if (arg.shouldCompress === 'gzip') {
+      arg.rs
+        .pipe(zlib.createGzip())
+        .pipe(extras)
+        .pipe(arg.res)
+    } else {
+      arg.rs.pipe(extras).pipe(arg.res)
     }
-  )
-
-  // Compress
-  if (arg.shouldCompress === 'br') {
-    arg.rs
-      .pipe(brotli.compressStream())
-      .pipe(extras)
-      .pipe(arg.res)
-  } else if (arg.shouldCompress === 'gzip') {
-    arg.rs
-      .pipe(zlib.createGzip())
-      .pipe(extras)
-      .pipe(arg.res)
-  } else {
-    arg.rs.pipe(extras).pipe(arg.res)
   }
 }
 

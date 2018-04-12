@@ -16,288 +16,290 @@ const errorView = require(path.join(__dirname, '/../debug/views')).error
  * Represents the main server.
  * @constructor
  */
-const Api = function () {
-  this.paths = []
-  this.all = []
-  this.errors = []
+class Api {
+  constructor () {
+    this.paths = []
+    this.all = []
+    this.errors = []
 
-  // Fallthrough error handler
-  this.errors.push(onError(this))
+    // Fallthrough error handler
+    this.errors.push(onError(this))
 
-  // permanently bind context to listener
-  this.listener = this.listener.bind(this)
+    // permanently bind context to listener
+    this.listener = this.listener.bind(this)
 
-  this.protocol = config.get('server.protocol') || 'http'
-  this.redirectPort = config.get('server.redirectPort')
+    this.protocol = config.get('server.protocol') || 'http'
+    this.redirectPort = config.get('server.redirectPort')
 
-  if (this.protocol === 'https') {
-    // Redirect http to https
-    if (this.redirectPort > 0) {
-      this.redirectInstance = http.createServer(this.redirectListener)
-    }
+    if (this.protocol === 'https') {
+      // Redirect http to https
+      if (this.redirectPort > 0) {
+        this.redirectInstance = http.createServer(this.redirectListener)
+      }
 
-    const readFileSyncSafe = path => {
+      const readFileSyncSafe = path => {
+        try {
+          return fs.readFileSync(path)
+        } catch (ex) {
+          console.log('error loading ssl file:', ex)
+        }
+        return null
+      }
+
+      const passphrase = config.get('server.sslPassphrase')
+      const caPath = config.get('server.sslIntermediateCertificatePath')
+      const caPaths = config.get('server.sslIntermediateCertificatePaths')
+      const serverOptions = {
+        key: readFileSyncSafe(config.get('server.sslPrivateKeyPath')),
+        cert: readFileSyncSafe(config.get('server.sslCertificatePath'))
+      }
+
+      if (passphrase && passphrase.length >= 4) {
+        serverOptions.passphrase = passphrase
+      }
+
+      if (caPaths && caPaths.length > 0) {
+        serverOptions.ca = []
+        caPaths.forEach(path => {
+          const data = readFileSyncSafe(path)
+          data && serverOptions.ca.push(data)
+        })
+      } else if (caPath && caPath.length > 0) {
+        serverOptions.ca = readFileSyncSafe(caPath)
+      }
+
+      // we need to catch any errors resulting from bad parameters
+      // such as incorrect passphrase or no passphrase provided
       try {
-        return fs.readFileSync(path)
+        this.httpsInstance = https.createServer(serverOptions, this.listener)
       } catch (ex) {
-        console.log('error loading ssl file:', ex)
+        const exPrefix = 'error starting https server: '
+        switch (ex.message) {
+          case 'error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt':
+            throw new Error(exPrefix + 'incorrect ssl passphrase')
+          case 'error:0906A068:PEM routines:PEM_do_header:bad password read':
+            throw new Error(exPrefix + 'required ssl passphrase not provided')
+          default:
+            throw new Error(exPrefix + ex.message)
+        }
       }
-      return null
+    } else {
+      this.httpInstance = http.createServer(this.listener)
+    }
+  }
+
+  /**
+   *  Connects a handler to a specific path
+   *  @param {String} path
+   *  @param {String} host
+   *  @param {Controller} handler
+   *  @return undefined
+   *  @api public
+   */
+  use (path, host, handler) {
+    if (typeof path === 'function') {
+      if (path.length === 4) return this.errors.push(path)
+      return this.all.push(path)
     }
 
-    const passphrase = config.get('server.sslPassphrase')
-    const caPath = config.get('server.sslIntermediateCertificatePath')
-    const caPaths = config.get('server.sslIntermediateCertificatePaths')
-    const serverOptions = {
-      key: readFileSyncSafe(config.get('server.sslPrivateKeyPath')),
-      cert: readFileSyncSafe(config.get('server.sslCertificatePath'))
+    if (typeof host === 'function') {
+      handler = host
+      host = ''
+    } else if (typeof host === 'undefined') {
+      host = ''
     }
 
-    if (passphrase && passphrase.length >= 4) {
-      serverOptions.passphrase = passphrase
+    debug('use %s%s', host, path)
+
+    const keys = []
+    const regex = pathToRegexp(path, keys)
+    const hostWithPath = `${host}${path}`
+
+    this.paths.push({
+      path: hostWithPath,
+      order: routePriority(path, keys),
+      handler,
+      regex
+    })
+
+    debug('loaded %s%s', host, path)
+
+    this.paths.sort((a, b) => {
+      return b.order - a.order
+    })
+  }
+
+  /**
+   *  Removes a handler or removes the handler attached to a specific path
+   *  @param {String} path
+   *  @return undefined
+   *  @api public
+   */
+  unuse (path) {
+    debug('unuse %s', path)
+
+    this.paths = this.paths.filter(item => {
+      return item.path !== path
+    })
+  }
+
+  /**
+   *  convenience method that creates http/https server and attaches listener
+   *  @param {Number} backlog
+   *  @param {Function} [done]
+   *  @return http.Server or https.Server
+   *  @api public
+   */
+  listen (backlog, done) {
+    const port = config.get('server.port')
+    const host = config.get('server.host')
+    const redirectPort = config.get('server.redirectPort')
+
+    // If http only, return the http instance
+    if (this.httpInstance) {
+      return this.httpInstance.listen(port, host, backlog, done)
     }
 
-    if (caPaths && caPaths.length > 0) {
-      serverOptions.ca = []
-      caPaths.forEach(path => {
-        const data = readFileSyncSafe(path)
-        data && serverOptions.ca.push(data)
-      })
-    } else if (caPath && caPath.length > 0) {
-      serverOptions.ca = readFileSyncSafe(caPath)
+    // If http should redirect to https, listen but don't return
+    if (this.redirectInstance) {
+      this.redirectInstance.listen(redirectPort, host, backlog, done)
     }
 
-    // we need to catch any errors resulting from bad parameters
-    // such as incorrect passphrase or no passphrase provided
-    try {
-      this.httpsInstance = https.createServer(serverOptions, this.listener)
-    } catch (ex) {
-      const exPrefix = 'error starting https server: '
-      switch (ex.message) {
-        case 'error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt':
-          throw new Error(exPrefix + 'incorrect ssl passphrase')
-        case 'error:0906A068:PEM routines:PEM_do_header:bad password read':
-          throw new Error(exPrefix + 'required ssl passphrase not provided')
-        default:
-          throw new Error(exPrefix + ex.message)
-      }
+    // If https enabled, return the https instance
+    if (this.httpsInstance) {
+      return this.httpsInstance.listen(port, host, backlog, done)
     }
-  } else {
-    this.httpInstance = http.createServer(this.listener)
-  }
-}
-
-/**
- *  Connects a handler to a specific path
- *  @param {String} path
- *  @param {String} host
- *  @param {Controller} handler
- *  @return undefined
- *  @api public
- */
-Api.prototype.use = function (path, host, handler) {
-  if (typeof path === 'function') {
-    if (path.length === 4) return this.errors.push(path)
-    return this.all.push(path)
   }
 
-  if (typeof host === 'function') {
-    handler = host
-    host = ''
-  } else if (typeof host === 'undefined') {
-    host = ''
-  }
+  /**
+   *  listener function to be passed to node's `createServer`
+   *  @param {http.IncomingMessage} req
+   *  @param {http.ServerResponse} res
+   *  @return undefined
+   *  @api public
+   */
+  listener (req, res) {
+    debug('request %s%s', req.headers.host, req.url)
 
-  debug('use %s%s', host, path)
+    // clone the middleware stack
+    this.stack = this.all.slice(0)
 
-  const keys = []
-  const regex = pathToRegexp(path, keys)
-  const hostWithPath = `${host}${path}`
+    req.params = {}
+    req.paths = []
 
-  this.paths.push({
-    path: hostWithPath,
-    order: routePriority(path, keys),
-    handler,
-    regex
-  })
+    const originalReqParams = req.params
+    let pathsLoaded = false
 
-  debug('loaded %s%s', host, path)
+    const doStack = stackIdx => {
+      return err => {
+        if (err) return errStack(0)(err)
 
-  this.paths.sort((a, b) => {
-    return b.order - a.order
-  })
-}
+        // add the original params back, in case a middleware
+        // has modified the current req.params
+        Object.assign(req.params, originalReqParams)
 
-/**
- *  Removes a handler or removes the handler attached to a specific path
- *  @param {String} path
- *  @return undefined
- *  @api public
- */
-Api.prototype.unuse = function (path) {
-  debug('unuse %s', path)
+        try {
+          // if end of the stack, no middleware could handle the current
+          // request, so get matching routes from the loaded page components and
+          // add them to the stack just before the 404 handler, then continue the loop
 
-  this.paths = this.paths.filter(item => {
-    return item.path !== path
-  })
-}
+          if (
+            this.stack[stackIdx + 1] &&
+            this.stack[stackIdx + 1].name === 'notFound' &&
+            !pathsLoaded
+          ) {
+            const matches = this.getMatchingRoutes(req)
 
-/**
- *  convenience method that creates http/https server and attaches listener
- *  @param {Number} backlog
- *  @param {Function} [done]
- *  @return http.Server or https.Server
- *  @api public
- */
-Api.prototype.listen = function (backlog, done) {
-  const port = config.get('server.port')
-  const host = config.get('server.host')
-  const redirectPort = config.get('server.redirectPort')
+            if (matches.length > 0) {
+              // add the matches after the cache middleware and before the final 404 handler
+              matches.forEach(match => {
+                this.stack.splice(-1, 0, match)
+              })
+            }
 
-  // If http only, return the http instance
-  if (this.httpInstance) {
-    return this.httpInstance.listen(port, host, backlog, done)
-  }
-
-  // If http should redirect to https, listen but don't return
-  if (this.redirectInstance) {
-    this.redirectInstance.listen(redirectPort, host, backlog, done)
-  }
-
-  // If https enabled, return the https instance
-  if (this.httpsInstance) {
-    return this.httpsInstance.listen(port, host, backlog, done)
-  }
-}
-
-/**
- *  listener function to be passed to node's `createServer`
- *  @param {http.IncomingMessage} req
- *  @param {http.ServerResponse} res
- *  @return undefined
- *  @api public
- */
-Api.prototype.listener = function (req, res) {
-  debug('request %s%s', req.headers.host, req.url)
-
-  // clone the middleware stack
-  this.stack = this.all.slice(0)
-
-  req.params = {}
-  req.paths = []
-
-  const originalReqParams = req.params
-  let pathsLoaded = false
-
-  const doStack = stackIdx => {
-    return err => {
-      if (err) return errStack(0)(err)
-
-      // add the original params back, in case a middleware
-      // has modified the current req.params
-      Object.assign(req.params, originalReqParams)
-
-      try {
-        // if end of the stack, no middleware could handle the current
-        // request, so get matching routes from the loaded page components and
-        // add them to the stack just before the 404 handler, then continue the loop
-
-        if (
-          this.stack[stackIdx + 1] &&
-          this.stack[stackIdx + 1].name === 'notFound' &&
-          !pathsLoaded
-        ) {
-          const matches = this.getMatchingRoutes(req)
-
-          if (matches.length > 0) {
-            // add the matches after the cache middleware and before the final 404 handler
-            matches.forEach(match => {
-              this.stack.splice(-1, 0, match)
-            })
+            pathsLoaded = true
           }
 
-          pathsLoaded = true
+          this.stack[stackIdx](req, res, doStack(++stackIdx))
+        } catch (e) {
+          return errStack(0)(e)
         }
-
-        this.stack[stackIdx](req, res, doStack(++stackIdx))
-      } catch (e) {
-        return errStack(0)(e)
       }
     }
-  }
 
-  const errStack = stackIdx => {
-    return err => {
-      this.errors[stackIdx](err, req, res, errStack(++stackIdx))
-    }
-  }
-
-  // push the 404 handler
-  this.stack.push(notFound(this, req, res))
-
-  // start going through the middleware
-  doStack(0)()
-}
-
-/**
- *  listener function to be passed to node's `createServer`
- *  @param {http.IncomingMessage} req
- *  @param {http.ServerResponse} res
- *  @return undefined
- *  @api public
- */
-Api.prototype.redirectListener = (req, res) => {
-  const port = config.get('server.port')
-  const hostname = req.headers.host.split(':')[0]
-  const location = 'https://' + hostname + ':' + port + req.url
-
-  res.setHeader('Location', location)
-  res.statusCode = 302
-  res.end()
-}
-
-/**
- *  Check if any of the registered routes match the current url, if so populate `req.params`
- *  @param {http.IncomingMessage} req - the current request
- *  @return {Array} handlers - the handlers that best matched the current URL
- *  @api private
- */
-Api.prototype.getMatchingRoutes = function (req) {
-  const path = url.parse(req.url).pathname
-  const handlers = []
-
-  // get the host key that matches the request's host header
-  const virtualHosts = config.get('virtualHosts')
-  const host =
-    Object.keys(virtualHosts).find(key => {
-      return virtualHosts[key].hostnames.includes(req.headers.host)
-    }) || ''
-
-  const paths = this.paths.filter(path => {
-    return path.path.includes(host)
-  })
-
-  for (let idx = 0; idx < paths.length; idx++) {
-    // test the supplied url against each loaded route.
-    // for example: does '/test/2' match '/test/:page'?
-    const match = paths[idx].regex.exec(path)
-
-    // move to the next route if no match
-    if (!match) {
-      continue
+    const errStack = stackIdx => {
+      return err => {
+        this.errors[stackIdx](err, req, res, errStack(++stackIdx))
+      }
     }
 
-    req.paths.push(paths[idx].path)
+    // push the 404 handler
+    this.stack.push(notFound(this, req, res))
 
-    // get all the dynamic keys from the route
-    // i.e. anything that starts with ':' -> '/news/:title'
-    // var keys = paths[idx].regex.keys
-
-    // add this route's controller
-    handlers.push(paths[idx].handler)
+    // start going through the middleware
+    doStack(0)()
   }
 
-  return handlers
+  /**
+   *  listener function to be passed to node's `createServer`
+   *  @param {http.IncomingMessage} req
+   *  @param {http.ServerResponse} res
+   *  @return undefined
+   *  @api public
+   */
+  redirectListener (req, res) {
+    const port = config.get('server.port')
+    const hostname = req.headers.host.split(':')[0]
+    const location = 'https://' + hostname + ':' + port + req.url
+
+    res.setHeader('Location', location)
+    res.statusCode = 302
+    res.end()
+  }
+
+  /**
+   *  Check if any of the registered routes match the current url, if so populate `req.params`
+   *  @param {http.IncomingMessage} req - the current request
+   *  @return {Array} handlers - the handlers that best matched the current URL
+   *  @api private
+   */
+  getMatchingRoutes (req) {
+    const path = url.parse(req.url).pathname
+    const handlers = []
+
+    // get the host key that matches the request's host header
+    const virtualHosts = config.get('virtualHosts')
+    const host =
+      Object.keys(virtualHosts).find(key => {
+        return virtualHosts[key].hostnames.includes(req.headers.host)
+      }) || ''
+
+    const paths = this.paths.filter(path => {
+      return path.path.includes(host)
+    })
+
+    for (let idx = 0; idx < paths.length; idx++) {
+      // test the supplied url against each loaded route.
+      // for example: does '/test/2' match '/test/:page'?
+      const match = paths[idx].regex.exec(path)
+
+      // move to the next route if no match
+      if (!match) {
+        continue
+      }
+
+      req.paths.push(paths[idx].path)
+
+      // get all the dynamic keys from the route
+      // i.e. anything that starts with ':' -> '/news/:title'
+      // var keys = paths[idx].regex.keys
+
+      // add this route's controller
+      handlers.push(paths[idx].handler)
+    }
+
+    return handlers
+  }
 }
 
 function onError (api) {
