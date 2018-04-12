@@ -5,7 +5,6 @@ const should = require('should')
 const request = require('supertest')
 
 const api = require(__dirname + '/../../dadi/lib/api')
-const Bearer = require(__dirname + '/../../dadi/lib/auth/bearer')
 const Controller = require(__dirname + '/../../dadi/lib/controller')
 const Datasource = require(__dirname + '/../../dadi/lib/datasource')
 const help = require(__dirname + '/../../dadi/lib/help')

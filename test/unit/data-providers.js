@@ -7,19 +7,17 @@ var Readable = require("stream").Readable
 var request = require("supertest")
 var zlib = require("zlib")
 
+var Server = require(__dirname + "/../../dadi/lib")
+var TestHelper = require(__dirname + "/../help")()
 var api = require(__dirname + "/../../dadi/lib/api")
-var Bearer = require(__dirname + "/../../dadi/lib/auth/bearer")
 var Controller = require(__dirname + "/../../dadi/lib/controller")
 var Datasource = require(__dirname + "/../../dadi/lib/datasource")
 var help = require(__dirname + "/../../dadi/lib/help")
 var Page = require(__dirname + "/../../dadi/lib/page")
+
 var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
 var remoteProvider = require(__dirname + "/../../dadi/lib/providers/remote")
-var Server = require(__dirname + "/../../dadi/lib")
-var TestHelper = require(__dirname + "/../help")()
-var twitterProvider = require(__dirname + "/../../dadi/lib/providers/twitter")
-var wordpressProvider = require(__dirname +
-  "/../../dadi/lib/providers/wordpress")
+var restProvider = require(__dirname + "/../../dadi/lib/providers/restapi")
 var markdownProvider = require(__dirname + "/../../dadi/lib/providers/markdown")
 
 var config = require(path.resolve(path.join(__dirname, "/../../config")))
@@ -35,9 +33,11 @@ describe("Data Providers", function(done) {
   })
 
   afterEach(function(done) {
-    nock.cleanAll()
+  nock.cleanAll()
     TestHelper.stopServer(function() {})
-    done()
+    TestHelper.resetConfig().then(() => {
+      done()
+    })
   })
 
   describe("DADI API", function(done) {
@@ -58,11 +58,10 @@ describe("Data Providers", function(done) {
             "http://" + config.get("api.host") + ":" + config.get("api.port")
 
           var stub = sinon
-            .stub(Bearer.BearerAuthStrategy.prototype, "getToken")
+            .stub(apiProvider.prototype, "getToken")
             .callsFake(function(strategy, callback) {
-              should.exist(strategy.config)
-              should.exist(strategy.config)
-              strategy.config.host.should.eql("127.0.0.1")
+              should.exist(strategy)
+              strategy.host.should.eql("8.8.8.8")
 
               stub.restore()
               return done()
@@ -582,186 +581,54 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("Twitter", function(done) {
-    it("should use the datasource count property when querying the API", function(done) {
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "twitter",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.count = 10
-
-        var params = ds.provider.buildQueryParams()
-
-        should.exists(params.count)
-        params.count.should.eql(10)
+  describe("Rest API", function(done) {
+    it("should use a custom purest config if passed", function(done) {
+      new Datasource(Page("test", TestHelper.getPageSchema()), "youtube", TestHelper.getPathOptions()).init(function(err, ds) {
+        if (err) done(err)
+        should.exist(ds.source.provider.google)
         done()
       })
     })
 
-    it("should use the datasource filter property when querying the API", function(done) {
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "twitter",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.filter = { field: "value" }
-
-        var params = ds.provider.buildQueryParams()
-
-        should.exists(params.field)
-        params.field.should.eql("value")
-        done()
-      })
-    })
-
-    it("should only return data matching specified datasource fields when data is an array", function(done) {
-      var data = [
-        {
-          field1: "1",
-          field2: "2",
-          field3: "3",
-          field4: "4"
-        },
-        {
-          field1: "5",
-          field2: "6",
-          field3: "7",
-          field4: "8"
+    it("should use the datasource alias property when querying the endpoint", function(done) {
+      TestHelper.updateConfig({
+        api: {
+          "twitter": {
+            "type": "restapi",
+            "provider": "twitter",
+            "auth": {
+              "oauth": {
+                "consumer_key": "key",
+                "consumer_secret": "secret",
+                "token": "token",
+                "token_secret": "tokensecret"
+              }
+            }
+          }
         }
-      ]
+      }).then(() => {
+        new Datasource(Page("test", TestHelper.getPageSchema()), "twitter", TestHelper.getPathOptions()).init(function(err, ds) {
+          if (err) done(err)
 
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "twitter",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.fields = { field1: 1, field3: 1 }
+          ds.source.provider.should.eql('twitter')
 
-        data = ds.provider.processFields(data)
-        data.should.eql([
-          { field1: "1", field3: "3" },
-          { field1: "5", field3: "7" }
-        ])
-        done()
-      })
-    })
-
-    it("should only return data matching specified datasource fields when data is an object", function(done) {
-      var data = {
-        field1: "1",
-        field2: "2",
-        field3: "3",
-        field4: "4"
-      }
-
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "twitter",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.fields = { field1: 1, field3: 1 }
-
-        data = ds.provider.processFields(data)
-        data.should.eql({ field1: "1", field3: "3" })
-        done()
-      })
-    })
-
-    it("should use the auth details in main config if not specifed by the datasource", function(done) {
-      var authConfig = {
-        twitter: {
-          consumerKey: "key",
-          consumerSecret: "secret",
-          accessTokenKey: "tokenKey",
-          accessTokenSecret: "tokenSecret"
-        }
-      }
-
-      TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig(authConfig).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["twitter"]
-
-          var providerSpy = sinon.spy(twitterProvider.prototype, "initialise")
-
-          TestHelper.startServer(pages).then(() => {
-            providerSpy.restore()
-
-            providerSpy.thisValues[0].consumerKey.should.eql(
-              authConfig.twitter.consumerKey
-            )
-            providerSpy.thisValues[0].consumerSecret.should.eql(
-              authConfig.twitter.consumerSecret
-            )
-            providerSpy.thisValues[0].accessTokenKey.should.eql(
-              authConfig.twitter.accessTokenKey
-            )
-            providerSpy.thisValues[0].accessTokenSecret.should.eql(
-              authConfig.twitter.accessTokenSecret
-            )
-            done()
-          })
-        })
-      })
-    })
-
-    it("should use the auth details specified in the datasource config", function(done) {
-      var authConfig = {
-        consumer_key: "auth.key",
-        consumer_secret: "auth.secret",
-        access_token_key: "auth.tokenKey",
-        access_token_secret: "auth.tokenSecret"
-      }
-
-      var dsSchema = TestHelper.getSchemaFromFile(
-        TestHelper.getPathOptions().datasourcePath,
-        "twitter"
-      )
-      dsSchema.datasource.auth = authConfig
-
-      sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
-        .yields(null, dsSchema)
-
-      TestHelper.disableApiConfig().then(() => {
-        var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["twitter"]
-
-        var providerSpy = sinon.spy(twitterProvider.prototype, "initialise")
-
-        TestHelper.startServer(pages).then(() => {
-          Datasource.Datasource.prototype.loadDatasource.restore()
-          providerSpy.restore()
-
-          providerSpy.thisValues[0].consumerKey.should.eql(
-            authConfig.consumer_key
-          )
-          providerSpy.thisValues[0].consumerSecret.should.eql(
-            authConfig.consumer_secret
-          )
-          providerSpy.thisValues[0].accessTokenKey.should.eql(
-            authConfig.access_token_key
-          )
-          providerSpy.thisValues[0].accessTokenSecret.should.eql(
-            authConfig.access_token_secret
-          )
           done()
         })
       })
     })
 
-    it("should return data when no error is encountered", function(done) {
-      var host = "https://api.twitter.com:443"
-      var path = "/1.1/xxx.json"
+    it("should load data from the specified api", function(done) {
+      var host = "https://api.twitter.com"
+      var path = "/1.1/statuses/show.json?id=972581771681386497"
+
       var scope = nock(host)
         .get(path)
-        .reply(200, { x: "y" })
+        .replyWithFile(200, __dirname + "/../twitter-api-response.json")
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["twitter"]
+          pages[0].datasources = ["twitter-status"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -774,116 +641,27 @@ describe("Data Providers", function(done) {
             client
               .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
-                should.exist(res.body.twitter)
-                res.body.twitter.should.eql({ x: "y" })
+                should.exist(res.body.twitterstatus)
+                should.exist(res.body.twitterstatus.user.screen_name)
                 done()
               })
           })
         })
       })
     })
-  })
 
-  describe("Wordpress", function(done) {
-    it("should add query parameters to the endpoint", function(done) {
-      var req = {
-        url: "/posts/one-wet-day",
-        params: {
-          slug: "one-wet-day"
-        }
-      }
+    it("should fail gracefully if the api is unavailable", function(done) {
+      var host = "https://api.twitter.com"
+      var path = "/1.1/statuses/show.json?id=972581771681386498"
 
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "wordpress",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.provider.buildEndpoint(req)
-        ds.provider.endpoint.should.eql(
-          "sites/neversettleblog.wordpress.com/posts/slug:one-wet-day"
-        )
-        done()
-      })
-    })
-
-    it("should use the datasource count property when querying the API", function(done) {
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "wordpress",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.count = 10
-
-        var params = ds.provider.buildQueryParams()
-        should.exists(params.count)
-        params.count.should.eql(10)
-        done()
-      })
-    })
-
-    it("should use an array of datasource fields when querying the API", function(done) {
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "wordpress",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.fields = ["field1", "field2"]
-
-        var params = ds.provider.buildQueryParams()
-        should.exists(params.fields)
-        params.fields.should.eql("field1,field2")
-        done()
-      })
-    })
-
-    it("should use an object of datasource fields when querying the API", function(done) {
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "wordpress",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.fields = { field1: 1, field2: 1 }
-
-        var params = ds.provider.buildQueryParams()
-        should.exists(params.fields)
-        params.fields.should.eql("field1,field2")
-        done()
-      })
-    })
-
-    it("should use the datasource filter property when querying the API", function(done) {
-      new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "wordpress",
-        TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.filter = { field: "value" }
-
-        var params = ds.provider.buildQueryParams()
-
-        should.exists(params.field)
-        params.field.should.eql("value")
-        done()
-      })
-    })
-
-    it(
-      "should use the token specified in main config if no token is specifed by the datasource "
-    )
-    it("should use the token specified in the datasource config")
-
-    it("should return data when no error is encountered", function(done) {
-      var host = "https://public-api.wordpress.com"
-      var path =
-        "/rest/v1.1/sites/neversettleblog.wordpress.com/posts/slug:$post_slug?fields="
-      var scope = nock(host)
+      var scope2 = nock(host)
         .get(path)
-        .reply(200, { x: "y" })
+        .reply(404, "Not found")
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["wordpress"]
+          pages[0].datasources = ["twitter-status-two"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -892,12 +670,49 @@ describe("Data Providers", function(done) {
               ":" +
               config.get("server.port")
             var client = request(connectionString)
-            console.log(pages[0].routes[0].path)
+
             client
               .get(pages[0].routes[0].path + "?debug=json")
               .end((err, res) => {
-                should.exist(res.body["wordpress_post"])
-                res.body["wordpress_post"].should.eql({ x: "y" })
+                should.exist(res.body.twitterstatus.errors)
+                done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should filter specified fields from the output", function(done) {
+      var host = "https://api.twitter.com"
+      var path = "/1.1/statuses/show.json?id=972581771681386498"
+
+      var scope = nock(host)
+        .get(path)
+        .replyWithFile(200, __dirname + "/../twitter-api-response.json")
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["twitter-status-filtered"]
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString =
+              "http://" +
+              config.get("server.host") +
+              ":" +
+              config.get("server.port")
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?cache=false&debug=json")
+              .end((err, res) => {
+                should.exist(res.body.twitterstatus.user)
+                should.exist(res.body.twitterstatus.user.screen_name)
+                should.exist(res.body.twitterstatus.text)
+
+                Object.keys(res.body.twitterstatus).length.should.eql(2)
+                
+
                 done()
               })
           })

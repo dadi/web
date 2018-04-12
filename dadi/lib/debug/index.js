@@ -20,8 +20,18 @@ module.exports = function (req, res, next, view, page) {
         const stats = Object.assign(
           {},
           help.timer.getStats(),
-          { 'Data size': formatBytes(Buffer.byteLength(view.data, 'utf8'), 3) },
-          { 'Result size': formatBytes(Buffer.byteLength(result, 'utf8'), 3) }
+          {
+            'Data size': help.formatBytes(
+              Buffer.byteLength(view.data, 'utf8'),
+              3
+            )
+          },
+          {
+            'Result size': help.formatBytes(
+              Buffer.byteLength(result, 'utf8'),
+              3
+            )
+          }
         )
 
         res.setHeader('Content-Type', 'text/html')
@@ -236,7 +246,7 @@ module.exports = function (req, res, next, view, page) {
               {
                 title: `${page.page.template} (${
                   view.template.getEngineInfo().engine
-                } ${view.template.getEngineInfo().version})`,
+                } ${view.template.getEngineInfo().version || ''})`,
                 id: 'template',
                 output: view.template.data
               },
@@ -252,17 +262,4 @@ module.exports = function (req, res, next, view, page) {
         break
     }
   }
-}
-
-/*
-Helper for formatting bytes to human readable size
-*/
-
-function formatBytes (a, b) {
-  if (a === 0) return '0 Bytes'
-  let c = 1024
-  let d = b || 2
-  let e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-  let f = Math.floor(Math.log(a) / Math.log(c))
-  return parseFloat((a / Math.pow(c, f)).toFixed(d)) + ' ' + e[f]
 }

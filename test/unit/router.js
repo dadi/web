@@ -371,7 +371,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -402,7 +402,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -430,7 +430,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -458,7 +458,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -506,7 +506,7 @@ describe("Router", function(done) {
           console.log(pages)
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"

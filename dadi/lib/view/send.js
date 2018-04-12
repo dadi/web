@@ -1,12 +1,11 @@
-var path = require('path')
-var zlib = require('zlib')
-var brotli = require('iltorb')
-var compressible = require('compressible')
+const path = require('path')
+const zlib = require('zlib')
+const brotli = require('iltorb')
+const compressible = require('compressible')
+const CircularJSON = require('circular-json')
 
-var config = require(path.join(__dirname, '/../../../config.js'))
-var help = require(path.join(__dirname, '/../help'))
-
-var self = this
+const config = require(path.join(__dirname, '/../../../config.js'))
+const help = require(path.join(__dirname, '/../help'))
 
 /**
  * Sends back JSON
@@ -17,7 +16,7 @@ module.exports.json = function (statusCode, res, next) {
   return function (err, results) {
     if (err) return next(err)
 
-    var resBody = JSON.stringify(results, null, 2)
+    const resBody = CircularJSON.stringify(results, null, 2)
 
     // Only if nothing else has responsed e.g., errorView
     if (!res.headersSent) {
@@ -38,14 +37,16 @@ module.exports.html = function (req, res, next, statusCode, contentType) {
   return function (err, results) {
     if (err) return next(err)
 
-    var resBody = results
+    let resBody = results
 
     res.statusCode = statusCode
     res.setHeader('Content-Type', contentType)
-    self.addHeaders(res)
+
+    // Add headers
+    module.exports.addHeaders(res)
 
     // Compression
-    var shouldCompress = compressible(contentType)
+    const shouldCompress = compressible(contentType)
       ? help.canCompress(req.headers)
       : false
 
@@ -73,7 +74,7 @@ module.exports.html = function (req, res, next, statusCode, contentType) {
  * @param {res} res - the HTTP response
  */
 module.exports.addHeaders = function (res) {
-  var headers = config.get('headers').cors || {}
+  const headers = config.get('headers').cors || {}
 
   Object.keys(headers).forEach(key => {
     res.setHeader(key, headers[key])

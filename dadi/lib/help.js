@@ -7,26 +7,16 @@ const crypto = require('crypto')
 const debug = require('debug')('web:timer')
 const fs = require('fs')
 const getValue = require('get-value')
-const http = require('http')
-const https = require('https')
 const path = require('path')
 const perfy = require('perfy')
 
 const version = require('../../package.json').version
 const config = require(path.join(__dirname, '/../../config.js'))
-const Passport = require('@dadi/passport')
 const errorView = require(path.join(__dirname, '/debug/views')).error
 const Send = require(path.join(__dirname, '/view/send'))
 
 module.exports.getVersion = function () {
   return version
-}
-
-module.exports.htmlEncode = function (input) {
-  var encodedStr = input.replace(/[\u00A0-\u9999<>&]/gim, function (i) {
-    return '&#' + i.charCodeAt(0) + ';'
-  })
-  return encodedStr
 }
 
 module.exports.timer = {
@@ -66,49 +56,6 @@ module.exports.timer = {
     perfy.destroyAll()
     return stats
   }
-}
-
-module.exports.isApiAvailable = function (done) {
-  if (config.get('api.enabled') === false) {
-    return done(null, true)
-  }
-
-  var options = {
-    hostname: config.get('api.host'),
-    port: config.get('api.port'),
-    path: '/',
-    method: 'GET'
-  }
-
-  var request
-
-  if (config.get('api.protocol') === 'https') {
-    options.protocol = 'https:'
-    request = https.request(options, function (res) {
-      if (/200|401|404/.exec(res.statusCode)) {
-        return done(null, true)
-      }
-    })
-  } else {
-    request = http.request(options, function (res) {
-      if (/200|401|404/.exec(res.statusCode)) {
-        return done(null, true)
-      }
-    })
-  }
-
-  request.on('error', function (e) {
-    e.message = `Error connecting to API: ${
-      e.message
-    }. Check the 'api' settings in config file 'config/config.${config.get(
-      'env'
-    )}.json`
-    e.remoteIp = options.hostname
-    e.remotePort = options.port
-    return done(e)
-  })
-
-  request.end()
 }
 
 /**
@@ -160,21 +107,6 @@ module.exports.validateRequestMethod = function (req, res, allowedMethod) {
   }
 
   return true
-}
-
-// function to wrap try - catch for JSON.parse to mitigate pref losses
-module.exports.parseQuery = function (queryStr) {
-  var ret
-  try {
-    // strip leading zeroes from querystring before attempting to parse
-    ret = JSON.parse(queryStr.replace(/\b0(\d+)/, '$1'))
-  } catch (e) {
-    ret = {}
-  }
-
-  // handle case where queryStr is "null" or some other malicious string
-  if (typeof ret !== 'object' || ret === null) ret = {}
-  return ret
 }
 
 module.exports.clearCache = function (req, Cache, callback) {
@@ -249,36 +181,6 @@ module.exports.clearCache = function (req, Cache, callback) {
     .catch(err => {
       console.log(err)
     })
-}
-
-/**
- * Uses @dadi/passport to get a token to access a DADI API
- */
-
-module.exports.getToken = function (forceTokenRefresh) {
-  return Passport({
-    forceTokenRefresh: forceTokenRefresh,
-    issuer: {
-      uri: config.get('api.protocol') + '://' + config.get('api.host'),
-      port: config.get('api.port'),
-      endpoint: config.get('auth.tokenUrl')
-    },
-    credentials: {
-      clientId: config.get('auth.clientId'),
-      secret: config.get('auth.secret')
-    },
-    wallet: 'file',
-    walletOptions: {
-      path:
-        config.get('paths.tokenWallets') +
-        '/token.' +
-        config.get('api.host') +
-        config.get('api.port') +
-        '.' +
-        config.get('auth.clientId') +
-        '.json'
-    }
-  })
 }
 
 /**
@@ -469,3 +371,21 @@ function readFiles (files, options) {
 }
 
 module.exports.readFiles = readFiles
+
+/**
+ * Formats bytes to a more human readable size
+ *
+ * @param {string} the size of the item in bytes
+ * @param {string} the decimal places to round the figure by
+ *
+ * @return {string} the formatted figure e.g, 2 GB
+ */
+
+module.exports.formatBytes = function (a, b) {
+  if (a === 0) return '0 Bytes'
+  let c = 1024
+  let d = b || 2
+  let e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  let f = Math.floor(Math.log(a) / Math.log(c))
+  return parseFloat((a / Math.pow(c, f)).toFixed(d)) + ' ' + e[f]
+}

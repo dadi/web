@@ -37,7 +37,6 @@ fs.stat(devConfigPath, (err, stats) => {
 
 var api = require(path.join(__dirname, '/api'))
 var apiMiddleware = require(path.join(__dirname, '/api/middleware'))
-var auth = require(path.join(__dirname, '/auth'))
 var cache = require(path.join(__dirname, '/cache'))
 var Controller = require(path.join(__dirname, '/controller'))
 var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
@@ -242,9 +241,6 @@ Server.prototype.start = function (done) {
 
   // handle routing & redirects
   router(this, options)
-
-  // authentication layer
-  if (config.get('api.enabled')) auth(this)
 
   // start listening
   var server = (this.server = app.listen())
@@ -953,34 +949,37 @@ function onListening (e) {
   var engines = Object.keys(templateStore.getEngines())
   var enginesInfo = engines.length ? engines.join(', ') : 'None found'.red
 
-  // check that our API connection is valid
-  help.isApiAvailable((err, result) => {
-    if (err) {
-      dadiBoot.error(err)
-      process.exit(0)
-    } else if (config.get('env') !== 'test') {
-      dadiBoot.started({
-        server: `${config.get('server.protocol')}://${config.get(
-          'server.host'
-        )}:${config.get('server.port')}`,
-        header: {
-          app: config.get('app.name')
-        },
-        body: {
-          Protocol: config.get('server.protocol'),
-          Version: version,
-          'Node.js': nodeVersion,
-          Engine: enginesInfo,
-          Environment: config.get('env')
-        },
-        footer: {
-          'DADI API': config.get('api.enabled')
-            ? `${config.get('api.host')}:${config.get('api.port')}`
-            : '\u001b[31mNot enabled\u001b[39m'
-        }
-      })
+  if (config.get('env') !== 'test') {
+    let footer = {}
+
+    if (config.get('api').host) {
+      let apiKey = config.get('api').type ? config.get('api') : 'DADI API'
+      footer[apiKey] = config.get('api').host
+    } else {
+      for (let api in config.get('api')) {
+        let key = api === 'dadiapi' ? 'DADI API' : api
+
+        footer[key] = config.get('api')[api].host || config.get('api')[api].type
+      }
     }
-  })
+
+    dadiBoot.started({
+      server: `${config.get('server.protocol')}://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`,
+      header: {
+        app: config.get('app.name')
+      },
+      body: {
+        Protocol: config.get('server.protocol'),
+        Version: version,
+        'Node.js': nodeVersion,
+        Engine: enginesInfo,
+        Environment: config.get('env')
+      },
+      footer
+    })
+  }
 }
 
 function onError (err) {

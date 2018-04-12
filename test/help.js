@@ -37,7 +37,7 @@ var TestHelper = function() {
 }
 
 TestHelper.prototype.setupApiIntercepts = function() {
-  var host = "http://" + config.get("api.host") + ":" + config.get("api.port")
+  var host = "http://" + config.get('api').host + ":" + config.get('api').port
 
   var apiTestScope = nock(host)
     .get("/")
@@ -235,7 +235,7 @@ TestHelper.prototype.startServer = function(pages) {
 }
 
 TestHelper.prototype.stopServer = function(done) {
-  //if (!Server.readyState) return done()
+  if (!Server.readyState) return done()
   Server.stop(function() {
     //setTimeout(function() {
       done()

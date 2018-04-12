@@ -399,7 +399,6 @@ Controller.prototype.loadData = function (req, res, data, done) {
           ds.provider = new Providers[ds.source.type]()
           ds.provider.initialise(ds, ds.schema)
 
-          // var requestUrl = processSearchParameters(ds.schema.datasource.key, ds, req)
           processSearchParameters(ds.schema.datasource.key, ds, req)
 
           /**
@@ -546,7 +545,6 @@ Controller.prototype.processChained = function (
       chainedDatasource.schema
     )
 
-    // var requestUrl = chainedDatasource.provider.buildEndpoint(chainedDatasource.schema.datasource)
     chainedDatasource.provider.buildEndpoint(
       chainedDatasource.schema.datasource
     )
@@ -605,7 +603,6 @@ Controller.prototype.getParameterValue = function (object, parameter) {
 function processSearchParameters (key, datasource, req) {
   // process each of the datasource's requestParams, testing for their existence
   // in the querystring's request params e.g. /car-reviews/:make/:model
-  // return datasource.processRequest(key, req)
   datasource.processRequest(key, req)
 }
 

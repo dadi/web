@@ -5,6 +5,7 @@ const fs = require('fs')
 const getValue = require('get-value')
 const path = require('path')
 const url = require('url')
+const debug = require('debug')('web:datasource')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
 const Event = require(path.join(__dirname, '/../event'))
@@ -23,19 +24,90 @@ const Datasource = function (page, datasource, options) {
 
 Datasource.prototype.init = function (callback) {
   this.loadDatasource((err, schema) => {
-    if (err) {
-      return callback(err)
-    }
+    if (err) return callback(err)
 
     this.schema = schema
-    this.source = schema.datasource.source
     this.schema.datasource.filter = this.schema.datasource.filter || {}
     this.originalFilter = Array.isArray(this.schema.datasource.filter)
       ? Array.from(this.schema.datasource.filter)
       : Object.assign({}, this.schema.datasource.filter)
 
+    // Allow for api config alias
+    if (schema.datasource.source && schema.datasource.source.api) {
+      if (!config.get('api')[schema.datasource.source.api]) {
+        callback(
+          new Error(
+            `Settings for API '${
+              schema.datasource.source.api
+            }' not found in configuration file!`
+          )
+        )
+      } else {
+        this.source = Object.assign(
+          {},
+          schema.datasource.source,
+          config.get('api')[schema.datasource.source.api]
+        )
+      }
+    } else {
+      this.source = schema.datasource.source
+    }
+
+    // Default to dadiapi
     if (!this.source.type) {
       this.source.type = 'dadiapi'
+    }
+
+    // Default options if not provided for dadiapi
+    if (!this.source.host && this.source.type === 'dadiapi') {
+      let apis = config.get('api')
+      let apiInfo = {}
+
+      // If there is only one config in the api block
+      if (apis.host || apis.port || apis.auth) {
+        apiInfo = apis
+      } else {
+        // Else, it's probably an object of configs
+        // If there is a config blocked explicitly called 'dadiapi'
+        if (apis['dadiapi']) {
+          apiInfo = apis['dadiapi']
+        } else {
+          // Else, find the fist one with type 'type=dadiapi' or the first with no type defined
+          for (const key in apis) {
+            if (apis[key].type === 'dadiapi' || !apis[key].type) {
+              apiInfo = apis[key]
+              break
+            }
+          }
+        }
+      }
+
+      // Allow the DS source to override the above
+      this.source = Object.assign({}, apiInfo, this.source)
+    }
+
+    // Set defaults
+    if (this.source.type === 'dadiapi') {
+      if (!this.source.auth) {
+        this.source.auth = {
+          clientId: config.get('auth.clientId'),
+          secret: config.get('auth.secret')
+        }
+      }
+      if (!this.source.protocol) {
+        this.source.protocol = config.get('api').protocol || 'http'
+      }
+      if (!this.source.port) this.source.port = config.get('api').port
+      if (!this.source.host) this.source.host = config.get('api').host
+      if (!this.source.tokenUrl) {
+        this.source.tokenUrl = config.get('api').tokenUrl || '/token'
+      }
+    }
+
+    // DEPRECATE THIS: Legacy config block (now moved into source)
+    if (this.auth) {
+      this.source.auth = this.auth
+      delete this.auth
     }
 
     if (!providers[this.source.type]) {
@@ -68,6 +140,8 @@ Datasource.prototype.init = function (callback) {
         this.options
       )
     }
+
+    debug(`initialise datasource '${this.name}'`)
 
     this.provider.initialise(this, schema)
 
@@ -126,10 +200,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
 
   // handle the cache flag
   if (query.cache && query.cache === 'false') {
-    // this.schema.datasource.cache = false
     datasourceParams.cache = false
   } else {
-    // delete this.schema.datasource.cache
     delete datasourceParams.cache
   }
 
@@ -162,7 +234,6 @@ Datasource.prototype.processRequest = function (datasource, req) {
     // add an ID filter if it was present in the querystring
     // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
     if (req.params.id || query.id) {
-      //  this.schema.datasource.filter['_id'] = req.params.id || query.id
       delete query.id
     }
 
@@ -217,7 +288,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
         const placeholderRegex = new RegExp('{' + param.field + '}', 'ig')
         endpoint = endpoint.replace(placeholderRegex, value)
       } else {
-        datasourceParams.filter[param.field] = value
+        datasourceParams[param.target] = datasourceParams[param.target] || {}
+        datasourceParams[param.target][param.field] = value
       }
     } else {
       if (param.target === 'filter') {
@@ -269,7 +341,9 @@ Datasource.prototype.getParameterValue = function (req, parameter) {
       value = req.session && getValue(req.session, parameter.param)
       break
     default:
-      value = req.params && req.params[parameter.param]
+      value =
+        (req.params && req.params[parameter.param]) ||
+        (req.query && req.query[parameter.param])
       break
   }
 

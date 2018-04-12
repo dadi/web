@@ -1,14 +1,14 @@
-var path = require('path')
-var Datasource = require(path.join(__dirname, '/../datasource'))
-var Providers = require(path.join(__dirname, '/../providers'))
+const path = require('path')
+const Datasource = require(path.join(__dirname, '/../datasource'))
+const Providers = require(path.join(__dirname, '/../providers'))
 
-var RouteValidator = function () {
+const RouteValidator = function () {
   this.validationDatasources = {}
 }
 
 RouteValidator.prototype.get = function (route, param, options, req) {
   return new Promise((resolve, reject) => {
-    var datasource = this.validationDatasources[param.fetch]
+    let datasource = this.validationDatasources[param.fetch]
 
     if (!datasource) {
       new Datasource(route.path, param.fetch, options).init((err, ds) => {
@@ -21,10 +21,8 @@ RouteValidator.prototype.get = function (route, param, options, req) {
     datasource.provider = new Providers[datasource.source.type]()
     datasource.provider.initialise(datasource, datasource.schema)
 
-    // var requestUrl = datasource.processRequest(route.path, req)
     datasource.processRequest(route.path, req)
 
-    // return datasource.provider.load(requestUrl, (err, data) => {
     return datasource.provider.load(req.url, (err, data) => {
       if (err) return reject(err)
 
@@ -39,7 +37,7 @@ RouteValidator.prototype.get = function (route, param, options, req) {
   })
 }
 
-var instance
+let instance
 
 module.exports = function () {
   if (!instance) {
@@ -48,5 +46,3 @@ module.exports = function () {
 
   return instance
 }
-
-// module.exports.RouteValidator = RouteValidator
