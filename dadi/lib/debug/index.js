@@ -53,14 +53,14 @@ module.exports = function (req, res, next, view, page) {
 
         headers.request = req.headers
 
-        var options = {
+        const options = {
           host: view.data.url.hostname,
           port: view.data.url.port,
           path: view.data.url.pathname,
           method: 'GET'
         }
 
-        var newReq = http.request(options, newRes => {
+        const newReq = http.request(options, newRes => {
           headers.response = newRes.headers
 
           res.setHeader('Content-Type', 'text/html')
@@ -99,7 +99,7 @@ module.exports = function (req, res, next, view, page) {
         break
       case 'ds':
         let dss = {}
-        for (var key in page.datasources) {
+        for (const key in page.datasources) {
           dss[key] = {
             schema: page.datasources[key].schema.datasource,
             endpoint: page.datasources[key].provider.endpoint,
@@ -168,7 +168,7 @@ module.exports = function (req, res, next, view, page) {
       case 'route':
         let router = fs.readFileSync(require.resolve('path-to-regexp'), 'utf8')
 
-        var re = new RegExp(/module\.exports(.*)?/, 'g')
+        const re = new RegExp(/module\.exports(.*)?/, 'g')
         router = router.replace(re, '')
 
         res.setHeader('Content-Type', 'text/html')

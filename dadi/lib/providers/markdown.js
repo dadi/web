@@ -68,7 +68,7 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
     // Ignore files without the correct extension
     recursive(sourcePath, (err, filepaths) => {
       if (err && err.code === 'ENOENT') {
-        var data = {
+        const data = {
           results: [],
           errors: [
             formatError.createWebError('0006', { sourcePath: sourcePath })

@@ -75,7 +75,7 @@ Public.prototype.process = function (arg) {
   }
 
   // Headers
-  var headers = {
+  const headers = {
     'Cache-Control':
       config.get('headers.cacheControl')[contentType] ||
       'public, max-age=86400',

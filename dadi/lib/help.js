@@ -38,7 +38,7 @@ module.exports.timer = {
 
   getStats: function getStats () {
     if (!this.isDebugEnabled()) return
-    var stats = {}
+    const stats = {}
 
     perfy.names().forEach(key => {
       if (perfy.result(key)) {
@@ -88,7 +88,7 @@ module.exports.validateRequestCredentials = function (req, res) {
  * @param {String} allowedMethod - the HTTP method valid for the current request
  */
 module.exports.validateRequestMethod = function (req, res, allowedMethod) {
-  var method = req.method && req.method.toLowerCase()
+  const method = req.method && req.method.toLowerCase()
   if (method !== allowedMethod.toLowerCase()) {
     Send.html(req, res, null, 405, 'text/html')(
       null,
@@ -110,15 +110,15 @@ module.exports.validateRequestMethod = function (req, res, allowedMethod) {
 }
 
 module.exports.clearCache = function (req, Cache, callback) {
-  var pathname = req.body.path
-  var modelDir = crypto
+  const pathname = req.body.path
+  let modelDir = crypto
     .createHash('sha1')
     .update(pathname)
     .digest('hex')
-  var cacheDir = config.get('caching.directory.path')
+  const cacheDir = config.get('caching.directory.path')
 
-  var datasourceCachePaths = []
-  var files = fs.readdirSync(cacheDir)
+  let datasourceCachePaths = []
+  let files = fs.readdirSync(cacheDir)
 
   if (pathname === '*') {
     modelDir = '.*'
@@ -131,15 +131,15 @@ module.exports.clearCache = function (req, Cache, callback) {
       datasourceCachePaths.push(path.join(cacheDir, file))
     })
   } else {
-    var endpointRequest = {
+    const endpointRequest = {
       url: req.headers['host'] + pathname
     }
 
-    var endpoint = Cache.getEndpointMatchingRequest(endpointRequest)
+    const endpoint = Cache.getEndpointMatchingRequest(endpointRequest)
 
     if (endpoint && endpoint.page && endpoint.page.datasources) {
       endpoint.page.datasources.forEach(datasource => {
-        var cachePrefix = crypto
+        const cachePrefix = crypto
           .createHash('sha1')
           .update(datasource)
           .digest('hex')
@@ -188,10 +188,10 @@ module.exports.clearCache = function (req, Cache, callback) {
  * @param {Object} reqHeaders - Request headers
  */
 module.exports.canCompress = function (reqHeaders) {
-  var compressType = false
+  let compressType = false
 
   if (config.get('headers.useCompression') && !config.get('debug')) {
-    var acceptEncoding = reqHeaders['accept-encoding'] || ''
+    const acceptEncoding = reqHeaders['accept-encoding'] || ''
     if (~acceptEncoding.indexOf('gzip')) compressType = 'gzip'
     if (~acceptEncoding.indexOf('br')) compressType = 'br'
   }

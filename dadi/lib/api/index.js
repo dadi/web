@@ -226,7 +226,7 @@ Api.prototype.listener = function (req, res) {
     }
   }
 
-  var errStack = stackIdx => {
+  const errStack = stackIdx => {
     return err => {
       this.errors[stackIdx](err, req, res, errStack(++stackIdx))
     }

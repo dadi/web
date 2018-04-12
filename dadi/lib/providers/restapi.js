@@ -55,8 +55,9 @@ RestApi.prototype.load = function load (requestUrl, done) {
   )
 
   // allow query string param to bypass cache
-  var query = url.parse(requestUrl, true).query
-  var noCache = query.cache && query.cache.toString().toLowerCase() === 'false'
+  const urlQuery = url.parse(requestUrl, true).query
+  const noCache =
+    urlQuery.cache && urlQuery.cache.toString().toLowerCase() === 'false'
 
   try {
     const endpoint = this.schema.datasource.source.endpoint
@@ -69,7 +70,7 @@ RestApi.prototype.load = function load (requestUrl, done) {
 
     this.dataCache = new DatasourceCache()
 
-    var cacheOptions = {
+    const cacheOptions = {
       name: this.datasource.name,
       caching: this.schema.datasource.caching,
       cacheKey: this.cacheKey
@@ -132,7 +133,7 @@ RestApi.prototype.processOutput = function processOutput (
   if (res.statusCode === 200) {
     data = this.processFields(data)
 
-    var cacheOptions = {
+    const cacheOptions = {
       name: this.datasource.name,
       caching: this.schema.datasource.caching,
       cacheKey: this.cacheKey

@@ -84,7 +84,7 @@ DadiApiProvider.prototype.buildEndpoint = function (datasourceParams) {
  * @return {void}
  */
 DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
-  var cacheOptions = {
+  const cacheOptions = {
     name: this.datasource.name,
     caching: this.schema.datasource.caching,
     endpoint: this.endpoint
@@ -173,8 +173,8 @@ DadiApiProvider.prototype.handleResponse = function (requestUrl, res, done) {
       ? res.headers['content-encoding']
       : ''
 
-    var buffers = []
-    var output
+    const buffers = []
+    let output
 
     if (encoding === 'gzip') {
       const gunzip = zlib.createGunzip()
@@ -288,7 +288,7 @@ DadiApiProvider.prototype.processOutput = function (
           ')'
       )
 
-      var cacheOptions = {
+      const cacheOptions = {
         name: this.datasource.name,
         caching: this.schema.datasource.caching,
         endpoint: this.endpoint

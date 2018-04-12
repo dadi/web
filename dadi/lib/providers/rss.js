@@ -74,7 +74,7 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
     ].join('+')
     this.dataCache = new DatasourceCache()
 
-    var cacheOptions = {
+    const cacheOptions = {
       name: this.datasource.name,
       caching: this.schema.datasource.caching,
       cacheKey: this.cacheKey
@@ -119,7 +119,7 @@ RSSProvider.prototype.load = function load (requestUrl, done) {
       feedparser.on('error', done)
 
       feedparser.on('end', () => {
-        var cacheOptions = {
+        const cacheOptions = {
           name: this.datasource.name,
           caching: this.schema.datasource.caching,
           cacheKey: this.cacheKey

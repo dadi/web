@@ -81,7 +81,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 
   this.options.protocol = this.options.protocol + ':'
 
-  var cacheOptions = {
+  const cacheOptions = {
     name: this.datasource.name,
     caching: this.schema.datasource.caching,
     // endpoint: requestUrl
@@ -138,13 +138,13 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
       this.redirects++
 
       if (this.redirects >= 10) {
-        var err = new Error('Infinite redirect loop detected')
+        const err = new Error('Infinite redirect loop detected')
         err.remoteIp = this.options.host
         err.remotePort = this.options.port
         return done(err)
       }
 
-      var options = url.parse(res.headers.location)
+      const options = url.parse(res.headers.location)
       this.options = Object.assign({}, this.options, options)
 
       debug('following %s redirect to %s', res.statusCode, res.headers.location)
@@ -181,8 +181,8 @@ RemoteProvider.prototype.handleResponse = function (requestUrl, res, done) {
     ? res.headers['content-encoding']
     : ''
 
-  var buffers = []
-  var output
+  const buffers = []
+  let output
 
   if (encoding === 'gzip') {
     const gunzip = zlib.createGunzip()
@@ -317,7 +317,7 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
           ')'
       )
 
-      var cacheOptions = {
+      const cacheOptions = {
         name: this.datasource.name,
         caching: this.schema.datasource.caching,
         endpoint: this.endpoint
