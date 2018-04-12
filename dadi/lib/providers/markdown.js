@@ -118,7 +118,7 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
             Object.keys(sort).forEach(field => {
               posts.sort(
                 help.sortBy(field, value => {
-                  if (field.toLowerCase().indexOf('date') > -1) {
+                  if (field.toLowerCase().includes('date')) {
                     value = new Date(value)
                   }
 

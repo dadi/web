@@ -148,7 +148,7 @@ module.exports.clearCache = function (req, Cache, callback) {
           {},
           datasourceCachePaths,
           files.filter(file => {
-            return file.indexOf(cachePrefix) > -1
+            return file.includes(cachePrefix)
           })
         )
 
@@ -304,7 +304,7 @@ function readDirectory (directory, options) {
         const stats = fs.statSync(absolutePath)
 
         const isValidExtension =
-          !extensions || extensions.indexOf(path.extname(file)) !== -1
+          !extensions || extensions.includes(path.extname(file))
 
         if (stats.isFile() && isValidExtension) {
           matchingFiles.push(absolutePath)
@@ -355,7 +355,7 @@ function readFiles (files, options) {
     files.forEach(file => {
       const extension = path.extname(file)
 
-      if (extensions && extensions.indexOf(extension) === -1) {
+      if (extensions && !extensions.includes(extension)) {
         return
       }
 

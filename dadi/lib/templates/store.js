@@ -29,7 +29,7 @@ TemplateStore.prototype.findEngineForExtension = function (extension) {
   const engineHandle = Object.keys(this.engines).find(handle => {
     const engine = this.engines[handle]
 
-    return engine.extensions && engine.extensions.indexOf(extension) !== -1
+    return engine.extensions && engine.extensions.includes(extension)
   })
 
   if (engineHandle) {
@@ -117,7 +117,7 @@ TemplateStore.prototype.getSupportedExtensions = function () {
     const engineExtensions = this.engines[handle].extensions
 
     engineExtensions.forEach(engineExtension => {
-      if (extensions.indexOf(engineExtension) === -1) {
+      if (!extensions.includes(engineExtension)) {
         extensions.push(engineExtension)
       }
     })
@@ -273,7 +273,7 @@ TemplateStore.prototype.loadPages = function (pages, options) {
     })
     .then(files => {
       this.additionalTemplates = files.filter(file => {
-        return filePaths.indexOf(file) === -1
+        return !filePaths.includes(file)
       })
 
       return this.loadFiles(filePaths, extendedOptions)
@@ -328,9 +328,8 @@ TemplateStore.prototype.loadTemplate = function (parameters) {
     const EngineConstructor = engine.factory()
     const additionalTemplatesForEngine = this.additionalTemplates.filter(
       template => {
-        return (
-          engine.factory.metadata.extensions.indexOf(path.extname(template)) !==
-          -1
+        return engine.factory.metadata.extensions.includes(
+          path.extname(template)
         )
       }
     )

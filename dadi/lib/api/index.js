@@ -274,7 +274,7 @@ Api.prototype.getMatchingRoutes = function (req) {
     }) || ''
 
   const paths = this.paths.filter(path => {
-    return path.path.indexOf(host) > -1
+    return path.path.includes(host)
   })
 
   for (let idx = 0; idx < paths.length; idx++) {
@@ -401,13 +401,13 @@ function findPath (req, paths, pathString) {
     }) || ''
 
   const matchingPaths = paths.filter(path => {
-    return path.path.indexOf(host) > -1
+    return path.path.includes(host)
   })
 
   // look for a page matching the pathString that has been loaded
   // along with the rest of the API
   return matchingPaths.filter(path => {
-    return path.path.indexOf(pathString) > -1
+    return path.path.includes(pathString)
   })
 }
 

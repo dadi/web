@@ -212,7 +212,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
   // if the current datasource matches the page name
   // add some params from the query string or request params
   if (
-    (this.page.name && datasource.indexOf(this.page.name) >= 0) ||
+    (this.page.name && datasource.includes(this.page.name)) ||
     this.page.passFilters
   ) {
     const requestParamsPage = this.requestParams.find(obj => {

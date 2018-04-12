@@ -808,11 +808,11 @@ Server.prototype.getSessionStore = function (sessionConfig, env) {
     return null
   }
 
-  if (sessionConfig.store.indexOf('mongodb') > -1) {
+  if (sessionConfig.store.includes('mongodb')) {
     return new MongoStore({
       url: sessionConfig.store
     })
-  } else if (sessionConfig.store.indexOf('redis') > -1) {
+  } else if (sessionConfig.store.includes('redis')) {
     return new RedisStore({
       url: sessionConfig.store
     })

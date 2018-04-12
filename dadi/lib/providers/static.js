@@ -48,7 +48,7 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
       Object.keys(sort).forEach(field => {
         data.sort(
           help.sortBy(field, value => {
-            if (field.toLowerCase().indexOf('date') > -1) {
+            if (field.toLowerCase().includes('date')) {
               value = new Date(value)
             }
 

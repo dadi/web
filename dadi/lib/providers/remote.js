@@ -127,7 +127,7 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
 
   this.options.agent = this.keepAliveAgent(this.options.protocol)
 
-  const agent = this.options.protocol.indexOf('https') > -1 ? https : http
+  const agent = this.options.protocol.includes('https') ? https : http
 
   let request = agent.request(this.options, res => {
     if (
@@ -382,7 +382,7 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
  * @return {module} http|https
  */
 RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
-  return protocol.indexOf('https') > -1
+  return protocol.includes('https')
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
 }
