@@ -4,14 +4,13 @@ const async = require('async')
 const formatError = require('@dadi/format-error')
 const fs = require('fs')
 const path = require('path')
-const marked = require('marked')
 const meta = require('@dadi/metadata')
 const recursive = require('recursive-readdir')
 const yaml = require('js-yaml')
 
 const help = require(path.join(__dirname, '../help'))
 
-const MarkdownProvider = function () {}
+const TextProvider = function () {}
 
 /**
  * initialise - initialises the datasource provider
@@ -20,7 +19,7 @@ const MarkdownProvider = function () {}
  * @param  {obj} schema - the schema that this provider works with
  * @return {void}
  */
-MarkdownProvider.prototype.initialise = function (datasource, schema) {
+TextProvider.prototype.initialise = function (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
   this.extension = schema.datasource.source.extension
@@ -34,7 +33,7 @@ MarkdownProvider.prototype.initialise = function (datasource, schema) {
  * @param  {?} obj - sort parameter
  * @return {?}
  */
-MarkdownProvider.prototype.processSortParameter = function (obj) {
+TextProvider.prototype.processSortParameter = function (obj) {
   let sort = {}
 
   if (
@@ -61,7 +60,7 @@ MarkdownProvider.prototype.processSortParameter = function (obj) {
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
-MarkdownProvider.prototype.load = function (requestUrl, done) {
+TextProvider.prototype.load = function (requestUrl, done) {
   try {
     const sourcePath = path.normalize(this.schema.datasource.source.path)
 
@@ -173,17 +172,17 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
  * @param  {obj} req - web request object
  * @return {void}
  */
-MarkdownProvider.prototype.processRequest = function (datasourceParams) {
+TextProvider.prototype.processRequest = function (datasourceParams) {
   this.datasourceParams = datasourceParams
 }
 
-MarkdownProvider.prototype.readFileAsync = function (filename, callback) {
+TextProvider.prototype.readFileAsync = function (filename, callback) {
   fs.readFile(filename, 'utf8', function (err, data) {
     return callback(err, { _name: filename, _contents: data })
   })
 }
 
-MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
+TextProvider.prototype.parseRawDataAsync = function (data, callback) {
   const yamlRegex = /---[\n\r]+([\s\S]*)[\n\r]+---[\n\r]+([\s\S]*)/
   const posts = []
 
@@ -200,7 +199,6 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
 
     if (attributes) {
       const contentText = bits[2] || ''
-      const contentHtml = marked(contentText)
       const parsedPath = path.parse(data[i]._name)
 
       // Some info about the file
@@ -218,8 +216,7 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
       posts.push({
         attributes,
         original: data[i]._contents,
-        contentText,
-        contentHtml
+        contentText
       })
     }
   }
@@ -227,4 +224,4 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
   callback(null, posts)
 }
 
-module.exports = MarkdownProvider
+module.exports = TextProvider
