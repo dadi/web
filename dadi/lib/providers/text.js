@@ -24,7 +24,7 @@ TextProvider.prototype.initialise = function (datasource, schema) {
   this.schema = schema
   this.extension = schema.datasource.source.extension
     ? schema.datasource.source.extension
-    : 'md'
+    : 'txt'
 }
 
 /**
