@@ -403,7 +403,7 @@ DadiApiProvider.prototype.getHeaders = function (done, authenticationRetry) {
     .then(bearerToken => {
       headers['Authorization'] = 'Bearer ' + bearerToken
 
-      return done(null, { headers })
+      return done(null, headers)
     })
     .catch(errorData => {
       let err = new Error()
