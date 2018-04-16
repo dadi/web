@@ -3,8 +3,9 @@
     "key": "markdown",
     "name": "Markdown DS",
     "source": {
-      "type": "markdown",
-      "path": "./test/app/public"
+      "type": "text",
+      "path": "./test/app/public",
+      "extension": "md"
     },
     "paginate": true,
     "count": 1,

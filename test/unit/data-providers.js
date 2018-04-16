@@ -18,7 +18,6 @@ var Page = require(__dirname + "/../../dadi/lib/page")
 var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
 var remoteProvider = require(__dirname + "/../../dadi/lib/providers/remote")
 var restProvider = require(__dirname + "/../../dadi/lib/providers/restapi")
-var markdownProvider = require(__dirname + "/../../dadi/lib/providers/markdown")
 
 var config = require(path.resolve(path.join(__dirname, "/../../config")))
 var controller
@@ -817,11 +816,11 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("Markdown", function(done) {
+  describe("Text", function(done) {
     it("should process frontmatter from the files in the datasource path", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
 
       sinon
@@ -831,7 +830,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -871,7 +870,7 @@ describe("Data Providers", function(done) {
     it("should return correct pagination metadata", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
 
       sinon
@@ -881,7 +880,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -911,7 +910,7 @@ describe("Data Providers", function(done) {
     it("should use the datasource requestParams to filter the results", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
 
       sinon
@@ -921,7 +920,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
           pages[0].routes[0].path = "/test/:category?"
 
           TestHelper.startServer(pages).then(() => {
@@ -953,7 +952,7 @@ describe("Data Providers", function(done) {
     it("should return the number of records specified by the count property", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
 
       sinon
@@ -963,7 +962,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -989,7 +988,7 @@ describe("Data Providers", function(done) {
     it("should process files of a specified extension", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
       dsSchema.datasource.source.extension = "txt"
 
@@ -1000,7 +999,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -1029,7 +1028,7 @@ describe("Data Providers", function(done) {
     it("should return an error if the source folder does not exist", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
       dsSchema.datasource.source.path = "./foobar"
 
@@ -1040,7 +1039,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -1068,7 +1067,7 @@ describe("Data Providers", function(done) {
     it("should ignore malformed dates in a source file", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
       dsSchema.datasource.source.extension = "txt"
 
@@ -1079,7 +1078,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -1107,7 +1106,7 @@ describe("Data Providers", function(done) {
     it("should sort by the specified field in reverse order if set to -1", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
 
       delete dsSchema.datasource.sort.date
@@ -1121,7 +1120,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
@@ -1152,7 +1151,7 @@ describe("Data Providers", function(done) {
     it("should only return the selected fields as specified by the datasource", function(done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        "text"
       )
       dsSchema.datasource.fields = ["attributes.title", "attributes._id"]
       dsSchema.datasource.count = 2
@@ -1164,7 +1163,7 @@ describe("Data Providers", function(done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+          pages[0].datasources = ["text"]
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
