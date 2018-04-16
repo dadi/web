@@ -102,8 +102,10 @@ RestApi.prototype.load = function load (requestUrl, done) {
               this.datasource.schema.datasource.key +
               '": ' +
               decodeURIComponent(res ? res.request.href : '') +
-              ' (HTTP 200, ' +
-              help.formatBytes(Buffer.byteLength(body)) +
+              ' (HTTP ' +
+              res.statusCode +
+              ', ' +
+              help.formatBytes(Buffer.byteLength(body.toString())) +
               ')'
           )
 
