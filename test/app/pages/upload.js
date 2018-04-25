@@ -1,1 +1,1 @@
-${expectedData ? JSON.stringify(expectedData) : ''}
+${typeof expectedData !== 'undefined' ? JSON.stringify(expectedData) : ''}

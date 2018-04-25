@@ -1,15 +1,17 @@
-var middleware = module.exports
-var path = require('path')
-var proxyaddr = require('proxy-addr')
+const middleware = module.exports
+const path = require('path')
+const proxyaddr = require('proxy-addr')
 
-var config = require(path.resolve(path.join(__dirname, '/../../../config.js')))
-var log = require('@dadi/logger')
-var debug = require('debug')('web:middleware')
+const config = require(path.resolve(
+  path.join(__dirname, '/../../../config.js')
+))
+const log = require('@dadi/logger')
+const debug = require('debug')('web:middleware')
 
-var HTTP = 'http:'
-var HTTPS = 'https:'
+const HTTP = 'http:'
+const HTTPS = 'https:'
 
-var compileTrust = function (val) {
+const compileTrust = function (val) {
   if (typeof val === 'function') return val
 
   if (val === true) {
@@ -49,10 +51,10 @@ middleware.setUpRequest = function () {
   return function populateRequest (req, res, next) {
     Object.defineProperty(req, 'protocol', {
       get: function () {
-        var protocol = config.get('server.protocol')
+        let protocol = config.get('server.protocol')
 
         // var protocol = req.connection.encrypted ? 'https' : 'http'
-        var trust = compileTrust(config.get('security.trustProxy'))
+        const trust = compileTrust(config.get('security.trustProxy'))
 
         if (!trust(req.connection.remoteAddress, 0)) {
           return protocol
@@ -86,7 +88,7 @@ middleware.setUpRequest = function () {
      */
     Object.defineProperty(req, 'ip', {
       get: function () {
-        var trust = compileTrust(config.get('security.trustProxy'))
+        const trust = compileTrust(config.get('security.trustProxy'))
         return proxyaddr(this, trust)
       },
       enumerable: true,
@@ -106,8 +108,8 @@ middleware.setUpRequest = function () {
      */
     Object.defineProperty(req, 'ips', {
       get: function () {
-        var trust = compileTrust(config.get('security.trustProxy'))
-        var addrs = proxyaddr.all(this, trust)
+        const trust = compileTrust(config.get('security.trustProxy'))
+        const addrs = proxyaddr.all(this, trust)
         return addrs.slice(1).reverse()
       },
       enumerable: true,
@@ -120,13 +122,13 @@ middleware.setUpRequest = function () {
 
 middleware.transportSecurity = function () {
   function securityEnabled () {
-    var transportSecurity = config.get('security.transportSecurity')
-    var protocol = config.get('server.protocol')
+    const transportSecurity = config.get('security.transportSecurity')
+    const protocol = config.get('server.protocol')
     return protocol === 'https' || transportSecurity
   }
 
   function redirect (req, res, scheme) {
-    var location = scheme + '//' + req.headers.host + req.url
+    const location = scheme + '//' + req.headers.host + req.url
     res.writeHead(301, {
       Location: location
     })

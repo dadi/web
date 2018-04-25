@@ -7,15 +7,15 @@
     "port": 5000
   },
   "cluster": false,
-  "api": {
-    "enabled": false,
+  "api": { 
+    "enabled": true,
     "host": "127.0.0.1",
-    "port": 3000
-  },
-  "auth": {
-    "tokenUrl":"/token",
-    "clientId":"your-client-id",
-    "secret":"your-secret"
+    "port": 3000,
+    "auth": {
+      "tokenUrl": "/token",
+      "clientId": "your-client-id",
+      "secret": "your-secret"
+    }
   },
   "global" : {
     "baseUrl": "http://www.example.com"

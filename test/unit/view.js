@@ -41,10 +41,9 @@ describe("View", function(done) {
 
     var req = { url: "/test" }
     var p = page(name, schema)
-    var v = view(req.url, p, false)
+    var v = view(req.url, p)
 
     v.url.should.eql("/test")
-    v.json.should.eql(false)
     v.page.name.should.eql("test")
     done()
   })
@@ -56,7 +55,7 @@ describe("View", function(done) {
 
     var req = { url: "/test" }
     var p = page(name, schema)
-    var v = view(req.url, p, false)
+    var v = view(req.url, p)
 
     var data = {
       title: "Sir",
@@ -78,28 +77,6 @@ describe("View", function(done) {
     done()
   })
 
-  it("should return json when calling `render()`", function(done) {
-    var name = "test"
-    var schema = TestHelper.getPageSchema()
-    schema.template = "test.js"
-
-    var req = { url: "/test" }
-    var p = page(name, schema)
-    var v = view(req.url, p, true)
-
-    var data = {
-      title: "Sir",
-      names: [{ name: "Moe" }, { name: "Larry" }, { name: "Curly" }]
-    }
-
-    v.setData(data)
-
-    v.render(function(err, result) {
-      result.should.eql(data)
-      done()
-    })
-  })
-
   it("should return html when calling `render()`", function(done) {
     var name = "test"
     var schema = TestHelper.getPageSchema()
@@ -107,7 +84,7 @@ describe("View", function(done) {
 
     var req = { url: "/test" }
     var p = page(name, schema)
-    var v = view(req.url, p, false)
+    var v = view(req.url, p)
 
     var data = {
       names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]
@@ -128,15 +105,9 @@ describe("View", function(done) {
     schema.template = "test.js"
     schema.settings.postProcessors = ["replace-sir"]
 
-    // load a template
-    //var template = "<h1>This is testing postProcessors</h1>"
-    //var expected = "<h2>This is testing postProcessors</h2>"
-    //var compiled = webEngine.compile(template, "test", true)
-    //webEngine.register(template, "test")
-
     var req = { url: "/test" }
     var p = page(name, schema)
-    var v = view(req.url, p, false)
+    var v = view(req.url, p)
 
     var data = {
       names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]

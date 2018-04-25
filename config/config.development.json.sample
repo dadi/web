@@ -11,16 +11,6 @@
     "port": 3001
   },
   "cluster": false,
-  "paths": {
-    "workspace": "workspace",
-    "datasources": "workspace/datasources",
-    "pages": "workspace/pages",
-    "events": "workspace/events",
-    "middleware": "workspace/middleware",
-    "media": "workspace/media",
-    "public": "workspace/public",
-    "routes": "workspace/routes"
-  },
   "allowJsonView": true,
   "debug": true
 }

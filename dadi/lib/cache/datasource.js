@@ -1,26 +1,26 @@
 /**
  * @module Cache
  */
-var crypto = require('crypto')
-var debug = require('debug')('web:datasource-cache')
-var merge = require('deepmerge')
-var path = require('path')
-var url = require('url')
+const crypto = require('crypto')
+const debug = require('debug')('web:datasource-cache')
+const merge = require('deepmerge')
+const path = require('path')
+const url = require('url')
 
-var Cache = require(path.join(__dirname, '/index.js'))
-var config = require(path.join(__dirname, '/../../../config.js'))
-var log = require('@dadi/logger')
+const Cache = require(path.join(__dirname, '/index.js'))
+const config = require(path.join(__dirname, '/../../../config.js'))
+const log = require('@dadi/logger')
 
 /**
  * Creates a new DatasourceCache singleton for caching datasource results
  * @constructor
  */
-var DatasourceCache = function () {
+const DatasourceCache = function () {
   this.cacheOptions = config.get('caching')
   this.cache = Cache().cache
 
-  var directoryEnabled = this.cacheOptions.directory.enabled
-  var redisEnabled = this.cacheOptions.redis.enabled
+  const directoryEnabled = this.cacheOptions.directory.enabled
+  const redisEnabled = this.cacheOptions.redis.enabled
 
   this.enabled = !(directoryEnabled === false && redisEnabled === false)
 }
@@ -43,10 +43,10 @@ DatasourceCache.prototype.getFromCache = function (opts, done) {
     return done(false)
   }
 
-  var filename = this.getFilename(opts)
-  var options = this.getOptions(opts)
+  const filename = this.getFilename(opts)
+  const options = this.getOptions(opts)
 
-  var buffers = []
+  const buffers = []
 
   // attempt to get from the cache
   this.cache
@@ -79,7 +79,7 @@ DatasourceCache.prototype.getFromCache = function (opts, done) {
  * @param  {fn} done - the method to call when finished, accepts args (Boolean written)
  */
 DatasourceCache.prototype.cacheResponse = function (opts, data, done) {
-  var enabled = this.cachingEnabled(opts)
+  const enabled = this.cachingEnabled(opts)
 
   if (!enabled) {
     return done(false)
@@ -92,8 +92,8 @@ DatasourceCache.prototype.cacheResponse = function (opts, data, done) {
 
   debug('write to cache (%s)', opts.name)
 
-  var filename = this.getFilename(opts)
-  var options = this.getOptions(opts)
+  const filename = this.getFilename(opts)
+  const options = this.getOptions(opts)
 
   // console.log('> CACHE RESPONSE')
   // console.log('is Buffer?', Buffer.isBuffer(data))
@@ -113,11 +113,11 @@ DatasourceCache.prototype.cacheResponse = function (opts, data, done) {
  * @param {object} datasource - a datasource schema object containing the datasource settings
  */
 DatasourceCache.prototype.cachingEnabled = function (opts) {
-  var enabled = this.enabled
+  let enabled = this.enabled
 
   // check the querystring for a no cache param
   if (typeof opts.endpoint !== 'undefined') {
-    var query = url.parse(opts.endpoint, true).query
+    const query = url.parse(opts.endpoint, true).query
     if (query.cache && query.cache === 'false') {
       enabled = false
     }
@@ -131,7 +131,7 @@ DatasourceCache.prototype.cachingEnabled = function (opts) {
     enabled = false
   }
 
-  var options = this.getOptions(opts)
+  const options = this.getOptions(opts)
 
   debug('options (%s): %o', opts.name, options)
 
@@ -148,7 +148,7 @@ DatasourceCache.prototype.cachingEnabled = function (opts) {
  * @param {object} datasource - a datasource schema object containing the datasource settings
  */
 DatasourceCache.prototype.getFilename = function (opts) {
-  var filename = crypto
+  let filename = crypto
     .createHash('sha1')
     .update(opts.name)
     .digest('hex')
@@ -178,7 +178,7 @@ DatasourceCache.prototype.getFilename = function (opts) {
  * @returns {object} options for the cache
  */
 DatasourceCache.prototype.getOptions = function (opts) {
-  var options = merge(this.cacheOptions, opts.caching || {})
+  const options = merge(this.cacheOptions, opts.caching || {})
 
   options.directory.extension = 'json'
 

@@ -94,7 +94,7 @@ describe("Router", function(done) {
     var routerConfig = {
       rewrites: {
         forceLowerCase: true,
-        allowJsonView: true,
+        allowDebugView: true,
         loadDatasourceAsFile: false,
         path: "test/app/routes/rewrites.txt"
       }
@@ -115,7 +115,7 @@ describe("Router", function(done) {
           var routerConfig = {
             rewrites: {
               forceLowerCase: true,
-              allowJsonView: true,
+              allowDebugView: true,
               loadDatasourceAsFile: false,
               path: ""
             }
@@ -371,7 +371,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -402,7 +402,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -430,7 +430,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -458,7 +458,7 @@ describe("Router", function(done) {
           var pages = TestHelper.setUpPages()
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -506,7 +506,7 @@ describe("Router", function(done) {
           console.log(pages)
 
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            "http://" + config.get('api').host + ":" + config.get('api').port
           var scope = nock(apiConnectionString)
             .get(
               "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D"
@@ -559,7 +559,7 @@ describe("Router", function(done) {
       var routerConfig = {
         rewrites: {
           forceLowerCase: true,
-          allowJsonView: true,
+          allowDebugView: true,
           loadDatasourceAsFile: false,
           datasource: "redirects"
         }
@@ -611,7 +611,7 @@ describe("Router", function(done) {
         },
         rewrites: {
           forceLowerCase: true,
-          allowJsonView: true,
+          allowDebugView: true,
           loadDatasourceAsFile: false,
           datasource: "redirects"
         }
@@ -708,7 +708,7 @@ describe("Router", function(done) {
         rewrites: {
           forceTrailingSlash: false,
           forceLowerCase: true,
-          allowJsonView: true,
+          allowDebugView: true,
           loadDatasourceAsFile: false,
           datasource: ""
         }
@@ -930,12 +930,10 @@ describe("Router", function(done) {
       var page = Page("test", schema)
 
       var req = {},
-        res = {}
+          res = {}
 
-      server.app.Router.testConstraint(page.routes[0].path, req, res, function(
-        result
-      ) {
-        result.should.eql(true)
+      server.app.Router.testConstraint(page.routes[0].path, req, res, function(err, passed) {
+        passed.should.eql(true)
         done()
       })
     })
@@ -960,10 +958,8 @@ describe("Router", function(done) {
       var req = { url: "/test" },
         res = {}
 
-      server.app.Router.testConstraint(page.routes[0].path, req, res, function(
-        result
-      ) {
-        result.should.eql(false)
+      server.app.Router.testConstraint(page.routes[0].path, req, res, function(err, passed) {
+        passed.should.eql(false)
         done()
       })
     })

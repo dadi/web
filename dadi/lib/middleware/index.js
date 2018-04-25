@@ -1,11 +1,11 @@
 /**
  * @module Middleware
  */
-var debug = require('debug')('web:middleware')
-var log = require('@dadi/logger')
-var path = require('path')
+const debug = require('debug')('web:middleware')
+const log = require('@dadi/logger')
+const path = require('path')
 
-var Middleware = function (name, options) {
+const Middleware = function (name, options) {
   debug('loaded %s', name)
 
   this.name = name
@@ -13,7 +13,7 @@ var Middleware = function (name, options) {
 }
 
 Middleware.prototype.load = function () {
-  var filepath = path.join(this.options.middlewarePath, this.name + '.js')
+  const filepath = path.join(this.options.middlewarePath, this.name + '.js')
 
   try {
     // get the file

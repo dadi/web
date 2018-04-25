@@ -5,7 +5,6 @@ const should = require('should')
 const request = require('supertest')
 
 const api = require(__dirname + '/../../dadi/lib/api')
-const Bearer = require(__dirname + '/../../dadi/lib/auth/bearer')
 const Controller = require(__dirname + '/../../dadi/lib/controller')
 const Datasource = require(__dirname + '/../../dadi/lib/datasource')
 const help = require(__dirname + '/../../dadi/lib/help')
@@ -171,7 +170,7 @@ describe('Upload', function (done) {
       security: {
         csrf: true
       },
-      allowJsonView: true,
+      allowDebugView: true,
       uploads: {
         enabled: true,
         destinationPath: './test/app/uploads',
@@ -188,9 +187,11 @@ describe('Upload', function (done) {
         const client = request(connectionString)
 
         client
-        .get('/allowed-upload-route/?json=true')
+        .get('/allowed-upload-route/?debug=json')
         .end((err, res) => {
           const token = res.body.csrfToken
+
+          should.exist(res)
 
           client
           .post('/allowed-upload-route/')
