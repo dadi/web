@@ -1,7 +1,7 @@
 <img src="https://dadi.tech/assets/products/dadi-web-full.png" alt="DADI Web" height="65"/>
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
-[![coverage](https://img.shields.io/badge/coverage-82%25-yellow.svg?style=flat?style=flat-square)](https://github.com/dadi/web)
+[![coverage](https://img.shields.io/badge/coverage-82%-yellow.svg?style=flat-square)](https://github.com/dadi/web)
 [![Build Status](https://travis-ci.org/dadi/web.svg?branch=master)](https://travis-ci.org/dadi/web)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 [![Greenkeeper badge](https://badges.greenkeeper.io/dadi/web.svg)](https://greenkeeper.io/)
@@ -25,7 +25,7 @@ DADI Web is part of [DADI](https://github.com/dadi/), a suite of components cove
 
 ## Requirements
 
-* **[Node.js](https://www.nodejs.org/)** (supported versions: 4.7.0, 5.12.0, 6.9.2)
+* **[Node.js](https://www.nodejs.org/)** (supported versions: 6.11.1, 8.9.4)
 
 ## Your first Web project
 
@@ -92,7 +92,7 @@ $ [sudo] service web restart
 DADI is a data centric development and delivery stack, built specifically in support of the principles of API first and COPE.
 
 Copyright notice<br />
-(C) 2017 DADI+ Limited <support@dadi.tech><br />
+(C) 2018 DADI+ Limited <support@dadi.tech><br />
 All rights reserved
 
 This product is part of DADI.<br />
