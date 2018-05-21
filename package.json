@@ -36,7 +36,7 @@
     "@dadi/passport": "~1.5.0",
     "@dadi/status": "~1.0.0",
     "@purest/providers": "~1.0.0",
-    "async": "~1.5.2",
+    "async": "~2.6.1",
     "body-parser": "~1.18.2",
     "chokidar": "~2.0.0",
     "circular-json": "~0.5.1",
