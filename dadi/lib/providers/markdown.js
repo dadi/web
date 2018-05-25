@@ -1,17 +1,22 @@
 'use strict'
 
-const async = require('async')
 const formatError = require('@dadi/format-error')
 const fs = require('fs')
+const recursive = require('recursive-readdir')
 const path = require('path')
 const marked = require('marked')
 const meta = require('@dadi/metadata')
-const recursive = require('recursive-readdir')
 const yaml = require('js-yaml')
 
 const help = require(path.join(__dirname, '../help'))
+const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
+const log = require('@dadi/logger')
 
-const MarkdownProvider = function () {}
+const yamlRegex = /---[\n\r]+([\s\S]*)[\n\r]+---[\n\r]+([\s\S]*)/
+
+const MarkdownProvider = function () {
+  this.dataCache = new DatasourceCache()
+}
 
 /**
  * initialise - initialises the datasource provider
@@ -57,114 +62,144 @@ MarkdownProvider.prototype.processSortParameter = function (obj) {
 /**
  * load - loads data form the datasource
  *
- * @param  {string} requestUrl - url of the web request (not used)
+ * @param  {string} requestUrl - url of the web request
  * @param  {fn} done - callback on error or completion
  * @return {void}
  */
 MarkdownProvider.prototype.load = function (requestUrl, done) {
-  try {
-    const sourcePath = path.normalize(this.schema.datasource.source.path)
+  const sourcePath = path.normalize(this.schema.datasource.source.path)
 
-    // Ignore files without the correct extension
-    recursive(sourcePath, (err, filepaths) => {
-      if (err && err.code === 'ENOENT') {
-        const data = {
-          results: [],
-          errors: [formatError.createWebError('0006', { sourcePath })]
-        }
+  const params = this.datasourceParams
+    ? this.datasourceParams
+    : this.schema.datasource
 
-        return done(null, data)
+  const sort = this.processSortParameter(params.sort)
+  const search = params.search
+  const count = params.count
+  const fields = params.fields || []
+  const filter = params.filter
+  const page = params.page || 1
+
+  const cacheOptions = {
+    name: this.datasource.name,
+    endpoint: sourcePath
+  }
+
+  if (this.schema.datasource.caching) {
+    cacheOptions.caching = this.schema.datasource.caching
+  }
+
+  this.dataCache.getFromCache(cacheOptions, cachedData => {
+    // data found in the cache, parse into JSON
+    // and return to whatever called load()
+    if (cachedData) {
+      try {
+        cachedData = JSON.parse(cachedData.toString())
+        return done(null, cachedData)
+      } catch (err) {
+        log.error(
+          'markdown: cache data incomplete, making HTTP request: ' +
+            err +
+            '(' +
+            cacheOptions.endpoint +
+            ')'
+        )
       }
+    }
+  })
 
-      // Filter out only files with the correct extension
+  this.readdirAsync(sourcePath)
+    .then(filepaths => {
+      // Ignore files without the correct extension
       filepaths = filepaths.filter(i =>
         new RegExp('.' + this.extension + '$', 'i').test(i)
       )
 
-      // Process each file
-      async.map(filepaths, this.readFileAsync, (err, readResults) => {
-        if (err) return done(err, null)
-
-        this.parseRawDataAsync(readResults, (err, posts) => {
-          if (err) return done(err)
-
-          const params = this.datasourceParams
-            ? this.datasourceParams
-            : this.schema.datasource
-
-          const sort = this.processSortParameter(params.sort)
-          const search = params.search
-          const count = params.count
-          const fields = params.fields || []
-          const filter = params.filter
-          const page = params.page || 1
-
-          let metadata = []
-
-          // apply search
-          posts = help.where(posts, search)
-
-          // apply filter
-          posts = posts.filter(post => {
-            if (help.where([post.attributes], filter).length > 0) {
-              return post
-            }
-          })
-
-          // Sort posts by attributes field (with date support)
-          if (sort && Object.keys(sort).length > 0) {
-            Object.keys(sort).forEach(field => {
-              posts.sort(
-                help.sortBy(field, value => {
-                  if (field.toLowerCase().includes('date')) {
-                    value = new Date(value)
-                  }
-
-                  return value
-                })
-              )
-
-              if (sort[field] === -1) {
-                posts.reverse()
-              }
-            })
-          }
-
-          // Count posts
-          let postCount = posts.length
-
-          // Paginate if required
-          if (page && count) {
-            const offset = (page - 1) * count
-            posts = posts.slice(offset, offset + count)
-
-            // Metadata for pagination
-            const options = []
-            options['page'] = parseInt(page)
-            options['limit'] = parseInt(count)
-
-            metadata = meta(options, parseInt(postCount))
-          }
-
-          if (fields && fields.length > 0) {
-            if (Array.isArray(posts)) {
-              let i = 0
-              posts.forEach(document => {
-                posts[i] = help.pick(posts[i], fields)
-                i++
-              })
-            } else {
-              posts = help.pick(posts, fields)
-            }
-          }
-
-          done(null, { results: posts, metadata: metadata || null })
-        })
-      })
+      return Promise.all(filepaths.map(i => this.readFileAsync(i)))
     })
-  } catch (ex) {
-    done(ex, null)
-  }
+    .then(files => {
+      return Promise.all(files.map(i => this.parseRawDataAsync(i)))
+    })
+    .then(posts => {
+      let metadata = []
+
+      // apply search
+      posts = help.where(posts, search)
+
+      // apply filter
+      posts = posts.filter(post => {
+        if (post && help.where([post.attributes], filter).length > 0) {
+          return post
+        }
+      })
+
+      // Sort posts by attributes field (with date support)
+      if (sort && Object.keys(sort).length > 0) {
+        Object.keys(sort).forEach(field => {
+          posts.sort(
+            help.sortBy(field, value => {
+              if (field.toLowerCase().includes('date')) {
+                value = new Date(value)
+              }
+
+              return value
+            })
+          )
+
+          if (sort[field] === -1) {
+            posts.reverse()
+          }
+        })
+      }
+
+      // Count posts
+      let postCount = posts.length
+
+      // Paginate if required
+      if (page && count) {
+        const offset = (page - 1) * count
+        posts = posts.slice(offset, offset + count)
+
+        // Metadata for pagination
+        const options = []
+        options['page'] = parseInt(page)
+        options['limit'] = parseInt(count)
+
+        metadata = meta(options, parseInt(postCount))
+      }
+
+      if (fields && fields.length > 0) {
+        if (Array.isArray(posts)) {
+          let i = 0
+          posts.forEach(document => {
+            posts[i] = help.pick(posts[i], fields)
+            i++
+          })
+        } else {
+          posts = help.pick(posts, fields)
+        }
+      }
+
+      const data = { results: posts, metadata: metadata || null }
+
+      this.dataCache.cacheResponse(
+        cacheOptions,
+        JSON.stringify(data),
+        written => {
+          return done(null, data)
+        }
+      )
+    })
+    .catch(err => {
+      log.error(err)
+
+      const data = {
+        results: [],
+        errors: [formatError.createWebError('0006', { sourcePath })]
+      }
+
+      return done(null, data)
+    })
 }
 
 /**
@@ -177,36 +212,51 @@ MarkdownProvider.prototype.processRequest = function (datasourceParams) {
   this.datasourceParams = datasourceParams
 }
 
-MarkdownProvider.prototype.readFileAsync = function (filename, callback) {
-  fs.readFile(filename, 'utf8', function (err, data) {
-    return callback(err, { _name: filename, _contents: data })
+MarkdownProvider.prototype.readFileAsync = function (filename) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filename, 'utf8', (err, data) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve({ _name: filename, _contents: data })
+      }
+    })
   })
 }
 
-MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
-  const yamlRegex = /---[\n\r]+([\s\S]*)[\n\r]+---[\n\r]+([\s\S]*)/
-  const posts = []
+MarkdownProvider.prototype.readdirAsync = function (dirname) {
+  return new Promise((resolve, reject) => {
+    recursive(dirname, (err, filenames) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(filenames)
+      }
+    })
+  })
+}
 
-  for (let i = 0; i < data.length; i++) {
-    const bits = yamlRegex.exec(data[i]._contents)
+MarkdownProvider.prototype.parseRawDataAsync = function (post, callback) {
+  return new Promise((resolve, reject) => {
+    const bits = yamlRegex.exec(post._contents)
     let attributes = []
 
     try {
       attributes = yaml.safeLoad(bits[1] || '')
     } catch (err) {
-      err.message = `Error in file '${data[i]._name}': ${err.message}`
-      callback(err)
+      err.message = `Error in file '${post._name}': ${err.message}`
+      reject(err)
     }
 
     if (attributes) {
       const contentText = bits[2] || ''
       const contentHtml = marked(contentText)
-      const parsedPath = path.parse(data[i]._name)
+      const parsedPath = path.parse(post._name)
 
       // Some info about the file
       attributes._id = parsedPath.name
       attributes._ext = parsedPath.ext
-      attributes._loc = data[i]._name
+      attributes._loc = post._name
       attributes._path = parsedPath.dir
         .replace(path.normalize(this.schema.datasource.source.path), '')
         .replace(/^\/|\/$/g, '')
@@ -215,16 +265,16 @@ MarkdownProvider.prototype.parseRawDataAsync = function (data, callback) {
       attributes._path = attributes._path.filter(Boolean)
       attributes._path = attributes._path.length === 0 ? null : attributes._path
 
-      posts.push({
+      post = {
         attributes,
-        original: data[i]._contents,
+        original: post._contents,
         contentText,
         contentHtml
-      })
+      }
     }
-  }
 
-  callback(null, posts)
+    resolve(post)
+  })
 }
 
 module.exports = MarkdownProvider
