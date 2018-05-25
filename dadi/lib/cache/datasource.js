@@ -86,7 +86,6 @@ DatasourceCache.prototype.cacheResponse = function (opts, data, done) {
   }
 
   if (this.stillCaching) {
-    // console.log('stillCaching...')
     return done(false)
   }
 
@@ -95,17 +94,17 @@ DatasourceCache.prototype.cacheResponse = function (opts, data, done) {
   const filename = this.getFilename(opts)
   const options = this.getOptions(opts)
 
-  // console.log('> CACHE RESPONSE')
-  // console.log('is Buffer?', Buffer.isBuffer(data))
-  // console.log(filename, opts.endpoint)
-
   this.stillCaching = true
 
-  this.cache.set(filename, data, options).then(() => {
-    // console.log('< CACHE RESPONSE', filename)
-    this.stillCaching = false
-    return done(true)
-  })
+  this.cache
+    .set(filename, data, options)
+    .then(() => {
+      this.stillCaching = false
+      return done(true)
+    })
+    .catch(err => {
+      log.info('datasource cache fail: ', err)
+    })
 }
 
 /**
@@ -148,25 +147,14 @@ DatasourceCache.prototype.cachingEnabled = function (opts) {
  * @param {object} datasource - a datasource schema object containing the datasource settings
  */
 DatasourceCache.prototype.getFilename = function (opts) {
-  let filename = crypto
-    .createHash('sha1')
-    .update(opts.name)
-    .digest('hex')
+  let filename = crypto.createHash('sha1').update(opts.name).digest('hex')
 
   if (opts.cacheKey) {
     filename +=
-      '_' +
-      crypto
-        .createHash('sha1')
-        .update(opts.cacheKey)
-        .digest('hex')
+      '_' + crypto.createHash('sha1').update(opts.cacheKey).digest('hex')
   } else {
     filename +=
-      '_' +
-      crypto
-        .createHash('sha1')
-        .update(opts.endpoint)
-        .digest('hex')
+      '_' + crypto.createHash('sha1').update(opts.endpoint).digest('hex')
   }
 
   return filename
