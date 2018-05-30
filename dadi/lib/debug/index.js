@@ -9,7 +9,7 @@ module.exports = function (req, res, next, view, page) {
   return function (err, result, unprocessed) {
     if (err) return next(err)
 
-    const mode = view.data.debugView
+    let mode = view.data.debugView
     delete view.data.debugView
 
     switch (mode) {
@@ -17,12 +17,12 @@ module.exports = function (req, res, next, view, page) {
         Send.json(200, res, next)(null, view.data)
         break
       case 'stats':
-        const stats = Object.assign(
+        let stats = Object.assign(
           {},
           help.timer.getStats(),
           {
             'Data size': help.formatBytes(
-              Buffer.byteLength(view.data, 'utf8'),
+              Buffer.byteLength(JSON.stringify(view.data), 'utf8'),
               3
             )
           },
@@ -53,14 +53,14 @@ module.exports = function (req, res, next, view, page) {
 
         headers.request = req.headers
 
-        const options = {
+        let options = {
           host: view.data.url.hostname,
           port: view.data.url.port,
           path: view.data.url.pathname,
           method: 'GET'
         }
 
-        const newReq = http.request(options, newRes => {
+        let newReq = http.request(options, newRes => {
           headers.response = newRes.headers
 
           res.setHeader('Content-Type', 'text/html')
@@ -168,7 +168,7 @@ module.exports = function (req, res, next, view, page) {
       case 'route':
         let router = fs.readFileSync(require.resolve('path-to-regexp'), 'utf8')
 
-        const re = new RegExp(/module\.exports(.*)?/, 'g')
+        let re = new RegExp(/module\.exports(.*)?/, 'g')
         router = router.replace(re, '')
 
         res.setHeader('Content-Type', 'text/html')

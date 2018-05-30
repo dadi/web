@@ -283,8 +283,7 @@ Router.prototype.validate = function (route, options, req, res) {
 
     Promise.all(paramsPromises)
       .then(result => {
-        this.testConstraint(route.path, req, res, (err, passed) => {
-          console.log(err)
+        this.testConstraint(route.path, req, res, (_, passed) => {
           if (passed) {
             return resolve('')
           } else {
