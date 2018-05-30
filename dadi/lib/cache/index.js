@@ -1,15 +1,15 @@
 /**
  * @module Cache
  */
+const compressible = require('compressible')
 const crypto = require('crypto')
 const debug = require('debug')('web:cache')
-const path = require('path')
-const url = require('url')
-const fs = require('fs')
-
-const compressible = require('compressible')
-const mime = require('mime-types')
 const etag = require('etag')
+const fs = require('fs')
+const mime = require('mime-types')
+const path = require('path')
+const pathToRegexp = require('path-to-regexp')
+const url = require('url')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
 const help = require(path.join(__dirname, '/../help'))
@@ -79,21 +79,29 @@ Cache.prototype.cachingEnabled = function (req) {
  * @returns {object}
  */
 Cache.prototype.getEndpointMatchingRequest = function (req) {
-  const endpoints = this.server.components || {}
-  const requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
+  let endpoints = this.server.components || {}
+  let requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
+
+  if (requestUrl === '') requestUrl = '/'
 
   // get the host key that matches the request's host header
-  const virtualHosts = config.get('virtualHosts')
+  let virtualHosts = config.get('virtualHosts')
 
-  const host =
+  let host =
     Object.keys(virtualHosts).find(key => {
       return virtualHosts.hostnames.includes(req.headers.host)
     }) || ''
 
-  const matchKey = Object.keys(endpoints).find(key => {
-    const paths = endpoints[key].page.routes.map(route => route.path)
+  let matchKey = Object.keys(endpoints).find(key => {
+    let paths = endpoints[key].page.routes.map(route => route.path)
 
-    if (!paths.includes(requestUrl)) {
+    let matchPath = path => {
+      let keys = []
+      let regex = pathToRegexp(path, keys)
+      return regex.exec(requestUrl)
+    }
+
+    if (!paths.some(matchPath) && !paths.includes(requestUrl)) {
       return false
     }
 
