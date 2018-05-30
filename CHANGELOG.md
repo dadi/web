@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [6.0.1] - 2018-05-30
+
+* [#399](https://github.com/dadi/web/issues/399): improve the process of selecting a loaded endpoint based on the request URL within the cache layer
+
+
 # [6.0.0] - 2018-04-25
 
 ## Debug view
