@@ -81,7 +81,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "~5.2.8",
-    "@commitlint/config-angular": "~5.1.1",
+    "@commitlint/config-angular": "~7.0.0",
     "cheerio": "~1.0.0-rc.2",
     "env-test": "~1.0.0",
     "husky": "~0.13.3",
