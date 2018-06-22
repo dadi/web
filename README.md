@@ -85,7 +85,7 @@ $ [sudo] service web restart
 
 
 ## Links
-* [Web Documentation](http://docs.dadi.tech/web/)
+* [Web Documentation](https://docs.dadi.cloud/web/)
 
 ## Licence
 
