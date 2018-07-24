@@ -94,7 +94,7 @@
     "prettier": "^1.1.0",
     "should": "~13.2.0",
     "sinon": "~2.3.2",
-    "sinon-test": "~1.0.2",
+    "sinon-test": "~2.2.1",
     "snazzy": "~7.0.0",
     "standard": "8.6.0",
     "superagent": "~3.8.1",
