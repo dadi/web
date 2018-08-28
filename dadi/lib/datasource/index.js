@@ -231,6 +231,11 @@ Datasource.prototype.processRequest = function (datasource, req) {
         ~~datasourceParams.page === 0 ? 1 : ~~datasourceParams.page
     }
 
+    // i18n setting for passing languages
+    if (req.params.lang && datasourceParams.i18n) {
+      datasourceParams.lang = req.params.lang
+    }
+
     // add an ID filter if it was present in the querystring
     // either as http://www.blah.com?id=xxx or via a route parameter e.g. /books/:id
     if (req.params.id || query.id) {
