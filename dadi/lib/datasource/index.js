@@ -232,8 +232,8 @@ Datasource.prototype.processRequest = function (datasource, req) {
     }
 
     // i18n setting for passing languages
-    if (req.params.lang && datasourceParams.i18n) {
-      datasourceParams.lang = req.params.lang
+    if (datasourceParams.i18n) {
+      datasourceParams.lang = req.params.lang || query.lang || null
     }
 
     // add an ID filter if it was present in the querystring
