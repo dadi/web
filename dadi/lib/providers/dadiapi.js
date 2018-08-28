@@ -339,6 +339,7 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
   const existingParams = qs.parse(url.parse(uri).search)
 
   const params = [
+    { lang: datasourceParams.lang || null },
     { count: datasourceParams.count || 0 },
     { skip: datasourceParams.skip },
     { page: datasourceParams.page || 1 },
