@@ -12,8 +12,8 @@ const help = require(path.join(__dirname, '../help'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 const log = require('@dadi/logger')
 
-var optionalByteOrderMark = '\\ufeff?'
-var pattern =
+const optionalByteOrderMark = '\\ufeff?'
+const pattern =
   '^(' +
   optionalByteOrderMark +
   '(= yaml =|---)' +
@@ -22,7 +22,7 @@ var pattern =
   '$' +
   (process.platform === 'win32' ? '\\r?' : '') +
   '(?:\\n)?)'
-var yamlRegex = new RegExp(pattern, 'm')
+const yamlRegex = new RegExp(pattern, 'm')
 
 const MarkdownProvider = function () {
   this.dataCache = new DatasourceCache()
