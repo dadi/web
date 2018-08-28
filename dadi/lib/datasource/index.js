@@ -249,7 +249,9 @@ Datasource.prototype.processRequest = function (datasource, req) {
   }
 
   // i18n setting for passing languages
-  if (typeof elem !== 'undefined' ? datasourceParams.i18n : true) {
+  if (
+    typeof datasourceParams.i18n !== 'undefined' ? datasourceParams.i18n : true
+  ) {
     datasourceParams.lang = req.params.lang || query.lang || null
   }
 
