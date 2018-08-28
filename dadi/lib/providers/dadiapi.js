@@ -339,7 +339,6 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
   const existingParams = qs.parse(url.parse(uri).search)
 
   const params = [
-    { lang: datasourceParams.lang || '' },
     { count: datasourceParams.count || 0 },
     { skip: datasourceParams.skip },
     { page: datasourceParams.page || 1 },
@@ -351,6 +350,11 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
   // pass cache flag to API endpoint
   if (datasourceParams.hasOwnProperty('cache')) {
     params.push({ cache: datasourceParams.cache })
+  }
+
+  // pass language to api endpoint
+  if (datasourceParams.lang) {
+    params.push({ lang: datasourceParams.lang })
   }
 
   params.forEach(param => {
