@@ -364,8 +364,8 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
           query +
           key +
           '=' +
-          (Object.keys(param[key])
-            ? key !== 'lang' ? JSON.stringify(param[key]) : param[key]
+          (Object.keys(param[key]) && typeof param[key] !== 'string'
+            ? JSON.stringify(param[key])
             : param[key]) +
           '&'
       }
