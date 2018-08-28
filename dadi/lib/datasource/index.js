@@ -124,6 +124,7 @@ Datasource.prototype.init = function (callback) {
     this.filterEvent = null
     this.requestParams = schema.datasource.requestParams || []
     this.chained = schema.datasource.chained || null
+    this.i18n = typeof elem !== 'undefined' ? schema.datasource.i18n : true
 
     if (schema.datasource.endpointEvent) {
       this.endpointEvent = new Event(
@@ -232,7 +233,7 @@ Datasource.prototype.processRequest = function (datasource, req) {
     }
 
     // i18n setting for passing languages
-    if (datasourceParams.i18n) {
+    if (this.i18n) {
       datasourceParams.lang = req.params.lang || query.lang || null
     }
 
