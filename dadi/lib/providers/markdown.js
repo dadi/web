@@ -12,7 +12,17 @@ const help = require(path.join(__dirname, '../help'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
 const log = require('@dadi/logger')
 
-const yamlRegex = /---[\n\r]+([\s\S]*)[\n\r]+---[\n\r]+([\s\S]*)/
+var optionalByteOrderMark = '\\ufeff?'
+var pattern =
+  '^(' +
+  optionalByteOrderMark +
+  '(= yaml =|---)' +
+  '$([\\s\\S]*?)' +
+  '^(?:\\2|\\.\\.\\.)' +
+  '$' +
+  (process.platform === 'win32' ? '\\r?' : '') +
+  '(?:\\n)?)'
+var yamlRegex = new RegExp(pattern, 'm')
 
 const MarkdownProvider = function () {
   this.dataCache = new DatasourceCache()
@@ -239,38 +249,34 @@ MarkdownProvider.prototype.readdirAsync = function (dirname) {
 MarkdownProvider.prototype.parseRawDataAsync = function (post, callback) {
   return new Promise((resolve, reject) => {
     const bits = yamlRegex.exec(post._contents)
+
+    // Attributes
     let attributes = []
+    attributes = bits[bits.length - 1].replace(/^\s+|\s+$/g, '')
+    attributes = yaml.safeLoad(attributes) || {}
 
-    try {
-      attributes = yaml.safeLoad(bits[1] || '')
-    } catch (err) {
-      err.message = `Error in file '${post._name}': ${err.message}`
-      reject(err)
-    }
+    const contentText = post._contents.replace(bits[0], '') || ''
+    const contentHtml = marked(contentText)
 
-    if (attributes) {
-      const contentText = bits[2] || ''
-      const contentHtml = marked(contentText)
-      const parsedPath = path.parse(post._name)
+    // Some info about the file
+    const parsedPath = path.parse(post._name)
 
-      // Some info about the file
-      attributes._id = parsedPath.name
-      attributes._ext = parsedPath.ext
-      attributes._loc = post._name
-      attributes._path = parsedPath.dir
-        .replace(path.normalize(this.schema.datasource.source.path), '')
-        .replace(/^\/|\/$/g, '')
-        .split('/')
+    attributes._id = parsedPath.name
+    attributes._ext = parsedPath.ext
+    attributes._loc = post._name
+    attributes._path = parsedPath.dir
+      .replace(path.normalize(this.schema.datasource.source.path), '')
+      .replace(/^\/|\/$/g, '')
+      .split('/')
 
-      attributes._path = attributes._path.filter(Boolean)
-      attributes._path = attributes._path.length === 0 ? null : attributes._path
+    attributes._path = attributes._path.filter(Boolean)
+    attributes._path = attributes._path.length === 0 ? null : attributes._path
 
-      post = {
-        attributes,
-        original: post._contents,
-        contentText,
-        contentHtml
-      }
+    post = {
+      attributes,
+      original: post._contents,
+      contentText,
+      contentHtml
     }
 
     resolve(post)
