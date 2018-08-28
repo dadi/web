@@ -122,10 +122,6 @@ DatasourceCache.prototype.cachingEnabled = function (opts) {
     }
   }
 
-  // if (datasource.source.type === 'static') {
-  //   enabled = false
-  // }
-
   if (config.get('debug')) {
     enabled = false
   }
@@ -147,14 +143,25 @@ DatasourceCache.prototype.cachingEnabled = function (opts) {
  * @param {object} datasource - a datasource schema object containing the datasource settings
  */
 DatasourceCache.prototype.getFilename = function (opts) {
-  let filename = crypto.createHash('sha1').update(opts.name).digest('hex')
+  let filename = crypto
+    .createHash('sha1')
+    .update(opts.name)
+    .digest('hex')
 
   if (opts.cacheKey) {
     filename +=
-      '_' + crypto.createHash('sha1').update(opts.cacheKey).digest('hex')
+      '_' +
+      crypto
+        .createHash('sha1')
+        .update(opts.cacheKey)
+        .digest('hex')
   } else {
     filename +=
-      '_' + crypto.createHash('sha1').update(opts.endpoint).digest('hex')
+      '_' +
+      crypto
+        .createHash('sha1')
+        .update(opts.endpoint)
+        .digest('hex')
   }
 
   return filename
