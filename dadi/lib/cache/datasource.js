@@ -86,7 +86,6 @@ DatasourceCache.prototype.cacheResponse = function (opts, data, done) {
   }
 
   if (this.stillCaching) {
-    // console.log('stillCaching...')
     return done(false)
   }
 
@@ -95,17 +94,17 @@ DatasourceCache.prototype.cacheResponse = function (opts, data, done) {
   const filename = this.getFilename(opts)
   const options = this.getOptions(opts)
 
-  // console.log('> CACHE RESPONSE')
-  // console.log('is Buffer?', Buffer.isBuffer(data))
-  // console.log(filename, opts.endpoint)
-
   this.stillCaching = true
 
-  this.cache.set(filename, data, options).then(() => {
-    // console.log('< CACHE RESPONSE', filename)
-    this.stillCaching = false
-    return done(true)
-  })
+  this.cache
+    .set(filename, data, options)
+    .then(() => {
+      this.stillCaching = false
+      return done(true)
+    })
+    .catch(err => {
+      log.info('datasource cache fail: ', err)
+    })
 }
 
 /**
@@ -122,10 +121,6 @@ DatasourceCache.prototype.cachingEnabled = function (opts) {
       enabled = false
     }
   }
-
-  // if (datasource.source.type === 'static') {
-  //   enabled = false
-  // }
 
   if (config.get('debug')) {
     enabled = false

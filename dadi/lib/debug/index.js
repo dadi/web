@@ -180,16 +180,16 @@ module.exports = function (req, res, next, view, page) {
                 title: 'Page routes',
                 raw: `
                 <input type="text" id="inputPath" placeholder="/path/value/" value="${
-                  view.data.url.pathname
-                }"><br>
+  view.data.url.pathname
+}"><br>
                 ${page.page.routes
-                  .map(
-                    (i, idx) =>
-                      `<input type="text" class="inputRoute" readonly id="ir_${idx}" placeholder="/path/:key/" value="${
-                        i.path
-                      }"><br>`
-                  )
-                  .join('')}
+    .map(
+      (i, idx) =>
+        `<input type="text" class="inputRoute" readonly id="ir_${idx}" placeholder="/path/:key/" value="${
+          i.path
+        }"><br>`
+    )
+    .join('')}
 
                   <script>
                     ${router}

@@ -829,7 +829,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -879,7 +879,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -919,7 +919,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
           pages[0].routes[0].path = "/test/:category?"
@@ -961,7 +961,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -998,7 +998,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1038,7 +1038,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1077,7 +1077,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1119,7 +1119,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1162,7 +1162,7 @@ describe("Data Providers", function(done) {
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true }).then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
           var pages = TestHelper.setUpPages()
           pages[0].datasources = ["markdown"]
 
@@ -1187,6 +1187,65 @@ describe("Data Providers", function(done) {
                   "Another Quick Brown Fox"
                 )
                 done()
+              })
+          })
+        })
+      })
+    })
+
+    it("should retrieve data from the cache if it is enabled", function(done) {
+      var dsSchema = TestHelper.getSchemaFromFile(
+        TestHelper.getPathOptions().datasourcePath,
+        "markdown"
+      )
+
+      dsSchema.caching = {
+        "directory": {
+          "enabled": true
+        }
+      }
+
+      sinon
+        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: false }).then(() => {
+          var pages = TestHelper.setUpPages()
+          pages[0].datasources = ["markdown"]
+
+          TestHelper.startServer(pages).then(() => {
+            var connectionString =
+              "http://" +
+              config.get("server.host") +
+              ":" +
+              config.get("server.port")
+            var client = request(connectionString)
+
+            client
+              .get(pages[0].routes[0].path + "?debug=json")
+              .end((err, res) => {
+                res.body.markdown.results[0].attributes.title.should.eql('A Quick Brown Fox')
+      
+                sinon
+                  .stub(markdownProvider.prototype, "parseRawDataAsync")
+                  .returns({
+                    attributes: {
+                      title: 'Mr. Uncache'
+                    }
+                  })
+
+                client
+                  .get(pages[0].routes[0].path + "?debug=json")
+                  .end((err, res) => {
+                    Datasource.Datasource.prototype.loadDatasource.restore()
+
+                    markdownProvider.prototype.parseRawDataAsync.restore()
+
+                    res.body.markdown.results[0].attributes.title.should.eql('A Quick Brown Fox')
+
+                    done()                   
+                  })                
               })
           })
         })
