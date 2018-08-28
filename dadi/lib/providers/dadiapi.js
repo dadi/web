@@ -339,7 +339,7 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
   const existingParams = qs.parse(url.parse(uri).search)
 
   const params = [
-    { lang: datasourceParams.lang || null },
+    { lang: datasourceParams.lang },
     { count: datasourceParams.count || 0 },
     { skip: datasourceParams.skip },
     { page: datasourceParams.page || 1 },
@@ -364,7 +364,9 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
           query +
           key +
           '=' +
-          (Object.keys(param[key]) ? JSON.stringify(param[key]) : param[key]) +
+          (Object.keys(param[key])
+            ? key !== 'lang' ? JSON.stringify(param[key]) : param[key]
+            : param[key]) +
           '&'
       }
     }
