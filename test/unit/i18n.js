@@ -96,5 +96,75 @@ describe("Data Providers", function(done) {
         })
       })
     })
+
+    it("should not pass the lang variable to the dadiapi endpoint when it is not defined in the page routes", function(done) {
+      var clientHost =
+        "http://" + config.get("server.host") + ":" + config.get("server.port")
+      var apiHost =
+        "http://" + config.get('api').host + ":" + config.get('api').port
+      
+      var client = request(clientHost)
+      var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"foobar"}&fields={"name":1}&sort={"name":1}'
+      var scope2 = nock(apiHost)
+        .get(encodeURI(endpoint1))
+        .reply(200, JSON.stringify({ results: [{ name: "foobar" }] }))
+
+      // create page 1
+      var page1 = page("langedpage", TestHelper.getPageSchema())
+      page1.datasources = ["categories"]
+      page1.template = "test.js"
+      page1.routes[0].path = "/categories/:category"
+      page1.events = []
+
+      var pages = []
+      pages.push(page1)
+
+      TestHelper.enableApiConfig().then(() => {  
+        TestHelper.startServer(pages).then(() => {
+          client
+            .get("/categories/foobar")
+            .expect(200)
+            .end((err, res) => {
+              if (err) return done(err)
+              done()
+          })
+        })
+      })
+    })
+
+    it("should not pass the lang variable to the dadiapi endpoint when i18n is false in the DS schema", function(done) {
+      var clientHost =
+        "http://" + config.get("server.host") + ":" + config.get("server.port")
+      var apiHost =
+        "http://" + config.get('api').host + ":" + config.get('api').port
+      
+      var client = request(clientHost)
+      var endpoint1 = '/1.0/library/categories?count=20&page=1&filter={"name":"foobar"}&fields={"name":1}&sort={"name":1}'
+      var scope2 = nock(apiHost)
+        .get(encodeURI(endpoint1))
+        .reply(200, JSON.stringify({ results: [{ name: "foobar" }] }))
+
+      // create page 1
+      var page1 = page("langedpage", TestHelper.getPageSchema())
+      page1.datasources = ["categories_i18n_false"]
+      page1.template = "test.js"
+      page1.routes[0].path = "/:lang/categories/:category"
+      page1.events = []
+
+      var pages = []
+      pages.push(page1)
+
+      TestHelper.enableApiConfig().then(() => {  
+        TestHelper.startServer(pages).then(() => {
+          client
+            .get("/en/categories/foobar")
+            .expect(200)
+            .end((err, res) => {
+              if (err) return done(err)
+              done()
+          })
+        })
+      })
+    })
   })
 })
