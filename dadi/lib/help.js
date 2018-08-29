@@ -117,11 +117,6 @@ module.exports.clearCache = function (req, Cache, callback) {
     .digest('hex')
   const cacheDir = config.get('caching.directory.path')
 
-  console.log('*********')
-  console.log('clearCache called!')
-  console.log('path: ' + pathname)
-  console.log('*********')
-
   let datasourceCachePaths = []
   let files = fs.readdirSync(cacheDir)
 
