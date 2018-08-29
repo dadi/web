@@ -525,7 +525,12 @@ describe("Datasource Cache", function(done) {
         )
         var expected = "ds content from filesystem"
 
-        fs.writeFile(cachepath, expected, function () {
+        fs.writeFile(cachepath, expected, function (err) {
+          if (err) {
+            console.log(err)
+            done()
+          }
+          
           var dsCache = datasourceCache()
 
           dsCache.getFromCache(
