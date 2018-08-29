@@ -525,9 +525,7 @@ describe("Datasource Cache", function(done) {
         )
         var expected = "ds content from filesystem"
 
-        fs.writeFileSync(cachepath, expected)
-
-        setTimeout(function() {
+        fs.writeFile(cachepath, expected, function () {
           var dsCache = datasourceCache()
 
           dsCache.getFromCache(
@@ -542,7 +540,7 @@ describe("Datasource Cache", function(done) {
               done()
             }
           )
-        }, 1000)
+        })
       })
     })
 
