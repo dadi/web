@@ -352,6 +352,11 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
     params.push({ cache: datasourceParams.cache })
   }
 
+  // pass language to api endpoint
+  if (datasourceParams.lang) {
+    params.push({ lang: datasourceParams.lang })
+  }
+
   params.forEach(param => {
     for (let key in param) {
       if (
@@ -363,7 +368,9 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
           query +
           key +
           '=' +
-          (Object.keys(param[key]) ? JSON.stringify(param[key]) : param[key]) +
+          (Object.keys(param[key]) && typeof param[key] !== 'string'
+            ? JSON.stringify(param[key])
+            : param[key]) +
           '&'
       }
     }

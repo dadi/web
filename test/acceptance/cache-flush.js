@@ -79,14 +79,6 @@ describe("Cache Flush", function(done) {
           TestHelper.setupApiIntercepts()
           TestHelper.clearCache()
 
-          // fake token post
-          // var scope = nock('http://127.0.0.1:3000')
-          //   .post('/token')
-          //   .times(5)
-          //   .reply(200, {
-          //     accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
-          //   })
-
           // fake api data request
           var dsEndpoint =
             'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
@@ -291,69 +283,6 @@ describe("Cache Flush", function(done) {
       })
   })
 
-  it("should flush all cached items when no path is specified", function(done) {
-    // config.set('api.enabled', true)
-    //
-    // // fake token post
-    // var scope = nock('http://127.0.0.1:3000')
-    //   .post('/token')
-    //   .times(4)
-    //   .reply(200, {
-    //     accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
-    //   })
-
-    // get cached version of the page
-    var client = request(clientHost)
-    client
-      .get("/test")
-      .expect("content-type", "text/html")
-      .expect(200)
-      .end(function(err, res) {
-        if (err) return done(err)
-
-        res.headers["x-cache"].should.exist
-        res.headers["x-cache"].should.eql("HIT")
-
-        // clear cache for this path
-        client
-          .post("/api/flush")
-          .send(Object.assign({}, { path: "*" }, credentials))
-          .expect(200)
-          .end(function(err, res) {
-            if (err) return done(err)
-            res.body.result.should.equal("success")
-
-            // get page again, should be uncached
-            var client = request(clientHost)
-            client
-              .get("/test")
-              .expect("content-type", "text/html")
-              .expect(200)
-              .end(function(err, res) {
-                if (err) return done(err)
-
-                res.headers["x-cache"].should.exist
-                res.headers["x-cache"].should.eql("MISS")
-
-                // get second route again, should still be cached
-                var client = request(clientHost)
-                client
-                  .get("/extra_test")
-                  .expect("content-type", "text/html")
-                  .expect(200)
-                  .end(function(err, res) {
-                    if (err) return done(err)
-
-                    res.headers["x-cache"].should.exist
-                    res.headers["x-cache"].should.eql("MISS")
-
-                    done()
-                  })
-              })
-          })
-      })
-  })
-
   it("should flush associated datasource files when flushing by path", function(done) {
     nock.cleanAll()
 
@@ -432,35 +361,35 @@ describe("Cache Flush", function(done) {
                       // new ones
                       fs.readdir(config.get("caching.directory.path"), function (err, files) {
                         if (err) console.log(err)
-                          
-                        files
-                          .filter(function(file) {
-                            return file.substr(-10) === ".html.gzip"
+                         
+                        var filteredFiles = files.filter(file => file.substr(-10) === ".html.gzip")
+                        var filesDeleted = 0
+
+                        filteredFiles.forEach(function(file) {
+                          var filePath = path.resolve(path.join(config.get("caching.directory.path"), file))
+
+                          fs.unlink(filePath, function (err) {
+                            if (err) console.log(err)
+
+                            filesDeleted++
+
+                            if (filesDeleted === filteredFiles.length) {
+                              client
+                                .get("/page2")
+                                .expect("content-type", "text/html")
+                                .end(function(err, res) {
+                                  if (err) return done(err)
+
+                                  res.headers["x-cache"].should.exist
+                                  res.headers["x-cache"].should.eql("MISS")
+
+                                  res.text.should.eql("<h3>Crime</h3>")
+
+                                  done()
+                                })
+                            }
                           })
-                          .forEach(function(file) {
-                            fs.unlinkSync(
-                              path.join(
-                                config.get("caching.directory.path"),
-                                file
-                              )
-                            )
-                          })
-
-                        // get second page again, should return same data
-                        client
-                          .get("/page2")
-                          .expect("content-type", "text/html")
-                          .expect(200)
-                          .end(function(err, res) {
-                            if (err) return done(err)
-
-                            res.headers["x-cache"].should.exist
-                            res.headers["x-cache"].should.eql("MISS")
-
-                            res.text.should.eql("<h3>Crime</h3>")
-
-                            done()
-                          })
+                        })
                     })
                   })
               })
@@ -529,6 +458,69 @@ describe("Cache Flush", function(done) {
                   done()
                 })
             }, 500)
+          })
+      })
+  })
+
+  it("should flush all cached items when no path is specified", function(done) {
+    // config.set('api.enabled', true)
+    //
+    // // fake token post
+    // var scope = nock('http://127.0.0.1:3000')
+    //   .post('/token')
+    //   .times(4)
+    //   .reply(200, {
+    //     accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
+    //   })
+
+    // get cached version of the page
+    var client = request(clientHost)
+    client
+      .get("/test")
+      .expect("content-type", "text/html")
+      .expect(200)
+      .end(function(err, res) {
+        if (err) return done(err)
+
+        res.headers["x-cache"].should.exist
+        res.headers["x-cache"].should.eql("HIT")
+
+        // clear cache for this path
+        client
+          .post("/api/flush")
+          .send(Object.assign({}, { path: "*" }, credentials))
+          .expect(200)
+          .end(function(err, res) {
+            if (err) return done(err)
+            res.body.result.should.equal("success")
+
+            // get page again, should be uncached
+            var client = request(clientHost)
+            client
+              .get("/test")
+              .expect("content-type", "text/html")
+              .expect(200)
+              .end(function(err, res) {
+                if (err) return done(err)
+
+                res.headers["x-cache"].should.exist
+                res.headers["x-cache"].should.eql("MISS")
+
+                // get second route again, should still be cached
+                var client = request(clientHost)
+                client
+                  .get("/extra_test")
+                  .expect("content-type", "text/html")
+                  .expect(200)
+                  .end(function(err, res) {
+                    if (err) return done(err)
+
+                    res.headers["x-cache"].should.exist
+                    res.headers["x-cache"].should.eql("MISS")
+
+                    done()
+                  })
+              })
           })
       })
   })
