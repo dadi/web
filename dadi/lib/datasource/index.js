@@ -248,6 +248,11 @@ Datasource.prototype.processRequest = function (datasource, req) {
     })
   }
 
+  // i18n setting for passing languages
+  if (typeof datasourceParams.i18n === 'undefined' || datasourceParams.i18n) {
+    datasourceParams.lang = req.params.lang || query.lang || null
+  }
+
   // Regular expression search for {param.nameOfParam} and replace with requestParameters
   const paramRule = /("\{)(\bparams.\b)(.*?)(\}")/gim
 
