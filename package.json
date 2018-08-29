@@ -71,7 +71,7 @@
     "query-string": "~6.0.0",
     "recursive-readdir": "~2.2.1",
     "redis": "~2.8.0",
-    "request": "~2.83.0",
+    "request": "2.88.0",
     "server-destroy": "~1.0.1",
     "snyk": "^1.47.0",
     "through": "~2.3.8",
