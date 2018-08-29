@@ -8,13 +8,6 @@ var sinon = require("sinon")
 var helpers = require(__dirname + "/../../dadi/lib/help")
 
 describe("Help", done => {
-  describe("HtmlEncode", () => {
-    it("should HTML encode the specified string", done => {
-      helpers.htmlEncode("\u00A0").should.eql("&#160;")
-      done()
-    })
-  })
-
   describe("Timer", () => {
     it("should save and return stats", done => {
       sinon.stub(helpers.timer, "isDebugEnabled").callsFake(() => {
@@ -29,9 +22,8 @@ describe("Help", done => {
       var stats = helpers.timer.getStats()
 
       helpers.timer.isDebugEnabled.restore()
-
-      stats[0].key.should.eql(key)
-      should.exist(stats[0].value)
+      
+      should.exist(stats[key].time)
       done()
     })
   })

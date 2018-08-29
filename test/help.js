@@ -37,7 +37,7 @@ var TestHelper = function() {
 }
 
 TestHelper.prototype.setupApiIntercepts = function() {
-  var host = "http://" + config.get("api.host") + ":" + config.get("api.port")
+  var host = "http://" + config.get('api').host + ":" + config.get('api').port
 
   var apiTestScope = nock(host)
     .get("/")
@@ -124,9 +124,9 @@ TestHelper.prototype.extractCookieValue = function(res, cookieName) {
  */
 TestHelper.prototype.shouldSetCookie = function(name) {
   return function(res) {
-    console.log("***")
-    console.log("headers:", res.headers)
-    console.log("***")
+    //console.log("***")
+    //console.log("headers:", res.headers)
+    //console.log("***")
     var header = cookie(res)
     assert.ok(header, "should have a cookie header")
     assert.equal(header.split("=")[0], name, "should set cookie " + name)
@@ -211,7 +211,7 @@ TestHelper.prototype.startServer = function(pages) {
 
     Server.start(() => {
       var idx = 0
-      setTimeout(() => {
+      //setTimeout(() => {
         pages.forEach(page => {
           var controller = Controller(page, options)
 
@@ -229,7 +229,7 @@ TestHelper.prototype.startServer = function(pages) {
             return resolve(Server.compile(options).then(() => Server))
           }
         })
-      }, 100)
+      //}, 100)
     })
   })
 }
@@ -237,9 +237,9 @@ TestHelper.prototype.startServer = function(pages) {
 TestHelper.prototype.stopServer = function(done) {
   if (!Server.readyState) return done()
   Server.stop(function() {
-    setTimeout(function() {
+    //setTimeout(function() {
       done()
-    }, 100)
+    //}, 100)
   })
 }
 

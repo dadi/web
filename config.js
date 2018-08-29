@@ -82,28 +82,6 @@ const conf = convict({
       env: 'SSL_INTERMEDIATE_CERTIFICATE_PATHS'
     }
   },
-  api: {
-    host: {
-      doc: 'The IP address the DADI API application runs on',
-      format: '*',
-      default: '0.0.0.0'
-    },
-    protocol: {
-      doc: 'The protocol to use for the DADI API application',
-      format: String,
-      default: 'http'
-    },
-    port: {
-      doc: 'The port for the DADI API application',
-      format: 'port',
-      default: 8080
-    },
-    enabled: {
-      doc: 'Determines whether this web instance requires access to the API',
-      format: Boolean,
-      default: false
-    }
-  },
   auth: {
     tokenUrl: {
       doc: '',
@@ -128,6 +106,11 @@ const conf = convict({
       env: 'AUTH_TOKEN_SECRET'
     }
   },
+  api: {
+    doc: 'Any apis and their auth for use in datasources.',
+    format: Object,
+    default: {}
+  },
   aws: {
     accessKeyId: {
       doc: '',
@@ -146,40 +129,6 @@ const conf = convict({
       format: String,
       default: '',
       env: 'AWS_REGION'
-    }
-  },
-  twitter: {
-    consumerKey: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_CONSUMER_KEY'
-    },
-    consumerSecret: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_CONSUMER_SECRET'
-    },
-    accessTokenKey: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_ACCESS_TOKEN_KEY'
-    },
-    accessTokenSecret: {
-      doc: '',
-      format: String,
-      default: '',
-      env: 'TWITTER_ACCESS_TOKEN_SECRET'
-    }
-  },
-  wordpress: {
-    bearerToken: {
-      doc: 'A pregenerated oauth access bearer token',
-      format: String,
-      default: '',
-      env: 'WORDPRESS_BEARER_TOKEN'
     }
   },
   caching: {
@@ -238,11 +187,6 @@ const conf = convict({
     }
   },
   headers: {
-    useGzipCompression: {
-      doc: 'Depricated: use `useCompression` instead.',
-      format: Boolean,
-      default: true
-    },
     useCompression: {
       doc:
         "If true, uses br or gzip compression where available and adds a 'Content-Encoding: [br|gzip]' header to the response.",
@@ -514,6 +458,11 @@ const conf = convict({
     format: Boolean,
     default: false
   },
+  allowDebugView: {
+    doc: 'If true, allows appending ?debug= to the querystring to view how the page is constructed,',
+    format: Boolean,
+    default: false
+  },
   toobusy: {
     enabled: {
       doc:
@@ -556,6 +505,11 @@ const conf = convict({
     doc: 'Engine-specific configuration parameters',
     format: Object,
     default: {}
+  },
+  status: {
+    doc: '@dadi/status module options',
+    format: Object,
+    default: {}
   }
 })
 
@@ -580,9 +534,6 @@ conf.updateConfigDataForDomain = function (domain) {
     })
   })
 }
-
-// Perform validation
-conf.validate()
 
 module.exports = conf
 module.exports.configPath = function () {

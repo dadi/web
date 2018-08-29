@@ -1,14 +1,14 @@
 {
-	"datasource": {
-		"key": "redirects",
-		"name": "redirects ds",
-		"source": {
-			"type": "dadiapi",
-			"protocol": "http",
+  "datasource": {
+    "key": "redirects",
+    "name": "redirects ds",
+    "source": {
+      "type": "dadiapi",
+      "protocol": "http",
       "host": "127.0.0.1",
-			"port": "3000",
-			"endpoint": "1.0/test/redirects"
-		},
+      "port": "3000",
+      "endpoint": "1.0/test/redirects"
+    },
     "caching": {
       "ttl": 1800,
       "directory": {
@@ -20,12 +20,12 @@
         "enabled": false
       }
     },
-		"paginate": false,
-		"count": 3,
-		"sort": {},
-		"filter": {},
-		"search": {},
-		"fields": {},
-		"requestParams": []
-	}
+    "paginate": false,
+    "count": 3,
+    "sort": {},
+    "filter": {},
+    "search": {},
+    "fields": {},
+    "requestParams": []
+  }
 }

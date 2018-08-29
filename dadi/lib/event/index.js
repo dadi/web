@@ -1,38 +1,27 @@
 /**
  * @module Event
  */
-var fs = require('fs')
-var path = require('path')
+const path = require('path')
+const log = require('@dadi/logger')
 
-var log = require('@dadi/logger')
-
-var Event = function (pageName, eventName, options) {
-  // if (!pageName) throw new Error('Page name required')
+const Event = function (pageName, eventName, options) {
   this.page = pageName
   this.name = eventName
   this.options = options || {}
 }
 
 Event.prototype.loadEvent = function () {
-  var filepath = path.join(this.options.eventPath, this.name + '.js')
-
-  if (filepath && !fs.existsSync(filepath)) {
-    throw new Error(
-      'Page "' +
-        this.page +
-        '" references event "' +
-        this.name +
-        '" which can\'t be found in "' +
-        this.options.eventPath +
-        '"'
-    )
-  }
+  const filepath = path.join(this.options.eventPath, this.name + '.js')
 
   try {
     // get the event
     return require(filepath)
   } catch (err) {
-    throw err
+    throw new Error(
+      `Page "${this.page}" references event "${
+        this.name
+      }" which can't be found in "${this.options.eventPath}"`
+    )
   }
 }
 

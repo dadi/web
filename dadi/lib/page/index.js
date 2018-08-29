@@ -10,7 +10,7 @@ let _pages = {}
 const Page = function (name, schema, hostKey, templateCandidate) {
   schema.settings = schema.settings || {}
 
-  this.name = name // schema.page.name || name
+  this.name = name
   this.key = schema.page.key || name
   this.hostKey = hostKey || ''
   this.template = schema.template || templateCandidate
@@ -25,16 +25,12 @@ const Page = function (name, schema, hostKey, templateCandidate) {
     this.settings.postProcessors === false
       ? false
       : this.settings.postProcessors || []
-  this.keepWhitespace = Boolean(this.settings.keepWhitespace)
   this.passFilters = this.settings.hasOwnProperty('passFilters')
     ? this.settings.passFilters
     : false
   this.passHeaders = this.settings.hasOwnProperty('passHeaders')
     ? this.settings.passHeaders
     : false
-
-  checkCacheSetting(schema, this.name)
-  checkRouteSetting(schema, this.name)
 
   this.routes = this.constructRoutes(schema)
 
@@ -85,7 +81,8 @@ Page.prototype.toPath = function (params) {
   let url
 
   this.routes.forEach(route => {
-    let keys = pathToRegexp(route.path).keys
+    let keys = []
+    pathToRegexp(route.path, keys)
 
     // only attempt this if the route's parameters match those passed to toPath
     let matchingKeys = Object.keys(params).every(param => {
@@ -116,50 +113,6 @@ Page.prototype.toPath = function (params) {
   if (!url && error) throw error
 
   return url
-}
-
-/**
- * Checks the page schema contains a valid route setting, otherwise throws an error
- * @param {Object} schema - the page specification
- * @param {String} name - the page name
- * @api private
- */
-function checkRouteSetting (schema, name) {
-  if (!schema.routes && schema.route && typeof schema.route !== 'object') {
-    let newSchema = schema
-    newSchema.routes = [{ path: schema.route }]
-    delete newSchema.route
-    let message =
-      '\nThe `route` property for pages has been extended to provide better routing functionality.\n'
-    message +=
-      "Please modify the route property for page '" +
-      name +
-      "'. The schema should change to the below:\n\n"
-    message += JSON.stringify(newSchema, null, 2) + '\n\n'
-    throw new Error(message)
-  }
-}
-
-/**
- * Checks the page schema contains a valid cache setting, otherwise throws an error
- * @param {Object} schema - the page specification
- * @param {String} name - the page name
- * @api private
- */
-function checkCacheSetting (schema, name) {
-  if (schema.page.cache !== undefined) {
-    schema.settings.cache = schema.page.cache
-    delete schema.page.cache
-
-    let message = '\nThe `cache` property should be nested under `settings`.\n'
-    message +=
-      "Please modify the descriptor file for page '" +
-      name +
-      "'. The schema should change to the below:\n\n"
-    message += JSON.stringify(schema, null, 2) + '\n\n'
-
-    throw new Error(message)
-  }
 }
 
 // exports

@@ -191,7 +191,7 @@ describe("Session", function(done) {
         target: "endpoint"
       })
 
-      sinon
+      var stubby = sinon
         .stub(Datasource.Datasource.prototype, "loadDatasource")
         .yields(null, dsSchema)
 
@@ -242,7 +242,7 @@ describe("Session", function(done) {
               .expect("content-type", pages[0].contentType)
               .end((err, res) => {
                 if (err) return done(err)
-                var data = JSON.parse(JSON.stringify(res.body))
+                var data = JSON.parse(res.text)
 
                 TestHelper.resetConfig().then(() => {
                   should.exist(data)
@@ -251,6 +251,9 @@ describe("Session", function(done) {
                   data.make.should.eql("mazda")
                   data.edition.should.eql(3)
                   ;(data.session_id !== null).should.eql(true)
+
+                  stubby.restore()
+
                   done()
                 })
               })

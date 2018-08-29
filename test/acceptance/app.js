@@ -23,7 +23,8 @@ describe("Application", function() {
     TestHelper.clearCache()
 
     var apiHost =
-      "http://" + config.get("api.host") + ":" + config.get("api.port")
+      "http://" + config.get('api').host + ":" + config.get('api').port
+      
     scope = nock(apiHost)
       .post("/token")
       .times(5)
@@ -47,17 +48,6 @@ describe("Application", function() {
     })
   })
 
-  //   TestHelper.resetConfig().then(() => {
-  //     var apiHost = "http://" + config.get("api.host") + ":" + config.get("api.port")
-  //     scope = nock(apiHost)
-  //       .post("/token")
-  //       .times(5)
-  //       .reply(200, { accessToken: "xx" })
-  //     var scope1 = nock(apiHost).get("/").times(5).reply(200)
-  //     done()
-  //   })
-  // })
-
   afterEach(function(done) {
     TestHelper.resetConfig().then(() => {
       TestHelper.stopServer(done)
@@ -67,14 +57,7 @@ describe("Application", function() {
   after(function(done) {
     delete require.cache[path.resolve(path.join(__dirname, "/../../config"))]
 
-    TestHelper.updateConfig({
-      server: {
-        host: "127.0.0.1",
-        port: 5111,
-        redirectPort: 0,
-        protocol: "http"
-      }
-    }).then(() => {
+    TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.stopServer(done)
       })
@@ -86,11 +69,10 @@ describe("Application", function() {
       var clientHost =
         "http://" + config.get("server.host") + ":" + config.get("server.port")
       var apiHost =
-        "http://" + config.get("api.host") + ":" + config.get("api.port")
+        "http://" + config.get('api').host + ":" + config.get('api').port
+      
       var client = request(clientHost)
-
-      var endpoint1 =
-        "/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D"
+      var endpoint1 = "/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D"
       var scope2 = nock(apiHost)
         .get(endpoint1)
         .reply(200, JSON.stringify({ results: [{ name: "Crime" }] }))
@@ -105,7 +87,9 @@ describe("Application", function() {
       var pages = []
       pages.push(page1)
 
-      TestHelper.enableApiConfig().then(() => {
+      //console.log(pages)
+
+      TestHelper.enableApiConfig().then(() => {  
         TestHelper.startServer(pages).then(() => {
           client.get("/categories/Crime").end((err, res) => {
             if (err) return done(err)
@@ -129,7 +113,7 @@ describe("Application", function() {
           ":" +
           config.get("server.port")
         var apiHost =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          "http://" + config.get('api').host + ":" + config.get('api').port
         var client = request(clientHost)
 
         var pages = TestHelper.setUpPages()
@@ -153,7 +137,7 @@ describe("Application", function() {
           ":" +
           config.get("server.port")
         var apiHost =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          "http://" + config.get('api').host + ":" + config.get('api').port
         var client = request(clientHost)
 
         var pages = TestHelper.setUpPages()
@@ -176,7 +160,7 @@ describe("Application", function() {
           ":" +
           config.get("server.port")
         var apiHost =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          "http://" + config.get('api').host + ":" + config.get('api').port
         var client = request(clientHost)
 
         var pages = TestHelper.setUpPages()
@@ -194,6 +178,40 @@ describe("Application", function() {
           })
         })
       })
+
+      it("should return status information if correct credentials posted", function(done) {
+        this.timeout(10000)
+
+        var clientHost =
+          "http://" +
+          config.get("server.host") +
+          ":" +
+          config.get("server.port")
+        var apiHost =
+          "http://" + config.get('api').host + ":" + config.get('api').port
+        var client = request(clientHost)
+
+        var pages = TestHelper.setUpPages()
+
+        TestHelper.enableApiConfig().then(() => {
+          TestHelper.updateConfig({
+            status: {
+              routes: [{
+                route: '/test'
+              }]
+            }
+          }).then(() => {
+            TestHelper.startServer(pages).then(() => {
+              client
+                .post('/api/status')
+                .set('content-type', 'application/json')
+                .send({"secret": config.get("auth.secret"), "clientId": config.get("auth.clientId")})
+                .expect(200)
+                .end(done)
+            })
+          })
+        })
+      })
     })
   })
 
@@ -202,7 +220,7 @@ describe("Application", function() {
       var clientHost =
         "http://" + config.get("server.host") + ":" + config.get("server.port")
       var apiHost =
-        "http://" + config.get("api.host") + ":" + config.get("api.port")
+        "http://" + config.get('api').host + ":" + config.get('api').port
       var client = request(clientHost)
 
       // create page 1

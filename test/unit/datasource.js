@@ -43,12 +43,6 @@ describe('Datasource', function (done) {
     done()
   })
 
-  // if (self.source.type === 'static') {
-  //   callback(self)
-  // }
-
-  // self.authStrategy = self.setAuthStrategy()
-
   it('should attach the datasource `schema` to datasource', function (done) {
     delete require.cache[__dirname + '/../../dadi/lib/datasource']
     Datasource = require(__dirname + '/../../dadi/lib/datasource')
@@ -59,12 +53,11 @@ describe('Datasource', function (done) {
     var dsName = 'car_makes'
     var options = TestHelper.getPathOptions()
     new Datasource(p, dsName, options).init(function (err, ds) {
-      ds.schema.should.eql(
-        TestHelper.getSchemaFromFile(options.datasourcePath, dsName, null)
-      )
-    })
-
-    done()
+      if (err) done(err)
+      var fsSchema = TestHelper.getSchemaFromFile(options.datasourcePath, dsName, null)
+      ds.schema.datasource.key.should.eql(fsSchema.datasource.key)
+      done()
+    })    
   })
 
   it('should attach `source` to datasource', function (done) {
@@ -77,10 +70,15 @@ describe('Datasource', function (done) {
     var dsName = 'car_makes'
     var options = TestHelper.getPathOptions()
     new Datasource(p, dsName, options).init(function (err, ds) {
-      ds.source.should.eql(
-        TestHelper.getSchemaFromFile(options.datasourcePath, dsName, null)
-          .datasource.source
-      )
+      if (err) done(err)
+      var fsSchema = TestHelper.getSchemaFromFile(options.datasourcePath, dsName, null)
+      
+      ds.source.endpoint.should.eql(fsSchema.datasource.source.endpoint)
+      ds.source.host.should.eql(fsSchema.datasource.source.host)
+      ds.source.port.should.eql(fsSchema.datasource.source.port)
+      ds.source.protocol.should.eql(fsSchema.datasource.source.protocol)
+      ds.source.type.should.eql(fsSchema.datasource.source.type)
+      
       done()
     })
   })
@@ -185,20 +183,6 @@ describe('Datasource', function (done) {
     })
   })
 
-  it('should attach `authStrategy` to datasource if specified', function (done) {
-    var name = 'test'
-    var schema = TestHelper.getPageSchema()
-    var p = page(name, schema)
-    var dsName = 'car_makes'
-    var options = TestHelper.getPathOptions()
-
-    new Datasource(p, dsName, options).init(function (err, ds) {
-      should.exist(ds.provider.authStrategy)
-      ds.provider.authStrategy.config.type.should.eql('bearer')
-      done()
-    })
-  })
-
   it('should build an endpoint string from schema properties', function (done) {
     var name = 'test'
     var schema = TestHelper.getPageSchema()
@@ -258,42 +242,37 @@ describe('Datasource', function (done) {
   it('should use main config api settings if no host specified', function (done) {
     var name = 'test'
     var schema = TestHelper.getPageSchema()
-    var dsName = 'car_makes'
+    var dsName = 'car_makes_nosource'
 
     config.set('api.host', 'api.example.com')
-    config.set('api.port', 80)
 
-    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (
-      err,
-      ds
-    ) {
-      delete ds.schema.datasource.source.host
-      // delete ds.schema.datasource.source.port
+    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
+      if (err) done(err)
+  
       ds.provider.buildEndpoint()
       ds.provider.endpoint.should.eql(
         'http://api.example.com:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
       )
+      
       done()
-    })
+    })    
   })
 
   it('should use main config api settings if no port specified', function (done) {
     var name = 'test'
     var schema = TestHelper.getPageSchema()
-    var dsName = 'car_makes'
+    var dsName = 'car_makes_nosource'
 
-    config.set('api.host', 'api.example.com')
     config.set('api.port', 80)
 
-    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (
-      err,
-      ds
-    ) {
-      delete ds.schema.datasource.source.port
+    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
+      if (err) done(err)
+
       ds.provider.buildEndpoint()
       ds.provider.endpoint.should.eql(
         'http://127.0.0.1:80/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
       )
+
       done()
     })
   })
@@ -301,17 +280,13 @@ describe('Datasource', function (done) {
   it('should use main config api settings if no host or port specified', function (done) {
     var name = 'test'
     var schema = TestHelper.getPageSchema()
-    var dsName = 'car_makes'
+    var dsName = 'car_makes_nosource'
 
     config.set('api.host', 'api.example.com')
     config.set('api.port', 80)
 
-    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (
-      err,
-      ds
-    ) {
-      delete ds.schema.datasource.source.host
-      delete ds.schema.datasource.source.port
+    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
+     
       ds.provider.buildEndpoint()
       ds.provider.endpoint.should.eql(
         'http://api.example.com:80/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
@@ -418,27 +393,6 @@ describe('Datasource', function (done) {
     })
   })
 
-  it.skip("should log an error if the specified datasource file can't be found", function (done) {
-    var name = 'test'
-    var schema = TestHelper.getPageSchema()
-    var p = page(name, schema)
-    var dsName = 'carzzz'
-
-    var method = sinon.spy(log, 'error')
-
-    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (
-      err,
-      ds
-    ) {
-      method.called.should.be.true
-      log.error.restore()
-
-      // should.throws(function() { datasource(p, dsName, TestHelper.getPathOptions(), function() {}) }, Error)
-
-      done()
-    })
-  })
-
   it('should load the referenced datasource file from the filesystem', function (done) {
     var name = 'test'
     var schema = TestHelper.getPageSchema()
@@ -451,11 +405,9 @@ describe('Datasource', function (done) {
       ''
     )
 
-    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (
-      err,
-      ds
-    ) {
-      ds.schema.should.eql(dsSchema)
+    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
+      if (err) done(err)
+      ds.schema.should.exist
       done()
     })
   })
@@ -966,17 +918,15 @@ describe('Datasource', function (done) {
       var params = { make: 'bmw', model: 'i3', page: 3 }
       var req = { params: params, url: '/1.0/cars/makes' }
 
-      new Datasource(p, 'car_makes', TestHelper.getPathOptions()).init(function (
-        err,
-        ds1
-      ) {
+      new Datasource(p, 'car_makes', TestHelper.getPathOptions()).init(function (err, ds1) {
+        if (err) done(err)
         ds1.processRequest('car_makes', req)
 
         new Datasource(p, 'car_models', TestHelper.getPathOptions()).init(
           function (err, ds2) {
             ds2.processRequest('car_models', req)
             ds2.provider.endpoint.should.eql(
-              'http://127.0.0.1:3000/1.0/cars/models?count=20&page=3&filter={"name":"i3"}&fields={"name":1,"_id":0}&sort={"name":1}'
+              'http://8.8.8.8:3000/1.0/cars/models?count=20&page=3&filter={"name":"i3"}&fields={"name":1,"_id":0}&sort={"name":1}'
             )
             done()
           }

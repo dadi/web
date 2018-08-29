@@ -7,20 +7,13 @@ const https = require('https')
 const path = require('path')
 const zlib = require('zlib')
 
-const config = require(path.join(__dirname, '/../../../config.js'))
 const log = require('@dadi/logger')
-const BearerAuthStrategy = require(path.join(__dirname, '/../auth/bearer'))
 const DatasourceCache = require(path.join(__dirname, '/../cache/datasource'))
+
+const help = require(path.join(__dirname, '../help'))
 
 const RemoteProvider = function () {
   this.dataCache = new DatasourceCache()
-
-  RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) + 1
-  // console.log('RemoteProvider:', RemoteProvider.numInstances)
-}
-
-RemoteProvider.prototype.destroy = function () {
-  RemoteProvider.numInstances = (RemoteProvider.numInstances || 0) - 1
 }
 
 /**
@@ -33,7 +26,6 @@ RemoteProvider.prototype.destroy = function () {
 RemoteProvider.prototype.initialise = function (datasource, schema) {
   this.datasource = datasource
   this.schema = schema
-  this.setAuthStrategy()
   this.buildEndpoint()
   this.redirects = 0
 }
@@ -48,12 +40,11 @@ RemoteProvider.prototype.buildEndpoint = function (datasourceParams) {
     datasourceParams = this.schema.datasource
   }
 
-  const apiConfig = config.get('api')
   const source = datasourceParams.source || this.datasource.source
 
   const protocol = source.protocol || 'http'
-  const host = source.host || apiConfig.host
-  const port = source.port || apiConfig.port
+  const host = source.host
+  const port = source.port
 
   const uri = [
     protocol,
@@ -77,9 +68,9 @@ RemoteProvider.prototype.buildEndpoint = function (datasourceParams) {
  */
 RemoteProvider.prototype.load = function (requestUrl, done) {
   this.options = {
-    protocol: this.datasource.source.protocol || config.get('api.protocol'),
-    host: this.datasource.source.host || config.get('api.host'),
-    port: this.datasource.source.port || config.get('api.port'),
+    protocol: this.datasource.source.protocol || 'http',
+    host: this.datasource.source.host,
+    port: this.datasource.source.port || '80',
     path: url.parse(this.endpoint).path,
     // path: url.parse(requestUrl).path,
     method: 'GET'
@@ -90,7 +81,7 @@ RemoteProvider.prototype.load = function (requestUrl, done) {
 
   this.options.protocol = this.options.protocol + ':'
 
-  var cacheOptions = {
+  const cacheOptions = {
     name: this.datasource.name,
     caching: this.schema.datasource.caching,
     // endpoint: requestUrl
@@ -136,7 +127,7 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
 
   this.options.agent = this.keepAliveAgent(this.options.protocol)
 
-  const agent = this.options.protocol.indexOf('https') > -1 ? https : http
+  const agent = this.options.protocol.includes('https') ? https : http
 
   let request = agent.request(this.options, res => {
     if (
@@ -147,13 +138,13 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
       this.redirects++
 
       if (this.redirects >= 10) {
-        var err = new Error('Infinite redirect loop detected')
+        const err = new Error('Infinite redirect loop detected')
         err.remoteIp = this.options.host
         err.remotePort = this.options.port
         return done(err)
       }
 
-      var options = url.parse(res.headers.location)
+      const options = url.parse(res.headers.location)
       this.options = Object.assign({}, this.options, options)
 
       debug('following %s redirect to %s', res.statusCode, res.headers.location)
@@ -190,8 +181,8 @@ RemoteProvider.prototype.handleResponse = function (requestUrl, res, done) {
     ? res.headers['content-encoding']
     : ''
 
-  var buffers = []
-  var output
+  const buffers = []
+  let output
 
   if (encoding === 'gzip') {
     const gunzip = zlib.createGunzip()
@@ -322,11 +313,11 @@ RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) 
           '": ' +
           decodeURIComponent(this.endpoint) +
           ' (HTTP 200, ' +
-          require('humanize-plus').fileSize(Buffer.byteLength(data)) +
+          help.formatBytes(Buffer.byteLength(data)) +
           ')'
       )
 
-      var cacheOptions = {
+      const cacheOptions = {
         name: this.datasource.name,
         caching: this.schema.datasource.caching,
         endpoint: this.endpoint
@@ -381,28 +372,7 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
     'accept-encoding': 'gzip'
   }
 
-  // If the data-source has its own auth strategy, use it.
-  // Otherwise, authenticate with the main server via bearer token
-  if (this.authStrategy) {
-    // This could eventually become a switch statement that handles different auth types
-    if (this.authStrategy.getType() === 'bearer') {
-      this.authStrategy.getToken(
-        this.authStrategy,
-        false,
-        (err, bearerToken) => {
-          if (err) {
-            return done(err)
-          }
-
-          headers['Authorization'] = 'Bearer ' + bearerToken
-
-          return done(null, { headers: headers })
-        }
-      )
-    }
-  } else {
-    return done(null, { headers: headers })
-  }
+  return done(null, { headers })
 }
 
 /**
@@ -412,19 +382,9 @@ RemoteProvider.prototype.getHeaders = function getHeaders (done) {
  * @return {module} http|https
  */
 RemoteProvider.prototype.keepAliveAgent = function keepAliveAgent (protocol) {
-  return protocol.indexOf('https') > -1
+  return protocol.includes('https')
     ? new https.Agent({ keepAlive: true })
     : new http.Agent({ keepAlive: true })
-}
-
-/**
- * setAuthStrategy
- *
- * @return {void}
- */
-RemoteProvider.prototype.setAuthStrategy = function setAuthStrategy () {
-  if (!this.schema.datasource.auth) return null
-  this.authStrategy = new BearerAuthStrategy(this.schema.datasource.auth)
 }
 
 module.exports = RemoteProvider

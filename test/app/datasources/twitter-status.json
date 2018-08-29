@@ -1,0 +1,22 @@
+{
+  "datasource": {
+    "key": "twitterstatus",
+    "name": "twitterstatus",
+    "source": {
+      "type": "restapi",
+      "provider": "twitter",
+      "endpoint": "statuses/show",
+      "auth": {
+        "oauth": {
+          "consumer_key": "xxx",
+          "consumer_secret": "xxx",
+          "token": "xxx",
+          "token_secret": "xxx"
+        }
+      }
+    },
+    "query": {
+      "id": "972581771681386497"
+    }
+  }
+}

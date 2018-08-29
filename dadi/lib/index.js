@@ -1,32 +1,31 @@
 'use strict'
 
-var version = require('../../package.json').version
-var site = require('../../package.json').name
-var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
+const version = require('../../package.json').version
+const site = require('../../package.json').name
+const nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
-var bodyParser = require('body-parser')
-var debug = require('debug')('web:server')
-var enableDestroy = require('server-destroy')
-var fs = require('fs')
-var mkdirp = require('mkdirp')
-var path = require('path')
-var session = require('express-session')
-var csrf = require('csurf')
-var cookieParser = require('cookie-parser')
-var toobusy = require('toobusy-js')
-var multer = require('multer')
-var pathToRegexp = require('path-to-regexp')
-var crypto = require('crypto')
-var uuidv4 = require('uuid/v4')
+const bodyParser = require('body-parser')
+const debug = require('debug')('web:server')
+const enableDestroy = require('server-destroy')
+const fs = require('fs')
+const path = require('path')
+const session = require('express-session')
+const csrf = require('csurf')
+const cookieParser = require('cookie-parser')
+const toobusy = require('toobusy-js')
+const multer = require('multer')
+const pathToRegexp = require('path-to-regexp')
+const crypto = require('crypto')
+const uuidv4 = require('uuid/v4')
 
-var dadiStatus = require('@dadi/status')
-var dadiBoot = require('@dadi/boot')
+const dadiStatus = require('@dadi/status')
+const dadiBoot = require('@dadi/boot')
 
-var MongoStore = require('connect-mongo')(session)
-var RedisStore = require('connect-redis')(session)
+const MongoStore = require('connect-mongo')(session)
+const RedisStore = require('connect-redis')(session)
 
 // let's ensure there's at least a dev config file here
-var devConfigPath = path.join(
+const devConfigPath = path.join(
   __dirname,
   '/../../config/config.development.json'
 )
@@ -36,31 +35,32 @@ fs.stat(devConfigPath, (err, stats) => {
   }
 })
 
-var api = require(path.join(__dirname, '/api'))
-var apiMiddleware = require(path.join(__dirname, '/api/middleware'))
-var auth = require(path.join(__dirname, '/auth'))
-var cache = require(path.join(__dirname, '/cache'))
-var Controller = require(path.join(__dirname, '/controller'))
-var forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
-var help = require(path.join(__dirname, '/help'))
-var Send = require(path.join(__dirname, '/view/send'))
-var Middleware = require(path.join(__dirname, '/middleware'))
-var servePublic = require(path.join(__dirname, '/view/public'))
-var monitor = require(path.join(__dirname, '/monitor'))
-var Page = require(path.join(__dirname, '/page'))
-var Preload = require(path.resolve(path.join(__dirname, 'datasource/preload')))
-var router = require(path.join(__dirname, '/controller/router'))
-var templateStore = require(path.join(__dirname, '/templates/store'))
+const api = require(path.join(__dirname, '/api'))
+const apiMiddleware = require(path.join(__dirname, '/api/middleware'))
+const cache = require(path.join(__dirname, '/cache'))
+const Controller = require(path.join(__dirname, '/controller'))
+const forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
+const help = require(path.join(__dirname, '/help'))
+const Send = require(path.join(__dirname, '/view/send'))
+const Middleware = require(path.join(__dirname, '/middleware'))
+const servePublic = require(path.join(__dirname, '/view/public'))
+const monitor = require(path.join(__dirname, '/monitor'))
+const Page = require(path.join(__dirname, '/page'))
+const Preload = require(path.resolve(
+  path.join(__dirname, 'datasource/preload')
+))
+const router = require(path.join(__dirname, '/controller/router'))
+const templateStore = require(path.join(__dirname, '/templates/store'))
 
-var config = require(path.resolve(path.join(__dirname, '/../../config')))
-var log = require('@dadi/logger')
+const config = require(path.resolve(path.join(__dirname, '/../../config')))
+const log = require('@dadi/logger')
 log.init(config.get('logging'), config.get('aws'), process.env.NODE_ENV)
 
 /**
  * Creates a new Server instance.
  * @constructor
  */
-var Server = function (appOptions) {
+const Server = function (appOptions) {
   this.components = {}
   this.appOptions = appOptions
   this.monitors = {}
@@ -70,10 +70,10 @@ var Server = function (appOptions) {
 Server.prototype.start = function (done) {
   this.readyState = 2
 
-  var options = this.loadPaths()
+  const options = this.loadPaths()
 
   // create app
-  var app = (this.app = api())
+  const app = (this.app = api())
 
   // override config
   if (options.configPath) {
@@ -111,7 +111,7 @@ Server.prototype.start = function (done) {
       return next()
     }
 
-    var hostConfigFile = './config/' + virtualHosts[host].configFile
+    const hostConfigFile = './config/' + virtualHosts[host].configFile
 
     fs.stat(hostConfigFile, (err, stats) => {
       if (err && err.code === 'ENOENT') {
@@ -120,7 +120,7 @@ Server.prototype.start = function (done) {
         return next()
       }
 
-      var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
+      const hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
 
       // extend main config with "global" settings for host
       config.load({
@@ -133,7 +133,7 @@ Server.prototype.start = function (done) {
 
   // add middleware for domain redirects
   if (config.get('rewrites.forceDomain') !== '') {
-    var domain = config.get('rewrites.forceDomain')
+    const domain = config.get('rewrites.forceDomain')
 
     app.use(
       forceDomain({
@@ -154,10 +154,10 @@ Server.prototype.start = function (done) {
 
     // TODO catch err
 
-    var stats = fs.statSync(hostConfigFile)
+    const stats = fs.statSync(hostConfigFile)
     if (stats) {
-      var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
-      var hostOptions = this.loadPaths(hostConfig.paths)
+      const hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
+      const hostOptions = this.loadPaths(hostConfig.paths)
 
       app.use(
         servePublic.middleware(
@@ -200,10 +200,10 @@ Server.prototype.start = function (done) {
   }
 
   // session manager
-  var sessionConfig = config.get('sessions')
+  const sessionConfig = config.get('sessions')
 
   if (sessionConfig.enabled) {
-    var sessionOptions = {
+    const sessionOptions = {
       name: sessionConfig.name,
       secret: sessionConfig.secret,
       resave: sessionConfig.resave,
@@ -211,7 +211,7 @@ Server.prototype.start = function (done) {
       cookie: sessionConfig.cookie
     }
 
-    var store = this.getSessionStore(sessionConfig, config.get('env'))
+    const store = this.getSessionStore(sessionConfig, config.get('env'))
 
     if (store) {
       sessionOptions.store = store
@@ -227,7 +227,14 @@ Server.prototype.start = function (done) {
       app.use(csrf())
     } else {
       app.use(cookieParser())
-      app.use(csrf({ cookie: true }))
+      app.use(
+        csrf({
+          cookie: {
+            httpOnly: true,
+            secure: true
+          }
+        })
+      )
     }
   }
 
@@ -237,11 +244,8 @@ Server.prototype.start = function (done) {
   // handle routing & redirects
   router(this, options)
 
-  // authentication layer
-  if (config.get('api.enabled')) auth(this)
-
   // start listening
-  var server = (this.server = app.listen())
+  const server = (this.server = app.listen())
 
   server.on('connection', onConnection)
   server.on('listening', onListening)
@@ -270,7 +274,7 @@ Server.prototype.start = function (done) {
   }
 
   // initialise virtualDirectories for serving static content
-  var parent = this
+  const parent = this
   config.get('virtualDirectories').forEach(directory => {
     app.use(servePublic.virtualDirectories(directory, parent.cacheLayer))
   })
@@ -289,8 +293,10 @@ Server.prototype.start = function (done) {
         // No domain-specific configuration file
         console.error('Host config not found:', hostConfigFile)
       } else {
-        var hostConfig = JSON.parse(fs.readFileSync(hostConfigFile).toString())
-        var hostOptions = this.loadPaths(hostConfig.paths)
+        const hostConfig = JSON.parse(
+          fs.readFileSync(hostConfigFile).toString()
+        )
+        const hostOptions = this.loadPaths(hostConfig.paths)
 
         hostOptions.host = key
 
@@ -337,7 +343,7 @@ Server.prototype.start = function (done) {
 }
 
 Server.prototype.exitHandler = function (options, err) {
-  var server = options.server
+  const server = options.server
 
   if (options.cleanup) {
     server.stop(function () {
@@ -392,7 +398,7 @@ Server.prototype.resolvePaths = function (paths) {
 
 Server.prototype.loadPaths = function (paths) {
   paths = Object.assign({}, config.get('paths'), paths || {})
-  var options = {}
+  const options = {}
 
   options.datasourcePath = path.resolve(paths.datasources)
   options.eventPath = path.resolve(paths.events)
@@ -405,8 +411,6 @@ Server.prototype.loadPaths = function (paths) {
   if (config.get('uploads.enabled')) {
     options.uploadPath = path.resolve(config.get('uploads.destinationPath'))
   }
-
-  this.ensureDirectories(options, () => {})
 
   return options
 }
@@ -434,10 +438,10 @@ Server.prototype.loadApi = function (options, reload, callback) {
         help.validateRequestMethod(req, res, 'POST') &&
         help.validateRequestCredentials(req, res)
       ) {
-        var params = {
-          site: site,
+        const params = {
+          site,
           package: '@dadi/web',
-          version: version,
+          version,
           healthCheck: {
             baseUrl:
               'http://' +
@@ -448,22 +452,19 @@ Server.prototype.loadApi = function (options, reload, callback) {
           }
         }
 
-        var protocol = config.get('server.protocol') || 'http'
+        const protocol = config.get('server.protocol') || 'http'
         if (protocol === 'https') {
-          var httpsHost = config.get('server.host')
-          var httpsPort = config.get('server.port')
-          var suffix = httpsPort !== 443 ? ':' + httpsPort : ''
-          params.healthCheck.baseUrl = 'https://' + httpsHost + suffix
+          params.healthCheck.baseUrl = `https://${config.get('server.host')}${
+            config.get('server.port') !== 443
+              ? `:${config.get('server.port')}`
+              : ''
+          }`
         }
 
         dadiStatus(params, (err, data) => {
           if (err) return next(err)
-          var resBody = JSON.stringify(data, null, 2)
 
-          res.statusCode = 200
-          res.setHeader('Content-Type', 'application/json')
-          res.setHeader('content-length', Buffer.byteLength(resBody))
-          res.end(resBody)
+          Send.json(200, res, next)(null, data)
         })
       }
     })
@@ -513,7 +514,7 @@ Server.prototype.loadApi = function (options, reload, callback) {
 }
 
 Server.prototype.initMiddleware = function (directoryPath, options) {
-  var middlewares = this.loadMiddleware(directoryPath, options)
+  const middlewares = this.loadMiddleware(directoryPath, options) || []
   middlewares.forEach(middleware => {
     middleware.init(this.app)
   })
@@ -529,15 +530,15 @@ Server.prototype.initMiddleware = function (directoryPath, options) {
 Server.prototype.loadMiddleware = function (directoryPath, options) {
   if (!fs.existsSync(directoryPath)) return
 
-  var files = fs.readdirSync(directoryPath)
+  const files = fs.readdirSync(directoryPath)
 
-  var middlewares = []
+  const middlewares = []
 
   files.forEach(file => {
     if (path.extname(file) !== '.js') return
 
-    var name = file.slice(0, file.indexOf('.'))
-    var m = new Middleware(name, options)
+    const name = file.slice(0, file.indexOf('.'))
+    const m = new Middleware(name, options)
     middlewares.push(m)
   })
 
@@ -584,11 +585,11 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
 
         this.addRoute(
           {
-            name: name,
+            name,
             filepath: page
           },
           Object.assign({}, options, {
-            templateCandidate: templateCandidate
+            templateCandidate
           }),
           reload
         )
@@ -604,14 +605,14 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
 
 Server.prototype.addRoute = function (obj, options, reload) {
   // get the page schema
-  var schema
+  let schema
 
   try {
     schema = require(obj.filepath)
   } catch (err) {
     log.error(
       { module: 'server' },
-      { err: err },
+      { err },
       'Error loading page schema "' + obj.filepath + '". Is it valid JSON?'
     )
     throw err
@@ -619,10 +620,10 @@ Server.prototype.addRoute = function (obj, options, reload) {
 
   // create a page with the supplied schema,
   // using the filename as the page name
-  var page = Page(obj.name, schema, options.host, options.templateCandidate)
+  const page = Page(obj.name, schema, options.host, options.templateCandidate)
 
   // create a handler for requests to this page
-  var controller = new Controller(
+  const controller = new Controller(
     page,
     options,
     schema.page,
@@ -649,14 +650,14 @@ Server.prototype.addComponent = function (options, reload) {
 
   if (reload) {
     options.routes.forEach(route => {
-      var hostWithPath = `${options.host}${route.path}`
+      const hostWithPath = `${options.host}${route.path}`
       this.removeComponent(hostWithPath)
     })
   }
 
   options.routes.forEach(route => {
     // only add a route once
-    var hostWithPath = `${options.host}${route.path}`
+    const hostWithPath = `${options.host}${route.path}`
 
     if (this.components[hostWithPath]) return
 
@@ -691,8 +692,7 @@ Server.prototype.addComponent = function (options, reload) {
             .then(() => {
               return options.component[req.method.toLowerCase()](req, res, next)
             })
-            .catch(err => {
-              if (err) return next(err)
+            .catch(() => {
               // try next route
               if (next) {
                 return next()
@@ -741,7 +741,7 @@ Server.prototype.addMonitor = function (filepath, callback) {
   // only add one watcher per path
   if (this.monitors[filepath]) return
 
-  var m = monitor(filepath)
+  const m = monitor(filepath)
   m.on('change', callback)
 
   this.monitors[filepath] = m
@@ -758,9 +758,15 @@ Server.prototype.compile = function (options) {
   // Get a list of templates to render based on the registered components
   const componentTemplates = Object.keys(this.components).map(route => {
     if (this.components[route].options.host === options.host) {
+      const resolvedTemplate = path.join(
+        templatePath,
+        this.components[route].page.template
+      )
+      this.components[route].page.resolvedTemplate = resolvedTemplate
+
       return {
         engine: this.components[route].engine,
-        file: path.join(templatePath, this.components[route].page.template)
+        file: resolvedTemplate
       }
     }
   })
@@ -776,7 +782,7 @@ Server.prototype.compile = function (options) {
 Server.prototype.getSessionStore = function (sessionConfig, env) {
   if (/development|test/.exec(env) === null) {
     if (sessionConfig.store === '') {
-      var message = ''
+      let message = ''
       message +=
         'It is not recommended to use an in-memory session store in the ' +
         env +
@@ -802,11 +808,11 @@ Server.prototype.getSessionStore = function (sessionConfig, env) {
     return null
   }
 
-  if (sessionConfig.store.indexOf('mongodb') > -1) {
+  if (sessionConfig.store.includes('mongodb')) {
     return new MongoStore({
       url: sessionConfig.store
     })
-  } else if (sessionConfig.store.indexOf('redis') > -1) {
+  } else if (sessionConfig.store.includes('redis')) {
     return new RedisStore({
       url: sessionConfig.store
     })
@@ -853,7 +859,7 @@ Server.prototype.getUploader = function () {
  */
 Server.prototype.createTemporaryFile = destination => {
   return multer.diskStorage({
-    destination: destination,
+    destination,
     filename: (req, file, cb) => {
       let filename = file.originalname
 
@@ -875,40 +881,6 @@ Server.prototype.createTemporaryFile = destination => {
       }
 
       cb(null, filename)
-    }
-  })
-}
-
-/**
- *  Create workspace directories if they don't already exist
- *
- *  @param {Object} options Object containing workspace paths
- *  @return
- *  @api public
- */
-Server.prototype.ensureDirectories = function (options, done) {
-  // create workspace directories if they don't exist; permissions default to 0777
-  var idx = 0
-
-  Object.keys(options).forEach(key => {
-    const dir = options[key]
-
-    if (Array.isArray(dir)) {
-      this.ensureDirectories(dir, () => {})
-    } else {
-      mkdirp(dir, {}, (err, made) => {
-        if (err) {
-          log.error({ module: 'server' }, err)
-        }
-
-        if (made) {
-          debug('Created directory %s', made)
-        }
-
-        idx++
-
-        if (idx === Object.keys(options).length) return done()
-      })
     }
   })
 }
@@ -937,17 +909,17 @@ module.exports = options => new Server(options)
 // used to create the RegExp that will test requests for this route
 function buildVerbMethod (verb) {
   return function () {
-    var args = [].slice.call(arguments, 0)
-    var route = typeof arguments[0] === 'string' ? args.shift() : null
+    const args = [].slice.call(arguments, 0)
+    const route = typeof arguments[0] === 'string' ? args.shift() : null
 
-    var handler = function (req, res, next) {
+    const handler = function (req, res, next) {
       if (!(req.method && req.method.toLowerCase() === verb)) {
         next()
       }
 
       // push the next route on to the bottom of callback stack in case none of these callbacks send a response
       args.push(next)
-      var doCallbacks = function (i) {
+      const doCallbacks = function (i) {
         return function (err) {
           if (err) return next(err)
 
@@ -978,37 +950,40 @@ function onConnection (socket) {
 
 function onListening (e) {
   // Get list of engines used
-  var engines = Object.keys(templateStore.getEngines())
-  var enginesInfo = engines.length ? engines.join(', ') : 'None found'.red
+  const engines = Object.keys(templateStore.getEngines())
+  const enginesInfo = engines.length ? engines.join(', ') : 'None found'.red
 
-  // check that our API connection is valid
-  help.isApiAvailable((err, result) => {
-    if (err) {
-      dadiBoot.error(err)
-      process.exit(0)
-    } else if (config.get('env') !== 'test') {
-      dadiBoot.started({
-        server: `${config.get('server.protocol')}://${config.get(
-          'server.host'
-        )}:${config.get('server.port')}`,
-        header: {
-          app: config.get('app.name')
-        },
-        body: {
-          Protocol: config.get('server.protocol'),
-          Version: version,
-          'Node.js': nodeVersion,
-          Engine: enginesInfo,
-          Environment: config.get('env')
-        },
-        footer: {
-          'DADI API': config.get('api.enabled')
-            ? `${config.get('api.host')}:${config.get('api.port')}`
-            : '\u001b[31mNot enabled\u001b[39m'
-        }
-      })
+  if (config.get('env') !== 'test') {
+    let footer = {}
+
+    if (config.get('api').host) {
+      let apiKey = config.get('api').type ? config.get('api') : 'DADI API'
+      footer[apiKey] = config.get('api').host
+    } else {
+      for (let api in config.get('api')) {
+        let key = api === 'dadiapi' ? 'DADI API' : api
+
+        footer[key] = config.get('api')[api].host || config.get('api')[api].type
+      }
     }
-  })
+
+    dadiBoot.started({
+      server: `${config.get('server.protocol')}://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`,
+      header: {
+        app: config.get('app.name')
+      },
+      body: {
+        Protocol: config.get('server.protocol'),
+        Version: version,
+        'Node.js': nodeVersion,
+        Engine: enginesInfo,
+        Environment: config.get('env')
+      },
+      footer
+    })
+  }
 }
 
 function onError (err) {

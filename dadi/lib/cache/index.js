@@ -1,39 +1,39 @@
 /**
  * @module Cache
  */
-var crypto = require('crypto')
-var debug = require('debug')('web:cache')
-var path = require('path')
-var url = require('url')
-var fs = require('fs')
+const compressible = require('compressible')
+const crypto = require('crypto')
+const debug = require('debug')('web:cache')
+const etag = require('etag')
+const fs = require('fs')
+const mime = require('mime-types')
+const path = require('path')
+const pathToRegexp = require('path-to-regexp')
+const url = require('url')
 
-var compressible = require('compressible')
-var mime = require('mime-types')
-var etag = require('etag')
+const config = require(path.join(__dirname, '/../../../config.js'))
+const help = require(path.join(__dirname, '/../help'))
 
-var config = require(path.join(__dirname, '/../../../config.js'))
-var help = require(path.join(__dirname, '/../help'))
-
-var DadiCache = require('@dadi/cache')
+const DadiCache = require('@dadi/cache')
 
 /**
  * Creates a new Cache instance for the server
  * @constructor
  * @param {Server} server - the main server instance
  */
-var Cache = function (server) {
+const Cache = function (server) {
   this.server = server
   this.cache = new DadiCache(config.get('caching'))
 
-  var directoryEnabled = config.get('caching.directory.enabled')
-  var redisEnabled = config.get('caching.redis.enabled')
+  const directoryEnabled = config.get('caching.directory.enabled')
+  const redisEnabled = config.get('caching.redis.enabled')
 
   this.enabled = !(directoryEnabled === false && redisEnabled === false)
   this.encoding = 'utf8'
   this.options = {}
 }
 
-var instance
+let instance
 module.exports = function (server) {
   if (!instance) {
     instance = new Cache(server)
@@ -49,14 +49,14 @@ module.exports = function (server) {
  */
 Cache.prototype.cachingEnabled = function (req) {
   // Check it is not a json view
-  var query = url.parse(req.url, true).query
-  if (query.json && query.json !== 'false') return false
+  const query = url.parse(req.url, true).query
+  if ((query.json && query.json !== 'false') || query.debug) return false
 
   // Disable cache for debug mode
   if (config.get('debug')) return false
 
   // if it's in the endpoint and caching is enabled
-  var endpoint = this.getEndpoint(req)
+  const endpoint = this.getEndpoint(req)
 
   if (endpoint) {
     this.options.cache =
@@ -67,7 +67,7 @@ Cache.prototype.cachingEnabled = function (req) {
     return this.enabled && this.options.cache
   } else {
     // Otherwise it might be in the public folder
-    var file = url.parse(req.url).pathname
+    const file = url.parse(req.url).pathname
 
     return compressible(mime.lookup(file))
   }
@@ -79,21 +79,29 @@ Cache.prototype.cachingEnabled = function (req) {
  * @returns {object}
  */
 Cache.prototype.getEndpointMatchingRequest = function (req) {
-  const endpoints = this.server.components || {}
-  const requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
+  let endpoints = this.server.components || {}
+  let requestUrl = url.parse(req.url, true).pathname.replace(/\/+$/, '')
+
+  if (requestUrl === '') requestUrl = '/'
 
   // get the host key that matches the request's host header
-  const virtualHosts = config.get('virtualHosts')
+  let virtualHosts = config.get('virtualHosts')
 
-  const host =
+  let host =
     Object.keys(virtualHosts).find(key => {
       return virtualHosts.hostnames.includes(req.headers.host)
     }) || ''
 
-  const matchKey = Object.keys(endpoints).find(key => {
-    const paths = endpoints[key].page.routes.map(route => route.path)
+  let matchKey = Object.keys(endpoints).find(key => {
+    let paths = endpoints[key].page.routes.map(route => route.path)
 
-    if (!paths.includes(requestUrl)) {
+    let matchPath = path => {
+      let keys = []
+      let regex = pathToRegexp(path, keys)
+      return regex.exec(requestUrl)
+    }
+
+    if (!paths.some(matchPath) && !paths.includes(requestUrl)) {
       return false
     }
 
@@ -135,7 +143,7 @@ Cache.prototype.getEndpointMatchingLoadedPaths = function (req) {
  */
 Cache.prototype.getReqContentType = function (req) {
   // Check for content-type in the page json
-  var endpoint = this.getEndpoint(req)
+  const endpoint = this.getEndpoint(req)
 
   return endpoint && endpoint.page && endpoint.page.contentType
     ? endpoint.page.contentType
@@ -146,7 +154,7 @@ Cache.prototype.getReqContentType = function (req) {
  * Adds the Cache middleware to the stack
  */
 Cache.prototype.getEndpoint = function (req) {
-  var endpoint = this.getEndpointMatchingRequest(req)
+  let endpoint = this.getEndpointMatchingRequest(req)
   if (!endpoint) endpoint = this.getEndpointMatchingLoadedPaths(req)
 
   return endpoint
@@ -156,7 +164,7 @@ Cache.prototype.getEndpoint = function (req) {
  * Adds the Cache middleware to the stack
  */
 Cache.prototype.init = function () {
-  var self = this
+  const self = this
 
   /**
    * Retrieves the page that the requested URL matches
@@ -164,7 +172,7 @@ Cache.prototype.init = function () {
    * @returns {object}
    */
   this.server.app.use(function cache (req, res, next) {
-    var enabled = self.cachingEnabled(req)
+    const enabled = self.cachingEnabled(req)
 
     if (!enabled) return next()
 
@@ -174,14 +182,14 @@ Cache.prototype.init = function () {
     if (!self.getEndpoint(req)) return next()
 
     // get contentType that current endpoint requires
-    var contentType = self.getReqContentType(req)
+    const contentType = self.getReqContentType(req)
 
     // only cache GET requests
     if (req.method && req.method.toLowerCase() !== 'get') return next()
 
     // we build the filename with a hashed hex string so we can be unique
     // and avoid using file system reserved characters in the name
-    var requestUrl = url.parse(req.url, true).path
+    const requestUrl = url.parse(req.url, true).path
 
     // get the host key that matches the request's host header
     const virtualHosts = config.get('virtualHosts')
@@ -191,28 +199,28 @@ Cache.prototype.init = function () {
         return virtualHosts.hostnames.includes(req.headers.host)
       }) || ''
 
-    var filename = crypto
+    const filename = crypto
       .createHash('sha1')
       .update(`${host}${requestUrl}`)
       .digest('hex')
 
     // allow query string param to bypass cache
-    var query = url.parse(req.url, true).query
-    var noCache =
+    const query = url.parse(req.url, true).query
+    const noCache =
       query.cache && query.cache.toString().toLowerCase() === 'false'
 
     // File extension for cache file
-    var cacheExt =
+    const cacheExt =
       compressible(contentType) && help.canCompress(req.headers)
         ? '.' + help.canCompress(req.headers)
         : null
 
-    var opts = {
+    const opts = {
       directory: { extension: mime.extension(contentType) + cacheExt }
     }
 
     // Compression settings
-    var shouldCompress = compressible(contentType)
+    const shouldCompress = compressible(contentType)
       ? help.canCompress(req.headers)
       : false
 
@@ -228,7 +236,7 @@ Cache.prototype.init = function () {
           return next()
         }
 
-        var headers = {
+        const headers = {
           'X-Cache-Lookup': 'HIT',
           'X-Cache': 'HIT',
           'Content-Type': contentType,
@@ -267,10 +275,10 @@ Cache.prototype.init = function () {
      */
     function cacheResponse () {
       // file is expired or does not exist, wrap res.end and res.write to save to cache
-      var _end = res.end
-      var _write = res.write
+      const _end = res.end
+      const _write = res.write
 
-      var data = []
+      const data = []
 
       res.write = function (chunk) {
         if (chunk) data.push(chunk)
@@ -312,11 +320,11 @@ module.exports.reset = function () {
 }
 
 module.exports.delete = function (pattern, callback) {
-  var async = require('async')
-  var iter = '0'
+  const async = require('async')
+  let iter = '0'
   pattern = pattern + '*'
-  var cacheKeys = []
-  var self = this
+  const cacheKeys = []
+  const self = this
 
   async.doWhilst(
     function (acb) {
@@ -355,7 +363,7 @@ module.exports.delete = function (pattern, callback) {
           return callback(null)
         }
 
-        var i = 0
+        let i = 0
 
         cacheKeys.forEach(key => {
           self.client().del(key, function (err, result) {
