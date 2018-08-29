@@ -432,35 +432,35 @@ describe("Cache Flush", function(done) {
                       // new ones
                       fs.readdir(config.get("caching.directory.path"), function (err, files) {
                         if (err) console.log(err)
-                          
-                        files
-                          .filter(function(file) {
-                            return file.substr(-10) === ".html.gzip"
+                         
+                        var filteredFiles = files.filter(file => file.substr(-10) === ".html.gzip")
+                        var filesDeleted = 0
+
+                        filteredFiles.forEach(function(file) {
+                          var filePath = path.resolve(path.join(config.get("caching.directory.path"), file))
+
+                          fs.unlink(filePath, function (err) {
+                            if (err) console.log(err)
+
+                            filesDeleted++
+
+                            if (filesDeleted === filteredFiles.length) {
+                              client
+                                .get("/page2")
+                                .expect("content-type", "text/html")
+                                .end(function(err, res) {
+                                  if (err) return done(err)
+
+                                  res.headers["x-cache"].should.exist
+                                  res.headers["x-cache"].should.eql("MISS")
+
+                                  res.text.should.eql("<h3>Crime</h3>")
+
+                                  done()
+                                })
+                            }
                           })
-                          .forEach(function(file) {
-                            fs.unlinkSync(
-                              path.join(
-                                config.get("caching.directory.path"),
-                                file
-                              )
-                            )
-                          })
-
-                        // get second page again, should return same data
-                        client
-                          .get("/page2")
-                          .expect("content-type", "text/html")
-                          .expect(200)
-                          .end(function(err, res) {
-                            if (err) return done(err)
-
-                            res.headers["x-cache"].should.exist
-                            res.headers["x-cache"].should.eql("MISS")
-
-                            res.text.should.eql("<h3>Crime</h3>")
-
-                            done()
-                          })
+                        })
                     })
                   })
               })
