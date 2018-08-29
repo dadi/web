@@ -62,7 +62,7 @@
     "kinesis": "~1.2.2",
     "marked": "~0.3.9",
     "mime-types": "~2.1.17",
-    "mongodb": "~2.2.0",
+    "mongodb": "~3.1.0",
     "multer": "^1.3.0",
     "path-to-regexp": "~2.1.0",
     "perfy": "~1.1.2",
