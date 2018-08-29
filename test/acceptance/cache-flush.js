@@ -313,6 +313,10 @@ describe("Cache Flush", function(done) {
 
     // get cached version of the page
     var client = request(clientHost)
+
+    // Hit page2 again as async tests are deleting the cache too early
+    client.get("/page2")
+
     client
       .get("/test")
       .expect("content-type", "text/html")
@@ -463,15 +467,6 @@ describe("Cache Flush", function(done) {
   })
 
   it("should flush all cached items when no path is specified", function(done) {
-    // config.set('api.enabled', true)
-    //
-    // // fake token post
-    // var scope = nock('http://127.0.0.1:3000')
-    //   .post('/token')
-    //   .times(4)
-    //   .reply(200, {
-    //     accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
-    //   })
 
     // get cached version of the page
     var client = request(clientHost)
