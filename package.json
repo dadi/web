@@ -80,7 +80,7 @@
     "web-es6-templates": "1.2.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^6.2.0",
+    "@commitlint/cli": "^7.1.0",
     "@commitlint/config-conventional": "^6.1.3",
     "cheerio": "~1.0.0-rc.2",
     "env-test": "~1.0.0",
