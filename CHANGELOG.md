@@ -4,6 +4,108 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [6.0.1] - 2018-05-30
+
+* [#399](https://github.com/dadi/web/issues/399): improve the process of selecting a loaded endpoint based on the request URL within the cache layer
+
+
+# [6.0.0] - 2018-04-25
+
+## Debug view
+
+A new debug view has been added to allow developers to understand how a particular page has been generated. In previous versions of Web we've used a configuration setting `allowJsonView` which enabled the option of seeing the data context used to build a rendered page - this could be used on any page by appending `json=true` to the URL.
+
+The new debug view in this version is far more powerful and provides greater insight into how your data is being used within Web. Documentation is available on the [DADI Documentation website](http://docs.dadi.tech/web/latest#debug-view).
+
+## Multiple API support
+
+Version 6.0 removes Web's 1:1 relationship with DADI API, allowing multiple DADI API configurations which can be referenced from a datasource by API name:
+
+**Main configuration**
+```json
+"api": { 
+  "main": {
+    "host": "api-one.somedomain.com",
+    "port": 80,
+    "auth": {
+      "tokenUrl": "/token",
+      "clientId": "your-client-id",
+      "secret": "your-secret"
+    }
+  },
+  "secondary":  {
+    "host": "api-two.somedomain.com",
+    "port": 80,
+    "auth": {
+      "tokenUrl": "/token",
+      "clientId": "your-client-id",
+      "secret": "your-secret"
+    }
+  }
+}
+```
+
+**Datasource configuration**
+```json
+{
+  "datasource": {
+    "key": "articles",
+    "source": {
+      "api": "main",
+      "endpoint": "1.0/library/articles"
+    },
+    "count": 12,
+    "paginate": false
+  }
+}
+```
+
+
+## REST API provider 
+
+Version 6.0 removes the `wordpress` and `twitter` data providers, replacing them with a `restapi` provider. Details are available here: https://docs.dadi.tech/web/latest#rest-api. The main difference between the existing `remote` provider and the new `restapi` provider is that `restapi` provider can be supplied with authentication configuration.
+
+
+## Changed
+
+* [#258](https://github.com/dadi/web/issues/258): give `globalEvents` access to full page data, and run per request instead of only at startup
+* [#262](https://github.com/dadi/web/issues/262):  default workspace folders no longer created unnecessarily, even if the config `paths` specified different locations than the default
+* [#267](https://github.com/dadi/web/issues/267):  fix Markdown provider crash if data was malformed
+* [#336](https://github.com/dadi/web/issues/336): middleware can now intercept public folder requests
+* [#350](https://github.com/dadi/web/issues/350):  add support for range header requests on static assets so a browser can specify which part of a file it wants to receieve and when.
+* [#370](https://github.com/dadi/web/issues/370): add configuration options for [@dadi/status](https://github.com/dadi/status)
+* Deprecated configuration setting for compression removed. `headers.useGzipCompression` was deprecated in Web 4.0 in favour of the more generic `useCompression`.
+
+### Page whitespace configuration
+
+> Note: this is a breaking change
+
+This configuration option has been moved within the page specification file to a block dedicated to the chosen template engine. Modify existing `page.json` files as follows:
+
+**Existing**
+```json
+"settings": {
+  "keepWhitespace": true
+}
+```
+
+**New**
+```json
+"settings": {
+  "engine": {
+    "keepWhitespace": true
+  }
+}
+```
+
+Template engine developers can also use `engine` to pass any page specific setting to their engine.
+
+### Dependency updates
+
+* upgrade to Brotli 1.0 compression engine
+* upgrade router to use version 2.0 of [path-to-regexp](https://github.com/pillarjs/path-to-regexp)
+
+
 # [5.0.1] - 2018-01-13
 
 ## Changed

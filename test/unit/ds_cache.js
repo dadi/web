@@ -517,32 +517,35 @@ describe("Datasource Cache", function(done) {
             .update(ds.provider.endpoint)
             .digest("hex")
 
-        var cachepath = path.resolve(
-          path.join(
-            ds.schema.datasource.caching.directory.path,
-            filename + "." + ds.schema.datasource.caching.directory.extension
-          )
+
+        var cachedir = path.resolve(ds.schema.datasource.caching.directory.path)
+
+        var cachepath = path.join(
+          cachedir,
+          filename + "." + ds.schema.datasource.caching.directory.extension
         )
         var expected = "ds content from filesystem"
 
-        fs.writeFileSync(cachepath, expected)
-
-        setTimeout(function() {
+        fs.mkdir(cachedir, function (err) {
           var dsCache = datasourceCache()
 
-          dsCache.getFromCache(
-            {
-              name: ds.name,
-              caching: ds.schema.datasource.caching,
-              endpoint: ds.provider.endpoint
-            },
-            function(data) {
-              data.should.not.eql(false)
-              data.toString().should.eql(expected)
-              done()
-            }
-          )
-        }, 1000)
+          fs.writeFile(cachepath, expected, function (err) {
+            if (err) console.log(err)
+
+            dsCache.getFromCache(
+              {
+                name: ds.name,
+                caching: ds.schema.datasource.caching,
+                endpoint: ds.provider.endpoint
+              },
+              function(data) {
+                data.should.not.eql(false)
+                data.toString().should.eql(expected)
+                done()
+              }
+            )
+          })
+        })
       })
     })
 
@@ -575,29 +578,34 @@ describe("Datasource Cache", function(done) {
             .createHash("sha1")
             .update(ds.provider.endpoint)
             .digest("hex")
-        cachepath = path.resolve(
-          path.join(
-            ds.schema.datasource.caching.directory.path,
-            filename + "_XX." + ds.schema.datasource.caching.directory.extension
-          )
+        
+        var cachedir = path.resolve(ds.schema.datasource.caching.directory.path)
+
+        var cachepath = path.join(
+          cachedir,
+          filename + "_FOOBAR." + ds.schema.datasource.caching.directory.extension
         )
+
         var expected = "ds content from filesystem"
 
-        fs.writeFile(cachepath, expected, { encoding: "utf-8" }, function(err) {
-          if (err) console.log(err.toString())
-
+        fs.mkdir(cachedir, function (err) {
           var dsCache = datasourceCache()
-          dsCache.getFromCache(
-            {
-              name: ds.name,
-              caching: ds.schema.datasource.caching,
-              endpoint: ds.provider.endpoint
-            },
-            function(data) {
-              data.should.eql(false)
-              done()
-            }
-          )
+
+          fs.writeFile(cachepath, expected, function (err) {
+            if (err) console.log(err)
+
+            dsCache.getFromCache(
+              {
+                name: ds.name,
+                caching: ds.schema.datasource.caching,
+                endpoint: ds.provider.endpoint
+              },
+              function(data) {
+                data.should.eql(false)
+                done()
+              }
+            )
+          })
         })
       })
     })

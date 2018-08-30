@@ -6,6 +6,8 @@ notifications:
   slack: dadi:pnhiL60xOrm7GOglHUmb7xHK
   email: false
 node_js:
+  - '10'
+  - '8'
   - '6'
 before_script:
   - npm prune
@@ -15,4 +17,3 @@ branches:
 services:
   - mongodb
   - redis-server
-before_install: if [[ `npm -v` != 5* ]]; then npm i -g npm@latest; fi
