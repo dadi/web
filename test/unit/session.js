@@ -1,37 +1,38 @@
-var nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
+const nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
-var nock = require('nock')
-var path = require('path')
-var request = require('supertest')
-var should = require('should')
-var session = require('express-session')
-var sinon = require('sinon')
+const nock = require('nock')
+const path = require('path')
+const request = require('supertest')
+const should = require('should')
+const session = require('express-session')
+const sinon = require('sinon')
 
-var mongoStore
+let mongoStore
 if (nodeVersion < 1) {
   mongoStore = require('connect-mongo/es5')(session)
 } else {
   mongoStore = require('connect-mongo')(session)
 }
 
-var Datasource = require(__dirname + '/../../dadi/lib/datasource')
-var Page = require(__dirname + '/../../dadi/lib/page')
-var Preload = require(__dirname + '/../../dadi/lib/datasource/preload')
-var Server = require(__dirname + '/../help').Server
-var TestHelper = require(__dirname + '/../help')()
-var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
+const Datasource = require(`${__dirname}/../../dadi/lib/datasource`)
+const Page = require(`${__dirname}/../../dadi/lib/page`)
+const Preload = require(`${__dirname}/../../dadi/lib/datasource/preload`)
+const Server = require(`${__dirname}/../help`).Server
+const TestHelper = require(`${__dirname}/../help`)()
+const remoteProvider = require(`${__dirname}/../../dadi/lib/providers/remote`)
 
-var config = require(path.resolve(path.join(__dirname, '/../../config')))
-var connectionString =
-  'http://' + config.get('server.host') + ':' + config.get('server.port')
+const config = require(path.resolve(path.join(__dirname, '/../../config')))
+const connectionString = `http://${config.get('server.host')}:${config.get(
+  'server.port'
+)}`
 
-describe('Session', function (done) {
-  before(function (done) {
+describe('Session', done => {
+  before(done => {
     Preload().reset()
     done()
   })
 
-  beforeEach(function (done) {
+  beforeEach(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
         done()
@@ -39,12 +40,12 @@ describe('Session', function (done) {
     })
   })
 
-  afterEach(function (done) {
+  afterEach(done => {
     TestHelper.stopServer(done)
   })
 
-  it('should set a session cookie', function (done) {
-    var sessionConfig = {
+  it('should set a session cookie', done => {
+    const sessionConfig = {
       sessions: {
         enabled: true,
         name: 'dadiweb.sid'
@@ -56,7 +57,7 @@ describe('Session', function (done) {
     }
 
     TestHelper.updateConfig(sessionConfig).then(() => {
-      var pages = TestHelper.newPage(
+      const pages = TestHelper.newPage(
         'test',
         '/session',
         'session.js',
@@ -66,17 +67,17 @@ describe('Session', function (done) {
       pages[0].contentType = 'application/json'
 
       // provide API response
-      var results = { results: [{ make: 'ford' }] }
-      var providerStub = sinon.stub(remoteProvider.prototype, 'load')
+      const results = { results: [{ make: 'ford' }] }
+      const providerStub = sinon.stub(remoteProvider.prototype, 'load')
       providerStub.yields(null, results)
 
       TestHelper.startServer(pages).then(() => {
-        var client = request(connectionString)
+        const client = request(connectionString)
         client
-          .get(pages[0].routes[0].path + '?cache=false')
+          .get(`${pages[0].routes[0].path}?cache=false`)
           .expect('content-type', pages[0].contentType)
           .expect(TestHelper.shouldSetCookie('dadiweb.sid'))
-          .end(function (err, res) {
+          .end((err, res) => {
             if (err) return done(err)
 
             providerStub.restore()
@@ -86,8 +87,8 @@ describe('Session', function (done) {
     })
   })
 
-  it('should have a session object attached to the request', function (done) {
-    var sessionConfig = {
+  it('should have a session object attached to the request', done => {
+    const sessionConfig = {
       sessions: {
         enabled: true,
         name: 'dadiweb.sid'
@@ -95,7 +96,7 @@ describe('Session', function (done) {
     }
 
     TestHelper.updateConfig(sessionConfig).then(() => {
-      var pages = TestHelper.newPage(
+      const pages = TestHelper.newPage(
         'test',
         '/session',
         'session.js',
@@ -105,15 +106,15 @@ describe('Session', function (done) {
       pages[0].contentType = 'application/json'
 
       TestHelper.startServer(pages).then(() => {
-        var client = request(connectionString)
+        const client = request(connectionString)
 
         client
           .get(pages[0].routes[0].path)
           .expect(200)
           .expect('content-type', pages[0].contentType)
-          .end(function (err, res) {
+          .end((err, res) => {
             if (err) return done(err)
-            var data = JSON.parse(JSON.stringify(res.body))
+            const data = JSON.parse(JSON.stringify(res.body))
             ;(data.session_id !== null).should.eql(true)
 
             done()
@@ -122,8 +123,8 @@ describe('Session', function (done) {
     })
   })
 
-  it('should get requestParams specified in session to populate placeholders in a datasource endpoint', function (done) {
-    var sessionConfig = {
+  it('should get requestParams specified in session to populate placeholders in a datasource endpoint', done => {
+    const sessionConfig = {
       sessions: {
         enabled: true,
         name: 'dadiweb.sid',
@@ -137,7 +138,7 @@ describe('Session', function (done) {
     }
 
     TestHelper.updateConfig(sessionConfig).then(() => {
-      var pages = TestHelper.newPage(
+      const pages = TestHelper.newPage(
         'test',
         '/session',
         'session.js',
@@ -145,9 +146,9 @@ describe('Session', function (done) {
         ['session']
       )
 
-      var dsName = 'car_makes'
-      var options = TestHelper.getPathOptions()
-      var dsSchema = TestHelper.getSchemaFromFile(
+      const dsName = 'car_makes'
+      const options = TestHelper.getPathOptions()
+      const dsSchema = TestHelper.getSchemaFromFile(
         options.datasourcePath,
         dsName
       )
@@ -191,58 +192,54 @@ describe('Session', function (done) {
         target: 'endpoint'
       })
 
-      var stubby = sinon
+      const stubby = sinon
         .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.startServer(pages).then(() => {
-        var client = request(connectionString)
+        const client = request(connectionString)
 
         // we should be intercepting a request for '/1.0/makes/%7Bname%7D/%7Bedition%7D' (nothing set in session yet)
-        var host =
-          'http://' +
-          dsSchema.datasource.source.host +
-          ':' +
+        const host = `http://${dsSchema.datasource.source.host}:${
           dsSchema.datasource.source.port
-        var scope = nock(host)
+        }`
+        const scope = nock(host)
           .get('/1.0/makes/%7Bname%7D/%7Bedition%7D')
           .reply(200, {})
 
         // request page twice, the second time we should get data from the sessiom
         client
-          .get(pages[0].routes[0].path + '?cache=false')
+          .get(`${pages[0].routes[0].path}?cache=false`)
           .expect(200)
           .expect('content-type', pages[0].contentType)
           .end((err, res) => {
             if (err) return done(err)
 
-            var cookies = res.headers['set-cookie']
-            var cookie = cookies.find(cookie => {
+            const cookies = res.headers['set-cookie']
+            const cookie = cookies.find(cookie => {
               return cookie.startsWith('dadiweb.sid=')
             })
 
-            var data = cookie.split(';')[0]
-            var value = data.split('=')[1]
+            const data = cookie.split(';')[0]
+            const value = data.split('=')[1]
 
             // we should be intercepting a request for '/1.0/makes/mazda/3' (as set in test/app/events/session.js)
-            var host =
-              'http://' +
-              dsSchema.datasource.source.host +
-              ':' +
+            const host = `http://${dsSchema.datasource.source.host}:${
               dsSchema.datasource.source.port
+            }`
 
-            var scope = nock(host)
+            const scope = nock(host)
               .get('/1.0/makes/mazda/3')
               .reply(200, { make: 'mazda', edition: 3 })
 
             client
-              .get(pages[0].routes[0].path + '?cache=false')
-              .set('Cookie', 'dadiweb.sid=' + value)
+              .get(`${pages[0].routes[0].path}?cache=false`)
+              .set('Cookie', `dadiweb.sid=${value}`)
               .expect(200)
               .expect('content-type', pages[0].contentType)
               .end((err, res) => {
                 if (err) return done(err)
-                var data = JSON.parse(res.text)
+                const data = JSON.parse(res.text)
 
                 TestHelper.resetConfig().then(() => {
                   should.exist(data)
@@ -262,8 +259,8 @@ describe('Session', function (done) {
     })
   })
 
-  it('should not set a session cookie if sessions are disabled', function (done) {
-    var sessionConfig = {
+  it('should not set a session cookie if sessions are disabled', done => {
+    const sessionConfig = {
       sessions: {
         enabled: false,
         name: 'dadiweb.sid'
@@ -271,7 +268,7 @@ describe('Session', function (done) {
     }
 
     TestHelper.updateConfig(sessionConfig).then(() => {
-      var pages = TestHelper.newPage(
+      const pages = TestHelper.newPage(
         'test',
         '/session',
         'session.js',
@@ -281,13 +278,13 @@ describe('Session', function (done) {
       pages[0].contentType = 'application/json'
 
       TestHelper.startServer(pages).then(() => {
-        var client = request(connectionString)
-        var sessionName = config.get('sessions.name')
+        const client = request(connectionString)
+        const sessionName = config.get('sessions.name')
 
-        client.get(pages[0].routes[0].path).end(function (err, res) {
+        client.get(pages[0].routes[0].path).end((err, res) => {
           if (err) return done(err)
 
-          var cookieHeader = res.headers['set-cookie']
+          const cookieHeader = res.headers['set-cookie']
           if (cookieHeader) {
             cookieHeader.indexOf(sessionName).should.equal(-1)
           }
@@ -298,9 +295,9 @@ describe('Session', function (done) {
     })
   })
 
-  describe('Store', function (done) {
-    it('should use an in-memory store if none is specified', function (done) {
-      var sessionConfig = {
+  describe('Store', done => {
+    it('should use an in-memory store if none is specified', done => {
+      const sessionConfig = {
         sessions: {
           enabled: true,
           name: 'dadiweb.sid',
@@ -316,8 +313,8 @@ describe('Session', function (done) {
       })
     })
 
-    it('should use a MongoDB store if one is specified', function (done) {
-      var sessionConfig = {
+    it('should use a MongoDB store if one is specified', done => {
+      const sessionConfig = {
         sessions: {
           enabled: true,
           name: 'dadiweb.sid',
@@ -326,15 +323,15 @@ describe('Session', function (done) {
       }
 
       TestHelper.updateConfig(sessionConfig).then(() => {
-        var store = Server.getSessionStore(config.get('sessions'))
+        const store = Server.getSessionStore(config.get('sessions'))
         ;(typeof store).should.eql('object')
         store.options.url.should.eql('mongodb://localhost:27017/test')
         done()
       })
     })
 
-    it('should use a Redis store if one is specified', function (done) {
-      var sessionConfig = {
+    it('should use a Redis store if one is specified', done => {
+      const sessionConfig = {
         sessions: {
           enabled: true,
           name: 'dadiweb.sid',
@@ -343,15 +340,15 @@ describe('Session', function (done) {
       }
 
       TestHelper.updateConfig(sessionConfig).then(() => {
-        var store = Server.getSessionStore(config.get('sessions'))
+        const store = Server.getSessionStore(config.get('sessions'))
         ;(typeof store).should.eql('object')
         store.client.address.should.eql('localhost:6379')
         done()
       })
     })
 
-    it('should throw error if an in-memory session store is used in production', function (done) {
-      var sessionConfig = {
+    it('should throw error if an in-memory session store is used in production', done => {
+      const sessionConfig = {
         sessions: {
           enabled: true,
           name: 'dadiweb.sid',
@@ -360,7 +357,7 @@ describe('Session', function (done) {
       }
 
       TestHelper.updateConfig(sessionConfig).then(() => {
-        should.throws(function () {
+        should.throws(() => {
           Server.getSessionStore(config.get('sessions'), 'production')
         }, Error)
         done()

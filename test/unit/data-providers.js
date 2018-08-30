@@ -1,30 +1,30 @@
-var fs = require('fs')
-var nock = require('nock')
-var path = require('path')
-var sinon = require('sinon')
-var should = require('should')
-var Readable = require('stream').Readable
-var request = require('supertest')
-var zlib = require('zlib')
+const fs = require('fs')
+const nock = require('nock')
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
+const Readable = require('stream').Readable
+const request = require('supertest')
+const zlib = require('zlib')
 
-var Server = require(__dirname + '/../../dadi/lib')
-var TestHelper = require(__dirname + '/../help')()
-var api = require(__dirname + '/../../dadi/lib/api')
-var Controller = require(__dirname + '/../../dadi/lib/controller')
-var Datasource = require(__dirname + '/../../dadi/lib/datasource')
-var help = require(__dirname + '/../../dadi/lib/help')
-var Page = require(__dirname + '/../../dadi/lib/page')
+const Server = require(`${__dirname}/../../dadi/lib`)
+const TestHelper = require(`${__dirname}/../help`)()
+const api = require(`${__dirname}/../../dadi/lib/api`)
+const Controller = require(`${__dirname}/../../dadi/lib/controller`)
+const Datasource = require(`${__dirname}/../../dadi/lib/datasource`)
+const help = require(`${__dirname}/../../dadi/lib/help`)
+const Page = require(`${__dirname}/../../dadi/lib/page`)
 
-var apiProvider = require(__dirname + '/../../dadi/lib/providers/dadiapi')
-var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
-var restProvider = require(__dirname + '/../../dadi/lib/providers/restapi')
-var markdownProvider = require(__dirname + '/../../dadi/lib/providers/markdown')
+const apiProvider = require(`${__dirname}/../../dadi/lib/providers/dadiapi`)
+const remoteProvider = require(`${__dirname}/../../dadi/lib/providers/remote`)
+const restProvider = require(`${__dirname}/../../dadi/lib/providers/restapi`)
+const markdownProvider = require(`${__dirname}/../../dadi/lib/providers/markdown`)
 
-var config = require(path.resolve(path.join(__dirname, '/../../config')))
-var controller
+const config = require(path.resolve(path.join(__dirname, '/../../config')))
+let controller
 
-describe('Data Providers', function (done) {
-  beforeEach(function (done) {
+describe('Data Providers', done => {
+  beforeEach(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
         done()
@@ -32,34 +32,33 @@ describe('Data Providers', function (done) {
     })
   })
 
-  afterEach(function (done) {
+  afterEach(done => {
     nock.cleanAll()
-    TestHelper.stopServer(function () {})
+    TestHelper.stopServer(() => {})
     TestHelper.resetConfig().then(() => {
       done()
     })
   })
 
-  describe('DADI API', function (done) {
-    it('should use the datasource auth block when obtaining a token', function (done) {
+  describe('DADI API', done => {
+    it('should use the datasource auth block when obtaining a token', done => {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['car_models']
 
           TestHelper.setupApiIntercepts()
 
-          var connectionString =
-            'http://' +
-            config.get('server.host') +
-            ':' +
-            config.get('server.port')
-          var apiConnectionString =
-            'http://' + config.get('api.host') + ':' + config.get('api.port')
+          const connectionString = `http://${config.get(
+            'server.host'
+          )}:${config.get('server.port')}`
+          const apiConnectionString = `http://${config.get(
+            'api.host'
+          )}:${config.get('api.port')}`
 
-          var stub = sinon
+          const stub = sinon
             .stub(apiProvider.prototype, 'getToken')
-            .callsFake(function (strategy, callback) {
+            .callsFake((strategy, callback) => {
               should.exist(strategy)
               strategy.host.should.eql('8.8.8.8')
 
@@ -68,35 +67,34 @@ describe('Data Providers', function (done) {
             })
 
           TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?cache=false&debug=json')
+              .get(`${pages[0].routes[0].path}?cache=false&debug=json`)
               .end((err, res) => {})
           })
         })
       })
     })
 
-    it('should return gzipped response if accept header specifies it', function (done) {
+    it('should return gzipped response if accept header specifies it', done => {
       TestHelper.enableApiConfig().then(() => {
-        var pages = TestHelper.setUpPages()
+        const pages = TestHelper.setUpPages()
         pages[0].datasources = ['car_makes_unchained']
 
-        var text = JSON.stringify({ hello: 'world!' })
+        const text = JSON.stringify({ hello: 'world!' })
 
-        zlib.gzip(text, function (_, data) {
+        zlib.gzip(text, (_, data) => {
           TestHelper.setupApiIntercepts()
 
-          var connectionString =
-            'http://' +
-            config.get('server.host') +
-            ':' +
-            config.get('server.port')
-          var apiConnectionString =
-            'http://' + config.get('api.host') + ':' + config.get('api.port')
+          const connectionString = `http://${config.get(
+            'server.host'
+          )}:${config.get('server.port')}`
+          const apiConnectionString = `http://${config.get(
+            'api.host'
+          )}:${config.get('api.port')}`
 
-          var scope = nock(apiConnectionString)
+          const scope = nock(apiConnectionString)
             .defaultReplyHeaders({
               'content-encoding': 'gzip'
             })
@@ -106,18 +104,18 @@ describe('Data Providers', function (done) {
             .times(5)
             .reply(200, data)
 
-          var providerSpy = sinon.spy(apiProvider.prototype, 'processOutput')
+          const providerSpy = sinon.spy(apiProvider.prototype, 'processOutput')
 
           TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?cache=false')
+              .get(`${pages[0].routes[0].path}?cache=false`)
               .end((err, res) => {
                 providerSpy.restore()
                 providerSpy.called.should.eql(true)
 
-                var buffer = providerSpy.firstCall.args[2]
+                const buffer = providerSpy.firstCall.args[2]
 
                 buffer.toString().should.eql(text)
 
@@ -128,44 +126,41 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return append query params if endpoint already has a querystring', function (done) {
+    it('should return append query params if endpoint already has a querystring', done => {
       TestHelper.enableApiConfig().then(() => {
-        var pages = TestHelper.setUpPages()
+        const pages = TestHelper.setUpPages()
         pages[0].datasources = ['car_makes_with_query']
 
         TestHelper.setupApiIntercepts()
 
-        var data = { hello: 'world' }
+        const data = { hello: 'world' }
 
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
-        var apiConnectionString =
-          'http://' + config.get('api.host') + ':' + config.get('api.port')
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
+        const apiConnectionString = `http://${config.get(
+          'api.host'
+        )}:${config.get('api.port')}`
 
-        var expected =
-          apiConnectionString +
-          '/1.0/cars/makes?param=value&count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
+        const expected = `${apiConnectionString}/1.0/cars/makes?param=value&count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}`
 
-        var scope = nock(apiConnectionString)
+        const scope = nock(apiConnectionString)
           .get(
             '/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false'
           )
           .times(5)
           .reply(200, data)
 
-        var providerSpy = sinon.spy(
+        const providerSpy = sinon.spy(
           apiProvider.prototype,
           'processDatasourceParameters'
         )
 
         TestHelper.startServer(pages).then(() => {
-          var client = request(connectionString)
+          const client = request(connectionString)
 
           client
-            .get(pages[0].routes[0].path + '?cache=false')
+            .get(`${pages[0].routes[0].path}?cache=false`)
             .end((err, res) => {
               providerSpy.restore()
               providerSpy.called.should.eql(true)
@@ -178,23 +173,22 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return an errors collection when a datasource times out', function (done) {
+    it('should return an errors collection when a datasource times out', done => {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['car_makes_unchained']
 
           TestHelper.setupApiIntercepts()
 
-          var connectionString =
-            'http://' +
-            config.get('server.host') +
-            ':' +
-            config.get('server.port')
-          var apiConnectionString =
-            'http://' + config.get('api.host') + ':' + config.get('api.port')
+          const connectionString = `http://${config.get(
+            'server.host'
+          )}:${config.get('server.port')}`
+          const apiConnectionString = `http://${config.get(
+            'api.host'
+          )}:${config.get('api.port')}`
 
-          var scope = nock(apiConnectionString)
+          const scope = nock(apiConnectionString)
             .get(
               '/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false'
             )
@@ -202,10 +196,10 @@ describe('Data Providers', function (done) {
             .reply(504)
 
           TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?cache=false&debug=json')
+              .get(`${pages[0].routes[0].path}?cache=false&debug=json`)
               .end((err, res) => {
                 should.exist(res.body['car_makes_unchained'].errors)
                 res.body['car_makes_unchained'].errors[0].title.should.eql(
@@ -218,23 +212,22 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return an errors collection when a datasource is not found', function (done) {
+    it('should return an errors collection when a datasource is not found', done => {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['car_makes_unchained']
 
           TestHelper.setupApiIntercepts()
 
-          var connectionString =
-            'http://' +
-            config.get('server.host') +
-            ':' +
-            config.get('server.port')
-          var apiConnectionString =
-            'http://' + config.get('api.host') + ':' + config.get('api.port')
+          const connectionString = `http://${config.get(
+            'server.host'
+          )}:${config.get('server.port')}`
+          const apiConnectionString = `http://${config.get(
+            'api.host'
+          )}:${config.get('api.port')}`
 
-          var scope = nock(apiConnectionString)
+          const scope = nock(apiConnectionString)
             .get(
               '/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false'
             )
@@ -242,10 +235,10 @@ describe('Data Providers', function (done) {
             .reply(404)
 
           TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?cache=false&debug=json')
+              .get(`${pages[0].routes[0].path}?cache=false&debug=json`)
               .end((err, res) => {
                 should.exist(res.body['car_makes_unchained'].errors)
                 res.body['car_makes_unchained'].errors[0].title.should.eql(
@@ -259,24 +252,23 @@ describe('Data Providers', function (done) {
     })
   })
 
-  describe('Remote', function (done) {
-    it('should return an errors collection when a datasource times out', function (done) {
+  describe('Remote', done => {
+    it('should return an errors collection when a datasource times out', done => {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['car_makes_unchained_remote']
 
           TestHelper.setupApiIntercepts()
 
-          var connectionString =
-            'http://' +
-            config.get('server.host') +
-            ':' +
-            config.get('server.port')
-          var apiConnectionString =
-            'http://' + config.get('api.host') + ':' + config.get('api.port')
+          const connectionString = `http://${config.get(
+            'server.host'
+          )}:${config.get('server.port')}`
+          const apiConnectionString = `http://${config.get(
+            'api.host'
+          )}:${config.get('api.port')}`
 
-          var scope = nock(apiConnectionString)
+          const scope = nock(apiConnectionString)
             .defaultReplyHeaders({
               'content-encoding': ''
             })
@@ -285,10 +277,10 @@ describe('Data Providers', function (done) {
             .reply(504)
 
           TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 should.exist(res.body['car_makes_unchained_remote'].errors)
                 res.body[
@@ -301,23 +293,22 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return an errors collection when a datasource is not found', function (done) {
+    it('should return an errors collection when a datasource is not found', done => {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['car_makes_unchained_remote']
 
           TestHelper.setupApiIntercepts()
 
-          var connectionString =
-            'http://' +
-            config.get('server.host') +
-            ':' +
-            config.get('server.port')
-          var apiConnectionString =
-            'http://' + config.get('api.host') + ':' + config.get('api.port')
+          const connectionString = `http://${config.get(
+            'server.host'
+          )}:${config.get('server.port')}`
+          const apiConnectionString = `http://${config.get(
+            'api.host'
+          )}:${config.get('api.port')}`
 
-          var scope = nock(apiConnectionString)
+          const scope = nock(apiConnectionString)
             .defaultReplyHeaders({
               'content-encoding': ''
             })
@@ -326,10 +317,10 @@ describe('Data Providers', function (done) {
             .reply(404)
 
           TestHelper.startServer(pages).then(() => {
-            var client = request(connectionString)
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?cache=false&debug=json')
+              .get(`${pages[0].routes[0].path}?cache=false&debug=json`)
               .end((err, res) => {
                 should.exist(res.body['car_makes_unchained_remote'].errors)
                 res.body[
@@ -343,9 +334,9 @@ describe('Data Providers', function (done) {
     })
   })
 
-  describe('Static', function (done) {
-    it('should sort the results by the provided field', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+  describe('Static', done => {
+    it('should sort the results by the provided field', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'static'
       )
@@ -358,19 +349,17 @@ describe('Data Providers', function (done) {
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -389,8 +378,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should wrap the data in a `results` node before returning', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should wrap the data in a `results` node before returning', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'static'
       )
@@ -404,19 +393,17 @@ describe('Data Providers', function (done) {
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -429,13 +416,13 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return the number of records specified by the count property', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should return the number of records specified by the count property', done => {
+      let dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'static'
       )
 
-      var dsConfig = {
+      const dsConfig = {
         count: 2,
         sort: {},
         search: {},
@@ -452,19 +439,17 @@ describe('Data Providers', function (done) {
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -478,13 +463,13 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should only return the fields specified by the fields property', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should only return the fields specified by the fields property', done => {
+      let dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'static'
       )
 
-      var dsConfig = {
+      const dsConfig = {
         count: 2,
         sort: {},
         search: {},
@@ -501,19 +486,17 @@ describe('Data Providers', function (done) {
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -521,7 +504,7 @@ describe('Data Providers', function (done) {
                 res.body.static.results.should.be.Array
                 res.body.static.results.length.should.eql(2)
 
-                var result = res.body.static.results[0]
+                const result = res.body.static.results[0]
                 Object.keys(result).should.eql(['title', 'director'])
                 done()
               })
@@ -530,13 +513,13 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should only return the data matching the search property', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should only return the data matching the search property', done => {
+      let dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'static'
       )
 
-      var dsConfig = {
+      const dsConfig = {
         search: { author: 'Roger Ebert' }
       }
 
@@ -550,19 +533,17 @@ describe('Data Providers', function (done) {
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -581,20 +562,20 @@ describe('Data Providers', function (done) {
     })
   })
 
-  describe('Rest API', function (done) {
-    it('should use a custom purest config if passed', function (done) {
+  describe('Rest API', done => {
+    it('should use a custom purest config if passed', done => {
       new Datasource(
         Page('test', TestHelper.getPageSchema()),
         'youtube',
         TestHelper.getPathOptions()
-      ).init(function (err, ds) {
+      ).init((err, ds) => {
         if (err) done(err)
         should.exist(ds.source.provider.google)
         done()
       })
     })
 
-    it('should use the datasource alias property when querying the endpoint', function (done) {
+    it('should use the datasource alias property when querying the endpoint', done => {
       TestHelper.updateConfig({
         api: {
           twitter: {
@@ -615,7 +596,7 @@ describe('Data Providers', function (done) {
           Page('test', TestHelper.getPageSchema()),
           'twitter',
           TestHelper.getPathOptions()
-        ).init(function (err, ds) {
+        ).init((err, ds) => {
           if (err) done(err)
 
           ds.source.provider.should.eql('twitter')
@@ -625,29 +606,27 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should load data from the specified api', function (done) {
-      var host = 'https://api.twitter.com'
-      var path = '/1.1/statuses/show.json?id=972581771681386497'
+    it('should load data from the specified api', done => {
+      const host = 'https://api.twitter.com'
+      const path = '/1.1/statuses/show.json?id=972581771681386497'
 
-      var scope = nock(host)
+      const scope = nock(host)
         .get(path)
-        .replyWithFile(200, __dirname + '/../twitter-api-response.json')
+        .replyWithFile(200, `${__dirname}/../twitter-api-response.json`)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['twitter-status']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 should.exist(res.body.twitterstatus)
                 should.exist(res.body.twitterstatus.user.screen_name)
@@ -658,29 +637,27 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should fail gracefully if the api is unavailable', function (done) {
-      var host = 'https://api.twitter.com'
-      var path = '/1.1/statuses/show.json?id=972581771681386498'
+    it('should fail gracefully if the api is unavailable', done => {
+      const host = 'https://api.twitter.com'
+      const path = '/1.1/statuses/show.json?id=972581771681386498'
 
-      var scope2 = nock(host)
+      const scope2 = nock(host)
         .get(path)
         .reply(404, 'Not found')
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['twitter-status-two']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 should.exist(res.body.twitterstatus.errors)
                 done()
@@ -690,29 +667,27 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should filter specified fields from the output', function (done) {
-      var host = 'https://api.twitter.com'
-      var path = '/1.1/statuses/show.json?id=972581771681386498'
+    it('should filter specified fields from the output', done => {
+      const host = 'https://api.twitter.com'
+      const path = '/1.1/statuses/show.json?id=972581771681386498'
 
-      var scope = nock(host)
+      const scope = nock(host)
         .get(path)
-        .replyWithFile(200, __dirname + '/../twitter-api-response.json')
+        .replyWithFile(200, `${__dirname}/../twitter-api-response.json`)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['twitter-status-filtered']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?cache=false&debug=json')
+              .get(`${pages[0].routes[0].path}?cache=false&debug=json`)
               .end((err, res) => {
                 should.exist(res.body.twitterstatus.user)
                 should.exist(res.body.twitterstatus.user.screen_name)
@@ -728,61 +703,61 @@ describe('Data Providers', function (done) {
     })
   })
 
-  describe('RSS', function (done) {
-    it('should use the datasource count property when querying the endpoint', function (done) {
+  describe('RSS', done => {
+    it('should use the datasource count property when querying the endpoint', done => {
       new Datasource(
         Page('test', TestHelper.getPageSchema()),
         'rss',
         TestHelper.getPathOptions()
-      ).init(function (err, ds) {
+      ).init((err, ds) => {
         ds.schema.datasource.count = 10
 
-        var params = ds.provider.buildQueryParams()
+        const params = ds.provider.buildQueryParams()
         should.exists(params.count)
         params.count.should.eql(10)
         done()
       })
     })
 
-    it('should use an array of datasource fields when querying the endpoint', function (done) {
+    it('should use an array of datasource fields when querying the endpoint', done => {
       new Datasource(
         Page('test', TestHelper.getPageSchema()),
         'rss',
         TestHelper.getPathOptions()
-      ).init(function (err, ds) {
+      ).init((err, ds) => {
         ds.schema.datasource.fields = ['field1', 'field2']
 
-        var params = ds.provider.buildQueryParams()
+        const params = ds.provider.buildQueryParams()
         should.exists(params.fields)
         params.fields.should.eql('field1,field2')
         done()
       })
     })
 
-    it('should use an object of datasource fields when querying the endpoint', function (done) {
+    it('should use an object of datasource fields when querying the endpoint', done => {
       new Datasource(
         Page('test', TestHelper.getPageSchema()),
         'rss',
         TestHelper.getPathOptions()
-      ).init(function (err, ds) {
+      ).init((err, ds) => {
         ds.schema.datasource.fields = { field1: 1, field2: 1 }
 
-        var params = ds.provider.buildQueryParams()
+        const params = ds.provider.buildQueryParams()
         should.exists(params.fields)
         params.fields.should.eql('field1,field2')
         done()
       })
     })
 
-    it('should use the datasource filter property when querying the endpoint', function (done) {
+    it('should use the datasource filter property when querying the endpoint', done => {
       new Datasource(
         Page('test', TestHelper.getPageSchema()),
         'rss',
         TestHelper.getPathOptions()
-      ).init(function (err, ds) {
+      ).init((err, ds) => {
         ds.schema.datasource.filter = { field: 'value' }
 
-        var params = ds.provider.buildQueryParams()
+        const params = ds.provider.buildQueryParams()
 
         should.exists(params.field)
         params.field.should.eql('value')
@@ -790,29 +765,27 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return data when no error is encountered', function (done) {
-      var host = 'http://www.feedforall.com'
-      var path = '/sample.xml'
+    it('should return data when no error is encountered', done => {
+      const host = 'http://www.feedforall.com'
+      const path = '/sample.xml'
 
-      var scope = nock(host)
+      const scope = nock(host)
         .get(path)
-        .replyWithFile(200, __dirname + '/../rss.xml')
+        .replyWithFile(200, `${__dirname}/../rss.xml`)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
-          var pages = TestHelper.setUpPages()
+          const pages = TestHelper.setUpPages()
           pages[0].datasources = ['rss']
 
           TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              'http://' +
-              config.get('server.host') +
-              ':' +
-              config.get('server.port')
-            var client = request(connectionString)
+            const connectionString = `http://${config.get(
+              'server.host'
+            )}:${config.get('server.port')}`
+            const client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + '?debug=json')
+              .get(`${pages[0].routes[0].path}?debug=json`)
               .end((err, res) => {
                 should.exist(res.body.rss)
                 should.exist(res.body.rss[0].title)
@@ -824,9 +797,9 @@ describe('Data Providers', function (done) {
     })
   })
 
-  describe('Markdown', function (done) {
-    it('should process frontmatter from the files in the datasource path', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+  describe('Markdown', done => {
+    it('should process frontmatter from the files in the datasource path', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -838,19 +811,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -877,8 +848,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return correct pagination metadata', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should return correct pagination metadata', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -890,19 +861,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -919,8 +888,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should use the datasource requestParams to filter the results', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should use the datasource requestParams to filter the results', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -932,17 +901,15 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
             pages[0].routes[0].path = '/test/:category?'
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client.get('/test/sports?debug=json').end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
@@ -963,8 +930,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return the number of records specified by the count property', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should return the number of records specified by the count property', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -976,19 +943,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
                   should.exist(res.body.markdown.results)
@@ -1001,8 +966,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should process files of a specified extension', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should process files of a specified extension', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -1015,19 +980,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
                   should.exist(res.body.markdown.results)
@@ -1043,8 +1006,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should return an error if the source folder does not exist', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should return an error if the source folder does not exist', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -1057,19 +1020,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
                   should.exist(res.body.markdown.errors)
@@ -1084,8 +1045,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should ignore malformed dates in a source file', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should ignore malformed dates in a source file', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -1098,19 +1059,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
                   should.exist(res.body.markdown.results)
@@ -1125,8 +1084,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should sort by the specified field in reverse order if set to -1', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should sort by the specified field in reverse order if set to -1', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -1142,19 +1101,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
                   should.exist(res.body.markdown.results)
@@ -1172,8 +1129,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should only return the selected fields as specified by the datasource', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should only return the selected fields as specified by the datasource', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -1187,19 +1144,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   Datasource.Datasource.prototype.loadDatasource.restore()
                   should.exist(res.body.markdown.results)
@@ -1218,8 +1173,8 @@ describe('Data Providers', function (done) {
       })
     })
 
-    it('should retrieve data from the cache if it is enabled', function (done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
+    it('should retrieve data from the cache if it is enabled', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
         'markdown'
       )
@@ -1237,19 +1192,17 @@ describe('Data Providers', function (done) {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true, debug: false }).then(
           () => {
-            var pages = TestHelper.setUpPages()
+            const pages = TestHelper.setUpPages()
             pages[0].datasources = ['markdown']
 
             TestHelper.startServer(pages).then(() => {
-              var connectionString =
-                'http://' +
-                config.get('server.host') +
-                ':' +
-                config.get('server.port')
-              var client = request(connectionString)
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
 
               client
-                .get(pages[0].routes[0].path + '?debug=json')
+                .get(`${pages[0].routes[0].path}?debug=json`)
                 .end((err, res) => {
                   res.body.markdown.results[0].attributes.title.should.eql(
                     'A Quick Brown Fox'
@@ -1264,7 +1217,7 @@ describe('Data Providers', function (done) {
                     })
 
                   client
-                    .get(pages[0].routes[0].path + '?debug=json')
+                    .get(`${pages[0].routes[0].path}?debug=json`)
                     .end((err, res) => {
                       Datasource.Datasource.prototype.loadDatasource.restore()
 

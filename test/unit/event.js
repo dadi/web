@@ -1,141 +1,144 @@
-var path = require('path')
-var should = require('should')
-var sinon = require('sinon')
-var e = require(__dirname + '/../../dadi/lib/event')
-var TestHelper = require(__dirname + '/../help')()
+const path = require('path')
+const should = require('should')
+const sinon = require('sinon')
+const e = require(`${__dirname}/../../dadi/lib/event`)
+const TestHelper = require(`${__dirname}/../help`)()
 
-describe('Event', function (done) {
-  before(function (done) {
+describe('Event', done => {
+  before(done => {
     TestHelper.resetConfig().then(() => {
       done()
     })
   })
 
-  it('should export constructor', function (done) {
+  it('should export constructor', done => {
     e.Event.should.be.Function
     done()
   })
 
-  it('should export a `loadEvent()` function', function (done) {
-    var pageName = 'test'
-    var eventName = 'car-reviews'
+  it('should export a `loadEvent()` function', done => {
+    const pageName = 'test'
+    const eventName = 'car-reviews'
     e(pageName, eventName, {}).loadEvent.should.be.Function
     done()
   })
 
-  it('should export a `run()` function', function (done) {
-    var pageName = 'test'
-    var eventName = 'car-reviews'
+  it('should export a `run()` function', done => {
+    const pageName = 'test'
+    const eventName = 'car-reviews'
     e(pageName, eventName, {}).run.should.be.Function
     done()
   })
 
-  it('should export function that returns an instance', function (done) {
+  it('should export function that returns an instance', done => {
     e.should.be.Function
-    var pageName = 'test'
-    var eventName = 'car-reviews'
+    const pageName = 'test'
+    const eventName = 'car-reviews'
     e(pageName, eventName, {}).should.be.an.instanceOf(e.Event)
     done()
   })
 
-  it('should attach name to event', function (done) {
-    var pageName = 'test'
-    var eventName = 'car-reviews'
+  it('should attach name to event', done => {
+    const pageName = 'test'
+    const eventName = 'car-reviews'
     e(pageName, eventName, {}).name.should.eql(eventName)
     done()
   })
 
-  it('should attach page to event', function (done) {
-    var pageName = 'test'
-    var eventName = 'car-reviews'
+  it('should attach page to event', done => {
+    const pageName = 'test'
+    const eventName = 'car-reviews'
     e(pageName, eventName, {}).page.should.eql(pageName)
     done()
   })
 
-  it('should attach default `options` to event', function (done) {
-    var pageName = 'test'
-    var eventName = 'car-reviews'
-    var newEvent = e(pageName, eventName, null)
+  it('should attach default `options` to event', done => {
+    const pageName = 'test'
+    const eventName = 'car-reviews'
+    const newEvent = e(pageName, eventName, null)
     newEvent.options.should.eql({})
     done()
   })
 
-  it('should attach specified `options` to event', function (done) {
-    var pageName = 'test'
-    var eventName = 'car-reviews'
-    var newEvent = e(pageName, eventName, { cache: true })
+  it('should attach specified `options` to event', done => {
+    const pageName = 'test'
+    const eventName = 'car-reviews'
+    const newEvent = e(pageName, eventName, { cache: true })
     newEvent.options.cache.should.be.true
     done()
   })
 
-  it.skip('should throw error if specified page name is not specified', function (done) {
-    var pageName = null
-    var eventName = 'car-reviews'
+  it.skip('should throw error if specified page name is not specified', done => {
+    const pageName = null
+    const eventName = 'car-reviews'
 
-    should.throws(function () {
+    should.throws(() => {
       e(pageName, eventName, {})
     }, Error)
 
     done()
   })
 
-  it('should run the attached event', function (done) {
-    var pageName = 'test'
-    var eventName = 'test_event'
-    var newEvent = e(pageName, eventName, {
+  it('should run the attached event', done => {
+    const pageName = 'test'
+    const eventName = 'test_event'
+    const newEvent = e(pageName, eventName, {
       eventPath: path.join(__dirname, '../app/events')
     })
 
-    var data = { test: true }
-    newEvent.run({}, {}, data, function (err, result) {
+    const data = { test: true }
+    newEvent.run({}, {}, data, (err, result) => {
       result.should.eql({ test: true, run: true })
       done()
     })
   })
 
-  it('should handle errors gracefully when they occur in the attached event', function (done) {
-    var pageName = 'test'
-    var eventName = 'test_event_error'
-    var newEvent = e(pageName, eventName, {
+  it('should handle errors gracefully when they occur in the attached event', done => {
+    const pageName = 'test'
+    const eventName = 'test_event_error'
+    const newEvent = e(pageName, eventName, {
       eventPath: path.join(__dirname, '../app/events')
     })
 
-    var data = { test: true }
+    const data = { test: true }
 
-    var req = {
+    const req = {
       url: '/test',
       params: { one: 1 }
     }
 
-    newEvent.run(req, {}, data, function (err, result) {
+    newEvent.run(req, {}, data, (err, result) => {
       should.not.exist(err)
       should.not.exist(result)
       done()
     })
   })
 
-  it('should load the referenced event file from the filesystem', function (done) {
-    var pageName = 'test'
-    var eventName = 'test_event'
-    var newEvent = e(pageName, eventName, {
+  it('should load the referenced event file from the filesystem', done => {
+    const pageName = 'test'
+    const eventName = 'test_event'
+    const newEvent = e(pageName, eventName, {
       eventPath: path.join(__dirname, '../app/events')
     })
 
-    var file = newEvent.loadEvent()
-    var expected = require(path.join(__dirname, '../app/events/test_event.js'))
+    const file = newEvent.loadEvent()
+    const expected = require(path.join(
+      __dirname,
+      '../app/events/test_event.js'
+    ))
 
     file.should.eql(expected)
     done()
   })
 
-  it("should throw an error if the referenced event file can't be found", function (done) {
-    var pageName = 'test'
-    var eventName = 'test_event_xxx'
-    var newEvent = e(pageName, eventName, {
+  it('should throw an error if the referenced event file can not be found', done => {
+    const pageName = 'test'
+    const eventName = 'test_event_xxx'
+    const newEvent = e(pageName, eventName, {
       eventPath: path.join(__dirname, '../app/events')
     })
 
-    should.throws(function () {
+    should.throws(() => {
       newEvent.loadEvent()
     })
     done()

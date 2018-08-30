@@ -1,11 +1,11 @@
-var fs = require('fs')
-var nock = require('nock')
-var request = require('supertest')
-var path = require('path')
-var should = require('should')
-var sinon = require('sinon')
+const fs = require('fs')
+const nock = require('nock')
+const request = require('supertest')
+const path = require('path')
+const should = require('should')
+const sinon = require('sinon')
 
-var helpers = require(__dirname + '/../../dadi/lib/help')
+const helpers = require(`${__dirname}/../../dadi/lib/help`)
 
 describe('Help', done => {
   describe('Timer', () => {
@@ -14,12 +14,12 @@ describe('Help', done => {
         return true
       })
 
-      var key = 'load'
+      const key = 'load'
 
       helpers.timer.start(key)
       helpers.timer.stop(key)
 
-      var stats = helpers.timer.getStats()
+      const stats = helpers.timer.getStats()
 
       helpers.timer.isDebugEnabled.restore()
 
@@ -29,7 +29,7 @@ describe('Help', done => {
   })
 
   describe('File system helpers', () => {
-    var mockStatSync = path => {
+    const mockStatSync = path => {
       return {
         isDirectory: () => path.indexOf('.') === -1,
         isFile: () => path.indexOf('.') !== -1
@@ -38,12 +38,12 @@ describe('Help', done => {
 
     describe('readDirectory', () => {
       it('returns an empty array if the directory is not found, or the read operation fails, and `failIfNotFound` is falsy', done => {
-        var directory = 'some/directory'
-        var fsReadError = new Error('Some error')
+        const directory = 'some/directory'
+        const fsReadError = new Error('Some error')
 
         fsReadError.code = 'ENOENT'
 
-        var mockReaddir = sinon.stub(fs, 'readdir').yields(fsReadError)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(fsReadError)
 
         helpers.readDirectory(directory, {}).then(response => {
           response.should.be.Array
@@ -56,12 +56,12 @@ describe('Help', done => {
       })
 
       it('throws an error if the directory is not found, or the read operation fails, and `failIfNotFound` is truthy', done => {
-        var directory = 'some/directory'
-        var fsReadError = new Error('Some error')
+        const directory = 'some/directory'
+        const fsReadError = new Error('Some error')
 
         fsReadError.code = 'ENOENT'
 
-        var mockReaddir = sinon.stub(fs, 'readdir').yields(fsReadError)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(fsReadError)
 
         helpers
           .readDirectory(directory, {
@@ -78,11 +78,11 @@ describe('Help', done => {
       })
 
       it('lists all files in a directory, returning a list of full paths', done => {
-        var directory = 'some/directory'
-        var files = ['directory1', 'file1.js', 'file2.png']
+        const directory = 'some/directory'
+        const files = ['directory1', 'file1.js', 'file2.png']
 
-        var mockReaddir = sinon.stub(fs, 'readdir').yields(null, files)
-        var mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(null, files)
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
 
         helpers.readDirectory(directory, {}).then(response => {
           response.should.deepEqual([
@@ -99,8 +99,8 @@ describe('Help', done => {
       })
 
       it('lists all files in a directory, filtered by extension, returning a list of full paths', done => {
-        var directory = 'some/directory'
-        var files = [
+        const directory = 'some/directory'
+        const files = [
           'directory1',
           'file1.js',
           'file2.png',
@@ -108,8 +108,8 @@ describe('Help', done => {
           'file4.txt'
         ]
 
-        var mockReaddir = sinon.stub(fs, 'readdir').yields(null, files)
-        var mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(null, files)
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
 
         helpers
           .readDirectory(directory, {
@@ -130,18 +130,18 @@ describe('Help', done => {
       })
 
       it('lists all files in a directory and searches sub-directories recursively, returning a list of full paths', done => {
-        var directory = 'some/directory'
-        var filesLevel1 = ['directory1', 'file1.js', 'file2.png']
-        var filesLevel2 = ['file3.js']
+        const directory = 'some/directory'
+        const filesLevel1 = ['directory1', 'file1.js', 'file2.png']
+        const filesLevel2 = ['file3.js']
 
-        var mockReaddir = sinon
+        const mockReaddir = sinon
           .stub(fs, 'readdir')
           .onCall(0)
           .yields(null, filesLevel1)
           .onCall(1)
           .yields(null, filesLevel2)
 
-        var mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
 
         helpers
           .readDirectory(directory, {
@@ -164,14 +164,14 @@ describe('Help', done => {
 
     describe('readFiles', () => {
       it('executes a callback for each file in a given list of full paths with the path as a parameter', done => {
-        var files = [
+        const files = [
           'some/directory/sub-directory1',
           'some/directory/sub-directory1/file1.js',
           'some/directory/file2.js',
           'some/directory/file3.png'
         ]
-        var mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
-        var callbackFn = sinon.spy()
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
+        const callbackFn = sinon.spy()
 
         helpers
           .readFiles(files, {
@@ -190,14 +190,14 @@ describe('Help', done => {
       })
 
       it('executes a callback for each file in a given list of full paths, filtered by extension, with the path as a parameter', done => {
-        var files = [
+        const files = [
           'some/directory/sub-directory1',
           'some/directory/sub-directory1/file1.js',
           'some/directory/file2.js',
           'some/directory/file3.png'
         ]
-        var mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
-        var callbackFn = sinon.spy()
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
+        const callbackFn = sinon.spy()
 
         helpers
           .readFiles(files, {
@@ -215,7 +215,7 @@ describe('Help', done => {
       })
 
       it('rejects if the callback is missing or is invalid', done => {
-        var files = ['some/directory/sub-directory1']
+        const files = ['some/directory/sub-directory1']
 
         helpers
           .readFiles(files, {

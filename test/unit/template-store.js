@@ -5,10 +5,10 @@ const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
 
-const helpers = require(__dirname + '/../../dadi/lib/help')
-const TemplateStore = require(__dirname + '/../../dadi/lib/templates/store')
+const helpers = require(`${__dirname}/../../dadi/lib/help`)
+const TemplateStore = require(`${__dirname}/../../dadi/lib/templates/store`)
   .TemplateStore
-const testHelpers = require(__dirname + '/../help')()
+const testHelpers = require(`${__dirname}/../help`)()
 
 let additionalFiles
 let directoryListing
@@ -50,8 +50,8 @@ beforeEach(done => {
   })
 })
 
-describe('Template store', function (done) {
-  describe('Validation', function (done) {
+describe('Template store', done => {
+  describe('Validation', done => {
     it('throw if engine is missing a metadata block', done => {
       const fakeFactory = {}
 
@@ -97,7 +97,8 @@ describe('Template store', function (done) {
         }
       }
 
-      let err1, err2
+      let err1
+      let err2
 
       try {
         new TemplateStore().validateEngine(fakeFactory1, {})
@@ -133,7 +134,8 @@ describe('Template store', function (done) {
         getCore: 'notAFunction'
       }
 
-      let err1, err2
+      let err1
+      let err2
 
       try {
         new TemplateStore().validateEngine(fakeFactory, fakeEngine1)
@@ -169,7 +171,8 @@ describe('Template store', function (done) {
         getInfo: 'notAFunction'
       }
 
-      let err1, err2
+      let err1
+      let err2
 
       try {
         new TemplateStore().validateEngine(fakeFactory, fakeEngine1)
@@ -205,7 +208,8 @@ describe('Template store', function (done) {
         initialise: 'notAFunction'
       }
 
-      let err1, err2
+      let err1
+      let err2
 
       try {
         new TemplateStore().validateEngine(fakeFactory, fakeEngine1)
@@ -241,7 +245,8 @@ describe('Template store', function (done) {
         register: 'notAFunction'
       }
 
-      let err1, err2
+      let err1
+      let err2
 
       try {
         new TemplateStore().validateEngine(fakeFactory, fakeEngine1)
@@ -277,7 +282,8 @@ describe('Template store', function (done) {
         render: 'notAFunction'
       }
 
-      let err1, err2
+      let err1
+      let err2
 
       try {
         new TemplateStore().validateEngine(fakeFactory, fakeEngine1)
@@ -363,17 +369,17 @@ describe('Template store', function (done) {
     })
 
     it('should instantiate the engine and call its `initialise` and `register` methods', done => {
-      var mockInitialiseFn = sinon.stub()
-      var mockRegisterFn = sinon.stub()
+      const mockInitialiseFn = sinon.stub()
+      const mockRegisterFn = sinon.stub()
 
-      var fakeEngine = () => {
-        var Engine = function () {}
+      const fakeEngine = () => {
+        const Engine = () => {}
 
         Engine.prototype.initialise = mockInitialiseFn
-        Engine.prototype.getCore = function () {}
-        Engine.prototype.getInfo = function () {}
+        Engine.prototype.getCore = () => {}
+        Engine.prototype.getInfo = () => {}
         Engine.prototype.register = mockRegisterFn
-        Engine.prototype.render = function () {}
+        Engine.prototype.render = () => {}
 
         return Engine
       }
@@ -383,7 +389,7 @@ describe('Template store', function (done) {
         handle: 'es6'
       }
 
-      var templateData = {
+      const templateData = {
         data: 'This is the content of the template',
         extension: '.js',
         name: 'fakeTemplate1',
@@ -415,7 +421,7 @@ describe('Template store', function (done) {
         return Promise.resolve(directoryListing)
       })
 
-      var mockReadFile = sinon
+      const mockReadFile = sinon
         .stub(fs, 'readFile')
         .yields(null, 'File contents')
 
@@ -430,8 +436,8 @@ describe('Template store', function (done) {
           mockReadFile.getCall(index).args[0].should.eql(page.file)
         })
 
-        var expectedTemplatesLoaded = pages.map(page => {
-          var extension = path.extname(page.file)
+        const expectedTemplatesLoaded = pages.map(page => {
+          const extension = path.extname(page.file)
 
           return path
             .relative(config.get('paths.pages'), page.file)

@@ -4,35 +4,36 @@ const path = require('path')
 const should = require('should')
 const request = require('supertest')
 
-const api = require(__dirname + '/../../dadi/lib/api')
-const Controller = require(__dirname + '/../../dadi/lib/controller')
-const Datasource = require(__dirname + '/../../dadi/lib/datasource')
-const help = require(__dirname + '/../../dadi/lib/help')
-const Page = require(__dirname + '/../../dadi/lib/page')
-const Server = require(__dirname + '/../../dadi/lib')
-const TestHelper = require(__dirname + '/../help')()
+const api = require(`${__dirname}/../../dadi/lib/api`)
+const Controller = require(`${__dirname}/../../dadi/lib/controller`)
+const Datasource = require(`${__dirname}/../../dadi/lib/datasource`)
+const help = require(`${__dirname}/../../dadi/lib/help`)
+const Page = require(`${__dirname}/../../dadi/lib/page`)
+const Server = require(`${__dirname}/../../dadi/lib`)
+const TestHelper = require(`${__dirname}/../help`)()
 
 const config = require(path.resolve(path.join(__dirname, '/../../config')))
 let controller
 
-const secureClientHost =
-  'https://' + config.get('server.host') + ':' + config.get('server.port')
+const secureClientHost = `https://${config.get('server.host')}:${config.get(
+  'server.port'
+)}`
 const secureClient = request(secureClientHost)
 
-const connectionString =
-  'http://' + config.get('server.host') + ':' + config.get('server.port')
+const connectionString = `http://${config.get('server.host')}:${config.get(
+  'server.port'
+)}`
 
 let scope
 
 // Ignore errors around self-assigned SSL certs
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
-describe('Upload', function (done) {
-  beforeEach(function (done) {
+describe('Upload', done => {
+  beforeEach(done => {
     TestHelper.clearCache()
 
-    const apiHost =
-      'http://' + config.get('api.host') + ':' + config.get('api.port')
+    const apiHost = `http://${config.get('api.host')}:${config.get('api.port')}`
     scope = nock(apiHost)
       .post('/token')
       .times(5)
@@ -56,13 +57,13 @@ describe('Upload', function (done) {
     })
   })
 
-  afterEach(function (done) {
+  afterEach(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.stopServer(done)
     })
   })
 
-  after(function (done) {
+  after(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.stopServer(done)
     })
@@ -192,7 +193,7 @@ describe('Upload', function (done) {
             .post('/allowed-upload-route/')
             .set(
               'Cookie',
-              '_csrf=' + TestHelper.extractCookieValue(res, '_csrf')
+              `_csrf=${TestHelper.extractCookieValue(res, '_csrf')}`
             )
             .field('_csrf', token.toString())
             .attach('avatar', './test/app/images/rosie.png')
@@ -238,11 +239,10 @@ describe('Upload', function (done) {
       }
     }
 
-    const expected =
-      require('crypto')
-        .createHmac('sha1', 'abcdef')
-        .update('rosie.png')
-        .digest('hex') + '.png'
+    const expected = `${require('crypto')
+      .createHmac('sha1', 'abcdef')
+      .update('rosie.png')
+      .digest('hex')}.png`
 
     TestHelper.updateConfig(uploadConfig).then(() => {
       TestHelper.startServer(pages).then(() => {

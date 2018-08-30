@@ -132,7 +132,7 @@ TestHelper.prototype.shouldSetCookie = function (name) {
 }
 
 /**
- * Test that the response doesn't have the specified header
+ * Test that the response does not have the specified header
  */
 TestHelper.prototype.shouldNotHaveHeader = function (header) {
   return function (res) {
