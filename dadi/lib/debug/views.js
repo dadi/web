@@ -32,34 +32,34 @@ module.exports.debug = function (debug) {
   <nav>
     <ul>
       <li><a href="?debug" ${
-        debug.mode === 'main' ? `class="active"` : ''
-      }>View</a></li>
+  debug.mode === 'main' ? `class="active"` : ''
+}>View</a></li>
       <li><a href="?debug=data" ${
-        debug.mode === 'data' ? `class="active"` : ''
-      }>Data</a></li>
+  debug.mode === 'data' ? `class="active"` : ''
+}>Data</a></li>
       <li><a href="?debug=page" ${
-        debug.mode === 'page' ? `class="active"` : ''
-      }>Page</a></li>
+  debug.mode === 'page' ? `class="active"` : ''
+}>Page</a></li>
       <li><a href="?debug=ds" ${
-        debug.mode === 'ds' ? `class="active"` : ''
-      }>Datasources</a></li>
+  debug.mode === 'ds' ? `class="active"` : ''
+}>Datasources</a></li>
       <li><a href="?debug=result" ${
-        debug.mode === 'result' ? `class="active"` : ''
-      }>Result</a></li>
+  debug.mode === 'result' ? `class="active"` : ''
+}>Result</a></li>
       <li><a href="?debug=stats" ${
-        debug.mode === 'stats' ? `class="active"` : ''
-      }>Stats</a></li>
+  debug.mode === 'stats' ? `class="active"` : ''
+}>Stats</a></li>
       <li><a href="?debug=route" ${
-        debug.mode === 'route' ? `class="active"` : ''
-      }>Route</a></li>
+  debug.mode === 'route' ? `class="active"` : ''
+}>Route</a></li>
       <li><a href="?debug=headers" ${
-        debug.mode === 'headers' ? `class="active"` : ''
-      }>Headers</a></li>
+  debug.mode === 'headers' ? `class="active"` : ''
+}>Headers</a></li>
     </ul>
     <ol>
       <li><a href="https://github.com/nodejs/Release#release-schedule">Node.js ${Number(
-        process.version.match(/^v(\d+\.\d+)/)[1]
-      )}</a></li>
+    process.version.match(/^v(\d+\.\d+)/)[1]
+  )}</a></li>
       <li><a href="https://dadi.cloud/web">v.${help.getVersion()}</a></li>
     </ol>
   </nav>
@@ -69,27 +69,27 @@ module.exports.debug = function (debug) {
       (i, idx) => `
     <div class="view">   
       ${
-        i.raw
-          ? `${i.raw}`
-          : `  
+  i.raw
+    ? `${i.raw}`
+    : `  
         <div class="info">${i.title}</div><div class="code" id="${i.id}">${
-              i.output ? encode(i.output) : ''
-            }</div>
+  i.output ? encode(i.output) : ''
+}</div>
       `
-      } 
+} 
 
       <script type="text/javascript">
         ${
-          i.json
-            ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, ${encode(
-                i.json
-              )}); ${i.expand ? `data.expandAll();` : ''}`
-            : ''
-        }
+  i.json
+    ? `var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, ${encode(
+      i.json
+    )}); ${i.expand ? `data.expandAll();` : ''}`
+    : ''
+}
 
         ${
-          i.output
-            ? `
+  i.output
+    ? `
           var options = {
             readOnly: true,
             tabSize: 2,
@@ -103,8 +103,8 @@ module.exports.debug = function (debug) {
 
           ace.edit("${i.id}").setOptions(options);
         `
-            : ''
-        }
+    : ''
+}
       </script>
     </div>
   `

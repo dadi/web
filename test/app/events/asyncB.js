@@ -1,4 +1,4 @@
-var Event = function(req, res, data, callback) {
+var Event = function (req, res, data, callback) {
   setTimeout(() => {
     data = `A said: "${data.asyncA}"`
 
@@ -6,7 +6,7 @@ var Event = function(req, res, data, callback) {
   }, 200)
 }
 
-module.exports = function(req, res, data, callback) {
+module.exports = function (req, res, data, callback) {
   return new Event(req, res, data, callback)
 }
 

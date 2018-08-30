@@ -1,57 +1,55 @@
-var assert = require("assert")
-var fs = require("fs")
-var nock = require("nock")
-var path = require("path")
-var uuid = require("uuid")
+var assert = require('assert')
+var fs = require('fs')
+var nock = require('nock')
+var path = require('path')
+var uuid = require('uuid')
 
-var api = require(__dirname + "/../dadi/lib/api")
-var Controller = require(__dirname + "/../dadi/lib/controller")
-var Page = require(__dirname + "/../dadi/lib/page")
-var Server = require(__dirname + "/../dadi/lib")
+var api = require(__dirname + '/../dadi/lib/api')
+var Controller = require(__dirname + '/../dadi/lib/controller')
+var Page = require(__dirname + '/../dadi/lib/page')
+var Server = require(__dirname + '/../dadi/lib')
 
 var serverOptions = {
-  engines: [require("web-es6-templates")]
+  engines: [require('web-es6-templates')]
 }
 
-var Server = require(__dirname + "/../dadi/lib")(serverOptions)
+var Server = require(__dirname + '/../dadi/lib')(serverOptions)
 
 var config
 var testConfigString
-var configKey = path.resolve(path.join(__dirname, "/../config"))
+var configKey = path.resolve(path.join(__dirname, '/../config'))
 
 /**
  * Return the Set-Cookie header
  */
-function cookie(res) {
-  var setCookie = res.headers["set-cookie"]
+function cookie (res) {
+  var setCookie = res.headers['set-cookie']
   return (setCookie && setCookie[0]) || undefined
 }
 
-var TestHelper = function() {
+var TestHelper = function () {
   config = require(configKey)
   this.originalConfigString = fs
-    .readFileSync(config.configPath() + ".sample")
+    .readFileSync(config.configPath() + '.sample')
     .toString()
   // console.log(this)
   config.loadFile(path.resolve(config.configPath()))
 }
 
-TestHelper.prototype.setupApiIntercepts = function() {
-  var host = "http://" + config.get('api').host + ":" + config.get('api').port
+TestHelper.prototype.setupApiIntercepts = function () {
+  var host = 'http://' + config.get('api').host + ':' + config.get('api').port
 
   var apiTestScope = nock(host)
-    .get("/")
+    .get('/')
     .reply(401)
 
   var authScope1 = nock(host)
-    .post("/token")
+    .post('/token')
     .times(10)
     .reply(200, { accessToken: uuid.v4() })
-
-  return
 }
 
-TestHelper.prototype.disableApiConfig = function() {
+TestHelper.prototype.disableApiConfig = function () {
   return new Promise((resolve, reject) => {
     var apiConfig = {
       api: {
@@ -60,35 +58,35 @@ TestHelper.prototype.disableApiConfig = function() {
     }
 
     this.updateConfig(apiConfig).then(() => {
-      return resolve("")
+      return resolve('')
     })
   })
 }
 
-TestHelper.prototype.enableApiConfig = function() {
+TestHelper.prototype.enableApiConfig = function () {
   return new Promise((resolve, reject) => {
     var apiConfig = {
       api: {
         enabled: true,
-        host: "127.0.0.1",
+        host: '127.0.0.1',
         port: 3000
       }
     }
 
     this.updateConfig(apiConfig).then(() => {
-      return resolve("")
+      return resolve('')
     })
   })
 }
 
-TestHelper.prototype.getConfig = function() {
+TestHelper.prototype.getConfig = function () {
   return new Promise((resolve, reject) => {
     var originalConfig = JSON.parse(this.originalConfigString)
     return resolve(Object.assign({}, originalConfig))
   })
 }
 
-TestHelper.prototype.updateConfig = function(configBlock) {
+TestHelper.prototype.updateConfig = function (configBlock) {
   return new Promise((resolve, reject) => {
     var originalConfig = JSON.parse(this.originalConfigString)
     var newConfig = Object.assign(originalConfig, configBlock)
@@ -100,7 +98,7 @@ TestHelper.prototype.updateConfig = function(configBlock) {
   })
 }
 
-TestHelper.prototype.resetConfig = function() {
+TestHelper.prototype.resetConfig = function () {
   return new Promise((resolve, reject) => {
     fs.writeFileSync(config.configPath(), this.originalConfigString)
     config.loadFile(path.resolve(config.configPath()))
@@ -109,47 +107,47 @@ TestHelper.prototype.resetConfig = function() {
   })
 }
 
-TestHelper.prototype.extractCookieValue = function(res, cookieName) {
-  var cookies = res.headers["set-cookie"]
+TestHelper.prototype.extractCookieValue = function (res, cookieName) {
+  var cookies = res.headers['set-cookie']
   var cookie = cookies.find(cookie => {
-    return cookie.startsWith(cookieName + "=")
+    return cookie.startsWith(cookieName + '=')
   })
-  var data = cookie.split(";")[0]
-  var value = data.split("=")[1]
+  var data = cookie.split(';')[0]
+  var value = data.split('=')[1]
   return value
 }
 
 /**
  * Tests that the response has the Set-Cookie header equal to "name"
  */
-TestHelper.prototype.shouldSetCookie = function(name) {
-  return function(res) {
-    //console.log("***")
-    //console.log("headers:", res.headers)
-    //console.log("***")
+TestHelper.prototype.shouldSetCookie = function (name) {
+  return function (res) {
+    // console.log("***")
+    // console.log("headers:", res.headers)
+    // console.log("***")
     var header = cookie(res)
-    assert.ok(header, "should have a cookie header")
-    assert.equal(header.split("=")[0], name, "should set cookie " + name)
+    assert.ok(header, 'should have a cookie header')
+    assert.equal(header.split('=')[0], name, 'should set cookie ' + name)
   }
 }
 
 /**
  * Test that the response doesn't have the specified header
  */
-TestHelper.prototype.shouldNotHaveHeader = function(header) {
-  return function(res) {
+TestHelper.prototype.shouldNotHaveHeader = function (header) {
+  return function (res) {
     assert.ok(
       !(header.toLowerCase() in res.headers),
-      "should not have " + header + " header"
+      'should not have ' + header + ' header'
     )
   }
 }
 
-TestHelper.prototype.setUpPages = function() {
+TestHelper.prototype.setUpPages = function () {
   // create page 1
-  var page1 = Page("page1", this.getPageSchema())
-  page1.template = "test.js"
-  page1.routes[0].path = "/test"
+  var page1 = Page('page1', this.getPageSchema())
+  page1.template = 'test.js'
+  page1.routes[0].path = '/test'
   page1.datasources = []
   page1.events = []
   page1.settings.cache = false
@@ -160,11 +158,11 @@ TestHelper.prototype.setUpPages = function() {
   return pages
 }
 
-TestHelper.prototype.setUp404Page = function() {
-  var page = Page("404", this.getPageSchema())
-  page.name = "404"
-  page.template = "404.js"
-  page.routes[0].path = "/404"
+TestHelper.prototype.setUp404Page = function () {
+  var page = Page('404', this.getPageSchema())
+  page.name = '404'
+  page.template = '404.js'
+  page.routes[0].path = '/404'
   page.datasources = []
   page.events = []
   page.settings.cache = false
@@ -175,7 +173,7 @@ TestHelper.prototype.setUp404Page = function() {
   return pages
 }
 
-TestHelper.prototype.newPage = function(
+TestHelper.prototype.newPage = function (
   name,
   path,
   template,
@@ -194,7 +192,7 @@ TestHelper.prototype.newPage = function(
   return pages
 }
 
-TestHelper.prototype.startServer = function(pages) {
+TestHelper.prototype.startServer = function (pages) {
   return new Promise((resolve, reject) => {
     if (pages !== null && !Array.isArray(pages)) {
       pages = [pages]
@@ -211,95 +209,95 @@ TestHelper.prototype.startServer = function(pages) {
 
     Server.start(() => {
       var idx = 0
-      //setTimeout(() => {
-        pages.forEach(page => {
-          var controller = Controller(page, options)
+      // setTimeout(() => {
+      pages.forEach(page => {
+        var controller = Controller(page, options)
 
-          Server.addComponent(
-            {
-              host: "",
-              key: page.key,
-              routes: page.routes,
-              component: controller
-            },
-            false
-          )
+        Server.addComponent(
+          {
+            host: '',
+            key: page.key,
+            routes: page.routes,
+            component: controller
+          },
+          false
+        )
 
-          if (++idx === pages.length) {
-            return resolve(Server.compile(options).then(() => Server))
-          }
-        })
-      //}, 100)
+        if (++idx === pages.length) {
+          return resolve(Server.compile(options).then(() => Server))
+        }
+      })
+      // }, 100)
     })
   })
 }
 
-TestHelper.prototype.stopServer = function(done) {
+TestHelper.prototype.stopServer = function (done) {
   if (!Server.readyState) return done()
-  Server.stop(function() {
-    //setTimeout(function() {
-      done()
-    //}, 100)
+  Server.stop(function () {
+    // setTimeout(function() {
+    done()
+    // }, 100)
   })
 }
 
-TestHelper.prototype.getPageSchema = function() {
+TestHelper.prototype.getPageSchema = function () {
   return {
     page: {
-      name: "Car Reviews",
-      description: "A collection of car reviews.",
-      language: "en"
+      name: 'Car Reviews',
+      description: 'A collection of car reviews.',
+      language: 'en'
     },
     settings: {
       cache: true
     },
     routes: [
       {
-        path: "/car-reviews/:make/:model"
+        path: '/car-reviews/:make/:model'
       }
     ],
-    contentType: "text/html",
-    template: "car-reviews.js",
-    datasources: ["car_makes"],
-    events: ["car-reviews"]
+    contentType: 'text/html',
+    template: 'car-reviews.js',
+    datasources: ['car_makes'],
+    events: ['car-reviews']
   }
 }
 
 /**
  * Return the default set of paths, where events and datasources are located
  */
-TestHelper.prototype.getPathOptions = function() {
+TestHelper.prototype.getPathOptions = function () {
   return {
-    datasourcePath: __dirname + "/../test/app/datasources",
-    pagePath: __dirname + "/../test/app/pages",
-    partialPath: __dirname + "/../test/app/partials",
-    eventPath: __dirname + "/../test/app/events",
-    routesPath: __dirname + "/../test/app/routes",
-    publicPath: __dirname + "/../test/app/public"
+    datasourcePath: __dirname + '/../test/app/datasources',
+    pagePath: __dirname + '/../test/app/pages',
+    partialPath: __dirname + '/../test/app/partials',
+    eventPath: __dirname + '/../test/app/events',
+    routesPath: __dirname + '/../test/app/routes',
+    publicPath: __dirname + '/../test/app/public'
   }
 }
 
-TestHelper.prototype.getSchemaFromFile = function(
+TestHelper.prototype.getSchemaFromFile = function (
   path,
   name,
   propertyToDelete
 ) {
-  var filepath = path + "/" + name + ".json"
+  var filepath = path + '/' + name + '.json'
   var schema
   if (fs.existsSync(filepath)) {
-    schema = JSON.parse(fs.readFileSync(filepath, { encoding: "utf-8" }))
-    if (typeof propertyToDelete !== "undefined") {
+    schema = JSON.parse(fs.readFileSync(filepath, { encoding: 'utf-8' }))
+    if (typeof propertyToDelete !== 'undefined') {
       delete schema.datasource[propertyToDelete]
     }
     return schema
   }
 }
 
-TestHelper.prototype.clearCache = function() {
-  var deleteFolderRecursive = function(filepath) {
+TestHelper.prototype.clearCache = function () {
+  var deleteFolderRecursive = function (filepath) {
     if (fs.existsSync(filepath) && fs.lstatSync(filepath).isDirectory()) {
-      fs.readdirSync(filepath).forEach(function(file, index) {
-        var curPath = filepath + "/" + file
+      fs.readdirSync(filepath).forEach(function (file, index) {
+        var curPath = filepath + '/' + file
         if (fs.lstatSync(curPath).isDirectory()) {
           // recurse
           deleteFolderRecursive(curPath)
@@ -316,17 +314,17 @@ TestHelper.prototype.clearCache = function() {
 
   // for each directory in the cache folder, remove all files then
   // delete the folder
-  var cachePath = path.resolve(config.get("caching.directory.path"))
-  fs.stat(cachePath, function(err, stats) {
+  var cachePath = path.resolve(config.get('caching.directory.path'))
+  fs.stat(cachePath, function (err, stats) {
     if (err) return
-    fs.readdirSync(cachePath).forEach(function(dirname) {
+    fs.readdirSync(cachePath).forEach(function (dirname) {
       deleteFolderRecursive(path.join(cachePath, dirname))
     })
   })
 }
 
 var instance
-module.exports = function() {
+module.exports = function () {
   if (!instance) {
     instance = new TestHelper()
   }
@@ -339,5 +337,5 @@ module.exports.Server = Server
 module.exports.getNewServer = options => {
   options = options || serverOptions
 
-  return require(__dirname + "/../dadi/lib")(options)
+  return require(__dirname + '/../dadi/lib')(options)
 }

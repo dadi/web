@@ -1,42 +1,42 @@
-var nock = require("nock")
-var path = require("path")
-var request = require("supertest")
-var should = require("should")
-var sinon = require("sinon")
+var nock = require('nock')
+var path = require('path')
+var request = require('supertest')
+var should = require('should')
+var sinon = require('sinon')
 
-var api = require(__dirname + "/../../dadi/lib/api")
-var cache = require(__dirname + "/../../dadi/lib/cache")
-var Controller = require(__dirname + "/../../dadi/lib/controller")
-var datasource = require(__dirname + "/../../dadi/lib/datasource")
-var page = require(__dirname + "/../../dadi/lib/page")
-var TestHelper = require(__dirname + "/../help")()
-var Server = require(__dirname + "/../../dadi/lib")
-var config = require(path.resolve(path.join(__dirname, "/../../config")))
+var api = require(__dirname + '/../../dadi/lib/api')
+var cache = require(__dirname + '/../../dadi/lib/cache')
+var Controller = require(__dirname + '/../../dadi/lib/controller')
+var datasource = require(__dirname + '/../../dadi/lib/datasource')
+var page = require(__dirname + '/../../dadi/lib/page')
+var TestHelper = require(__dirname + '/../help')()
+var Server = require(__dirname + '/../../dadi/lib')
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
 var secureClientHost =
-  "https://" + config.get("server.host") + ":" + config.get("server.port")
+  'https://' + config.get('server.host') + ':' + config.get('server.port')
 var secureClient = request(secureClientHost)
 var scope
 
-describe("Application", function() {
-  beforeEach(function(done) {
+describe('Application', function () {
+  beforeEach(function (done) {
     TestHelper.clearCache()
 
     var apiHost =
-      "http://" + config.get('api').host + ":" + config.get('api').port
-      
+      'http://' + config.get('api').host + ':' + config.get('api').port
+
     scope = nock(apiHost)
-      .post("/token")
+      .post('/token')
       .times(5)
-      .reply(200, { accessToken: "xx" })
+      .reply(200, { accessToken: 'xx' })
 
     var scope1 = nock(apiHost)
-      .get("/")
+      .get('/')
       .reply(200)
 
     var configUpdate = {
       server: {
-        host: "127.0.0.1",
+        host: '127.0.0.1',
         port: 5000
       }
     }
@@ -48,14 +48,14 @@ describe("Application", function() {
     })
   })
 
-  afterEach(function(done) {
+  afterEach(function (done) {
     TestHelper.resetConfig().then(() => {
       TestHelper.stopServer(done)
     })
   })
 
-  after(function(done) {
-    delete require.cache[path.resolve(path.join(__dirname, "/../../config"))]
+  after(function (done) {
+    delete require.cache[path.resolve(path.join(__dirname, '/../../config'))]
 
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
@@ -64,38 +64,39 @@ describe("Application", function() {
     })
   })
 
-  describe("Cache", function() {
-    it("should return MISS when not found in cache", function(done) {
+  describe('Cache', function () {
+    it('should return MISS when not found in cache', function (done) {
       var clientHost =
-        "http://" + config.get("server.host") + ":" + config.get("server.port")
+        'http://' + config.get('server.host') + ':' + config.get('server.port')
       var apiHost =
-        "http://" + config.get('api').host + ":" + config.get('api').port
-      
+        'http://' + config.get('api').host + ':' + config.get('api').port
+
       var client = request(clientHost)
-      var endpoint1 = "/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D"
+      var endpoint1 =
+        '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D'
       var scope2 = nock(apiHost)
         .get(endpoint1)
-        .reply(200, JSON.stringify({ results: [{ name: "Crime" }] }))
+        .reply(200, JSON.stringify({ results: [{ name: 'Crime' }] }))
 
       // create page 1
-      var page1 = page("page1", TestHelper.getPageSchema())
-      page1.datasources = ["categories"]
-      page1.template = "test.js"
-      page1.routes[0].path = "/categories/:category"
+      var page1 = page('page1', TestHelper.getPageSchema())
+      page1.datasources = ['categories']
+      page1.template = 'test.js'
+      page1.routes[0].path = '/categories/:category'
       page1.events = []
 
       var pages = []
       pages.push(page1)
 
-      //console.log(pages)
+      // console.log(pages)
 
-      TestHelper.enableApiConfig().then(() => {  
+      TestHelper.enableApiConfig().then(() => {
         TestHelper.startServer(pages).then(() => {
-          client.get("/categories/Crime").end((err, res) => {
+          client.get('/categories/Crime').end((err, res) => {
             if (err) return done(err)
-            should.exist(res.headers["x-cache"])
-            res.headers["x-cache"].should.eql("MISS")
-            res.text.should.eql("<h3>Crime</h3>")
+            should.exist(res.headers['x-cache'])
+            res.headers['x-cache'].should.eql('MISS')
+            res.text.should.eql('<h3>Crime</h3>')
 
             done()
           })
@@ -104,16 +105,16 @@ describe("Application", function() {
     })
   })
 
-  describe("Status Endpoint", function() {
-    describe("GET", function() {
-      it("should return 405 error", function(done) {
+  describe('Status Endpoint', function () {
+    describe('GET', function () {
+      it('should return 405 error', function (done) {
         var clientHost =
-          "http://" +
-          config.get("server.host") +
-          ":" +
-          config.get("server.port")
+          'http://' +
+          config.get('server.host') +
+          ':' +
+          config.get('server.port')
         var apiHost =
-          "http://" + config.get('api').host + ":" + config.get('api').port
+          'http://' + config.get('api').host + ':' + config.get('api').port
         var client = request(clientHost)
 
         var pages = TestHelper.setUpPages()
@@ -121,7 +122,7 @@ describe("Application", function() {
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
             client
-              .get("/api/status")
+              .get('/api/status')
               .expect(405)
               .end(done)
           })
@@ -129,15 +130,15 @@ describe("Application", function() {
       })
     })
 
-    describe("POST", function() {
-      it("should return 401 error if clientId or secret aren't specified", function(done) {
+    describe('POST', function () {
+      it("should return 401 error if clientId or secret aren't specified", function (done) {
         var clientHost =
-          "http://" +
-          config.get("server.host") +
-          ":" +
-          config.get("server.port")
+          'http://' +
+          config.get('server.host') +
+          ':' +
+          config.get('server.port')
         var apiHost =
-          "http://" + config.get('api').host + ":" + config.get('api').port
+          'http://' + config.get('api').host + ':' + config.get('api').port
         var client = request(clientHost)
 
         var pages = TestHelper.setUpPages()
@@ -145,7 +146,7 @@ describe("Application", function() {
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
             client
-              .post("/api/status")
+              .post('/api/status')
               .send({})
               .expect(401)
               .end(done)
@@ -153,14 +154,14 @@ describe("Application", function() {
         })
       })
 
-      it("should return 401 error if clientId or secret don't match config", function(done) {
+      it("should return 401 error if clientId or secret don't match config", function (done) {
         var clientHost =
-          "http://" +
-          config.get("server.host") +
-          ":" +
-          config.get("server.port")
+          'http://' +
+          config.get('server.host') +
+          ':' +
+          config.get('server.port')
         var apiHost =
-          "http://" + config.get('api').host + ":" + config.get('api').port
+          'http://' + config.get('api').host + ':' + config.get('api').port
         var client = request(clientHost)
 
         var pages = TestHelper.setUpPages()
@@ -168,10 +169,10 @@ describe("Application", function() {
         TestHelper.enableApiConfig().then(() => {
           TestHelper.startServer(pages).then(() => {
             client
-              .post("/api/status")
+              .post('/api/status')
               .send({
-                clientId: "xyz",
-                secret: "123"
+                clientId: 'xyz',
+                secret: '123'
               })
               .expect(401)
               .end(done)
@@ -179,16 +180,16 @@ describe("Application", function() {
         })
       })
 
-      it("should return status information if correct credentials posted", function(done) {
+      it('should return status information if correct credentials posted', function (done) {
         this.timeout(10000)
 
         var clientHost =
-          "http://" +
-          config.get("server.host") +
-          ":" +
-          config.get("server.port")
+          'http://' +
+          config.get('server.host') +
+          ':' +
+          config.get('server.port')
         var apiHost =
-          "http://" + config.get('api').host + ":" + config.get('api').port
+          'http://' + config.get('api').host + ':' + config.get('api').port
         var client = request(clientHost)
 
         var pages = TestHelper.setUpPages()
@@ -196,16 +197,21 @@ describe("Application", function() {
         TestHelper.enableApiConfig().then(() => {
           TestHelper.updateConfig({
             status: {
-              routes: [{
-                route: '/test'
-              }]
+              routes: [
+                {
+                  route: '/test'
+                }
+              ]
             }
           }).then(() => {
             TestHelper.startServer(pages).then(() => {
               client
                 .post('/api/status')
                 .set('content-type', 'application/json')
-                .send({"secret": config.get("auth.secret"), "clientId": config.get("auth.clientId")})
+                .send({
+                  secret: config.get('auth.secret'),
+                  clientId: config.get('auth.clientId')
+                })
                 .expect(200)
                 .end(done)
             })
@@ -215,31 +221,31 @@ describe("Application", function() {
     })
   })
 
-  describe("Error Pages", function() {
-    it("should return HTML error when no custom page exists", function(done) {
+  describe('Error Pages', function () {
+    it('should return HTML error when no custom page exists', function (done) {
       var clientHost =
-        "http://" + config.get("server.host") + ":" + config.get("server.port")
+        'http://' + config.get('server.host') + ':' + config.get('server.port')
       var apiHost =
-        "http://" + config.get('api').host + ":" + config.get('api').port
+        'http://' + config.get('api').host + ':' + config.get('api').port
       var client = request(clientHost)
 
       // create page 1
-      var page1 = page("page1", TestHelper.getPageSchema())
+      var page1 = page('page1', TestHelper.getPageSchema())
       page1.datasources = []
-      page1.template = "test.js"
-      page1.routes[0].path = "/test"
-      page1.events = ["test_500_error"]
+      page1.template = 'test.js'
+      page1.routes[0].path = '/test'
+      page1.events = ['test_500_error']
 
       var pages = []
       pages.push(page1)
 
       TestHelper.enableApiConfig().then(() => {
         TestHelper.startServer(pages).then(() => {
-          client.get("/test").end((err, res) => {
+          client.get('/test').end((err, res) => {
             if (err) return done(err)
-            res.headers["content-type"].should.eql("text/html")
+            res.headers['content-type'].should.eql('text/html')
             res.text
-              .indexOf("<h1>Something went wrong.</h1>")
+              .indexOf('<h1>Something went wrong.</h1>')
               .should.be.above(0)
             done()
           })

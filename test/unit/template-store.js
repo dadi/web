@@ -1,14 +1,14 @@
-"use strict"
+'use strict'
 
-const fs = require("fs")
-const path = require("path")
-const sinon = require("sinon")
-const should = require("should")
+const fs = require('fs')
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
 
-const helpers = require(__dirname + "/../../dadi/lib/help")
-const TemplateStore = require(__dirname + "/../../dadi/lib/templates/store")
+const helpers = require(__dirname + '/../../dadi/lib/help')
+const TemplateStore = require(__dirname + '/../../dadi/lib/templates/store')
   .TemplateStore
-const testHelpers = require(__dirname + "/../help")()
+const testHelpers = require(__dirname + '/../help')()
 
 let additionalFiles
 let directoryListing
@@ -23,23 +23,23 @@ beforeEach(done => {
     templateStore = new TemplateStore()
 
     directoryListing = [
-      path.resolve(config.get("paths.pages"), "page1.js"),
-      path.resolve(config.get("paths.pages"), "page2.js"),
-      path.resolve(config.get("paths.pages"), "sub-dir-1/page3.js"),
-      path.resolve(config.get("paths.pages"), "partials/partial1.js")
+      path.resolve(config.get('paths.pages'), 'page1.js'),
+      path.resolve(config.get('paths.pages'), 'page2.js'),
+      path.resolve(config.get('paths.pages'), 'sub-dir-1/page3.js'),
+      path.resolve(config.get('paths.pages'), 'partials/partial1.js')
     ]
 
     pages = [
       {
-        engine: "es6",
+        engine: 'es6',
         file: directoryListing[0]
       },
       {
-        engine: "es6",
+        engine: 'es6',
         file: directoryListing[1]
       },
       {
-        engine: "es6",
+        engine: 'es6',
         file: directoryListing[2]
       }
     ]
@@ -50,24 +50,24 @@ beforeEach(done => {
   })
 })
 
-describe("Template store", function(done) {
-  describe("Validation", function(done) {
-    it("throw if engine is missing a metadata block", done => {
+describe('Template store', function (done) {
+  describe('Validation', function (done) {
+    it('throw if engine is missing a metadata block', done => {
       const fakeFactory = {}
 
       try {
         new TemplateStore().validateEngine(fakeFactory, {})
       } catch (err) {
-        err.message.indexOf("is missing the metadata block").should.not.eql(-1)
+        err.message.indexOf('is missing the metadata block').should.not.eql(-1)
 
         done()
       }
     })
 
-    it("throw if engine is missing a valid extensions array", done => {
+    it('throw if engine is missing a valid extensions array', done => {
       const fakeFactory = {
         metadata: {
-          extensions: ".js"
+          extensions: '.js'
         }
       }
 
@@ -76,7 +76,7 @@ describe("Template store", function(done) {
       } catch (err) {
         err.message
           .indexOf(
-            "is missing a valid extensions property on the metadata block"
+            'is missing a valid extensions property on the metadata block'
           )
           .should.not.eql(-1)
 
@@ -84,15 +84,15 @@ describe("Template store", function(done) {
       }
     })
 
-    it("throw if engine is missing a valid handle property", done => {
+    it('throw if engine is missing a valid handle property', done => {
       const fakeFactory1 = {
         metadata: {
-          extensions: [".js"]
+          extensions: ['.js']
         }
       }
       const fakeFactory2 = {
         metadata: {
-          extensions: [".js"],
+          extensions: ['.js'],
           handle: 12345
         }
       }
@@ -112,25 +112,25 @@ describe("Template store", function(done) {
       }
 
       err1.message
-        .indexOf("is missing a valid handle property on the metadata block")
+        .indexOf('is missing a valid handle property on the metadata block')
         .should.not.eql(-1)
       err2.message
-        .indexOf("is missing a valid handle property on the metadata block")
+        .indexOf('is missing a valid handle property on the metadata block')
         .should.not.eql(-1)
 
       done()
     })
 
-    it("throw if engine is missing a `getCore()` method", done => {
+    it('throw if engine is missing a `getCore()` method', done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".js"],
-          handle: "es6"
+          extensions: ['.js'],
+          handle: 'es6'
         }
       }
       const fakeEngine1 = {}
       const fakeEngine2 = {
-        getCore: "notAFunction"
+        getCore: 'notAFunction'
       }
 
       let err1, err2
@@ -148,25 +148,25 @@ describe("Template store", function(done) {
       }
 
       err1.message
-        .indexOf("is missing the `getCore()` method")
+        .indexOf('is missing the `getCore()` method')
         .should.not.eql(-1)
       err2.message
-        .indexOf("is missing the `getCore()` method")
+        .indexOf('is missing the `getCore()` method')
         .should.not.eql(-1)
 
       done()
     })
 
-    it("throw if engine is missing a `getInfo()` method", done => {
+    it('throw if engine is missing a `getInfo()` method', done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".js"],
-          handle: "es6"
+          extensions: ['.js'],
+          handle: 'es6'
         }
       }
       const fakeEngine1 = {}
       const fakeEngine2 = {
-        getInfo: "notAFunction"
+        getInfo: 'notAFunction'
       }
 
       let err1, err2
@@ -184,25 +184,25 @@ describe("Template store", function(done) {
       }
 
       err1.message
-        .indexOf("is missing the `getInfo()` method")
+        .indexOf('is missing the `getInfo()` method')
         .should.not.eql(-1)
       err2.message
-        .indexOf("is missing the `getInfo()` method")
+        .indexOf('is missing the `getInfo()` method')
         .should.not.eql(-1)
 
       done()
     })
 
-    it("throw if engine is missing a `initialise()` method", done => {
+    it('throw if engine is missing a `initialise()` method', done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".js"],
-          handle: "es6"
+          extensions: ['.js'],
+          handle: 'es6'
         }
       }
       const fakeEngine1 = {}
       const fakeEngine2 = {
-        initialise: "notAFunction"
+        initialise: 'notAFunction'
       }
 
       let err1, err2
@@ -220,25 +220,25 @@ describe("Template store", function(done) {
       }
 
       err1.message
-        .indexOf("is missing the `initialise()` method")
+        .indexOf('is missing the `initialise()` method')
         .should.not.eql(-1)
       err2.message
-        .indexOf("is missing the `initialise()` method")
+        .indexOf('is missing the `initialise()` method')
         .should.not.eql(-1)
 
       done()
     })
 
-    it("throw if engine is missing a `register()` method", done => {
+    it('throw if engine is missing a `register()` method', done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".js"],
-          handle: "es6"
+          extensions: ['.js'],
+          handle: 'es6'
         }
       }
       const fakeEngine1 = {}
       const fakeEngine2 = {
-        register: "notAFunction"
+        register: 'notAFunction'
       }
 
       let err1, err2
@@ -256,25 +256,25 @@ describe("Template store", function(done) {
       }
 
       err1.message
-        .indexOf("is missing the `register()` method")
+        .indexOf('is missing the `register()` method')
         .should.not.eql(-1)
       err2.message
-        .indexOf("is missing the `register()` method")
+        .indexOf('is missing the `register()` method')
         .should.not.eql(-1)
 
       done()
     })
 
-    it("throw if engine is missing a `render()` method", done => {
+    it('throw if engine is missing a `render()` method', done => {
       const fakeFactory = {
         metadata: {
-          extensions: [".js"],
-          handle: "es6"
+          extensions: ['.js'],
+          handle: 'es6'
         }
       }
       const fakeEngine1 = {}
       const fakeEngine2 = {
-        render: "notAFunction"
+        render: 'notAFunction'
       }
 
       let err1, err2
@@ -292,19 +292,19 @@ describe("Template store", function(done) {
       }
 
       err1.message
-        .indexOf("is missing the `render()` method")
+        .indexOf('is missing the `render()` method')
         .should.not.eql(-1)
       err2.message
-        .indexOf("is missing the `render()` method")
+        .indexOf('is missing the `render()` method')
         .should.not.eql(-1)
 
       done()
     })
   })
 
-  describe("loadEngine", () => {
-    it("should load template engines", done => {
-      templateStore.loadEngines([require("web-es6-templates")])
+  describe('loadEngine', () => {
+    it('should load template engines', done => {
+      templateStore.loadEngines([require('web-es6-templates')])
 
       templateStore.engines.es6.should.be.Object
       templateStore.engines.es6.factory.should.be.Function
@@ -313,11 +313,11 @@ describe("Template store", function(done) {
       done()
     })
 
-    it("should load engine config block onto global config", done => {
-      templateStore.loadEngines([require("web-es6-templates")])
+    it('should load engine config block onto global config', done => {
+      templateStore.loadEngines([require('web-es6-templates')])
 
       const engine = templateStore.engines.es6
-      const engineConfig = config.get("engines.es6")
+      const engineConfig = config.get('engines.es6')
 
       engineConfig.should.be.Object
 
@@ -329,17 +329,17 @@ describe("Template store", function(done) {
     })
   })
 
-  describe("loadTemplate", () => {
-    it("should start an engine when a template that requires it is loaded", done => {
-      templateStore.loadEngines([require("web-es6-templates")])
+  describe('loadTemplate', () => {
+    it('should start an engine when a template that requires it is loaded', done => {
+      templateStore.loadEngines([require('web-es6-templates')])
 
       templateStore
         .loadTemplate({
-          data: "",
-          extension: ".js",
-          name: "fakeTemplate1",
+          data: '',
+          extension: '.js',
+          name: 'fakeTemplate1',
           namespace: undefined,
-          path: "/fake/path/fakeTemplate1.js"
+          path: '/fake/path/fakeTemplate1.js'
         })
         .then(loadedTemplate => {
           templateStore.engines.es6.started.should.eql(true)
@@ -348,47 +348,47 @@ describe("Template store", function(done) {
         })
     })
 
-    it("should throw an error when loading a template with an extension that is not supported", () => {
-      templateStore.loadEngines([require("web-es6-templates")])
+    it('should throw an error when loading a template with an extension that is not supported', () => {
+      templateStore.loadEngines([require('web-es6-templates')])
 
       should.throws(() => {
         templateStore.loadTemplate({
-          data: "",
-          extension: ".foo",
-          name: "fakeTemplate2",
+          data: '',
+          extension: '.foo',
+          name: 'fakeTemplate2',
           namespace: undefined,
-          path: "/fake/path/fakeTemplate2.foo"
+          path: '/fake/path/fakeTemplate2.foo'
         })
       })
     })
 
-    it("should instantiate the engine and call its `initialise` and `register` methods", done => {
+    it('should instantiate the engine and call its `initialise` and `register` methods', done => {
       var mockInitialiseFn = sinon.stub()
       var mockRegisterFn = sinon.stub()
 
       var fakeEngine = () => {
-        var Engine = function() {}
+        var Engine = function () {}
 
         Engine.prototype.initialise = mockInitialiseFn
-        Engine.prototype.getCore = function() {}
-        Engine.prototype.getInfo = function() {}
+        Engine.prototype.getCore = function () {}
+        Engine.prototype.getInfo = function () {}
         Engine.prototype.register = mockRegisterFn
-        Engine.prototype.render = function() {}
+        Engine.prototype.render = function () {}
 
         return Engine
       }
 
       fakeEngine.metadata = {
-        extensions: [".js"],
-        handle: "es6"
+        extensions: ['.js'],
+        handle: 'es6'
       }
 
       var templateData = {
-        data: "This is the content of the template",
-        extension: ".js",
-        name: "fakeTemplate1",
+        data: 'This is the content of the template',
+        extension: '.js',
+        name: 'fakeTemplate1',
         namespace: undefined,
-        path: "/fake/path/fakeTemplate1.js"
+        path: '/fake/path/fakeTemplate1.js'
       }
 
       templateStore.loadEngines([fakeEngine])
@@ -404,26 +404,26 @@ describe("Template store", function(done) {
           done()
         })
         .catch(err => {
-          console.log("** ERR:", err)
+          console.log('** ERR:', err)
         })
     })
   })
 
-  describe("loadPages", () => {
-    it("should all templates corresponding to the given pages, setting any remaining templates as additional templates", done => {
-      sinon.stub(helpers, "readDirectory").callsFake(() => {
+  describe('loadPages', () => {
+    it('should all templates corresponding to the given pages, setting any remaining templates as additional templates', done => {
+      sinon.stub(helpers, 'readDirectory').callsFake(() => {
         return Promise.resolve(directoryListing)
       })
 
       var mockReadFile = sinon
-        .stub(fs, "readFile")
-        .yields(null, "File contents")
+        .stub(fs, 'readFile')
+        .yields(null, 'File contents')
 
-      sinon.stub(fs, "statSync").callsFake(() => ({
+      sinon.stub(fs, 'statSync').callsFake(() => ({
         isFile: () => true
       }))
 
-      templateStore.loadEngines([require("web-es6-templates")])
+      templateStore.loadEngines([require('web-es6-templates')])
 
       templateStore.loadPages(pages, {}).then(response => {
         pages.forEach((page, index) => {
@@ -434,8 +434,8 @@ describe("Template store", function(done) {
           var extension = path.extname(page.file)
 
           return path
-            .relative(config.get("paths.pages"), page.file)
-            .replace(extension, "")
+            .relative(config.get('paths.pages'), page.file)
+            .replace(extension, '')
         })
 
         fs.statSync.restore()

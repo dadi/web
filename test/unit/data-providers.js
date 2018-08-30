@@ -1,30 +1,30 @@
-var fs = require("fs")
-var nock = require("nock")
-var path = require("path")
-var sinon = require("sinon")
-var should = require("should")
-var Readable = require("stream").Readable
-var request = require("supertest")
-var zlib = require("zlib")
+var fs = require('fs')
+var nock = require('nock')
+var path = require('path')
+var sinon = require('sinon')
+var should = require('should')
+var Readable = require('stream').Readable
+var request = require('supertest')
+var zlib = require('zlib')
 
-var Server = require(__dirname + "/../../dadi/lib")
-var TestHelper = require(__dirname + "/../help")()
-var api = require(__dirname + "/../../dadi/lib/api")
-var Controller = require(__dirname + "/../../dadi/lib/controller")
-var Datasource = require(__dirname + "/../../dadi/lib/datasource")
-var help = require(__dirname + "/../../dadi/lib/help")
-var Page = require(__dirname + "/../../dadi/lib/page")
+var Server = require(__dirname + '/../../dadi/lib')
+var TestHelper = require(__dirname + '/../help')()
+var api = require(__dirname + '/../../dadi/lib/api')
+var Controller = require(__dirname + '/../../dadi/lib/controller')
+var Datasource = require(__dirname + '/../../dadi/lib/datasource')
+var help = require(__dirname + '/../../dadi/lib/help')
+var Page = require(__dirname + '/../../dadi/lib/page')
 
-var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
-var remoteProvider = require(__dirname + "/../../dadi/lib/providers/remote")
-var restProvider = require(__dirname + "/../../dadi/lib/providers/restapi")
-var markdownProvider = require(__dirname + "/../../dadi/lib/providers/markdown")
+var apiProvider = require(__dirname + '/../../dadi/lib/providers/dadiapi')
+var remoteProvider = require(__dirname + '/../../dadi/lib/providers/remote')
+var restProvider = require(__dirname + '/../../dadi/lib/providers/restapi')
+var markdownProvider = require(__dirname + '/../../dadi/lib/providers/markdown')
 
-var config = require(path.resolve(path.join(__dirname, "/../../config")))
+var config = require(path.resolve(path.join(__dirname, '/../../config')))
 var controller
 
-describe("Data Providers", function(done) {
-  beforeEach(function(done) {
+describe('Data Providers', function (done) {
+  beforeEach(function (done) {
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
         done()
@@ -32,36 +32,36 @@ describe("Data Providers", function(done) {
     })
   })
 
-  afterEach(function(done) {
-  nock.cleanAll()
-    TestHelper.stopServer(function() {})
+  afterEach(function (done) {
+    nock.cleanAll()
+    TestHelper.stopServer(function () {})
     TestHelper.resetConfig().then(() => {
       done()
     })
   })
 
-  describe("DADI API", function(done) {
-    it("should use the datasource auth block when obtaining a token", function(done) {
+  describe('DADI API', function (done) {
+    it('should use the datasource auth block when obtaining a token', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car_models"]
+          pages[0].datasources = ['car_models']
 
           TestHelper.setupApiIntercepts()
 
           var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
+            'http://' +
+            config.get('server.host') +
+            ':' +
+            config.get('server.port')
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            'http://' + config.get('api.host') + ':' + config.get('api.port')
 
           var stub = sinon
-            .stub(apiProvider.prototype, "getToken")
-            .callsFake(function(strategy, callback) {
+            .stub(apiProvider.prototype, 'getToken')
+            .callsFake(function (strategy, callback) {
               should.exist(strategy)
-              strategy.host.should.eql("8.8.8.8")
+              strategy.host.should.eql('8.8.8.8')
 
               stub.restore()
               return done()
@@ -71,48 +71,48 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&debug=json")
+              .get(pages[0].routes[0].path + '?cache=false&debug=json')
               .end((err, res) => {})
           })
         })
       })
     })
 
-    it("should return gzipped response if accept header specifies it", function(done) {
+    it('should return gzipped response if accept header specifies it', function (done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["car_makes_unchained"]
+        pages[0].datasources = ['car_makes_unchained']
 
-        var text = JSON.stringify({ hello: "world!" })
+        var text = JSON.stringify({ hello: 'world!' })
 
-        zlib.gzip(text, function(_, data) {
+        zlib.gzip(text, function (_, data) {
           TestHelper.setupApiIntercepts()
 
           var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
+            'http://' +
+            config.get('server.host') +
+            ':' +
+            config.get('server.port')
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            'http://' + config.get('api.host') + ':' + config.get('api.port')
 
           var scope = nock(apiConnectionString)
             .defaultReplyHeaders({
-              "content-encoding": "gzip"
+              'content-encoding': 'gzip'
             })
             .get(
-              "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
+              '/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false'
             )
             .times(5)
             .reply(200, data)
 
-          var providerSpy = sinon.spy(apiProvider.prototype, "processOutput")
+          var providerSpy = sinon.spy(apiProvider.prototype, 'processOutput')
 
           TestHelper.startServer(pages).then(() => {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false")
+              .get(pages[0].routes[0].path + '?cache=false')
               .end((err, res) => {
                 providerSpy.restore()
                 providerSpy.called.should.eql(true)
@@ -128,22 +128,22 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return append query params if endpoint already has a querystring", function(done) {
+    it('should return append query params if endpoint already has a querystring', function (done) {
       TestHelper.enableApiConfig().then(() => {
         var pages = TestHelper.setUpPages()
-        pages[0].datasources = ["car_makes_with_query"]
+        pages[0].datasources = ['car_makes_with_query']
 
         TestHelper.setupApiIntercepts()
 
-        var data = { hello: "world" }
+        var data = { hello: 'world' }
 
         var connectionString =
-          "http://" +
-          config.get("server.host") +
-          ":" +
-          config.get("server.port")
+          'http://' +
+          config.get('server.host') +
+          ':' +
+          config.get('server.port')
         var apiConnectionString =
-          "http://" + config.get("api.host") + ":" + config.get("api.port")
+          'http://' + config.get('api.host') + ':' + config.get('api.port')
 
         var expected =
           apiConnectionString +
@@ -151,21 +151,21 @@ describe("Data Providers", function(done) {
 
         var scope = nock(apiConnectionString)
           .get(
-            "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
+            '/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false'
           )
           .times(5)
           .reply(200, data)
 
         var providerSpy = sinon.spy(
           apiProvider.prototype,
-          "processDatasourceParameters"
+          'processDatasourceParameters'
         )
 
         TestHelper.startServer(pages).then(() => {
           var client = request(connectionString)
 
           client
-            .get(pages[0].routes[0].path + "?cache=false")
+            .get(pages[0].routes[0].path + '?cache=false')
             .end((err, res) => {
               providerSpy.restore()
               providerSpy.called.should.eql(true)
@@ -178,25 +178,25 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return an errors collection when a datasource times out", function(done) {
+    it('should return an errors collection when a datasource times out', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car_makes_unchained"]
+          pages[0].datasources = ['car_makes_unchained']
 
           TestHelper.setupApiIntercepts()
 
           var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
+            'http://' +
+            config.get('server.host') +
+            ':' +
+            config.get('server.port')
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            'http://' + config.get('api.host') + ':' + config.get('api.port')
 
           var scope = nock(apiConnectionString)
             .get(
-              "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
+              '/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false'
             )
             .times(5)
             .reply(504)
@@ -205,11 +205,11 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&debug=json")
+              .get(pages[0].routes[0].path + '?cache=false&debug=json')
               .end((err, res) => {
-                should.exist(res.body["car_makes_unchained"].errors)
-                res.body["car_makes_unchained"].errors[0].title.should.eql(
-                  "Datasource Timeout"
+                should.exist(res.body['car_makes_unchained'].errors)
+                res.body['car_makes_unchained'].errors[0].title.should.eql(
+                  'Datasource Timeout'
                 )
                 done()
               })
@@ -218,25 +218,25 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return an errors collection when a datasource is not found", function(done) {
+    it('should return an errors collection when a datasource is not found', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car_makes_unchained"]
+          pages[0].datasources = ['car_makes_unchained']
 
           TestHelper.setupApiIntercepts()
 
           var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
+            'http://' +
+            config.get('server.host') +
+            ':' +
+            config.get('server.port')
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            'http://' + config.get('api.host') + ':' + config.get('api.port')
 
           var scope = nock(apiConnectionString)
             .get(
-              "/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false"
+              '/1.0/cars/makes?count=20&page=1&filter=%7B%7D&fields=%7B%22name%22:1,%22_id%22:0%7D&sort=%7B%22name%22:1%7D&cache=false'
             )
             .times(5)
             .reply(404)
@@ -245,11 +245,11 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&debug=json")
+              .get(pages[0].routes[0].path + '?cache=false&debug=json')
               .end((err, res) => {
-                should.exist(res.body["car_makes_unchained"].errors)
-                res.body["car_makes_unchained"].errors[0].title.should.eql(
-                  "Datasource Not Found"
+                should.exist(res.body['car_makes_unchained'].errors)
+                res.body['car_makes_unchained'].errors[0].title.should.eql(
+                  'Datasource Not Found'
                 )
                 done()
               })
@@ -259,28 +259,28 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("Remote", function(done) {
-    it("should return an errors collection when a datasource times out", function(done) {
+  describe('Remote', function (done) {
+    it('should return an errors collection when a datasource times out', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car_makes_unchained_remote"]
+          pages[0].datasources = ['car_makes_unchained_remote']
 
           TestHelper.setupApiIntercepts()
 
           var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
+            'http://' +
+            config.get('server.host') +
+            ':' +
+            config.get('server.port')
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            'http://' + config.get('api.host') + ':' + config.get('api.port')
 
           var scope = nock(apiConnectionString)
             .defaultReplyHeaders({
-              "content-encoding": ""
+              'content-encoding': ''
             })
-            .get("/1.0/cars/makes")
+            .get('/1.0/cars/makes')
             .times(5)
             .reply(504)
 
@@ -288,12 +288,12 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
-                should.exist(res.body["car_makes_unchained_remote"].errors)
+                should.exist(res.body['car_makes_unchained_remote'].errors)
                 res.body[
-                  "car_makes_unchained_remote"
-                ].errors[0].title.should.eql("Datasource Timeout")
+                  'car_makes_unchained_remote'
+                ].errors[0].title.should.eql('Datasource Timeout')
                 done()
               })
           })
@@ -301,27 +301,27 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return an errors collection when a datasource is not found", function(done) {
+    it('should return an errors collection when a datasource is not found', function (done) {
       TestHelper.enableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["car_makes_unchained_remote"]
+          pages[0].datasources = ['car_makes_unchained_remote']
 
           TestHelper.setupApiIntercepts()
 
           var connectionString =
-            "http://" +
-            config.get("server.host") +
-            ":" +
-            config.get("server.port")
+            'http://' +
+            config.get('server.host') +
+            ':' +
+            config.get('server.port')
           var apiConnectionString =
-            "http://" + config.get("api.host") + ":" + config.get("api.port")
+            'http://' + config.get('api.host') + ':' + config.get('api.port')
 
           var scope = nock(apiConnectionString)
             .defaultReplyHeaders({
-              "content-encoding": ""
+              'content-encoding': ''
             })
-            .get("/1.0/cars/makes")
+            .get('/1.0/cars/makes')
             .times(5)
             .reply(404)
 
@@ -329,12 +329,12 @@ describe("Data Providers", function(done) {
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&debug=json")
+              .get(pages[0].routes[0].path + '?cache=false&debug=json')
               .end((err, res) => {
-                should.exist(res.body["car_makes_unchained_remote"].errors)
+                should.exist(res.body['car_makes_unchained_remote'].errors)
                 res.body[
-                  "car_makes_unchained_remote"
-                ].errors[0].title.should.eql("Datasource Not Found")
+                  'car_makes_unchained_remote'
+                ].errors[0].title.should.eql('Datasource Not Found')
                 done()
               })
           })
@@ -343,44 +343,44 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("Static", function(done) {
-    it("should sort the results by the provided field", function(done) {
+  describe('Static', function (done) {
+    it('should sort the results by the provided field', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "static"
+        'static'
       )
       dsSchema.datasource.sort = []
       dsSchema.datasource.sort.score = -1
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["static"]
+          pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
                 should.exist(res.body.static)
-                res.body.static.results[0].title.should.eql("Interstellar")
+                res.body.static.results[0].title.should.eql('Interstellar')
                 res.body.static.results[1].title.should.eql(
-                  "Dallas Buyers Club"
+                  'Dallas Buyers Club'
                 )
-                res.body.static.results[2].title.should.eql("Mud")
-                res.body.static.results[3].title.should.eql("Killer Joe")
+                res.body.static.results[2].title.should.eql('Mud')
+                res.body.static.results[3].title.should.eql('Killer Joe')
 
                 done()
               })
@@ -389,34 +389,34 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should wrap the data in a `results` node before returning", function(done) {
+    it('should wrap the data in a `results` node before returning', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "static"
+        'static'
       )
       dsSchema.datasource.source.data = {
         x: 100
       }
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["static"]
+          pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
@@ -429,10 +429,10 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should return the number of records specified by the count property", function(done) {
+    it('should return the number of records specified by the count property', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "static"
+        'static'
       )
 
       var dsConfig = {
@@ -447,24 +447,24 @@ describe("Data Providers", function(done) {
       }
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["static"]
+          pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -478,17 +478,17 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should only return the fields specified by the fields property", function(done) {
+    it('should only return the fields specified by the fields property', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "static"
+        'static'
       )
 
       var dsConfig = {
         count: 2,
         sort: {},
         search: {},
-        fields: ["title", "director"]
+        fields: ['title', 'director']
       }
 
       dsSchema = {
@@ -496,24 +496,24 @@ describe("Data Providers", function(done) {
       }
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["static"]
+          pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -522,7 +522,7 @@ describe("Data Providers", function(done) {
                 res.body.static.results.length.should.eql(2)
 
                 var result = res.body.static.results[0]
-                Object.keys(result).should.eql(["title", "director"])
+                Object.keys(result).should.eql(['title', 'director'])
                 done()
               })
           })
@@ -530,14 +530,14 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should only return the data matching the search property", function(done) {
+    it('should only return the data matching the search property', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "static"
+        'static'
       )
 
       var dsConfig = {
-        search: { author: "Roger Ebert" }
+        search: { author: 'Roger Ebert' }
       }
 
       dsSchema = {
@@ -545,24 +545,24 @@ describe("Data Providers", function(done) {
       }
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["static"]
+          pages[0].datasources = ['static']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
                 should.exist(res.body.static)
@@ -570,7 +570,7 @@ describe("Data Providers", function(done) {
                 res.body.static.results.length.should.eql(2)
 
                 res.body.static.results.forEach(result => {
-                  result.author.should.eql("Roger Ebert")
+                  result.author.should.eql('Roger Ebert')
                 })
 
                 done()
@@ -581,33 +581,41 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("Rest API", function(done) {
-    it("should use a custom purest config if passed", function(done) {
-      new Datasource(Page("test", TestHelper.getPageSchema()), "youtube", TestHelper.getPathOptions()).init(function(err, ds) {
+  describe('Rest API', function (done) {
+    it('should use a custom purest config if passed', function (done) {
+      new Datasource(
+        Page('test', TestHelper.getPageSchema()),
+        'youtube',
+        TestHelper.getPathOptions()
+      ).init(function (err, ds) {
         if (err) done(err)
         should.exist(ds.source.provider.google)
         done()
       })
     })
 
-    it("should use the datasource alias property when querying the endpoint", function(done) {
+    it('should use the datasource alias property when querying the endpoint', function (done) {
       TestHelper.updateConfig({
         api: {
-          "twitter": {
-            "type": "restapi",
-            "provider": "twitter",
-            "auth": {
-              "oauth": {
-                "consumer_key": "key",
-                "consumer_secret": "secret",
-                "token": "token",
-                "token_secret": "tokensecret"
+          twitter: {
+            type: 'restapi',
+            provider: 'twitter',
+            auth: {
+              oauth: {
+                consumer_key: 'key',
+                consumer_secret: 'secret',
+                token: 'token',
+                token_secret: 'tokensecret'
               }
             }
           }
         }
       }).then(() => {
-        new Datasource(Page("test", TestHelper.getPageSchema()), "twitter", TestHelper.getPathOptions()).init(function(err, ds) {
+        new Datasource(
+          Page('test', TestHelper.getPageSchema()),
+          'twitter',
+          TestHelper.getPathOptions()
+        ).init(function (err, ds) {
           if (err) done(err)
 
           ds.source.provider.should.eql('twitter')
@@ -617,29 +625,29 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should load data from the specified api", function(done) {
-      var host = "https://api.twitter.com"
-      var path = "/1.1/statuses/show.json?id=972581771681386497"
+    it('should load data from the specified api', function (done) {
+      var host = 'https://api.twitter.com'
+      var path = '/1.1/statuses/show.json?id=972581771681386497'
 
       var scope = nock(host)
         .get(path)
-        .replyWithFile(200, __dirname + "/../twitter-api-response.json")
+        .replyWithFile(200, __dirname + '/../twitter-api-response.json')
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["twitter-status"]
+          pages[0].datasources = ['twitter-status']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 should.exist(res.body.twitterstatus)
                 should.exist(res.body.twitterstatus.user.screen_name)
@@ -650,29 +658,29 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should fail gracefully if the api is unavailable", function(done) {
-      var host = "https://api.twitter.com"
-      var path = "/1.1/statuses/show.json?id=972581771681386498"
+    it('should fail gracefully if the api is unavailable', function (done) {
+      var host = 'https://api.twitter.com'
+      var path = '/1.1/statuses/show.json?id=972581771681386498'
 
       var scope2 = nock(host)
         .get(path)
-        .reply(404, "Not found")
+        .reply(404, 'Not found')
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["twitter-status-two"]
+          pages[0].datasources = ['twitter-status-two']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 should.exist(res.body.twitterstatus.errors)
                 done()
@@ -682,36 +690,35 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should filter specified fields from the output", function(done) {
-      var host = "https://api.twitter.com"
-      var path = "/1.1/statuses/show.json?id=972581771681386498"
+    it('should filter specified fields from the output', function (done) {
+      var host = 'https://api.twitter.com'
+      var path = '/1.1/statuses/show.json?id=972581771681386498'
 
       var scope = nock(host)
         .get(path)
-        .replyWithFile(200, __dirname + "/../twitter-api-response.json")
+        .replyWithFile(200, __dirname + '/../twitter-api-response.json')
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["twitter-status-filtered"]
+          pages[0].datasources = ['twitter-status-filtered']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?cache=false&debug=json")
+              .get(pages[0].routes[0].path + '?cache=false&debug=json')
               .end((err, res) => {
                 should.exist(res.body.twitterstatus.user)
                 should.exist(res.body.twitterstatus.user.screen_name)
                 should.exist(res.body.twitterstatus.text)
 
                 Object.keys(res.body.twitterstatus).length.should.eql(2)
-                
 
                 done()
               })
@@ -721,13 +728,13 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("RSS", function(done) {
-    it("should use the datasource count property when querying the endpoint", function(done) {
+  describe('RSS', function (done) {
+    it('should use the datasource count property when querying the endpoint', function (done) {
       new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "rss",
+        Page('test', TestHelper.getPageSchema()),
+        'rss',
         TestHelper.getPathOptions()
-      ).init(function(err, ds) {
+      ).init(function (err, ds) {
         ds.schema.datasource.count = 10
 
         var params = ds.provider.buildQueryParams()
@@ -737,75 +744,75 @@ describe("Data Providers", function(done) {
       })
     })
 
-    it("should use an array of datasource fields when querying the endpoint", function(done) {
+    it('should use an array of datasource fields when querying the endpoint', function (done) {
       new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "rss",
+        Page('test', TestHelper.getPageSchema()),
+        'rss',
         TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.fields = ["field1", "field2"]
+      ).init(function (err, ds) {
+        ds.schema.datasource.fields = ['field1', 'field2']
 
         var params = ds.provider.buildQueryParams()
         should.exists(params.fields)
-        params.fields.should.eql("field1,field2")
+        params.fields.should.eql('field1,field2')
         done()
       })
     })
 
-    it("should use an object of datasource fields when querying the endpoint", function(done) {
+    it('should use an object of datasource fields when querying the endpoint', function (done) {
       new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "rss",
+        Page('test', TestHelper.getPageSchema()),
+        'rss',
         TestHelper.getPathOptions()
-      ).init(function(err, ds) {
+      ).init(function (err, ds) {
         ds.schema.datasource.fields = { field1: 1, field2: 1 }
 
         var params = ds.provider.buildQueryParams()
         should.exists(params.fields)
-        params.fields.should.eql("field1,field2")
+        params.fields.should.eql('field1,field2')
         done()
       })
     })
 
-    it("should use the datasource filter property when querying the endpoint", function(done) {
+    it('should use the datasource filter property when querying the endpoint', function (done) {
       new Datasource(
-        Page("test", TestHelper.getPageSchema()),
-        "rss",
+        Page('test', TestHelper.getPageSchema()),
+        'rss',
         TestHelper.getPathOptions()
-      ).init(function(err, ds) {
-        ds.schema.datasource.filter = { field: "value" }
+      ).init(function (err, ds) {
+        ds.schema.datasource.filter = { field: 'value' }
 
         var params = ds.provider.buildQueryParams()
 
         should.exists(params.field)
-        params.field.should.eql("value")
+        params.field.should.eql('value')
         done()
       })
     })
 
-    it("should return data when no error is encountered", function(done) {
-      var host = "http://www.feedforall.com"
-      var path = "/sample.xml"
+    it('should return data when no error is encountered', function (done) {
+      var host = 'http://www.feedforall.com'
+      var path = '/sample.xml'
 
       var scope = nock(host)
         .get(path)
-        .replyWithFile(200, __dirname + "/../rss.xml")
+        .replyWithFile(200, __dirname + '/../rss.xml')
 
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({ allowDebugView: true }).then(() => {
           var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["rss"]
+          pages[0].datasources = ['rss']
 
           TestHelper.startServer(pages).then(() => {
             var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
+              'http://' +
+              config.get('server.host') +
+              ':' +
+              config.get('server.port')
             var client = request(connectionString)
 
             client
-              .get(pages[0].routes[0].path + "?debug=json")
+              .get(pages[0].routes[0].path + '?debug=json')
               .end((err, res) => {
                 should.exist(res.body.rss)
                 should.exist(res.body.rss[0].title)
@@ -817,438 +824,462 @@ describe("Data Providers", function(done) {
     })
   })
 
-  describe("Markdown", function(done) {
-    it("should process frontmatter from the files in the datasource path", function(done) {
+  describe('Markdown', function (done) {
+    it('should process frontmatter from the files in the datasource path', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                Datasource.Datasource.prototype.loadDatasource.restore()
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
 
-                should.exist(res.body.markdown.results)
-                res.body.markdown.results.should.be.Array
-                res.body.markdown.results[0].original.should.eql(
-                  "---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n"
-                ),
+                  should.exist(res.body.markdown.results)
+                  res.body.markdown.results.should.be.Array
+                  res.body.markdown.results[0].original.should.eql(
+                    '---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n'
+                  ),
                   res.body.markdown.results[0].attributes.title.should.eql(
-                    "A Quick Brown Fox"
+                    'A Quick Brown Fox'
                   )
-                res.body.markdown.results[0].attributes.category.should.eql(
-                  "guggenheim"
-                )
-                res.body.markdown.results[0].attributes.date.should.eql(
-                  "2010-01-01T00:00:00.000Z"
-                )
+                  res.body.markdown.results[0].attributes.category.should.eql(
+                    'guggenheim'
+                  )
+                  res.body.markdown.results[0].attributes.date.should.eql(
+                    '2010-01-01T00:00:00.000Z'
+                  )
 
-                done()
-              })
-          })
-        })
+                  done()
+                })
+            })
+          }
+        )
       })
     })
 
-    it("should return correct pagination metadata", function(done) {
+    it('should return correct pagination metadata', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+
+                  res.body.markdown.metadata.page.should.equal(1)
+                  res.body.markdown.metadata.limit.should.equal(1)
+                  res.body.markdown.metadata.totalPages.should.be.above(1)
+                  res.body.markdown.metadata.nextPage.should.equal(2)
+
+                  done()
+                })
+            })
+          }
+        )
+      })
+    })
+
+    it('should use the datasource requestParams to filter the results', function (done) {
+      var dsSchema = TestHelper.getSchemaFromFile(
+        TestHelper.getPathOptions().datasourcePath,
+        'markdown'
+      )
+
+      sinon
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
+        .yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
+            pages[0].routes[0].path = '/test/:category?'
+
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
+
+              client.get('/test/sports?debug=json').end((err, res) => {
                 Datasource.Datasource.prototype.loadDatasource.restore()
 
+                res.body.params['category'].should.equal('sports')
+                res.body.markdown.results[0].attributes.category.should.equal(
+                  'sports'
+                )
                 res.body.markdown.metadata.page.should.equal(1)
                 res.body.markdown.metadata.limit.should.equal(1)
-                res.body.markdown.metadata.totalPages.should.be.above(1)
-                res.body.markdown.metadata.nextPage.should.equal(2)
+                res.body.markdown.metadata.totalPages.should.equal(1)
 
                 done()
               })
-          })
-        })
-      })
-    })
-
-    it("should use the datasource requestParams to filter the results", function(done) {
-      var dsSchema = TestHelper.getSchemaFromFile(
-        TestHelper.getPathOptions().datasourcePath,
-        "markdown"
-      )
-
-      sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
-        .yields(null, dsSchema)
-
-      TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
-          pages[0].routes[0].path = "/test/:category?"
-
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
-
-            client.get("/test/sports?debug=json").end((err, res) => {
-              Datasource.Datasource.prototype.loadDatasource.restore()
-
-              res.body.params["category"].should.equal("sports")
-              res.body.markdown.results[0].attributes.category.should.equal(
-                "sports"
-              )
-              res.body.markdown.metadata.page.should.equal(1)
-              res.body.markdown.metadata.limit.should.equal(1)
-              res.body.markdown.metadata.totalPages.should.equal(1)
-
-              done()
             })
-          })
-        })
+          }
+        )
       })
     })
 
-    it("should return the number of records specified by the count property", function(done) {
+    it('should return the number of records specified by the count property', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                Datasource.Datasource.prototype.loadDatasource.restore()
-                should.exist(res.body.markdown.results)
-                res.body.markdown.results.length.should.eql(1)
-                done()
-              })
-          })
-        })
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+                  should.exist(res.body.markdown.results)
+                  res.body.markdown.results.length.should.eql(1)
+                  done()
+                })
+            })
+          }
+        )
       })
     })
 
-    it("should process files of a specified extension", function(done) {
+    it('should process files of a specified extension', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
-      dsSchema.datasource.source.extension = "txt"
+      dsSchema.datasource.source.extension = 'txt'
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                Datasource.Datasource.prototype.loadDatasource.restore()
-                should.exist(res.body.markdown.results)
-                res.body.markdown.results.should.be.Array
-                res.body.markdown.results[0].attributes.title.should.eql(
-                  "A txt file format"
-                )
-                done()
-              })
-          })
-        })
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+                  should.exist(res.body.markdown.results)
+                  res.body.markdown.results.should.be.Array
+                  res.body.markdown.results[0].attributes.title.should.eql(
+                    'A txt file format'
+                  )
+                  done()
+                })
+            })
+          }
+        )
       })
     })
 
-    it("should return an error if the source folder does not exist", function(done) {
+    it('should return an error if the source folder does not exist', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
-      dsSchema.datasource.source.path = "./foobar"
+      dsSchema.datasource.source.path = './foobar'
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                Datasource.Datasource.prototype.loadDatasource.restore()
-                should.exist(res.body.markdown.errors)
-                res.body.markdown.errors[0].title.should.eql(
-                  "No markdown files found"
-                )
-                done()
-              })
-          })
-        })
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+                  should.exist(res.body.markdown.errors)
+                  res.body.markdown.errors[0].title.should.eql(
+                    'No markdown files found'
+                  )
+                  done()
+                })
+            })
+          }
+        )
       })
     })
 
-    it("should ignore malformed dates in a source file", function(done) {
+    it('should ignore malformed dates in a source file', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
-      dsSchema.datasource.source.extension = "txt"
+      dsSchema.datasource.source.extension = 'txt'
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                Datasource.Datasource.prototype.loadDatasource.restore()
-                should.exist(res.body.markdown.results)
-                res.body.markdown.results[0].attributes.date.should.eql(
-                  "madeupdate"
-                )
-                done()
-              })
-          })
-        })
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+                  should.exist(res.body.markdown.results)
+                  res.body.markdown.results[0].attributes.date.should.eql(
+                    'madeupdate'
+                  )
+                  done()
+                })
+            })
+          }
+        )
       })
     })
 
-    it("should sort by the specified field in reverse order if set to -1", function(done) {
+    it('should sort by the specified field in reverse order if set to -1', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
 
       delete dsSchema.datasource.sort.date
-      dsSchema.datasource.sort["attributes.date"] = -1
+      dsSchema.datasource.sort['attributes.date'] = -1
       dsSchema.datasource.count = 2
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                Datasource.Datasource.prototype.loadDatasource.restore()
-                should.exist(res.body.markdown.results)
-                res.body.markdown.results[0].attributes.title.should.eql(
-                  "Another Quick Brown Fox"
-                )
-                res.body.markdown.results[1].attributes.title.should.eql(
-                  "A Quick Brown Fox"
-                )
-                done()
-              })
-          })
-        })
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+                  should.exist(res.body.markdown.results)
+                  res.body.markdown.results[0].attributes.title.should.eql(
+                    'Another Quick Brown Fox'
+                  )
+                  res.body.markdown.results[1].attributes.title.should.eql(
+                    'A Quick Brown Fox'
+                  )
+                  done()
+                })
+            })
+          }
+        )
       })
     })
 
-    it("should only return the selected fields as specified by the datasource", function(done) {
+    it('should only return the selected fields as specified by the datasource', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
-      dsSchema.datasource.fields = ["attributes.title", "attributes._id"]
+      dsSchema.datasource.fields = ['attributes.title', 'attributes._id']
       dsSchema.datasource.count = 2
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                Datasource.Datasource.prototype.loadDatasource.restore()
-                should.exist(res.body.markdown.results)
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+                  should.exist(res.body.markdown.results)
 
-                res.body.markdown.results[0].attributes.title.should.eql(
-                  "A Quick Brown Fox"
-                )
-                res.body.markdown.results[1].attributes.title.should.eql(
-                  "Another Quick Brown Fox"
-                )
-                done()
-              })
-          })
-        })
+                  res.body.markdown.results[0].attributes.title.should.eql(
+                    'A Quick Brown Fox'
+                  )
+                  res.body.markdown.results[1].attributes.title.should.eql(
+                    'Another Quick Brown Fox'
+                  )
+                  done()
+                })
+            })
+          }
+        )
       })
     })
 
-    it("should retrieve data from the cache if it is enabled", function(done) {
+    it('should retrieve data from the cache if it is enabled', function (done) {
       var dsSchema = TestHelper.getSchemaFromFile(
         TestHelper.getPathOptions().datasourcePath,
-        "markdown"
+        'markdown'
       )
 
       dsSchema.caching = {
-        "directory": {
-          "enabled": true
+        directory: {
+          enabled: true
         }
       }
 
       sinon
-        .stub(Datasource.Datasource.prototype, "loadDatasource")
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
         .yields(null, dsSchema)
 
       TestHelper.disableApiConfig().then(() => {
-        TestHelper.updateConfig({ allowDebugView: true, debug: false }).then(() => {
-          var pages = TestHelper.setUpPages()
-          pages[0].datasources = ["markdown"]
+        TestHelper.updateConfig({ allowDebugView: true, debug: false }).then(
+          () => {
+            var pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
 
-          TestHelper.startServer(pages).then(() => {
-            var connectionString =
-              "http://" +
-              config.get("server.host") +
-              ":" +
-              config.get("server.port")
-            var client = request(connectionString)
+            TestHelper.startServer(pages).then(() => {
+              var connectionString =
+                'http://' +
+                config.get('server.host') +
+                ':' +
+                config.get('server.port')
+              var client = request(connectionString)
 
-            client
-              .get(pages[0].routes[0].path + "?debug=json")
-              .end((err, res) => {
-                res.body.markdown.results[0].attributes.title.should.eql('A Quick Brown Fox')
-      
-                sinon
-                  .stub(markdownProvider.prototype, "parseRawDataAsync")
-                  .returns({
-                    attributes: {
-                      title: 'Mr. Uncache'
-                    }
-                  })
+              client
+                .get(pages[0].routes[0].path + '?debug=json')
+                .end((err, res) => {
+                  res.body.markdown.results[0].attributes.title.should.eql(
+                    'A Quick Brown Fox'
+                  )
 
-                client
-                  .get(pages[0].routes[0].path + "?debug=json")
-                  .end((err, res) => {
-                    Datasource.Datasource.prototype.loadDatasource.restore()
+                  sinon
+                    .stub(markdownProvider.prototype, 'parseRawDataAsync')
+                    .returns({
+                      attributes: {
+                        title: 'Mr. Uncache'
+                      }
+                    })
 
-                    markdownProvider.prototype.parseRawDataAsync.restore()
+                  client
+                    .get(pages[0].routes[0].path + '?debug=json')
+                    .end((err, res) => {
+                      Datasource.Datasource.prototype.loadDatasource.restore()
 
-                    res.body.markdown.results[0].attributes.title.should.eql('A Quick Brown Fox')
+                      markdownProvider.prototype.parseRawDataAsync.restore()
 
-                    done()                   
-                  })                
-              })
-          })
-        })
+                      res.body.markdown.results[0].attributes.title.should.eql(
+                        'A Quick Brown Fox'
+                      )
+
+                      done()
+                    })
+                })
+            })
+          }
+        )
       })
     })
   })

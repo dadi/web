@@ -72,9 +72,7 @@ describe('Public folder', function (done) {
   //   TestHelper.stopServer(done)
   // })
 
-  it('should compress files in the public folder where necessary', function (
-    done
-  ) {
+  it('should compress files in the public folder where necessary', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({}).then(() => {
@@ -97,9 +95,7 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should cache compressible files in the public folder where necessary', function (
-    done
-  ) {
+  it('should cache compressible files in the public folder where necessary', function (done) {
     var pages = TestHelper.setUpPages()
 
     var cacheConfig = {
@@ -135,9 +131,7 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should not cache compressible files in the public folder when cache is disabled', function (
-    done
-  ) {
+  it('should not cache compressible files in the public folder when cache is disabled', function (done) {
     var pages = TestHelper.setUpPages()
 
     var cacheConfig = {
@@ -201,9 +195,7 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should return files from a config.virtualDirectories folder', function (
-    done
-  ) {
+  it('should return files from a config.virtualDirectories folder', function (done) {
     var pages = TestHelper.setUpPages()
 
     var virtualConfig = {
@@ -232,9 +224,7 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should return an index file if specified for a config.virtualDirectories folder', function (
-    done
-  ) {
+  it('should return an index file if specified for a config.virtualDirectories folder', function (done) {
     var pages = TestHelper.setUpPages()
 
     var virtualConfig = {
@@ -264,9 +254,7 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should return an index files if specified as an array for a config.virtualDirectories folder', function (
-    done
-  ) {
+  it('should return an index files if specified as an array for a config.virtualDirectories folder', function (done) {
     var pages = TestHelper.setUpPages()
 
     var virtualConfig = {
@@ -300,9 +288,7 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should NOT return an index file if NOT specified for a config.virtualDirectories folder', function (
-    done
-  ) {
+  it('should NOT return an index file if NOT specified for a config.virtualDirectories folder', function (done) {
     var pages = TestHelper.setUpPages()
 
     var virtualConfig = {
@@ -345,7 +331,7 @@ describe('Public folder', function (done) {
         .end((err, res) => {
           res.headers['content-range'].should.eql('bytes 0-1/15023')
           done()
-      })
+        })
     })
   })
 })

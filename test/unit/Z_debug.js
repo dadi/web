@@ -4,7 +4,7 @@ var path = require('path')
 var should = require('should')
 var request = require('supertest')
 var cheerio = require('cheerio')
-var sinon = require("sinon")
+var sinon = require('sinon')
 
 var api = require(__dirname + '/../../dadi/lib/api')
 var Controller = require(__dirname + '/../../dadi/lib/controller')
@@ -16,10 +16,12 @@ var TestHelper = require(__dirname + '/../help')()
 
 var config = require(path.resolve(path.join(__dirname, '/../../config')))
 
-const connectionString = `http://${config.get('server.host')}:${config.get('server.port')}`
+const connectionString = `http://${config.get('server.host')}:${config.get(
+  'server.port'
+)}`
 
-describe("Debug view", function(done) {
-  beforeEach(function(done) {
+describe('Debug view', function (done) {
+  beforeEach(function (done) {
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
         done()
@@ -27,19 +29,17 @@ describe("Debug view", function(done) {
     })
   })
 
-  afterEach(function(done) {
+  afterEach(function (done) {
     TestHelper.resetConfig().then(() => {
       TestHelper.stopServer(() => {
-        setTimeout(function(){
+        setTimeout(function () {
           done()
-        },200)
+        }, 200)
       })
     })
   })
 
-  it('should enable the debug view if specified in the config', function (
-    done
-  ) {
+  it('should enable the debug view if specified in the config', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -48,20 +48,16 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug=json')
-          .end((err, res) => {
-            res.body.should.not.eql({})
-            res.body.page.name.should.eql('page1')
-            done()
-          })
+        client.get(pages[0].routes[0].path + '?debug=json').end((err, res) => {
+          res.body.should.not.eql({})
+          res.body.page.name.should.eql('page1')
+          done()
+        })
       })
     })
   })
 
-  it('should disable the debug view if specified in the config', function (
-    done
-  ) {
+  it('should disable the debug view if specified in the config', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -70,19 +66,15 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug=json')
-          .end((err, res) => {
-            res.body.should.eql({})
-            done()
-          })
+        client.get(pages[0].routes[0].path + '?debug=json').end((err, res) => {
+          res.body.should.eql({})
+          done()
+        })
       })
     })
   })
 
-  it('should return page data, template and output by default', function (
-    done
-  ) {
+  it('should return page data, template and output by default', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -91,24 +83,20 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug')
-          .end((err, res) => {
-            const $ = cheerio.load(res.text)
+        client.get(pages[0].routes[0].path + '?debug').end((err, res) => {
+          const $ = cheerio.load(res.text)
 
-            $('#data').length.should.be.above(0)
-            $('#template').length.should.be.above(0)
-            $('#result').length.should.be.above(0)
-      
-            done()
-          })
+          $('#data').length.should.be.above(0)
+          $('#template').length.should.be.above(0)
+          $('#result').length.should.be.above(0)
+
+          done()
+        })
       })
     })
   })
 
-  it('should return rendered page output if ?debug=result', function (
-    done
-  ) {
+  it('should return rendered page output if ?debug=result', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -123,16 +111,14 @@ describe("Debug view", function(done) {
             const $ = cheerio.load(res.text)
 
             $('#unprocessed').length.should.be.above(0)
-      
+
             done()
           })
       })
     })
   })
 
-  it('should return page data if ?debug=data', function (
-    done
-  ) {
+  it('should return page data if ?debug=data', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -141,24 +127,26 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug=data')
-          .end((err, res) => {
-            const $ = cheerio.load(res.text)
+        client.get(pages[0].routes[0].path + '?debug=data').end((err, res) => {
+          const $ = cheerio.load(res.text)
 
-            $('#template').length.should.eql(0)
-            
-            $('.view > script').html().toString().trim().should.startWith("var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {\n  \"query\": {}")
-      
-            done()
-          })
+          $('#template').length.should.eql(0)
+
+          $('.view > script')
+            .html()
+            .toString()
+            .trim()
+            .should.startWith(
+              "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\n  \"query\": {}"
+            )
+
+          done()
+        })
       })
     })
   })
 
-  it('should return page info if ?debug=page', function (
-    done
-  ) {
+  it('should return page info if ?debug=page', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -167,24 +155,26 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug=page')
-          .end((err, res) => {
-            const $ = cheerio.load(res.text)
+        client.get(pages[0].routes[0].path + '?debug=page').end((err, res) => {
+          const $ = cheerio.load(res.text)
 
-            $('#template').length.should.eql(0)
+          $('#template').length.should.eql(0)
 
-            $('.view > script').html().toString().trim().should.startWith("var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {\n  \"name\": \"page1\"")
-      
-            done()
-          })
+          $('.view > script')
+            .html()
+            .toString()
+            .trim()
+            .should.startWith(
+              'var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {\n  "name": "page1"'
+            )
+
+          done()
+        })
       })
     })
   })
 
-  it('should return route info if ?debug=route', function (
-    done
-  ) {
+  it('should return route info if ?debug=route', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -193,24 +183,26 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug=route')
-          .end((err, res) => {
-            const $ = cheerio.load(res.text)
+        client.get(pages[0].routes[0].path + '?debug=route').end((err, res) => {
+          const $ = cheerio.load(res.text)
 
-            $('#template').length.should.eql(0)
+          $('#template').length.should.eql(0)
 
-            $('.view').html().toString().trim().should.startWith('<input type="text" id="inputPath" placeholder="/path/value/" value="/test">')
-      
-            done()
-          })
+          $('.view')
+            .html()
+            .toString()
+            .trim()
+            .should.startWith(
+              '<input type="text" id="inputPath" placeholder="/path/value/" value="/test">'
+            )
+
+          done()
+        })
       })
     })
   })
 
-  it('should return headers if ?debug=headers', function (
-    done
-  ) {
+  it('should return headers if ?debug=headers', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -226,29 +218,33 @@ describe("Debug view", function(done) {
 
             $('#template').length.should.eql(0)
 
-            $('.view > script').html().toString().trim().should.startWith("var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {\n  \"request\"")
-      
+            $('.view > script')
+              .html()
+              .toString()
+              .trim()
+              .should.startWith(
+                "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\n  \"request\""
+              )
+
             done()
           })
       })
     })
   })
 
-  it('should return stats if ?debug=stats', function (
-    done
-  ) {
+  it('should return stats if ?debug=stats', function (done) {
     // create page 1
     var pages = TestHelper.setUpPages()
-    pages[0].routes[0].path = "/statstest"
-    pages[0].datasources = ["markdown"]
+    pages[0].routes[0].path = '/statstest'
+    pages[0].datasources = ['markdown']
 
-   var dsSchema = TestHelper.getSchemaFromFile(
+    var dsSchema = TestHelper.getSchemaFromFile(
       TestHelper.getPathOptions().datasourcePath,
-      "markdown"
+      'markdown'
     )
 
     sinon
-      .stub(Datasource.Datasource.prototype, "loadDatasource")
+      .stub(Datasource.Datasource.prototype, 'loadDatasource')
       .yields(null, dsSchema)
 
     TestHelper.updateConfig({
@@ -257,25 +253,27 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug=stats')
-          .end((err, res) => {
-            if (err) done(err)
-            const $ = cheerio.load(res.text)
+        client.get(pages[0].routes[0].path + '?debug=stats').end((err, res) => {
+          if (err) done(err)
+          const $ = cheerio.load(res.text)
 
-            $('#template').length.should.eql(0)
+          $('#template').length.should.eql(0)
 
-            $('.view > script').html().toString().trim().should.startWith("var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {\n  \"get\"")
-      
-            done()
-          })
+          $('.view > script')
+            .html()
+            .toString()
+            .trim()
+            .should.startWith(
+              "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\n  \"get\""
+            )
+
+          done()
+        })
       })
     })
   })
 
-  it('should return stats if ?debug=ds', function (
-    done
-  ) {
+  it('should return stats if ?debug=ds', function (done) {
     var pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({
@@ -284,35 +282,41 @@ describe("Debug view", function(done) {
       TestHelper.startServer(pages).then(() => {
         var client = request(connectionString)
 
-        client
-          .get(pages[0].routes[0].path + '?debug=ds')
-          .end((err, res) => {
-            const $ = cheerio.load(res.text)
+        client.get(pages[0].routes[0].path + '?debug=ds').end((err, res) => {
+          const $ = cheerio.load(res.text)
 
-            $('#template').length.should.eql(0)
+          $('#template').length.should.eql(0)
 
-            $('.view > script').html().toString().trim().should.startWith("var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {}")
-      
-            done()
-          })
+          $('.view > script')
+            .html()
+            .toString()
+            .trim()
+            .should.startWith(
+              "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {}"
+            )
+
+          done()
+        })
       })
     })
   })
 
-  it('should return both rendered page outputs if ?debug=result and a post-processor used', function (
-    done
-  ) {
+  it('should return both rendered page outputs if ?debug=result and a post-processor used', function (done) {
     var pages = TestHelper.setUpPages()
-    pages[0].template = "test.js"
-    pages[0].postProcessors = ["replace-sir"]
+    pages[0].template = 'test.js'
+    pages[0].postProcessors = ['replace-sir']
 
     // provide API response
     var results = {
       debugView: 'result',
-      names: [{ title: "Sir", name: "Moe" }, { title: "Sir", name: "Larry" }, { title: "Sir", name: "Curly" }]
+      names: [
+        { title: 'Sir', name: 'Moe' },
+        { title: 'Sir', name: 'Larry' },
+        { title: 'Sir', name: 'Curly' }
+      ]
     }
     var fake = sinon
-      .stub(Controller.Controller.prototype, "loadData")
+      .stub(Controller.Controller.prototype, 'loadData')
       .yields(null, results)
 
     TestHelper.updateConfig({
@@ -324,14 +328,14 @@ describe("Debug view", function(done) {
         client
           .get(pages[0].routes[0].path + '?debug=result')
           .end((err, res) => {
-            //console.log(res.text)
+            // console.log(res.text)
             const $ = cheerio.load(res.text)
-            
+
             $('#unprocessed').length.should.be.above(0)
             $('#processed').length.should.be.above(0)
 
             fake.reset()
-      
+
             done()
           })
       })

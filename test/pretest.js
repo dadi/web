@@ -1,17 +1,17 @@
-var fs = require("fs")
-var path = require("path")
-var colors = require("colors")
+var fs = require('fs')
+var path = require('path')
+var colors = require('colors')
 
-var testConfigPath = "./config/config.test.json"
-var testConfigSamplePath = "./config/config.test.json.sample"
+var testConfigPath = './config/config.test.json'
+var testConfigSamplePath = './config/config.test.json.sample'
 
-function loadConfig() {
+function loadConfig () {
   try {
-    var testConfig = fs.readFileSync(testConfigPath, { encoding: "utf-8" })
+    var testConfig = fs.readFileSync(testConfigPath, { encoding: 'utf-8' })
   } catch (err) {
-    if (err.code === "ENOENT") {
+    if (err.code === 'ENOENT') {
       var testConfigSample = fs.readFileSync(testConfigSamplePath, {
-        encoding: "utf-8"
+        encoding: 'utf-8'
       })
 
       fs.writeFileSync(testConfigPath, testConfigSample)
@@ -20,7 +20,7 @@ function loadConfig() {
   }
 }
 
-function stop() {
+function stop () {
   process.exit(1)
 }
 

@@ -54,10 +54,14 @@ describe('Datasource', function (done) {
     var options = TestHelper.getPathOptions()
     new Datasource(p, dsName, options).init(function (err, ds) {
       if (err) done(err)
-      var fsSchema = TestHelper.getSchemaFromFile(options.datasourcePath, dsName, null)
+      var fsSchema = TestHelper.getSchemaFromFile(
+        options.datasourcePath,
+        dsName,
+        null
+      )
       ds.schema.datasource.key.should.eql(fsSchema.datasource.key)
       done()
-    })    
+    })
   })
 
   it('should attach `source` to datasource', function (done) {
@@ -71,14 +75,18 @@ describe('Datasource', function (done) {
     var options = TestHelper.getPathOptions()
     new Datasource(p, dsName, options).init(function (err, ds) {
       if (err) done(err)
-      var fsSchema = TestHelper.getSchemaFromFile(options.datasourcePath, dsName, null)
-      
+      var fsSchema = TestHelper.getSchemaFromFile(
+        options.datasourcePath,
+        dsName,
+        null
+      )
+
       ds.source.endpoint.should.eql(fsSchema.datasource.source.endpoint)
       ds.source.host.should.eql(fsSchema.datasource.source.host)
       ds.source.port.should.eql(fsSchema.datasource.source.port)
       ds.source.protocol.should.eql(fsSchema.datasource.source.protocol)
       ds.source.type.should.eql(fsSchema.datasource.source.type)
-      
+
       done()
     })
   })
@@ -246,16 +254,19 @@ describe('Datasource', function (done) {
 
     config.set('api.host', 'api.example.com')
 
-    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
+    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (
+      err,
+      ds
+    ) {
       if (err) done(err)
-  
+
       ds.provider.buildEndpoint()
       ds.provider.endpoint.should.eql(
         'http://api.example.com:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
       )
-      
+
       done()
-    })    
+    })
   })
 
   it('should use main config api settings if no port specified', function (done) {
@@ -265,7 +276,10 @@ describe('Datasource', function (done) {
 
     config.set('api.port', 80)
 
-    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
+    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (
+      err,
+      ds
+    ) {
       if (err) done(err)
 
       ds.provider.buildEndpoint()
@@ -285,8 +299,10 @@ describe('Datasource', function (done) {
     config.set('api.host', 'api.example.com')
     config.set('api.port', 80)
 
-    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
-     
+    new Datasource(null, dsName, TestHelper.getPathOptions()).init(function (
+      err,
+      ds
+    ) {
       ds.provider.buildEndpoint()
       ds.provider.endpoint.should.eql(
         'http://api.example.com:80/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
@@ -405,7 +421,10 @@ describe('Datasource', function (done) {
       ''
     )
 
-    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (err, ds) {
+    new Datasource(p, dsName, TestHelper.getPathOptions()).init(function (
+      err,
+      ds
+    ) {
       if (err) done(err)
       ds.schema.should.exist
       done()
@@ -918,7 +937,10 @@ describe('Datasource', function (done) {
       var params = { make: 'bmw', model: 'i3', page: 3 }
       var req = { params: params, url: '/1.0/cars/makes' }
 
-      new Datasource(p, 'car_makes', TestHelper.getPathOptions()).init(function (err, ds1) {
+      new Datasource(p, 'car_makes', TestHelper.getPathOptions()).init(function (
+        err,
+        ds1
+      ) {
         if (err) done(err)
         ds1.processRequest('car_makes', req)
 

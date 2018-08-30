@@ -20,10 +20,7 @@ const secureClientHost =
 const secureClient = request(secureClientHost)
 
 const connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
+  'http://' + config.get('server.host') + ':' + config.get('server.port')
 
 let scope
 
@@ -71,10 +68,10 @@ describe('Upload', function (done) {
     })
   })
 
-  it('should populate the req.files property with uploaded files', (done) => {
+  it('should populate the req.files property with uploaded files', done => {
     const pages = TestHelper.setUpPages()
 
-    pages[0].routes = [{path: '/allowed-upload-route'}]
+    pages[0].routes = [{ path: '/allowed-upload-route' }]
     pages[0].contentType = 'application/json'
     pages[0].template = 'upload.js'
     pages[0].events = ['upload']
@@ -99,25 +96,25 @@ describe('Upload', function (done) {
         const client = request(connectionString)
 
         client
-        .post('/allowed-upload-route/')
-        .attach('avatar', './test/app/images/rosie.png')
-        .end((err, res) => {
-          const expectedData = res.body
-          should.exist(expectedData.files)
-          expectedData.files.should.be.Array
-          should.exist(expectedData.files[0])
-          expectedData.files[0].fieldname.should.eql('avatar')
-          expectedData.files[0].path.should.eql('test/app/uploads/rosie.png')
-          done()
-        })
+          .post('/allowed-upload-route/')
+          .attach('avatar', './test/app/images/rosie.png')
+          .end((err, res) => {
+            const expectedData = res.body
+            should.exist(expectedData.files)
+            expectedData.files.should.be.Array
+            should.exist(expectedData.files[0])
+            expectedData.files[0].fieldname.should.eql('avatar')
+            expectedData.files[0].path.should.eql('test/app/uploads/rosie.png')
+            done()
+          })
       })
     })
   })
 
-  it('should allow fields and files when posting data', (done) => {
+  it('should allow fields and files when posting data', done => {
     const pages = TestHelper.setUpPages()
 
-    pages[0].routes = [{path: '/allowed-upload-route'}]
+    pages[0].routes = [{ path: '/allowed-upload-route' }]
     pages[0].contentType = 'application/json'
     pages[0].template = 'upload.js'
     pages[0].events = ['upload']
@@ -142,26 +139,26 @@ describe('Upload', function (done) {
         const client = request(connectionString)
 
         client
-        .post('/allowed-upload-route/')
-        .field('name', 'my avatar')
-        .attach('avatar', './test/app/images/rosie.png')
-        .end((err, res) => {
-          const expectedData = res.body
-          should.exist(expectedData.files)
-          expectedData.files.should.be.Array
-          should.exist(expectedData.files[0])
-          expectedData.files[0].fieldname.should.eql('avatar')
-          expectedData.files[0].path.should.eql('test/app/uploads/rosie.png')
-          done()
-        })
+          .post('/allowed-upload-route/')
+          .field('name', 'my avatar')
+          .attach('avatar', './test/app/images/rosie.png')
+          .end((err, res) => {
+            const expectedData = res.body
+            should.exist(expectedData.files)
+            expectedData.files.should.be.Array
+            should.exist(expectedData.files[0])
+            expectedData.files[0].fieldname.should.eql('avatar')
+            expectedData.files[0].path.should.eql('test/app/uploads/rosie.png')
+            done()
+          })
       })
     })
   })
 
-  it('should work when CSRF security is enabled', (done) => {
+  it('should work when CSRF security is enabled', done => {
     const pages = TestHelper.setUpPages()
 
-    pages[0].routes = [{path: '/allowed-upload-route'}]
+    pages[0].routes = [{ path: '/allowed-upload-route' }]
     pages[0].contentType = 'application/json'
     pages[0].template = 'upload.js'
     pages[0].events = ['upload']
@@ -186,41 +183,42 @@ describe('Upload', function (done) {
       TestHelper.startServer(pages).then(() => {
         const client = request(connectionString)
 
-        client
-        .get('/allowed-upload-route/?debug=json')
-        .end((err, res) => {
+        client.get('/allowed-upload-route/?debug=json').end((err, res) => {
           const token = res.body.csrfToken
 
           should.exist(res)
 
           client
-          .post('/allowed-upload-route/')
-          .set(
-            'Cookie', '_csrf=' + TestHelper.extractCookieValue(res, '_csrf')
-          )
-          .field('_csrf', token.toString())
-          .attach('avatar', './test/app/images/rosie.png')
-          .end((err, res2) => {
-            const expectedData = res2.body
-            should.exist(expectedData.files)
-            expectedData.files.should.be.Array
-            should.exist(expectedData.files[0])
-            expectedData.files[0].fieldname.should.eql('avatar')
-            expectedData.files[0].path.should.eql('test/app/uploads/rosie.png')
+            .post('/allowed-upload-route/')
+            .set(
+              'Cookie',
+              '_csrf=' + TestHelper.extractCookieValue(res, '_csrf')
+            )
+            .field('_csrf', token.toString())
+            .attach('avatar', './test/app/images/rosie.png')
+            .end((err, res2) => {
+              const expectedData = res2.body
+              should.exist(expectedData.files)
+              expectedData.files.should.be.Array
+              should.exist(expectedData.files[0])
+              expectedData.files[0].fieldname.should.eql('avatar')
+              expectedData.files[0].path.should.eql(
+                'test/app/uploads/rosie.png'
+              )
 
-            should.exist(expectedData.body._csrf)
-            expectedData.body._csrf.should.eql(token)
-            done()
-          })
+              should.exist(expectedData.body._csrf)
+              expectedData.body._csrf.should.eql(token)
+              done()
+            })
         })
       })
     })
   })
 
-  it('should hash the filename', (done) => {
+  it('should hash the filename', done => {
     const pages = TestHelper.setUpPages()
 
-    pages[0].routes = [{path: '/allowed-upload-route'}]
+    pages[0].routes = [{ path: '/allowed-upload-route' }]
     pages[0].contentType = 'application/json'
     pages[0].template = 'upload.js'
     pages[0].events = ['upload']
@@ -240,31 +238,32 @@ describe('Upload', function (done) {
       }
     }
 
-    const expected = require('crypto')
-    .createHmac('sha1', 'abcdef')
-    .update('rosie.png')
-    .digest('hex') + '.png'
+    const expected =
+      require('crypto')
+        .createHmac('sha1', 'abcdef')
+        .update('rosie.png')
+        .digest('hex') + '.png'
 
     TestHelper.updateConfig(uploadConfig).then(() => {
       TestHelper.startServer(pages).then(() => {
         const client = request(connectionString)
 
         client
-        .post('/allowed-upload-route/')
-        .attach('avatar', './test/app/images/rosie.png')
-        .end((err, res) => {
-          const expectedData = res.body
-          expectedData.files[0].filename.should.not.eql('rosie.png')
-          done()
-        })
+          .post('/allowed-upload-route/')
+          .attach('avatar', './test/app/images/rosie.png')
+          .end((err, res) => {
+            const expectedData = res.body
+            expectedData.files[0].filename.should.not.eql('rosie.png')
+            done()
+          })
       })
     })
   })
 
-  it('should save the uploaded file to the upload path', (done) => {
+  it('should save the uploaded file to the upload path', done => {
     const pages = TestHelper.setUpPages()
 
-    pages[0].routes = [{path: '/allowed-upload-route'}]
+    pages[0].routes = [{ path: '/allowed-upload-route' }]
     pages[0].contentType = 'application/json'
     pages[0].template = 'upload.js'
     pages[0].events = ['upload']
@@ -289,28 +288,28 @@ describe('Upload', function (done) {
         const client = request(connectionString)
 
         client
-        .post('/allowed-upload-route/')
-        .attach('avatar', './test/app/images/rosie.png')
-        .end((err, res) => {
-          fs.stat('test/app/uploads/rosie.png', (err, stat) => {
-            should.exist(stat)
-            done()
+          .post('/allowed-upload-route/')
+          .attach('avatar', './test/app/images/rosie.png')
+          .end((err, res) => {
+            fs.stat('test/app/uploads/rosie.png', (err, stat) => {
+              should.exist(stat)
+              done()
+            })
           })
-        })
       })
     })
   })
 
-  it('should not populate the req.files property for a non whitelist route', (done) => {
+  it('should not populate the req.files property for a non whitelist route', done => {
     const pages = TestHelper.setUpPages()
 
-    pages[0].routes = [{path: '/allowed-upload-route'}]
+    pages[0].routes = [{ path: '/allowed-upload-route' }]
     pages[0].contentType = 'application/json'
     pages[0].template = 'upload.js'
     pages[0].events = ['upload']
 
     pages.push(Object.assign({}, pages[0]))
-    pages[1].routes = [{path: '/non-allowed-upload-route'}]
+    pages[1].routes = [{ path: '/non-allowed-upload-route' }]
 
     const uploadConfig = {
       security: {
@@ -332,14 +331,14 @@ describe('Upload', function (done) {
         const client = request(connectionString)
 
         client
-        .post('/non-allowed-upload-route/')
-        .attach('avatar', './test/app/images/rosie.png')
-        .end((err, res) => {
-          const expectedData = res.body
-          should.exist(expectedData.files)
-          Object.keys(expectedData.files).length.should.eql(0)
-          done()
-        })
+          .post('/non-allowed-upload-route/')
+          .attach('avatar', './test/app/images/rosie.png')
+          .end((err, res) => {
+            const expectedData = res.body
+            should.exist(expectedData.files)
+            Object.keys(expectedData.files).length.should.eql(0)
+            done()
+          })
       })
     })
   })
