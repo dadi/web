@@ -1,11 +1,11 @@
 // the `data` parameter contains the data already loaded by
 // the page's datasources and any previous events that have fired
-var Event = function (req, res, data, callback) {
+var Event = function(req, res, data, callback) {
   if (req.session) {
     req.session.active = true
 
     req.session.vehicles = {
-      make: 'mazda',
+      make: "mazda",
       edition: 3
     }
 
@@ -20,7 +20,7 @@ var Event = function (req, res, data, callback) {
   callback(null, data)
 }
 
-module.exports = function (req, res, data, callback) {
+module.exports = function(req, res, data, callback) {
   return new Event(req, res, data, callback)
 }
 

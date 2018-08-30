@@ -1,3 +1,3 @@
 module.exports = (data, output) => {
-  return output.replace(/Sir/gim, 'Madam')
+  return output.replace(/Sir/gim, "Madam")
 }
