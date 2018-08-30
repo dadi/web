@@ -373,7 +373,7 @@ describe('Template store', done => {
       const mockRegisterFn = sinon.stub()
 
       const fakeEngine = () => {
-        const Engine = () => {}
+        const Engine = function () {}
 
         Engine.prototype.initialise = mockInitialiseFn
         Engine.prototype.getCore = () => {}
