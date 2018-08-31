@@ -34,9 +34,9 @@ Public.prototype.init = function (arg) {
     .filter(i => i.length)
     .map(i => ({
       url: i,
-      path: decodeURI([...new Set([...this.publicPath.split('/'), ...i.split('/')])].join(
+      path: [...new Set([...this.publicPath.split('/'), ...i.split('/')])].join(
         '/'
-      )), // Removes any duplicates in a path
+      ), // Removes any duplicates in a path
       ext: path.extname(i)
     }))
 
@@ -132,12 +132,19 @@ Public.prototype.process = function (arg) {
 }
 
 Public.prototype.openStream = function (arg) {
+  // Normalise file name
+  let filePath = decodeURIComponent(arg.file.path.replace(/\+/g, ' '))
+
+  console.log('*********')
+  console.log(filePath)
+  console.log('*********')
+
   // If a byte range requested e.g., video, audio file
   let rsOpts = {}
 
   if (!arg.rs && arg.req.headers.range) {
     try {
-      const stats = fs.statSync(arg.file.path)
+      const stats = fs.statSync(filePath)
       const parts = arg.req.headers.range.replace(/bytes=/, '').split('-')
 
       rsOpts = {
@@ -159,11 +166,13 @@ Public.prototype.openStream = function (arg) {
   }
 
   // Create a readstream if it hasn't been passed from the cache
-  if (!arg.rs) arg.rs = fs.createReadStream(arg.file.path, rsOpts)
+  if (!arg.rs) arg.rs = fs.createReadStream(filePath, rsOpts)
 
   // Try to load a folder index, if nothing found
-  arg.rs.on('error', () => {
-    if (this.loadAttempts === 0) this.originalPath = arg.file.path
+  arg.rs.on('error', (err) => {
+    if (err) console.log(err)
+      
+    if (this.loadAttempts === 0) this.originalPath = filePath
 
     if (this.index[this.loadAttempts]) {
       this.process({
