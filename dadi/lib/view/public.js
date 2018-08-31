@@ -34,7 +34,7 @@ Public.prototype.init = function (arg) {
     .filter(i => i.length)
     .map(i => ({
       url: i,
-      path: decodeURIComponent([...new Set([...this.publicPath.split('/'), ...i.split('/')])].join(
+      path: decodeURI([...new Set([...this.publicPath.split('/'), ...i.split('/')])].join(
         '/'
       )), // Removes any duplicates in a path
       ext: path.extname(i)
