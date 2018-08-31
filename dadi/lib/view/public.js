@@ -142,6 +142,9 @@ Public.prototype.openStream = function (arg) {
   // If a byte range requested e.g., video, audio file
   let rsOpts = {}
 
+  // Encoding
+  rsOpts.encoding = 'utf8'
+
   if (!arg.rs && arg.req.headers.range) {
     try {
       const stats = fs.statSync(filePath)
