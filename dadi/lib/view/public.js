@@ -160,10 +160,12 @@ Public.prototype.openStream = function (arg) {
   }
 
   // Create a readstream if it hasn't been passed from the cache
-  if (!arg.rs) arg.rs = fs.createReadStream(filePath, rsOpts)
+  if (!arg.rs) arg.rs = fs.createReadStream(Buffer(filePath).toString(), rsOpts)
 
   // Try to load a folder index, if nothing found
   arg.rs.on('error', (err) => {
+    if (err) console.log(err)
+
     if (this.loadAttempts === 0) this.originalPath = filePath
 
     if (this.index[this.loadAttempts]) {

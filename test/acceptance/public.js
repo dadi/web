@@ -173,7 +173,7 @@ describe('Public folder', done => {
       const client = request(connectionString)
 
       client
-        .get('/%26ima%CC%8A%20ge.png')
+        .get('/' + encodeURI('&imå ge.png'))
         .expect(200)
         .end((err, res) => {
           if (err) console.log(err)
