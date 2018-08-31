@@ -150,10 +150,8 @@ Public.prototype.openStream = function (arg) {
       const stats = fs.statSync(filePath)
       const parts = arg.req.headers.range.replace(/bytes=/, '').split('-')
 
-      rsOpts = {
-        start: parseInt(parts[0], 10),
-        end: parts[1] ? parseInt(parts[1], 10) : stats.size - 1
-      }
+      rsOpts.start = parseInt(parts[0], 10),
+      rsOpts.end: parts[1] ? parseInt(parts[1], 10) : stats.size - 1
 
       const chunkSize = rsOpts.end - rsOpts.start + 1
 
@@ -174,7 +172,7 @@ Public.prototype.openStream = function (arg) {
   // Try to load a folder index, if nothing found
   arg.rs.on('error', (err) => {
     if (err) console.log(err)
-      
+
     if (this.loadAttempts === 0) this.originalPath = filePath
 
     if (this.index[this.loadAttempts]) {
