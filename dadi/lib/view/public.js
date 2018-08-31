@@ -135,15 +135,8 @@ Public.prototype.openStream = function (arg) {
   // Normalise file name
   let filePath = decodeURIComponent(arg.file.path.replace(/\+/g, ' '))
 
-  console.log('*********')
-  console.log(filePath)
-  console.log('*********')
-
   // If a byte range requested e.g., video, audio file
   let rsOpts = {}
-
-  // Encoding
-  rsOpts.encoding = 'utf8'
 
   if (!arg.rs && arg.req.headers.range) {
     try {
@@ -171,8 +164,6 @@ Public.prototype.openStream = function (arg) {
 
   // Try to load a folder index, if nothing found
   arg.rs.on('error', (err) => {
-    if (err) console.log(err)
-
     if (this.loadAttempts === 0) this.originalPath = filePath
 
     if (this.index[this.loadAttempts]) {
