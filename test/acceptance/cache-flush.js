@@ -1,76 +1,77 @@
-var fs = require("fs")
-var nock = require("nock")
-var path = require("path")
-var request = require("supertest")
-var should = require("should")
-var sinon = require("sinon")
-var url = require("url")
+const fs = require('fs')
+const nock = require('nock')
+const path = require('path')
+const request = require('supertest')
+const should = require('should')
+const sinon = require('sinon')
+const url = require('url')
 
-var api = require(__dirname + "/../../dadi/lib/api")
-var Server = require(__dirname + "/../../dadi/lib")
-var Page = require(__dirname + "/../../dadi/lib/page")
-var Controller = require(__dirname + "/../../dadi/lib/controller")
-var TestHelper = require(__dirname + "/../help")()
-var config = require(__dirname + "/../../config")
-var help = require(__dirname + "/../../dadi/lib/help")
-var remoteProvider = require(__dirname + "/../../dadi/lib/providers/remote")
-var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
-var Helper = require(__dirname + "/../../dadi/lib/help")
+const api = require(`${__dirname}/../../dadi/lib/api`)
+const Server = require(`${__dirname}/../../dadi/lib`)
+const Page = require(`${__dirname}/../../dadi/lib/page`)
+const Controller = require(`${__dirname}/../../dadi/lib/controller`)
+const TestHelper = require(`${__dirname}/../help`)()
+const config = require(`${__dirname}/../../config`)
+const help = require(`${__dirname}/../../dadi/lib/help`)
+const remoteProvider = require(`${__dirname}/../../dadi/lib/providers/remote`)
+const apiProvider = require(`${__dirname}/../../dadi/lib/providers/dadiapi`)
+const Helper = require(`${__dirname}/../../dadi/lib/help`)
 
-var clientHost =
-  "http://" + config.get("server.host") + ":" + config.get("server.port")
-var apiHost = "http://" + config.get('api').host + ":" + config.get('api').port
-var credentials = {
-  clientId: config.get("auth.clientId"),
-  secret: config.get("auth.secret")
+const clientHost = `http://${config.get('server.host')}:${config.get(
+  'server.port'
+)}`
+const apiHost = `http://${config.get('api').host}:${config.get('api').port}`
+const credentials = {
+  clientId: config.get('auth.clientId'),
+  secret: config.get('auth.secret')
 }
 
-var token = JSON.stringify({
-  accessToken: "da6f610b-6f91-4bce-945d-9829cac5de71",
-  tokenType: "Bearer",
+const token = JSON.stringify({
+  accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71',
+  tokenType: 'Bearer',
   expiresIn: 1800
 })
 
-var fordResult = JSON.stringify({
+const fordResult = JSON.stringify({
   results: [
     {
-      makeName: "Ford"
+      makeName: 'Ford'
     }
   ]
 })
 
-var toyotaResult = JSON.stringify({
+const toyotaResult = JSON.stringify({
   results: [
     {
-      makeName: "Toyota"
+      makeName: 'Toyota'
     }
   ]
 })
 
-var categoriesResult1 = JSON.stringify({
+const categoriesResult1 = JSON.stringify({
   results: [
     {
-      name: "Crime"
+      name: 'Crime'
     }
   ]
 })
 
-var categoriesResult2 = JSON.stringify({
+const categoriesResult2 = JSON.stringify({
   results: [
     {
-      name: "Horror"
+      name: 'Horror'
     }
   ]
 })
 
-var carscope
-var catscope
+let carscope
+let catscope
 
-describe("Cache Flush", function(done) {
+describe('Cache Flush', function (done) {
   this.timeout(4000)
 
-  var auth
-  var body = "<html><body>Test</body></html>"
+  let auth
+  const body = '<html><body>Test</body></html>'
 
   beforeEach(done => {
     TestHelper.resetConfig().then(() => {
@@ -80,10 +81,10 @@ describe("Cache Flush", function(done) {
           TestHelper.clearCache()
 
           // fake api data request
-          var dsEndpoint =
+          let dsEndpoint =
             'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
-          var dsPath = url.parse(dsEndpoint).path
-          carscope = nock("http://127.0.0.1:3000")
+          let dsPath = url.parse(dsEndpoint).path
+          carscope = nock('http://127.0.0.1:3000')
             .get(dsPath)
             .times(2)
             .reply(200, fordResult)
@@ -91,71 +92,71 @@ describe("Cache Flush", function(done) {
           dsEndpoint =
             'http://127.0.0.1:3000/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}'
           dsPath = url.parse(dsEndpoint).path
-          catscope = nock("http://127.0.0.1:3000")
+          catscope = nock('http://127.0.0.1:3000')
             .get(dsPath)
             .times(2)
             .reply(200, categoriesResult1)
 
           // create a page
-          var name = "test"
-          var schema = TestHelper.getPageSchema()
-          var page = Page(name, schema)
-          var dsName = "car_makes_unchained"
-          var options = TestHelper.getPathOptions()
+          const name = 'test'
+          const schema = TestHelper.getPageSchema()
+          const page = Page(name, schema)
+          const dsName = 'car_makes_unchained'
+          const options = TestHelper.getPathOptions()
 
-          page.datasources = ["car_makes_unchained"]
-          page.template = "test_cache_flush.js"
+          page.datasources = ['car_makes_unchained']
+          page.template = 'test_cache_flush.js'
 
           // add two routes to the page for testing specific path cache clearing
-          page.routes[0].path = "/test"
-          page.routes.push({ path: "/extra_test" })
+          page.routes[0].path = '/test'
+          page.routes.push({ path: '/extra_test' })
 
           page.events = []
 
           // create a second page
-          var page2 = Page("page2", TestHelper.getPageSchema())
-          page2.datasources = ["categories"]
-          page2.template = "test.js"
+          const page2 = Page('page2', TestHelper.getPageSchema())
+          page2.datasources = ['categories']
+          page2.template = 'test.js'
 
           // add two routes to the page for testing specific path cache clearing
-          page2.routes[0].path = "/page2"
+          page2.routes[0].path = '/page2'
           page2.events = []
           // delete page2.route.constraint
 
-          var pages = []
+          const pages = []
           pages.push(page)
           pages.push(page2)
 
           TestHelper.startServer(pages).then(() => {
-            var client = request(clientHost)
+            const client = request(clientHost)
 
             client
-              .get("/test")
+              .get('/test')
               // .expect('content-type', 'text/html')
               // .expect(200)
-              .end(function(err, res) {
+              .end((err, res) => {
                 if (err) return done(err)
-                res.headers["x-cache"].should.exist
-                res.headers["x-cache"].should.eql("MISS")
+                res.headers['x-cache'].should.exist
+                res.headers['x-cache'].should.eql('MISS')
 
                 client
-                  .get("/extra_test")
+                  .get('/extra_test')
                   // .expect('content-type', 'text/html')
                   // .expect(200)
-                  .end(function(err, res) {
+                  .end((err, res) => {
                     if (err) return done(err)
-                    res.headers["x-cache"].should.exist
-                    res.headers["x-cache"].should.eql("MISS")
+                    res.headers['x-cache'].should.exist
+                    res.headers['x-cache'].should.eql('MISS')
 
                     client
-                      .get("/page2")
+                      .get('/page2')
                       // .expect('content-type', 'text/html')
                       // .expect(200)
-                      .end(function(err, res) {
+                      .end((err, res) => {
                         if (err) return done(err)
 
-                        res.headers["x-cache"].should.exist
-                        res.headers["x-cache"].should.eql("MISS")
+                        res.headers['x-cache'].should.exist
+                        res.headers['x-cache'].should.eql('MISS')
                         done()
                       })
                   })
@@ -166,7 +167,7 @@ describe("Cache Flush", function(done) {
     })
   })
 
-  afterEach(function(done) {
+  afterEach(done => {
     TestHelper.resetConfig().then(() => {
       nock.cleanAll()
       TestHelper.clearCache()
@@ -174,22 +175,21 @@ describe("Cache Flush", function(done) {
     })
   })
 
-  it("should return 401 if clientId and secret are not passed", function(done) {
-
+  it('should return 401 if clientId and secret are not passed', done => {
     // attempt to clear cache
-    var client = request(clientHost)
+    const client = request(clientHost)
     client
-      .post("/api/flush")
-      .set("content-type", "application/json")
-      .send({ path: "/test" })
+      .post('/api/flush')
+      .set('content-type', 'application/json')
+      .send({ path: '/test' })
       .expect(401)
-      .end(function(err, res) {
+      .end((err, res) => {
         if (err) return done(err)
         done()
       })
   })
 
-  it("should return 401 if clientId and secret are invalid", function(done) {
+  it('should return 401 if clientId and secret are invalid', done => {
     // config.set('api.enabled', true)
     //
     // // fake token post
@@ -201,63 +201,62 @@ describe("Cache Flush", function(done) {
     //   })
 
     // attempt to clear cache
-    var client = request(clientHost)
+    const client = request(clientHost)
     client
-      .post("/api/flush")
-      .set("content-type", "application/json")
-      .send({ path: "/test", clientId: "x", secret: "y" })
+      .post('/api/flush')
+      .set('content-type', 'application/json')
+      .send({ path: '/test', clientId: 'x', secret: 'y' })
       .expect(401)
-      .end(function(err, res) {
+      .end((err, res) => {
         if (err) return done(err)
         done()
       })
   })
 
-  it("should flush only cached items matching the specified path", function(done) {
-
+  it('should flush only cached items matching the specified path', done => {
     // get cached version of the page
-    var client = request(clientHost)
+    const client = request(clientHost)
     client
-      .get("/test")
-      .expect("content-type", "text/html")
+      .get('/test')
+      .expect('content-type', 'text/html')
       .expect(200)
-      .end(function(err, res) {
+      .end((err, res) => {
         if (err) return done(err)
 
-        res.headers["x-cache"].should.exist
-        res.headers["x-cache"].should.eql("HIT")
+        res.headers['x-cache'].should.exist
+        res.headers['x-cache'].should.eql('HIT')
 
         // clear cache for this path
         client
-          .post("/api/flush")
-          .send(Object.assign({}, { path: "/test" }, credentials))
+          .post('/api/flush')
+          .send(Object.assign({}, { path: '/test' }, credentials))
           .expect(200)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) return done(err)
-            res.body.result.should.equal("success")
+            res.body.result.should.equal('success')
 
             // get page again, should be uncached
-            var client = request(clientHost)
+            const client = request(clientHost)
             client
-              .get("/test")
-              .expect("content-type", "text/html")
+              .get('/test')
+              .expect('content-type', 'text/html')
               .expect(200)
-              .end(function(err, res) {
+              .end((err, res) => {
                 if (err) return done(err)
-                res.headers["x-cache"].should.exist
-                res.headers["x-cache"].should.eql("MISS")
+                res.headers['x-cache'].should.exist
+                res.headers['x-cache'].should.eql('MISS')
 
                 // get second route again, should still be cached
-                var client = request(clientHost)
+                const client = request(clientHost)
                 client
-                  .get("/extra_test")
-                  .expect("content-type", "text/html")
+                  .get('/extra_test')
+                  .expect('content-type', 'text/html')
                   .expect(200)
-                  .end(function(err, res) {
+                  .end((err, res) => {
                     if (err) return done(err)
 
-                    res.headers["x-cache"].should.exist
-                    res.headers["x-cache"].should.eql("HIT")
+                    res.headers['x-cache'].should.exist
+                    res.headers['x-cache'].should.eql('HIT')
                     done()
                   })
               })
@@ -265,22 +264,22 @@ describe("Cache Flush", function(done) {
       })
   })
 
-  it("should flush associated datasource files when flushing by path", function(done) {
+  it('should flush associated datasource files when flushing by path', done => {
     nock.cleanAll()
 
     // fake token post
-    var scope = nock("http://127.0.0.1:3000")
-      .post("/token")
+    const scope = nock('http://127.0.0.1:3000')
+      .post('/token')
       .times(6)
       .reply(200, {
-        accessToken: "da6f610b-6f91-4bce-945d-9829cac5de71"
+        accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
       })
 
     // fake api data requests
-    var dsEndpoint =
+    let dsEndpoint =
       'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
-    var dsPath = url.parse(dsEndpoint).path
-    carscope = nock("http://127.0.0.1:3000")
+    let dsPath = url.parse(dsEndpoint).path
+    carscope = nock('http://127.0.0.1:3000')
       .get(dsPath)
       .times(1)
       .reply(200, toyotaResult)
@@ -288,154 +287,164 @@ describe("Cache Flush", function(done) {
     dsEndpoint =
       'http://127.0.0.1:3000/1.0/library/categories?count=20&page=1&filter={}&fields={"name":1}&sort={"name":1}'
     dsPath = url.parse(dsEndpoint).path
-    catscope = nock("http://127.0.0.1:3000")
+    catscope = nock('http://127.0.0.1:3000')
       .get(dsPath)
       .times(1)
       .reply(200, categoriesResult2)
 
     // get cached version of the page
-    var client = request(clientHost)
+    const client = request(clientHost)
     client
-      .get("/test")
-      .expect("content-type", "text/html")
+      .get('/test')
+      .expect('content-type', 'text/html')
       .expect(200)
-      .end(function(err, res) {
+      .end((err, res) => {
         if (err) return done(err)
 
-        res.headers["x-cache"].should.exist
-        res.headers["x-cache"].should.eql("HIT")
+        res.headers['x-cache'].should.exist
+        res.headers['x-cache'].should.eql('HIT')
 
-        res.text.should.eql("<ul><li>Ford</li></ul>")
+        res.text.should.eql('<ul><li>Ford</li></ul>')
 
         // get cached version of page2
         client
-          .get("/page2")
-          .expect("content-type", "text/html")
+          .get('/page2')
+          .expect('content-type', 'text/html')
           .expect(200)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) return done(err)
 
-            //res.headers["x-cache"].should.exist
-            //res.headers["x-cache"].should.eql("HIT")
-            //res.text.should.eql("<h3>Crime</h3>")
+            // res.headers["x-cache"].should.exist
+            // res.headers["x-cache"].should.eql("HIT")
+            // res.text.should.eql("<h3>Crime</h3>")
 
             // clear cache for page1
             client
-              .post("/api/flush")
-              .send(Object.assign({}, { path: "/test" }, credentials))
+              .post('/api/flush')
+              .send(Object.assign({}, { path: '/test' }, credentials))
               .expect(200)
-              .end(function(err, res) {
+              .end((err, res) => {
                 if (err) return done(err)
-                res.body.result.should.equal("success")
+                res.body.result.should.equal('success')
 
                 // get first page again, should be uncached and with different data
                 client
-                  .get("/test")
-                  .expect("content-type", "text/html")
+                  .get('/test')
+                  .expect('content-type', 'text/html')
                   .expect(200)
-                  .end(function(err, res) {
+                  .end((err, res) => {
                     if (err) return done(err)
-                    res.headers["x-cache"].should.exist
-                    res.headers["x-cache"].should.eql("MISS")
-                    res.text.should.eql("<ul><li>Toyota</li></ul>")
+                    res.headers['x-cache'].should.exist
+                    res.headers['x-cache'].should.eql('MISS')
+                    res.text.should.eql('<ul><li>Toyota</li></ul>')
 
-                      // remove html files so the ds files have to be used to generate
-                      // new ones
-                      fs.readdir(config.get("caching.directory.path"), function (err, files) {
+                    // remove html files so the ds files have to be used to generate
+                    // new ones
+                    fs.readdir(
+                      config.get('caching.directory.path'),
+                      (err, files) => {
                         if (err) console.log(err)
-                         
-                        var filteredFiles = files.filter(file => file.substr(-10) === ".html.gzip")
-                        var filesDeleted = 0
 
-                        filteredFiles.forEach(function(file) {
-                          var filePath = path.resolve(path.join(config.get("caching.directory.path"), file))
+                        const filteredFiles = files.filter(
+                          file => file.substr(-10) === '.html.gzip'
+                        )
+                        let filesDeleted = 0
 
-                          fs.unlink(filePath, function (err) {
+                        filteredFiles.forEach(file => {
+                          const filePath = path.resolve(
+                            path.join(
+                              config.get('caching.directory.path'),
+                              file
+                            )
+                          )
+
+                          fs.unlink(filePath, err => {
                             if (err) console.log(err)
 
                             filesDeleted++
 
                             if (filesDeleted === filteredFiles.length) {
                               client
-                                .get("/page2")
-                                .expect("content-type", "text/html")
-                                .end(function(err, res) {
+                                .get('/page2')
+                                .expect('content-type', 'text/html')
+                                .end((err, res) => {
                                   if (err) return done(err)
 
-                                  res.headers["x-cache"].should.exist
-                                  res.headers["x-cache"].should.eql("MISS")
+                                  res.headers['x-cache'].should.exist
+                                  res.headers['x-cache'].should.eql('MISS')
 
-                                  res.text.should.eql("<h3>Crime</h3>")
+                                  res.text.should.eql('<h3>Crime</h3>')
 
                                   done()
                                 })
                             }
                           })
                         })
-                    })
+                      }
+                    )
                   })
               })
           })
       })
   })
 
-  it("should flush datasource files when flushing all", function(done) {
+  it('should flush datasource files when flushing all', done => {
     // fake api data requests
     nock.cleanAll()
 
     // fake token post
-    var scope = nock("http://127.0.0.1:3000")
-      .post("/token")
+    const scope = nock('http://127.0.0.1:3000')
+      .post('/token')
       .times(4)
       .reply(200, {
-        accessToken: "da6f610b-6f91-4bce-945d-9829cac5de71"
+        accessToken: 'da6f610b-6f91-4bce-945d-9829cac5de71'
       })
 
-    var dsEndpoint =
+    const dsEndpoint =
       'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}'
-    var dsPath = url.parse(dsEndpoint).path
-    carscope = nock("http://127.0.0.1:3000")
+    const dsPath = url.parse(dsEndpoint).path
+    carscope = nock('http://127.0.0.1:3000')
       .get(dsPath)
       .times(1)
       .reply(200, toyotaResult)
 
     // get cached version of the page
-    var client = request(clientHost)
+    const client = request(clientHost)
     client
-      .get("/test")
-      .expect("content-type", "text/html")
+      .get('/test')
+      .expect('content-type', 'text/html')
       .expect(200)
-      .end(function(err, res) {
+      .end((err, res) => {
         if (err) return done(err)
 
-        res.headers["x-cache"].should.exist
-        res.headers["x-cache"].should.eql("HIT")
+        res.headers['x-cache'].should.exist
+        res.headers['x-cache'].should.eql('HIT')
 
-        res.text.should.eql("<ul><li>Ford</li></ul>")
+        res.text.should.eql('<ul><li>Ford</li></ul>')
 
         // clear cache for this path
         client
-          .post("/api/flush")
-          .send(Object.assign({}, { path: "*" }, credentials))
+          .post('/api/flush')
+          .send(Object.assign({}, { path: '*' }, credentials))
           .expect(200)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) return done(err)
-            res.body.result.should.equal("success")
+            res.body.result.should.equal('success')
 
             // get page again, should be uncached and with different data
-            setTimeout(function() {
-              var client = request(clientHost)
+            setTimeout(() => {
+              const client = request(clientHost)
               client
-                .get("/test")
-                .expect("content-type", "text/html")
+                .get('/test')
+                .expect('content-type', 'text/html')
                 .expect(200)
-                .end(function(err, res) {
+                .end((err, res) => {
                   if (err) return done(err)
 
-                  res.headers["x-cache"].should.exist
-                  res.headers["x-cache"].should.eql("MISS")
+                  res.headers['x-cache'].should.exist
+                  res.headers['x-cache'].should.eql('MISS')
 
-                  res.text.should.eql("<ul><li>Toyota</li></ul>")
+                  res.text.should.eql('<ul><li>Toyota</li></ul>')
 
                   done()
                 })
@@ -444,7 +453,7 @@ describe("Cache Flush", function(done) {
       })
   })
 
-  it("should flush all cached items when no path is specified", function(done) {
+  it('should flush all cached items when no path is specified', done => {
     // config.set('api.enabled', true)
     //
     // // fake token post
@@ -456,50 +465,50 @@ describe("Cache Flush", function(done) {
     //   })
 
     // get cached version of the page
-    var client = request(clientHost)
+    const client = request(clientHost)
 
     client
-      .get("/test")
-      .expect("content-type", "text/html")
+      .get('/test')
+      .expect('content-type', 'text/html')
       .expect(200)
-      .end(function(err, res) {
+      .end((err, res) => {
         if (err) return done(err)
 
-        res.headers["x-cache"].should.exist
-        res.headers["x-cache"].should.eql("HIT")
+        res.headers['x-cache'].should.exist
+        res.headers['x-cache'].should.eql('HIT')
 
         // clear cache for this path
         client
-          .post("/api/flush")
-          .send(Object.assign({}, { path: "*" }, credentials))
+          .post('/api/flush')
+          .send(Object.assign({}, { path: '*' }, credentials))
           .expect(200)
-          .end(function(err, res) {
+          .end((err, res) => {
             if (err) return done(err)
-            res.body.result.should.equal("success")
+            res.body.result.should.equal('success')
 
             // get page again, should be uncached
-            var client = request(clientHost)
+            const client = request(clientHost)
             client
-              .get("/test")
-              .expect("content-type", "text/html")
+              .get('/test')
+              .expect('content-type', 'text/html')
               .expect(200)
-              .end(function(err, res) {
+              .end((err, res) => {
                 if (err) return done(err)
 
-                res.headers["x-cache"].should.exist
-                res.headers["x-cache"].should.eql("MISS")
+                res.headers['x-cache'].should.exist
+                res.headers['x-cache'].should.eql('MISS')
 
                 // get second route again, should still be cached
-                var client = request(clientHost)
+                const client = request(clientHost)
                 client
-                  .get("/extra_test")
-                  .expect("content-type", "text/html")
+                  .get('/extra_test')
+                  .expect('content-type', 'text/html')
                   .expect(200)
-                  .end(function(err, res) {
+                  .end((err, res) => {
                     if (err) return done(err)
 
-                    res.headers["x-cache"].should.exist
-                    res.headers["x-cache"].should.eql("MISS")
+                    res.headers['x-cache'].should.exist
+                    res.headers['x-cache'].should.eql('MISS')
 
                     done()
                   })

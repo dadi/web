@@ -1,46 +1,46 @@
-var fs = require("fs")
-var path = require("path")
-var should = require("should")
-var sinon = require("sinon")
+const fs = require('fs')
+const path = require('path')
+const should = require('should')
+const sinon = require('sinon')
 
-var api = require(__dirname + "/../../dadi/lib/api")
-var monitor = require(__dirname + "/../../dadi/lib/monitor")
-var Server = require(__dirname + "/../../dadi/lib")
-var TestHelper = require(__dirname + "/../help")()
+const api = require(`${__dirname}/../../dadi/lib/api`)
+const monitor = require(`${__dirname}/../../dadi/lib/monitor`)
+const Server = require(`${__dirname}/../../dadi/lib`)
+const TestHelper = require(`${__dirname}/../help`)()
 
-describe("Monitor", function(done) {
-  before(function(done) {
+describe('Monitor', done => {
+  before(done => {
     TestHelper.resetConfig().then(() => {
       done()
     })
   })
 
-  after(function(done) {
+  after(done => {
     try {
-      fs.unlinkSync(path.join(__dirname, "test.txt"))
+      fs.unlinkSync(path.join(__dirname, 'test.txt'))
     } catch (err) {}
     done()
   })
 
-  it("should export constructor", function(done) {
+  it('should export constructor', done => {
     monitor.Monitor.should.be.a.Function
     done()
   })
 
-  it("should export function that returns an instance", function(done) {
+  it('should export function that returns an instance', done => {
     monitor.should.be.a.Function
-    var p = __dirname
+    const p = __dirname
     monitor(p).should.be.an.instanceOf(monitor.Monitor)
     done()
   })
 
-  it("should fire `change` event when watched path changes", function(done) {
-    var p = path.join(__dirname, "test.txt")
+  it('should fire `change` event when watched path changes', done => {
+    const p = path.join(__dirname, 'test.txt')
 
-    fs.writeFile(p, "Hello World", function(err) {
-      var m = monitor(p)
-      m.on("change", function(fileName) {
-        fileName.should.eql("test.txt")
+    fs.writeFile(p, 'Hello World', err => {
+      const m = monitor(p)
+      m.on('change', fileName => {
+        fileName.should.eql('test.txt')
       })
 
       m.close()

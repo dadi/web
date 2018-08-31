@@ -399,7 +399,8 @@ const conf = convict({
   },
   uploads: {
     enabled: {
-      doc: 'If true, files uploaded via a form a saved to disk and added to `req.files`',
+      doc:
+        'If true, files uploaded via a form a saved to disk and added to `req.files`',
       format: Boolean,
       default: false
     },
@@ -414,12 +415,14 @@ const conf = convict({
       default: false
     },
     hashKey: {
-      doc: 'The key to use when hashing the filename, if `hashFilename` is true',
+      doc:
+        'The key to use when hashing the filename, if `hashFilename` is true',
       format: String,
       default: ''
     },
     prefix: {
-      doc: 'If set, the uploaded file is prefixed with the specified value. Overrides "prefixWithFieldName".',
+      doc:
+        'If set, the uploaded file is prefixed with the specified value. Overrides "prefixWithFieldName".',
       format: String,
       default: ''
     },
@@ -459,7 +462,8 @@ const conf = convict({
     default: false
   },
   allowDebugView: {
-    doc: 'If true, allows appending ?debug= to the querystring to view how the page is constructed,',
+    doc:
+      'If true, allows appending ?debug= to the querystring to view how the page is constructed,',
     format: Boolean,
     default: false
   },
