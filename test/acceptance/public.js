@@ -60,18 +60,6 @@ describe('Public folder', done => {
     })
   })
 
-  // beforeEach(function(done) {
-  //   TestHelper.resetConfig().then(() => {
-  //     TestHelper.disableApiConfig().then(() => {
-  //       done()
-  //     })
-  //   })
-  // })
-
-  // afterEach(function(done) {
-  //   TestHelper.stopServer(done)
-  // })
-
   it('should compress files in the public folder where necessary', done => {
     const pages = TestHelper.setUpPages()
 
@@ -172,6 +160,29 @@ describe('Public folder', done => {
         res.headers['cache-control'].should.eql('public, max-age=86400')
         done()
       })
+    })
+  })
+
+  it('should return files from the public folder with names containing special characters', done => {
+    const pages = TestHelper.setUpPages()
+
+    TestHelper.startServer(pages).then(() => {
+      const connectionString = `http://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`
+      const client = request(connectionString)
+
+      client
+        .get('/%26ima%CC%8A%20ge.png')
+        .expect(200)
+        .end((err, res) => {
+          if (err) done(err)
+
+          should.exist(res.headers)
+          res.headers['content-type'].should.eql('image/png')
+          res.headers['cache-control'].should.eql('public, max-age=86400')
+          done()
+        })
     })
   })
 
