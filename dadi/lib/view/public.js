@@ -151,7 +151,7 @@ Public.prototype.openStream = function (arg) {
       const parts = arg.req.headers.range.replace(/bytes=/, '').split('-')
 
       rsOpts.start = parseInt(parts[0], 10),
-      rsOpts.end: parts[1] ? parseInt(parts[1], 10) : stats.size - 1
+      rsOpts.end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1
 
       const chunkSize = rsOpts.end - rsOpts.start + 1
 
