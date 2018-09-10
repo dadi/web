@@ -1,49 +1,49 @@
-var fs = require("fs")
-var nock = require("nock")
-var request = require("supertest")
-var path = require("path")
-var should = require("should")
-var sinon = require("sinon")
+const fs = require('fs')
+const nock = require('nock')
+const request = require('supertest')
+const path = require('path')
+const should = require('should')
+const sinon = require('sinon')
 
-var helpers = require(__dirname + "/../../dadi/lib/help")
+const helpers = require(`${__dirname}/../../dadi/lib/help`)
 
-describe("Help", done => {
-  describe("Timer", () => {
-    it("should save and return stats", done => {
-      sinon.stub(helpers.timer, "isDebugEnabled").callsFake(() => {
+describe('Help', done => {
+  describe('Timer', () => {
+    it('should save and return stats', done => {
+      sinon.stub(helpers.timer, 'isDebugEnabled').callsFake(() => {
         return true
       })
 
-      var key = "load"
+      const key = 'load'
 
       helpers.timer.start(key)
       helpers.timer.stop(key)
 
-      var stats = helpers.timer.getStats()
+      const stats = helpers.timer.getStats()
 
       helpers.timer.isDebugEnabled.restore()
-      
+
       should.exist(stats[key].time)
       done()
     })
   })
 
-  describe("File system helpers", () => {
-    var mockStatSync = path => {
+  describe('File system helpers', () => {
+    const mockStatSync = path => {
       return {
-        isDirectory: () => path.indexOf(".") === -1,
-        isFile: () => path.indexOf(".") !== -1
+        isDirectory: () => path.indexOf('.') === -1,
+        isFile: () => path.indexOf('.') !== -1
       }
     }
 
-    describe("readDirectory", () => {
-      it("returns an empty array if the directory is not found, or the read operation fails, and `failIfNotFound` is falsy", done => {
-        var directory = "some/directory"
-        var fsReadError = new Error("Some error")
+    describe('readDirectory', () => {
+      it('returns an empty array if the directory is not found, or the read operation fails, and `failIfNotFound` is falsy', done => {
+        const directory = 'some/directory'
+        const fsReadError = new Error('Some error')
 
-        fsReadError.code = "ENOENT"
+        fsReadError.code = 'ENOENT'
 
-        var mockReaddir = sinon.stub(fs, "readdir").yields(fsReadError)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(fsReadError)
 
         helpers.readDirectory(directory, {}).then(response => {
           response.should.be.Array
@@ -55,13 +55,13 @@ describe("Help", done => {
         fs.readdir.restore()
       })
 
-      it("throws an error if the directory is not found, or the read operation fails, and `failIfNotFound` is truthy", done => {
-        var directory = "some/directory"
-        var fsReadError = new Error("Some error")
+      it('throws an error if the directory is not found, or the read operation fails, and `failIfNotFound` is truthy', done => {
+        const directory = 'some/directory'
+        const fsReadError = new Error('Some error')
 
-        fsReadError.code = "ENOENT"
+        fsReadError.code = 'ENOENT'
 
-        var mockReaddir = sinon.stub(fs, "readdir").yields(fsReadError)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(fsReadError)
 
         helpers
           .readDirectory(directory, {
@@ -77,17 +77,17 @@ describe("Help", done => {
         fs.readdir.restore()
       })
 
-      it("lists all files in a directory, returning a list of full paths", done => {
-        var directory = "some/directory"
-        var files = ["directory1", "file1.js", "file2.png"]
+      it('lists all files in a directory, returning a list of full paths', done => {
+        const directory = 'some/directory'
+        const files = ['directory1', 'file1.js', 'file2.png']
 
-        var mockReaddir = sinon.stub(fs, "readdir").yields(null, files)
-        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(null, files)
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
 
         helpers.readDirectory(directory, {}).then(response => {
           response.should.deepEqual([
-            path.join(directory, "file1.js"),
-            path.join(directory, "file2.png")
+            path.join(directory, 'file1.js'),
+            path.join(directory, 'file2.png')
           ])
           mockReaddir.getCall(0).args[0].should.eql(directory)
 
@@ -98,28 +98,28 @@ describe("Help", done => {
         fs.statSync.restore()
       })
 
-      it("lists all files in a directory, filtered by extension, returning a list of full paths", done => {
-        var directory = "some/directory"
-        var files = [
-          "directory1",
-          "file1.js",
-          "file2.png",
-          "file3.js",
-          "file4.txt"
+      it('lists all files in a directory, filtered by extension, returning a list of full paths', done => {
+        const directory = 'some/directory'
+        const files = [
+          'directory1',
+          'file1.js',
+          'file2.png',
+          'file3.js',
+          'file4.txt'
         ]
 
-        var mockReaddir = sinon.stub(fs, "readdir").yields(null, files)
-        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
+        const mockReaddir = sinon.stub(fs, 'readdir').yields(null, files)
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
 
         helpers
           .readDirectory(directory, {
-            extensions: [".js", ".txt"]
+            extensions: ['.js', '.txt']
           })
           .then(response => {
             response.should.deepEqual([
-              path.join(directory, "file1.js"),
-              path.join(directory, "file3.js"),
-              path.join(directory, "file4.txt")
+              path.join(directory, 'file1.js'),
+              path.join(directory, 'file3.js'),
+              path.join(directory, 'file4.txt')
             ])
 
             done()
@@ -129,29 +129,29 @@ describe("Help", done => {
         fs.statSync.restore()
       })
 
-      it("lists all files in a directory and searches sub-directories recursively, returning a list of full paths", done => {
-        var directory = "some/directory"
-        var filesLevel1 = ["directory1", "file1.js", "file2.png"]
-        var filesLevel2 = ["file3.js"]
+      it('lists all files in a directory and searches sub-directories recursively, returning a list of full paths', done => {
+        const directory = 'some/directory'
+        const filesLevel1 = ['directory1', 'file1.js', 'file2.png']
+        const filesLevel2 = ['file3.js']
 
-        var mockReaddir = sinon
-          .stub(fs, "readdir")
+        const mockReaddir = sinon
+          .stub(fs, 'readdir')
           .onCall(0)
           .yields(null, filesLevel1)
           .onCall(1)
           .yields(null, filesLevel2)
 
-        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
 
         helpers
           .readDirectory(directory, {
-            extensions: [".js"],
+            extensions: ['.js'],
             recursive: true
           })
           .then(response => {
             response.should.deepEqual([
-              path.join(directory, "file1.js"),
-              path.join(directory, "directory1", "file3.js")
+              path.join(directory, 'file1.js'),
+              path.join(directory, 'directory1', 'file3.js')
             ])
 
             done()
@@ -162,16 +162,16 @@ describe("Help", done => {
       })
     })
 
-    describe("readFiles", () => {
-      it("executes a callback for each file in a given list of full paths with the path as a parameter", done => {
-        var files = [
-          "some/directory/sub-directory1",
-          "some/directory/sub-directory1/file1.js",
-          "some/directory/file2.js",
-          "some/directory/file3.png"
+    describe('readFiles', () => {
+      it('executes a callback for each file in a given list of full paths with the path as a parameter', done => {
+        const files = [
+          'some/directory/sub-directory1',
+          'some/directory/sub-directory1/file1.js',
+          'some/directory/file2.js',
+          'some/directory/file3.png'
         ]
-        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
-        var callbackFn = sinon.spy()
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
+        const callbackFn = sinon.spy()
 
         helpers
           .readFiles(files, {
@@ -189,20 +189,20 @@ describe("Help", done => {
         fs.statSync.restore()
       })
 
-      it("executes a callback for each file in a given list of full paths, filtered by extension, with the path as a parameter", done => {
-        var files = [
-          "some/directory/sub-directory1",
-          "some/directory/sub-directory1/file1.js",
-          "some/directory/file2.js",
-          "some/directory/file3.png"
+      it('executes a callback for each file in a given list of full paths, filtered by extension, with the path as a parameter', done => {
+        const files = [
+          'some/directory/sub-directory1',
+          'some/directory/sub-directory1/file1.js',
+          'some/directory/file2.js',
+          'some/directory/file3.png'
         ]
-        var mockStat = sinon.stub(fs, "statSync").callsFake(mockStatSync)
-        var callbackFn = sinon.spy()
+        const mockStat = sinon.stub(fs, 'statSync').callsFake(mockStatSync)
+        const callbackFn = sinon.spy()
 
         helpers
           .readFiles(files, {
             callback: callbackFn,
-            extensions: [".png"]
+            extensions: ['.png']
           })
           .then(response => {
             callbackFn.callCount.should.eql(1)
@@ -214,12 +214,12 @@ describe("Help", done => {
         fs.statSync.restore()
       })
 
-      it("rejects if the callback is missing or is invalid", done => {
-        var files = ["some/directory/sub-directory1"]
+      it('rejects if the callback is missing or is invalid', done => {
+        const files = ['some/directory/sub-directory1']
 
         helpers
           .readFiles(files, {
-            callback: "notAFunction"
+            callback: 'notAFunction'
           })
           .catch(error1 => {
             return helpers.readFiles(files, {}).catch(err => {

@@ -1,26 +1,27 @@
-var fs = require("fs")
-var nock = require("nock")
-var path = require("path")
-var request = require("supertest")
-var should = require("should")
-var sinon = require("sinon")
+const fs = require('fs')
+const nock = require('nock')
+const path = require('path')
+const request = require('supertest')
+const should = require('should')
+const sinon = require('sinon')
 
-var api = require(__dirname + "/../../dadi/lib/api")
-var Controller = require(__dirname + "/../../dadi/lib/controller")
-var datasource = require(__dirname + "/../../dadi/lib/datasource")
-var Page = require(__dirname + "/../../dadi/lib/page")
-var Preload = require(path.resolve(
-  path.join(__dirname, "/../../dadi/lib/datasource/preload")
+const api = require(`${__dirname}/../../dadi/lib/api`)
+const Controller = require(`${__dirname}/../../dadi/lib/controller`)
+const datasource = require(`${__dirname}/../../dadi/lib/datasource`)
+const Page = require(`${__dirname}/../../dadi/lib/page`)
+const Preload = require(path.resolve(
+  path.join(__dirname, '/../../dadi/lib/datasource/preload')
 ))
-var apiProvider = require(__dirname + "/../../dadi/lib/providers/dadiapi")
-var TestHelper = require(__dirname + "/../help")()
+const apiProvider = require(`${__dirname}/../../dadi/lib/providers/dadiapi`)
+const TestHelper = require(`${__dirname}/../help`)()
 
-var config = require(path.resolve(path.join(__dirname, "/../../config")))
-var connectionString =
-  "http://" + config.get("server.host") + ":" + config.get("server.port")
+const config = require(path.resolve(path.join(__dirname, '/../../config')))
+const connectionString = `http://${config.get('server.host')}:${config.get(
+  'server.port'
+)}`
 
-describe("Preloader", function(done) {
-  beforeEach(function(done) {
+describe('Preloader', done => {
+  beforeEach(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.disableApiConfig().then(() => {
         done()
@@ -28,25 +29,25 @@ describe("Preloader", function(done) {
     })
   })
 
-  afterEach(function(done) {
+  afterEach(done => {
     TestHelper.stopServer(done)
   })
 
-  it("should preload data when the server starts", function(done) {
+  it('should preload data when the server starts', done => {
     TestHelper.disableApiConfig().then(() => {
-      TestHelper.updateConfig({ data: { preload: ["car_makes"] } }).then(() => {
-        var pages = TestHelper.setUpPages()
+      TestHelper.updateConfig({ data: { preload: ['car_makes'] } }).then(() => {
+        const pages = TestHelper.setUpPages()
         pages[0].settings.cache = false
-        pages[0].datasources = ["car_makes"]
+        pages[0].datasources = ['car_makes']
 
         // provide API response
-        var results = {
-          results: [{ make: "ford" }, { make: "mazda" }, { make: "toyota" }]
+        const results = {
+          results: [{ make: 'ford' }, { make: 'mazda' }, { make: 'toyota' }]
         }
-        var providerStub = sinon.stub(apiProvider.prototype, "load")
+        const providerStub = sinon.stub(apiProvider.prototype, 'load')
         providerStub.onFirstCall().yields(null, results)
 
-        var preloadSpy = sinon.spy(Preload.Preload.prototype, "init")
+        const preloadSpy = sinon.spy(Preload.Preload.prototype, 'init')
 
         TestHelper.startServer(pages).then(() => {
           apiProvider.prototype.load.restore()
@@ -56,7 +57,7 @@ describe("Preloader", function(done) {
           providerStub.called.should.eql(true)
 
           Preload()
-            .get("car_makes")
+            .get('car_makes')
             .should.eql(results.results)
 
           done()

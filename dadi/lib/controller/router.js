@@ -508,7 +508,7 @@ module.exports = function (server, options) {
       // force a trailing slash
       if (rewritesConfig.forceTrailingSlash) {
         if (/^([^.]*[^/])$/.test(pathname) === true) {
-          location = pathname + '/' + parsed.search
+          location = `${pathname}/${parsed.search || ''}`
           redirect = true
         }
       }

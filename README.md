@@ -1,7 +1,7 @@
 <img src="https://dadi.tech/assets/products/dadi-web-full.png" alt="DADI Web" height="65"/>
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
-[![coverage](https://img.shields.io/badge/coverage-82%-yellow.svg?style=flat-square)](https://github.com/dadi/web)
+[![coverage](https://img.shields.io/badge/coverage-82%25-yellow.svg?style=flat?style=flat-square)](https://github.com/dadi/web)
 [![Build Status](https://travis-ci.org/dadi/web.svg?branch=master)](https://travis-ci.org/dadi/web)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 [![Greenkeeper badge](https://badges.greenkeeper.io/dadi/web.svg)](https://greenkeeper.io/)
@@ -85,7 +85,7 @@ $ [sudo] service web restart
 
 
 ## Links
-* [Web Documentation](http://docs.dadi.tech/web/)
+* [Web Documentation](https://docs.dadi.cloud/web/)
 
 ## Licence
 

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [6.1.0] - 2018-09-10
+
+## Added
+
+* [#405](https://github.com/dadi/web/issues/405): Multi-language support
+
+## Changed
+
+* [#402](https://github.com/dadi/web/issues/402): Add caching to markdown datasource status: needs tests
+* [#416](https://github.com/dadi/web/issues/416): Markdown provider: error when document body contains --- type: bug
+* [#428](https://github.com/dadi/web/issues/428): 404 returned for files containing spaces type: bug
+
 # [6.0.1] - 2018-05-30
 
 * [#399](https://github.com/dadi/web/issues/399): improve the process of selecting a loaded endpoint based on the request URL within the cache layer

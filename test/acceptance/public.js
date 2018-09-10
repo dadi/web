@@ -1,46 +1,46 @@
-var fs = require('fs')
-var nock = require('nock')
-var path = require('path')
-var should = require('should')
-var Readable = require('stream').Readable
-var request = require('supertest')
-var zlib = require('zlib')
+const fs = require('fs')
+const nock = require('nock')
+const path = require('path')
+const should = require('should')
+const Readable = require('stream').Readable
+const request = require('supertest')
+const zlib = require('zlib')
 
-var api = require(__dirname + '/../../dadi/lib/api')
-var Controller = require(__dirname + '/../../dadi/lib/controller')
-var Datasource = require(__dirname + '/../../dadi/lib/datasource')
-var help = require(__dirname + '/../../dadi/lib/help')
-var Page = require(__dirname + '/../../dadi/lib/page')
-var Server = require(__dirname + '/../../dadi/lib')
-var TestHelper = require(__dirname + '/../help')()
+const api = require(`${__dirname}/../../dadi/lib/api`)
+const Controller = require(`${__dirname}/../../dadi/lib/controller`)
+const Datasource = require(`${__dirname}/../../dadi/lib/datasource`)
+const help = require(`${__dirname}/../../dadi/lib/help`)
+const Page = require(`${__dirname}/../../dadi/lib/page`)
+const Server = require(`${__dirname}/../../dadi/lib`)
+const TestHelper = require(`${__dirname}/../help`)()
 
-var config = require(path.resolve(path.join(__dirname, '/../../config')))
-var controller
+const config = require(path.resolve(path.join(__dirname, '/../../config')))
+let controller
 
-var secureClientHost =
-  'https://' + config.get('server.host') + ':' + config.get('server.port')
-var secureClient = request(secureClientHost)
-var scope
+const secureClientHost = `https://${config.get('server.host')}:${config.get(
+  'server.port'
+)}`
+const secureClient = request(secureClientHost)
+let scope
 
 // Ignore errors around self-assigned SSL certs
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
-describe('Public folder', function (done) {
-  beforeEach(function (done) {
+describe('Public folder', done => {
+  beforeEach(done => {
     TestHelper.clearCache()
 
-    var apiHost =
-      'http://' + config.get('api.host') + ':' + config.get('api.port')
+    const apiHost = `http://${config.get('api.host')}:${config.get('api.port')}`
     scope = nock(apiHost)
       .post('/token')
       .times(5)
       .reply(200, { accessToken: 'xx' })
 
-    var scope1 = nock(apiHost)
+    const scope1 = nock(apiHost)
       .get('/')
       .reply(200)
 
-    var configUpdate = {
+    const configUpdate = {
       server: {
         host: '127.0.0.1',
         port: 5000
@@ -54,37 +54,21 @@ describe('Public folder', function (done) {
     })
   })
 
-  afterEach(function (done) {
+  afterEach(done => {
     TestHelper.resetConfig().then(() => {
       TestHelper.stopServer(done)
     })
   })
 
-  // beforeEach(function(done) {
-  //   TestHelper.resetConfig().then(() => {
-  //     TestHelper.disableApiConfig().then(() => {
-  //       done()
-  //     })
-  //   })
-  // })
-
-  // afterEach(function(done) {
-  //   TestHelper.stopServer(done)
-  // })
-
-  it('should compress files in the public folder where necessary', function (
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
+  it('should compress files in the public folder where necessary', done => {
+    const pages = TestHelper.setUpPages()
 
     TestHelper.updateConfig({}).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
-        var client = request(connectionString)
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
+        const client = request(connectionString)
 
         client
           .get('/gzipme.css')
@@ -97,12 +81,10 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should cache compressible files in the public folder where necessary', function (
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
+  it('should cache compressible files in the public folder where necessary', done => {
+    const pages = TestHelper.setUpPages()
 
-    var cacheConfig = {
+    const cacheConfig = {
       caching: {
         directory: {
           enabled: true
@@ -112,11 +94,9 @@ describe('Public folder', function (done) {
 
     TestHelper.updateConfig(cacheConfig).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
 
         request(connectionString)
           .get('/gzipme.css')
@@ -135,12 +115,10 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should not cache compressible files in the public folder when cache is disabled', function (
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
+  it('should not cache compressible files in the public folder when cache is disabled', done => {
+    const pages = TestHelper.setUpPages()
 
-    var cacheConfig = {
+    const cacheConfig = {
       caching: {
         directory: {
           enabled: false
@@ -150,12 +128,10 @@ describe('Public folder', function (done) {
 
     TestHelper.updateConfig(cacheConfig).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
-        var client = request(connectionString)
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
+        const client = request(connectionString)
 
         client
           .get('/gzipme.css')
@@ -169,13 +145,14 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should return files from the public folder', function (done) {
-    var pages = TestHelper.setUpPages()
+  it('should return files from the public folder', done => {
+    const pages = TestHelper.setUpPages()
 
     TestHelper.startServer(pages).then(() => {
-      var connectionString =
-        'http://' + config.get('server.host') + ':' + config.get('server.port')
-      var client = request(connectionString)
+      const connectionString = `http://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`
+      const client = request(connectionString)
 
       client.get('/image.png').end((err, res) => {
         should.exist(res.headers['content-type'])
@@ -186,13 +163,37 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should not compress images in the public folder', function (done) {
-    var pages = TestHelper.setUpPages()
+  it('should return files from the public folder with names containing spaces', done => {
+    const pages = TestHelper.setUpPages()
 
     TestHelper.startServer(pages).then(() => {
-      var connectionString =
-        'http://' + config.get('server.host') + ':' + config.get('server.port')
-      var client = request(connectionString)
+      const connectionString = `http://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`
+      const client = request(connectionString)
+
+      client
+        .get('/' + encodeURI('&ima ge.png'))
+        .expect(200)
+        .end((err, res) => {
+          if (err) console.log(err)
+
+          should.exist(res.headers)
+          res.headers['content-type'].should.eql('image/png')
+          res.headers['cache-control'].should.eql('public, max-age=86400')
+          done()
+        })
+    })
+  })
+
+  it('should not compress images in the public folder', done => {
+    const pages = TestHelper.setUpPages()
+
+    TestHelper.startServer(pages).then(() => {
+      const connectionString = `http://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`
+      const client = request(connectionString)
 
       client.get('/image.png').end((err, res) => {
         should.not.exist(res.headers['content-encoding'])
@@ -201,12 +202,10 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should return files from a config.virtualDirectories folder', function (
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
+  it('should return files from a config.virtualDirectories folder', done => {
+    const pages = TestHelper.setUpPages()
 
-    var virtualConfig = {
+    const virtualConfig = {
       virtualDirectories: [
         {
           path: './test/app/virtualdir'
@@ -216,12 +215,10 @@ describe('Public folder', function (done) {
 
     TestHelper.updateConfig(virtualConfig).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
-        var client = request(connectionString)
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
+        const client = request(connectionString)
 
         // Serve the readme for Web
         client.get('/virtualdir/testing.html').end((err, res) => {
@@ -232,12 +229,10 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should return an index file if specified for a config.virtualDirectories folder', function (
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
+  it('should return an index file if specified for a config.virtualDirectories folder', done => {
+    const pages = TestHelper.setUpPages()
 
-    var virtualConfig = {
+    const virtualConfig = {
       virtualDirectories: [
         {
           path: './test/app/virtualdir',
@@ -248,12 +243,10 @@ describe('Public folder', function (done) {
 
     TestHelper.updateConfig(virtualConfig).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
-        var client = request(connectionString)
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
+        const client = request(connectionString)
 
         // Serve the readme for Web
         client.get('/virtualdir/').end((err, res) => {
@@ -264,12 +257,10 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should return an index files if specified as an array for a config.virtualDirectories folder', function (
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
+  it('should return an index files if specified as an array for a config.virtualDirectories folder', done => {
+    const pages = TestHelper.setUpPages()
 
-    var virtualConfig = {
+    const virtualConfig = {
       virtualDirectories: [
         {
           path: './test/app/virtualdir',
@@ -280,12 +271,10 @@ describe('Public folder', function (done) {
 
     TestHelper.updateConfig(virtualConfig).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
-        var client = request(connectionString)
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
+        const client = request(connectionString)
 
         // Serve the readme for Web
         client.get('/virtualdir/').end((err, res) => {
@@ -300,12 +289,10 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should NOT return an index file if NOT specified for a config.virtualDirectories folder', function (
-    done
-  ) {
-    var pages = TestHelper.setUpPages()
+  it('should NOT return an index file if NOT specified for a config.virtualDirectories folder', done => {
+    const pages = TestHelper.setUpPages()
 
-    var virtualConfig = {
+    const virtualConfig = {
       virtualDirectories: [
         {
           path: './test/app/virtualdir'
@@ -315,12 +302,10 @@ describe('Public folder', function (done) {
 
     TestHelper.updateConfig(virtualConfig).then(() => {
       TestHelper.startServer(pages).then(() => {
-        var connectionString =
-          'http://' +
-          config.get('server.host') +
-          ':' +
-          config.get('server.port')
-        var client = request(connectionString)
+        const connectionString = `http://${config.get(
+          'server.host'
+        )}:${config.get('server.port')}`
+        const client = request(connectionString)
 
         // Serve the readme for Web
         client.get('/virtualdir/').end((err, res) => {
@@ -331,13 +316,14 @@ describe('Public folder', function (done) {
     })
   })
 
-  it('should respond to a range header from the client with the specified partial of the file', function (done) {
-    var pages = TestHelper.setUpPages()
+  it('should respond to a range header from the client with the specified partial of the file', done => {
+    const pages = TestHelper.setUpPages()
 
     TestHelper.startServer(pages).then(() => {
-      var connectionString =
-        'http://' + config.get('server.host') + ':' + config.get('server.port')
-      var client = request(connectionString)
+      const connectionString = `http://${config.get(
+        'server.host'
+      )}:${config.get('server.port')}`
+      const client = request(connectionString)
 
       client
         .get('/blank1second.mp4')
@@ -345,7 +331,7 @@ describe('Public folder', function (done) {
         .end((err, res) => {
           res.headers['content-range'].should.eql('bytes 0-1/15023')
           done()
-      })
+        })
     })
   })
 })
