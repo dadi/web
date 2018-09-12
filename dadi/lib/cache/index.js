@@ -89,7 +89,7 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
 
   let host =
     Object.keys(virtualHosts).find(key => {
-      return virtualHosts.hostnames.includes(req.headers.host)
+      return virtualHosts.hostnames.includes((req.headers.host || req.headers[':authority']))
     }) || ''
 
   let matchKey = Object.keys(endpoints).find(key => {
@@ -176,7 +176,7 @@ Cache.prototype.init = function () {
 
     if (!enabled) return next()
 
-    debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
+    debug('%s%s, cache enabled: %s', (req.headers.host || req.headers[':authority']), req.url, enabled)
 
     // Check it's a page
     if (!self.getEndpoint(req)) return next()
@@ -196,7 +196,7 @@ Cache.prototype.init = function () {
 
     const host =
       Object.keys(virtualHosts).find(key => {
-        return virtualHosts.hostnames.includes(req.headers.host)
+        return virtualHosts.hostnames.includes((req.headers.host || req.headers[':authority']))
       }) || ''
 
     const filename = crypto
@@ -228,7 +228,7 @@ Cache.prototype.init = function () {
     self.cache
       .get(filename, opts)
       .then(stream => {
-        debug('serving %s%s from cache', req.headers.host, req.url)
+        debug('serving %s%s from cache', (req.headers.host || req.headers[':authority']), req.url)
 
         if (noCache) {
           res.setHeader('X-Cache-Lookup', 'HIT')

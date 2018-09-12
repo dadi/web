@@ -128,10 +128,6 @@ describe('Routing', done => {
 
             const req = method.firstCall.args[0]
 
-            console.log('*********')
-            console.log(req)
-            console.log('*********')
-
             req.protocol.should.exist
             req.protocol.should.eql('http')
             done()
