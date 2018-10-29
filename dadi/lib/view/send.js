@@ -2,7 +2,7 @@ const path = require('path')
 const zlib = require('zlib')
 const brotli = require('iltorb')
 const compressible = require('compressible')
-const CircularJSON = require('circular-json')
+const stringify = require('json-stringify-safe')
 
 const config = require(path.join(__dirname, '/../../../config.js'))
 const help = require(path.join(__dirname, '/../help'))
@@ -16,7 +16,7 @@ module.exports.json = function (statusCode, res, next) {
   return function (err, results) {
     if (err) return next(err)
 
-    const resBody = CircularJSON.stringify(results, null, 2)
+    const resBody = stringify(results)
 
     // Only if nothing else has responsed e.g., errorView
     if (!res.headersSent) {
