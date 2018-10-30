@@ -137,7 +137,7 @@ describe('Debug view', done => {
             .toString()
             .trim()
             .should.startWith(
-              "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\n  \"query\": {}"
+              'var data = new JSONEditor(document.getElementById("data"), {mode: "view"}, {"query": {}'
             )
 
           done()
