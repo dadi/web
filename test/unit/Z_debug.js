@@ -137,7 +137,7 @@ describe('Debug view', done => {
             .toString()
             .trim()
             .should.startWith(
-              'var data = new JSONEditor(document.getElementById("data"), {mode: "view"}, {"query": {}'
+              'var data = new JSONEditor(document.getElementById("data"), {mode: "view"}, {"query":{}'
             )
 
           done()
@@ -165,7 +165,7 @@ describe('Debug view', done => {
             .toString()
             .trim()
             .should.startWith(
-              'var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {\n  "name": "page1"'
+              'var data = new JSONEditor(document.getElementById(\'data\'), {mode: \'view\'}, {"name":"page1"'
             )
 
           done()
