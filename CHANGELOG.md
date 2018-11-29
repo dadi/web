@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [6.1.1] - 2018-11-29
+
+## Changed
+
+* Add property to markdown datasource to specify whether the HTML should be rendered and added to the output. To disable HTML, simply extend the `source` block with a `renderHtml` property:
+
+  ```
+   "source": {
+      "type": "markdown",
+      "path": "./docs",
+      "renderHtml": false
+    }
+  ```
+
+
+
 # [6.1.0] - 2018-09-10
 
 ## Added
