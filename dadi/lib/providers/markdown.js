@@ -42,11 +42,7 @@ MarkdownProvider.prototype.initialise = function (datasource, schema) {
     ? schema.datasource.source.extension
     : 'md'
 
-  this.renderHtml = true
-
-  if (datasource.source.hasOwnProperty('renderHtml')) {
-    this.renderHtml = datasource.source.renderHtml
-  }
+  this.renderHtml = datasource.source.renderHtml !== false
 }
 
 /**
