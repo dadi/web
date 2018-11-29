@@ -827,6 +827,60 @@ describe('Data Providers', done => {
 
                   should.exist(res.body.markdown.results)
                   res.body.markdown.results.should.be.Array
+                  res.body.markdown.results[0].contentHtml.should.not.eql('')
+                  res.body.markdown.results[0].original.should.eql(
+                    '---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n'
+                  ),
+                  res.body.markdown.results[0].attributes.title.should.eql(
+                    'A Quick Brown Fox'
+                  )
+                  res.body.markdown.results[0].attributes.category.should.eql(
+                    'guggenheim'
+                  )
+                  res.body.markdown.results[0].attributes.date.should.eql(
+                    '2010-01-01T00:00:00.000Z'
+                  )
+
+                  done()
+                })
+            })
+          }
+        )
+      })
+    })
+
+    it('should not convert markdown to HTML if specified not to', done => {
+      const dsSchema = TestHelper.getSchemaFromFile(
+        TestHelper.getPathOptions().datasourcePath,
+        'markdown'
+      )
+
+      dsSchema.datasource.source.renderHtml = false
+
+      sinon
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
+        .yields(null, dsSchema)
+
+      TestHelper.disableApiConfig().then(() => {
+        TestHelper.updateConfig({ allowDebugView: true, debug: true }).then(
+          () => {
+            const pages = TestHelper.setUpPages()
+            pages[0].datasources = ['markdown']
+
+            TestHelper.startServer(pages).then(() => {
+              const connectionString = `http://${config.get(
+                'server.host'
+              )}:${config.get('server.port')}`
+              const client = request(connectionString)
+
+              client
+                .get(`${pages[0].routes[0].path}?debug=json`)
+                .end((err, res) => {
+                  Datasource.Datasource.prototype.loadDatasource.restore()
+
+                  should.exist(res.body.markdown.results)
+                  res.body.markdown.results.should.be.Array
+                  res.body.markdown.results[0].contentHtml.should.eql('')
                   res.body.markdown.results[0].original.should.eql(
                     '---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n'
                   ),
