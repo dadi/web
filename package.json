@@ -95,8 +95,6 @@
     "sinon": "~2.3.2",
     "sinon-test": "~1.0.2",
     "snazzy": "~8.0.0",
-    "superagent": "~3.8.1",
-    "superagent-mock": "~3.3.0",
     "supertest": "~3.0.0"
   },
   "repository": {
