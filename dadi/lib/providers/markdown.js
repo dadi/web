@@ -41,6 +41,12 @@ MarkdownProvider.prototype.initialise = function (datasource, schema) {
   this.extension = schema.datasource.source.extension
     ? schema.datasource.source.extension
     : 'md'
+
+  this.renderHtml = true
+
+  if (datasource.source.hasOwnProperty('renderHtml')) {
+    this.renderHtml = datasource.source.renderHtml
+  }
 }
 
 /**
@@ -248,18 +254,18 @@ MarkdownProvider.prototype.readdirAsync = function (dirname) {
 
 MarkdownProvider.prototype.parseRawDataAsync = function (post, callback) {
   return new Promise((resolve, reject) => {
-    const bits = yamlRegex.exec(post._contents)
+    let bits = yamlRegex.exec(post._contents)
 
     // Attributes
     let attributes = []
     attributes = bits[bits.length - 1].replace(/^\s+|\s+$/g, '')
     attributes = yaml.safeLoad(attributes) || {}
 
-    const contentText = post._contents.replace(bits[0], '') || ''
-    const contentHtml = marked(contentText)
+    let contentText = post._contents.replace(bits[0], '') || ''
+    let contentHtml = this.renderHtml ? marked(contentText) : ''
 
     // Some info about the file
-    const parsedPath = path.parse(post._name)
+    let parsedPath = path.parse(post._name)
 
     attributes._id = parsedPath.name
     attributes._ext = parsedPath.ext
