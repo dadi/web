@@ -30,11 +30,15 @@ describe('Debug view', done => {
   })
 
   afterEach(done => {
-    TestHelper.resetConfig().then(() => {
-      TestHelper.stopServer(() => {
-        setTimeout(() => {
-          done()
-        }, 200)
+    TestHelper.updateConfig({
+      allowDebugView: false
+    }).then(() => {
+      TestHelper.resetConfig().then(() => {
+        TestHelper.stopServer(() => {
+          setTimeout(() => {
+            done()
+          }, 200)
+        })
       })
     })
   })
@@ -137,7 +141,7 @@ describe('Debug view', done => {
             .toString()
             .trim()
             .should.startWith(
-              'var data = new JSONEditor(document.getElementById("data"), {mode: "view"}, {"query":{}'
+              "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\"query\":{}"
             )
 
           done()
@@ -223,9 +227,8 @@ describe('Debug view', done => {
               .toString()
               .trim()
               .should.startWith(
-                "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\n  \"request\""
+                "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\"request\""
               )
-
             done()
           })
       })
@@ -264,7 +267,7 @@ describe('Debug view', done => {
             .toString()
             .trim()
             .should.startWith(
-              "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\n  \"get\""
+              "var data = new JSONEditor(document.getElementById('data'), {mode: 'view'}, {\"get\""
             )
 
           done()
