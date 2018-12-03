@@ -21,10 +21,9 @@
     ]
   },
   "lint-staged": {
-    "{dadi,scripts,test}/{!(app),*}/*.js": [
-      "prettier-standard",
-      "git add"
-    ]
+    "linters": {
+      "{dadi,scripts,test}/{!(app),*}/*.js": ["prettier-standard","git add"]
+    }
   },
   "dependencies": {
     "@dadi/boot": "~1.1.3",
