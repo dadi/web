@@ -38,7 +38,9 @@ StaticProvider.prototype.load = function load (requestUrl, done) {
     const fields = params.fields || []
 
     // apply search
-    data = help.where(data, search)
+    if (search) {
+      data = help.where(data, search)
+    }
 
     // apply filter
     data = help.where(data, params.filter)

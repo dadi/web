@@ -136,7 +136,9 @@ MarkdownProvider.prototype.load = function (requestUrl, done) {
       let metadata = []
 
       // apply search
-      posts = help.where(posts, search)
+      if (search) {
+        posts = help.where(posts, search)
+      }
 
       // apply filter
       posts = posts.filter(post => {

@@ -336,9 +336,9 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
 
   let query = uri.indexOf('?') > 0 ? '&' : '?'
 
-  const existingParams = qs.parse(url.parse(uri).search)
+  let existingParams = qs.parse(url.parse(uri).search || {})
 
-  const params = [
+  let params = [
     { count: datasourceParams.count || 0 },
     { skip: datasourceParams.skip },
     { page: datasourceParams.page || 1 },
