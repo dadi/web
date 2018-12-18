@@ -70,7 +70,7 @@
     "redis": "~2.8.0",
     "request": "2.88.0",
     "server-destroy": "~1.0.1",
-    "snyk": "~1.111.1",
+    "snyk": "~1.118.0",
     "through": "~2.3.8",
     "toobusy-js": "~0.5.1",
     "uuid": "~3.1.0",
