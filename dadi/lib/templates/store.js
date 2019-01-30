@@ -48,6 +48,8 @@ TemplateStore.prototype.reInitialise = function () {
   Object.keys(this.engines).forEach(name => {
     const engine = this.engines[name]
 
+    if (!engine.handler) return
+
     engine.handler.initialise()
 
     if (engine.started) {

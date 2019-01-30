@@ -5,6 +5,7 @@ const site = require('../../package.json').name
 const nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
 const bodyParser = require('body-parser')
+const chokidar = require('chokidar')
 const debug = require('debug')('web:server')
 const enableDestroy = require('server-destroy')
 const fs = require('fs')
@@ -44,7 +45,6 @@ const help = require(path.join(__dirname, '/help'))
 const Send = require(path.join(__dirname, '/view/send'))
 const Middleware = require(path.join(__dirname, '/middleware'))
 const servePublic = require(path.join(__dirname, '/view/public'))
-const monitor = require(path.join(__dirname, '/monitor'))
 const Page = require(path.join(__dirname, '/page'))
 const Preload = require(path.resolve(
   path.join(__dirname, 'datasource/preload')
@@ -553,7 +553,9 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
     .then(pages => {
       pages.forEach(page => {
         // Ignore files that aren't a JSON schema
-        if (path.extname(page) !== '.json') return
+        if (path.extname(page) !== '.json') {
+          return
+        }
 
         const relativePath = path.relative(directoryPath, page)
 
@@ -607,42 +609,44 @@ Server.prototype.addRoute = function (obj, options, reload) {
   // get the page schema
   let schema
 
-  try {
-    schema = require(obj.filepath)
-  } catch (err) {
-    log.error(
-      { module: 'server' },
-      { err },
-      'Error loading page schema "' + obj.filepath + '". Is it valid JSON?'
+  fs.readFile(obj.filepath, (_err, data) => {
+    try {
+      schema = JSON.parse(data.toString())
+    } catch (err) {
+      log.error(
+        { module: 'server' },
+        { err },
+        'Error loading page schema "' + obj.filepath + '". Is it valid JSON?'
+      )
+      throw err
+    }
+
+    // create a page with the supplied schema,
+    // using the filename as the page name
+    const page = Page(obj.name, schema, options.host, options.templateCandidate)
+
+    // create a handler for requests to this page
+    const controller = new Controller(
+      page,
+      options,
+      schema.page,
+      schema.engine,
+      this.cacheLayer
     )
-    throw err
-  }
 
-  // create a page with the supplied schema,
-  // using the filename as the page name
-  const page = Page(obj.name, schema, options.host, options.templateCandidate)
-
-  // create a handler for requests to this page
-  const controller = new Controller(
-    page,
-    options,
-    schema.page,
-    schema.engine,
-    this.cacheLayer
-  )
-
-  // add the component to the api by adding a route to the app and mapping
-  // `req.method` to component methods
-  this.addComponent(
-    {
-      component: controller,
-      filepath: obj.filepath,
-      host: options.host || '',
-      key: page.key,
-      routes: page.routes
-    },
-    reload
-  )
+    // add the component to the api by adding a route to the app and mapping
+    // `req.method` to component methods
+    this.addComponent(
+      {
+        component: controller,
+        filepath: obj.filepath,
+        host: options.host || '',
+        key: page.key,
+        routes: page.routes
+      },
+      reload
+    )
+  })
 }
 
 Server.prototype.addComponent = function (options, reload) {
@@ -741,10 +745,24 @@ Server.prototype.addMonitor = function (filepath, callback) {
   // only add one watcher per path
   if (this.monitors[filepath]) return
 
-  const m = monitor(filepath)
-  m.on('change', callback)
+  let watcher = chokidar.watch(filepath, {
+    ignored: /(^|[/\\])\../,
+    persistent: true
+  })
 
-  this.monitors[filepath] = m
+  watcher.on('add', (event, path) => {
+    callback()
+  })
+
+  watcher.on('change', (event, path) => {
+    callback()
+  })
+
+  watcher.on('unlink', (event, path) => {
+    callback()
+  })
+
+  this.monitors[filepath] = watcher
 }
 
 Server.prototype.removeMonitor = function (filepath) {
@@ -756,20 +774,26 @@ Server.prototype.compile = function (options) {
   const templatePath = options.pagePath
 
   // Get a list of templates to render based on the registered components
-  const componentTemplates = Object.keys(this.components).map(route => {
-    if (this.components[route].options.host === options.host) {
-      const resolvedTemplate = path.join(
-        templatePath,
-        this.components[route].page.template
-      )
-      this.components[route].page.resolvedTemplate = resolvedTemplate
-
-      return {
-        engine: this.components[route].engine,
-        file: resolvedTemplate
+  const componentTemplates = Object.keys(this.components)
+    .map(route => {
+      if (!this.components[route].page.template) {
+        return
       }
-    }
-  })
+
+      if (this.components[route].options.host === options.host) {
+        const resolvedTemplate = path.join(
+          templatePath,
+          this.components[route].page.template
+        )
+        this.components[route].page.resolvedTemplate = resolvedTemplate
+
+        return {
+          engine: this.components[route].engine,
+          file: resolvedTemplate
+        }
+      }
+    })
+    .filter(Boolean)
 
   // Loading engines and templates
   return templateStore
