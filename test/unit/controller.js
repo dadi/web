@@ -438,7 +438,7 @@ describe('Controller', done => {
       })
     })
 
-    it.skip('should run globalEvents within the get request', done => {
+    it('should run globalEvents within the get request', done => {
       TestHelper.disableApiConfig().then(() => {
         TestHelper.updateConfig({
           allowDebugView: true,
