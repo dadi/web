@@ -610,6 +610,10 @@ Server.prototype.addRoute = function (obj, options, reload) {
   let schema
 
   fs.readFile(obj.filepath, (_err, data) => {
+    if (data.toString() === '') {
+      return
+    }
+
     try {
       schema = JSON.parse(data.toString())
     } catch (err) {
