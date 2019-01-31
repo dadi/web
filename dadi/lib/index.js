@@ -750,15 +750,15 @@ Server.prototype.addMonitor = function (filepath, callback) {
     persistent: true
   })
 
-  watcher.on('add', (event, path) => {
+  watcher.on('add', path => {
     callback()
   })
 
-  watcher.on('change', (event, path) => {
+  watcher.on('change', path => {
     callback()
   })
 
-  watcher.on('unlink', (event, path) => {
+  watcher.on('unlink', path => {
     callback()
   })
 
