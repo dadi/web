@@ -35,7 +35,7 @@
     "@purest/providers": "~1.0.0",
     "async": "~1.5.2",
     "body-parser": "~1.18.2",
-    "chokidar": "~2.0.0",
+    "chokidar": "~2.1.0",
     "clone": "~2.1.1",
     "colors": "~1.1.2",
     "compressible": "~2.0.11",
