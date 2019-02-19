@@ -117,7 +117,8 @@
     "ignore": [
       "sinon",
       "mocha",
-      "lint-staged"
+      "lint-staged",
+      "snyk"
     ]
   },
   "author": "DADI <team@dadi.tech>",
