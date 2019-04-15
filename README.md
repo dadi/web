@@ -1,17 +1,14 @@
-<img src="https://dadi.tech/assets/products/dadi-web-full.png" alt="DADI Web" height="65"/>
+<img src="https://dadi.cloud/assets/products/dadi-web-full.png" alt="DADI Web" height="65"/>
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
 [![Coverage Status](https://coveralls.io/repos/github/dadi/web/badge.svg?branch=master)](https://coveralls.io/github/dadi/web?branch=master)
 [![Build Status](https://travis-ci.org/dadi/web.svg?branch=master)](https://travis-ci.org/dadi/web)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
-[![Greenkeeper badge](https://badges.greenkeeper.io/dadi/web.svg)](https://greenkeeper.io/)
 
 ## DADI Web
 
 * [Overview](#overview)
-* [Requirements](#requirements)
-* [Your First Web Project](#your-first-web-project)
-* [Links](#links)
+* [Getting started](#getting-started)
 
 ## Overview
 
@@ -23,76 +20,16 @@ DADI Web uses LinkedIn's Dust templating language which provides a simple yet po
 
 DADI Web is part of [DADI](https://github.com/dadi/), a suite of components covering the full development stack, built for performance and scale.
 
-## Requirements
+## Getting started
 
-* **[Node.js](https://www.nodejs.org/)** (supported versions: 6.11.1, 8.9.4)
-
-## Your first Web project
-
-### Install Web
-
-All DADI platform microservices are available from [NPM](https://www.npmjs.com/). To add *Web* to your project as a dependency:
-
-```bash
-$ cd my-app
-$ npm install --save @dadi/web
-```
-
-As part of the installation process of the `@dadi/web` package, several files and folders were added to your project:
-
-* `config/config.development.json`
-* `workspace/`
-* `server.js`
-
-This enables Web to boot straight out of the box with a default ‘blog’ style configuration and some suggestions of next steps. Start the server and open a browser to begin.
-
-### Start the server
-
-With the `server.js` in the root of your application, Web can be started from the command line simply by issuing the following command:
-
-```bash
-$ npm start
-```
-
-With the default configuration, our Web server is available at http://localhost:3001. Visit this URL in your browser to see a 'Welcome' page.
-
-### Configuration
-
-Web requires a configuration file specific to the application environment. For example in the production environment it will look for a file named `config.production.json`.
-
-Configuration files live in a `config` folder in your application root, for example `config/config.development.json`. Web starts with a sensible default configuration, but you can find full configuration documentation at http://docs.dadi.tech/web/getting-started/configuration/.
-
-#### Run Web as a service
-
-To run your Web application in the background as a service, install Forever and Forever Service:
-
-```bash
-$ npm install forever forever-service -g
-
-$ forever-service install -s server.js -e NODE_ENV=production web --start
-```
-
-You can now interact with the `web` service using the following commands:
-
-```bash
-$ [sudo] service web start
-$ [sudo] service web stop
-$ [sudo] service web status
-$ [sudo] service web restart
-```
-
-> Note: the environment variable `NODE_ENV=production` must be set to the required configuration version matching the configuration files available in the `config` directory.
-
-
-## Links
-* [Web Documentation](https://docs.dadi.cloud/web/)
+The [DADI Web Documentation](https://docs.dadi.cloud/web/) is the best place for information on installing and configuring your DADI Web project.
 
 ## Licence
 
 DADI is a data centric development and delivery stack, built specifically in support of the principles of API first and COPE.
 
 Copyright notice<br />
-(C) 2018 DADI+ Limited <support@dadi.tech><br />
+(C) 2019 DADI+ Limited <support@dadi.tech><br />
 All rights reserved
 
 This product is part of DADI.<br />
