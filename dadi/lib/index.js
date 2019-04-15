@@ -136,15 +136,8 @@ Server.prototype.start = function (done) {
   })
 
   // add middleware for domain redirects
-  if (config.get('rewrites.forceDomain') !== '') {
-    const domain = config.get('rewrites.forceDomain')
-
-    app.use(
-      forceDomain({
-        hostname: domain,
-        port: 80
-      })
-    )
+  if (config.get('rewrites.forceDomain.hostname') !== '') {
+    app.use(forceDomain(config.get('rewrites.forceDomain')))
   }
 
   app.use(apiMiddleware.handleHostHeader())
