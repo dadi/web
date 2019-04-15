@@ -113,14 +113,6 @@
       "workspace"
     ]
   },
-  "greenkeeper": {
-    "ignore": [
-      "sinon",
-      "mocha",
-      "lint-staged",
-      "snyk"
-    ]
-  },
   "author": "DADI <team@dadi.tech>",
   "license": "SEE LICENSE IN GPL.md",
   "snyk": true,
