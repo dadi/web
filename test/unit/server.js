@@ -77,11 +77,15 @@ describe('Server', done => {
   it('should recursively create components from pages', done => {
     Server.app = api()
 
+    console.log('Server.app :', Server.app)
+
     const config = TestHelper.getConfig().then(config => {
+      console.log('config :', config)
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
       Server.updatePages(pagesPath, options, false).then(server => {
+        console.log('server :', server)
         server.components['/'].should.be.Function
         server.components['/subdir/page1'].should.be.Function
         server.components['/subdir/subsubdir/page2'].should.be.Function
