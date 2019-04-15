@@ -77,16 +77,20 @@ describe('Server', done => {
   it('should recursively create components from pages', done => {
     Server.app = api()
 
-    const config = TestHelper.getConfig().then(config => {
+    TestHelper.getConfig().then(config => {
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
       Server.updatePages(pagesPath, options, false).then(server => {
-        server.components['/'].should.be.Function
-        server.components['/subdir/page1'].should.be.Function
-        server.components['/subdir/subsubdir/page2'].should.be.Function
+        setTimeout(() => {
+          Server.updatePages(pagesPath, options, true).then(server => {
+            server.components['/'].should.be.Function
+            server.components['/subdir/page1'].should.be.Function
+            server.components['/subdir/subsubdir/page2'].should.be.Function
 
-        done()
+            done()
+          })
+        }, 2000)
       })
     })
   })
@@ -94,11 +98,13 @@ describe('Server', done => {
   it('should not create components from templates without a schema', done => {
     Server.app = api()
 
-    const config = TestHelper.getConfig().then(config => {
+    TestHelper.getConfig().then(config => {
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
-      Server.updatePages(pagesPath, options, false).then(server => {
+      const update = Server.updatePages(pagesPath, options, true)
+
+      update.then(server => {
         should.not.exist(server.components['/404'])
         should.not.exist(server.components['/test'])
 
