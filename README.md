@@ -2,7 +2,7 @@
 
 [![npm (scoped)](https://img.shields.io/npm/v/@dadi/web.svg?maxAge=10800&style=flat-square)](https://www.npmjs.com/package/@dadi/web)
 [![Coverage Status](https://coveralls.io/repos/github/dadi/web/badge.svg?branch=develop)](https://coveralls.io/github/dadi/web?branch=develop)
-[![Build Status](https://travis-ci.org/dadi/web.svg?branch=master)](https://travis-ci.org/dadi/web)
+[![Build Status](https://travis-ci.org/dadi/web.svg?branch=develop)](https://travis-ci.org/dadi/web)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square)](http://standardjs.com/)
 
 ## DADI Web
