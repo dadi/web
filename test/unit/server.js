@@ -81,7 +81,9 @@ describe('Server', done => {
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
-      Server.updatePages(pagesPath, options, false).then(server => {
+      const update = Server.updatePages(pagesPath, options, true)
+
+      update.then(server => {
         server.components['/'].should.be.Function
         server.components['/subdir/page1'].should.be.Function
         server.components['/subdir/subsubdir/page2'].should.be.Function
@@ -98,7 +100,9 @@ describe('Server', done => {
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
-      Server.updatePages(pagesPath, options, false).then(server => {
+      const update = Server.updatePages(pagesPath, options, true)
+
+      update.then(server => {
         should.not.exist(server.components['/404'])
         should.not.exist(server.components['/test'])
 
