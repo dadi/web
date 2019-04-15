@@ -81,14 +81,16 @@ describe('Server', done => {
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
-      const update = Server.updatePages(pagesPath, options, true)
+      Server.updatePages(pagesPath, options, false).then(server => {
+        setTimeout(() => {
+          Server.updatePages(pagesPath, options, true).then(server => {
+            server.components['/'].should.be.Function
+            server.components['/subdir/page1'].should.be.Function
+            server.components['/subdir/subsubdir/page2'].should.be.Function
 
-      update.then(server => {
-        server.components['/'].should.be.Function
-        server.components['/subdir/page1'].should.be.Function
-        server.components['/subdir/subsubdir/page2'].should.be.Function
-
-        done()
+            done()
+          })
+        }, 2000)
       })
     })
   })
