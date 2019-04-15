@@ -78,12 +78,10 @@ describe('Server', done => {
     Server.app = api()
 
     TestHelper.getConfig().then(config => {
-      console.log('config :', config)
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
       Server.updatePages(pagesPath, options, false).then(server => {
-        console.log('server :', server)
         server.components['/'].should.be.Function
         server.components['/subdir/page1'].should.be.Function
         server.components['/subdir/subsubdir/page2'].should.be.Function
@@ -96,7 +94,7 @@ describe('Server', done => {
   it('should not create components from templates without a schema', done => {
     Server.app = api()
 
-    const config = TestHelper.getConfig().then(config => {
+    TestHelper.getConfig().then(config => {
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
 
