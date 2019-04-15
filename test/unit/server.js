@@ -77,9 +77,7 @@ describe('Server', done => {
   it('should recursively create components from pages', done => {
     Server.app = api()
 
-    console.log('Server.app :', Server.app)
-
-    const config = TestHelper.getConfig().then(config => {
+    TestHelper.getConfig().then(config => {
       console.log('config :', config)
       const options = Server.loadPaths()
       const pagesPath = path.resolve(config.paths.pages)
