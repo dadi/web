@@ -211,11 +211,13 @@ describe('Page', done => {
     }
 
     let component
-    const matches = Object.keys(server.object.components).map(component => {
-      if (server.object.components[component].page.key === 'test') {
-        return server.object.components[component]
-      }
-    })
+    const matches = Object.keys(server.object.components)
+      .map(component => {
+        if (server.object.components[component].page.key === 'test') {
+          return server.object.components[component]
+        }
+      })
+      .filter(Boolean)
 
     if (matches.length > 0) {
       component = matches[0]

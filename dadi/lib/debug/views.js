@@ -1,5 +1,5 @@
 const path = require('path')
-const CircularJSON = require('circular-json')
+const stringify = require('json-stringify-safe')
 const help = require(path.join(__dirname, '/../help'))
 
 /**
@@ -25,7 +25,7 @@ module.exports.error = function (error) {
 }
 
 module.exports.debug = function (debug) {
-  return `<!DOCTYPE html><html lang="en"><head> <meta charset="utf-8"><title>DADI Web</title><script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/ace.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor-minimalist.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.14.0/jsoneditor.min.css">
+  return `<!DOCTYPE html><html lang="en"><head> <meta charset="utf-8"><title>DADI Web</title><script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/ace.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.28.2/jsoneditor-minimalist.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.28.2/jsoneditor.min.css">
   <style type="text/css">#inputPath,.inputRoute,body{font-family:Monaco,Menlo,"Ubuntu Mono",Consolas,source-code-pro,monospace}*{padding:0;margin:0}html{height:100%}body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:#191E24;text-align:center;min-height:100%;display:-webkit-flex;display:-ms-flexbox;display:flex}.view{flex:1;position:relative}.code,.info,div.jsoneditor-navigation-bar,nav ol{position:absolute;left:0;right:0}.code{border:0;box-sizing:border-box;background:#191E24!important;max-height:100vh;top:0;bottom:0}.info{bottom:0;z-index:1000;font-size:12px;font-weight:700;color:#ccc;padding:10px 20px;text-align:right;background:-moz-linear-gradient(top,rgba(21,26,31,0) 0,rgba(21,26,31,1) 50%);background:-webkit-linear-gradient(top,rgba(21,26,31,0) 0,rgba(21,26,31,1) 50%);background:linear-gradient(to bottom,rgba(21,26,31,0) 0,rgba(21,26,31,1) 50%);border-left:1px solid #1D2733}.code,div.jsoneditor,div.jsoneditor td,div.jsoneditor-field,div.jsoneditor-value{font-size:12px;line-height:18px}div.jsoneditor-field{color:#fff}div.jsoneditor,div.jsoneditor-menu{border:0;background:0 0;color:#fff}div.jsoneditor-tree button{height:21px}div.jsoneditor td{color:inherit}table.jsoneditor-search div.jsoneditor-frame{border-radius:3px}div.jsoneditor-menu>button{background-color:none!important}div.jsoneditor-navigation-bar{border:0;background:0 0;text-align:left;overflow:hidden;bottom:5px;z-index:1000;display:inline-block}div.jsoneditor-treepath{padding:0 15px}div.jsoneditor-navigation-bar.nav-bar-empty:after{display:none}div.jsoneditor tr:hover{background:#0b0e14}table.jsoneditor-search div.jsoneditor-frame table tr:hover{background:0 0}a.jsoneditor-value.jsoneditor-url,div.jsoneditor-value.jsoneditor-string,div.jsoneditor-value.jsoneditor-url{color:#39d902}.ace_gutter{background:0 0!important;border-left:1px solid #1D2733}.ace_gutter-cell{font-size:11px}nav{background:#101417;position:relative;z-index:100;text-align:left}nav ol{bottom:0;text-align:right}nav li{list-style:none}nav li a{display:block;color:#fff;font-size:12px;padding:9px 13px;text-decoration:none}nav li a:hover{color:#326ff4;background:#191e24}nav li a.active{background:#326ff4;color:#fff}#inputPath,.inputRoute{background:0 0;color:#fff;border:none;border-bottom:1px solid #1e2833;padding:20px;font-size:13px;width:100%;box-sizing:border-box;outline:0}#inputPath{background:#1e2833;font-size:16px}.inputRoute.match{background:#88c34b;color:#fff}</style>
   </head><body>
 
@@ -117,7 +117,7 @@ module.exports.debug = function (debug) {
 function encode (data) {
   data =
     typeof data === 'object'
-      ? CircularJSON.stringify(data, null, 2)
+      ? stringify(data)
       : data.toString()
   return data
     .replace(/&/g, '&amp;')
