@@ -127,6 +127,7 @@ describe('Routing', done => {
             method.calledOnce.should.eql(true)
 
             const req = method.firstCall.args[0]
+
             req.protocol.should.exist
             req.protocol.should.eql('http')
             done()

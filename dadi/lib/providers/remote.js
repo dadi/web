@@ -1,9 +1,11 @@
 'use strict'
 
-const debug = require('debug')('web:provider:remote')
-const url = require('url')
 const http = require('http')
 const https = require('https')
+const http2 = require('http2')
+
+const debug = require('debug')('web:provider:remote')
+const url = require('url')
 const path = require('path')
 const zlib = require('zlib')
 
@@ -127,7 +129,18 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
 
   this.options.agent = this.keepAliveAgent(this.options.protocol)
 
-  const agent = this.options.protocol.includes('https') ? https : http
+  // Select the agent based on protocol
+  let agent
+
+  if (this.options.protocol.includes('https')) {
+    if (config.get('server.enableHTTP2')) {
+      agent = http2
+    } else {
+      agent = https
+    }
+  } else {
+    agent = http
+  }
 
   let request = agent.request(this.options, res => {
     if (
