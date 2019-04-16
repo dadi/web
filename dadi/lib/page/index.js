@@ -11,7 +11,7 @@ const Page = function (name, schema, hostKey, templateCandidate) {
   schema.settings = schema.settings || {}
 
   this.name = name
-  this.key = schema.page.key || name
+  this.key = schema.page && schema.page.key ? schema.page.key : name
   this.hostKey = hostKey || ''
   this.template = schema.template || templateCandidate
   this.contentType = schema.contentType || 'text/html'
