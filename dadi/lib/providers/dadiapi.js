@@ -369,6 +369,11 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
     params.push({ cache: datasourceParams.cache })
   }
 
+  // pass compose parameter to API endpoint
+  if (datasourceParams.hasOwnProperty('compose')) {
+    params.push({ compose: datasourceParams.compose })
+  }
+
   // pass language to api endpoint
   if (datasourceParams.lang) {
     params.push({ lang: datasourceParams.lang })

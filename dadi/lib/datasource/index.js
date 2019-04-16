@@ -169,8 +169,18 @@ Datasource.prototype.loadDatasource = function (done) {
 
   try {
     const body = fs.readFileSync(filepath, { encoding: 'utf-8' })
-
     schema = JSON.parse(body)
+
+    // If the schema has been provided as a flat structure,
+    // without the "datasource" property, wrap the provided data
+    // in a new "datasource" property
+    if (!schema.datasource) {
+      schema = {
+        datasource: {
+          ...schema
+        }
+      }
+    }
     done(null, schema)
   } catch (err) {
     log.error(
