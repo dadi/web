@@ -858,6 +858,36 @@ describe('Datasource', done => {
       })
     })
 
+    it('should pass compose param to the endpoint', done => {
+      const name = 'test'
+      const schema = TestHelper.getPageSchema()
+      const p = page(name, schema)
+      const dsName = 'car_makes'
+      const options = TestHelper.getPathOptions()
+      const dsSchema = TestHelper.getSchemaFromFile(
+        options.datasourcePath,
+        dsName
+      )
+
+      // modify the endpoint to give it a compose setting
+      dsSchema.datasource.compose = 'all'
+
+      sinon
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
+        .yields(null, dsSchema)
+
+      const req = { params: {}, url: '/1.0/makes/ford/2' }
+
+      new Datasource(p, dsName, options).init((err, ds) => {
+        Datasource.Datasource.prototype.loadDatasource.restore()
+        ds.processRequest(dsName, req)
+        ds.provider.endpoint.should.eql(
+          'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}&compose=all'
+        )
+        done()
+      })
+    })
+
     it('should pass page param to the endpoint when page.passFilters is true', done => {
       const name = 'test'
       const schema = TestHelper.getPageSchema()
