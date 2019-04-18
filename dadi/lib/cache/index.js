@@ -189,7 +189,7 @@ Cache.prototype.init = function () {
 
     // we build the filename with a hashed hex string so we can be unique
     // and avoid using file system reserved characters in the name
-    const requestUrl = url.parse(req.url, true).path
+    const requestUrl = req.url
 
     // get the host key that matches the request's host header
     const virtualHosts = config.get('virtualHosts')
