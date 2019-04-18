@@ -187,10 +187,6 @@ Cache.prototype.init = function () {
     // only cache GET requests
     if (req.method && req.method.toLowerCase() !== 'get') return next()
 
-    // we build the filename with a hashed hex string so we can be unique
-    // and avoid using file system reserved characters in the name
-    const requestUrl = url.parse(req.url, true).path
-
     // get the host key that matches the request's host header
     const virtualHosts = config.get('virtualHosts')
 
@@ -199,9 +195,11 @@ Cache.prototype.init = function () {
         return virtualHosts.hostnames.includes((req.headers.host || req.headers[':authority']))
       }) || ''
 
+    // we build the filename with a hashed hex string so we can be unique
+    // and avoid using file system reserved characters in the name
     const filename = crypto
       .createHash('sha1')
-      .update(`${host}${requestUrl}`)
+      .update(`${host}${req.url}`)
       .digest('hex')
 
     // allow query string param to bypass cache
@@ -299,7 +297,7 @@ Cache.prototype.init = function () {
         try {
           self.cache.set(filename, Buffer.concat(data), opts).then(() => {})
         } catch (e) {
-          console.log('Could not cache content: ' + requestUrl)
+          console.log('Could not cache content: ' + req.url)
         }
       }
 
