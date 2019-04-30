@@ -39,7 +39,9 @@ describe('Routing', done => {
         protocol: 'http'
       },
       rewrites: {
-        forceDomain: ''
+        forceDomain: {
+          hostname: ''
+        }
       }
     }).then(() => {
       TestHelper.stopServer(done)
@@ -127,6 +129,7 @@ describe('Routing', done => {
             method.calledOnce.should.eql(true)
 
             const req = method.firstCall.args[0]
+
             req.protocol.should.exist
             req.protocol.should.eql('http')
             done()
@@ -628,7 +631,9 @@ describe('Routing', done => {
 
       const configUpdate = {
         rewrites: {
-          forceDomain: 'example.com'
+          forceDomain: {
+            hostname: 'example.com'
+          }
         }
       }
 
@@ -650,7 +655,9 @@ describe('Routing', done => {
 
       const configUpdate = {
         rewrites: {
-          forceDomain: 'example.com:81'
+          forceDomain: {
+            hostname: 'example.com:81'
+          }
         }
       }
 
@@ -663,6 +670,61 @@ describe('Routing', done => {
             if (err) return done(err)
             done()
           })
+        })
+      })
+    })
+
+    it('should use specified redirect type when configured with rewrites.forceDomain', done => {
+      const pages = TestHelper.setUpPages()
+
+      const configUpdate = {
+        rewrites: {
+          forceDomain: {
+            hostname: 'example.com',
+            type: 302
+          }
+        }
+      }
+
+      TestHelper.updateConfig(configUpdate).then(() => {
+        TestHelper.startServer(pages).then(() => {
+          client.get('/test').end((err, res) => {
+            should.exist(res.headers.location)
+            res.headers.location.should.eql('http://example.com:80/test')
+            res.statusCode.should.eql(302)
+            if (err) return done(err)
+            done()
+          })
+        })
+      })
+    })
+
+    it('should handle a redirect from www to root when configured with rewrites.forceDomain', done => {
+      const pages = TestHelper.setUpPages()
+
+      const configUpdate = {
+        rewrites: {
+          forceDomain: {
+            hostname: 'example.com',
+            port: 443,
+            protocol: 'https',
+            type: 302
+          }
+        }
+      }
+
+      TestHelper.updateConfig(configUpdate).then(() => {
+        TestHelper.startServer(pages).then(() => {
+          client
+            .get('/')
+            .set('Host', 'www.example.com')
+            .end((err, res) => {
+              should.exist(res.headers.location)
+              res.headers.location.should.eql('https://example.com:443/')
+              res.statusCode.should.eql(302)
+              if (err) return done(err)
+              done()
+            })
         })
       })
     })

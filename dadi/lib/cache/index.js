@@ -89,7 +89,7 @@ Cache.prototype.getEndpointMatchingRequest = function (req) {
 
   let host =
     Object.keys(virtualHosts).find(key => {
-      return virtualHosts.hostnames.includes(req.headers.host)
+      return virtualHosts.hostnames.includes((req.headers.host || req.headers[':authority']))
     }) || ''
 
   let matchKey = Object.keys(endpoints).find(key => {
@@ -176,7 +176,7 @@ Cache.prototype.init = function () {
 
     if (!enabled) return next()
 
-    debug('%s%s, cache enabled: %s', req.headers.host, req.url, enabled)
+    debug('%s%s, cache enabled: %s', (req.headers.host || req.headers[':authority']), req.url, enabled)
 
     // Check it's a page
     if (!self.getEndpoint(req)) return next()
@@ -187,21 +187,19 @@ Cache.prototype.init = function () {
     // only cache GET requests
     if (req.method && req.method.toLowerCase() !== 'get') return next()
 
-    // we build the filename with a hashed hex string so we can be unique
-    // and avoid using file system reserved characters in the name
-    const requestUrl = url.parse(req.url, true).path
-
     // get the host key that matches the request's host header
     const virtualHosts = config.get('virtualHosts')
 
     const host =
       Object.keys(virtualHosts).find(key => {
-        return virtualHosts.hostnames.includes(req.headers.host)
+        return virtualHosts.hostnames.includes((req.headers.host || req.headers[':authority']))
       }) || ''
 
+    // we build the filename with a hashed hex string so we can be unique
+    // and avoid using file system reserved characters in the name
     const filename = crypto
       .createHash('sha1')
-      .update(`${host}${requestUrl}`)
+      .update(`${host}${req.url}`)
       .digest('hex')
 
     // allow query string param to bypass cache
@@ -228,7 +226,7 @@ Cache.prototype.init = function () {
     self.cache
       .get(filename, opts)
       .then(stream => {
-        debug('serving %s%s from cache', req.headers.host, req.url)
+        debug('serving %s%s from cache', (req.headers.host || req.headers[':authority']), req.url)
 
         if (noCache) {
           res.setHeader('X-Cache-Lookup', 'HIT')
@@ -299,7 +297,7 @@ Cache.prototype.init = function () {
         try {
           self.cache.set(filename, Buffer.concat(data), opts).then(() => {})
         } catch (e) {
-          console.log('Could not cache content: ' + requestUrl)
+          console.log('Could not cache content: ' + req.url)
         }
       }
 

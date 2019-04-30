@@ -1,9 +1,11 @@
 'use strict'
 
-const debug = require('debug')('web:provider:dadi-api')
-const formatError = require('@dadi/format-error')
 const http = require('http')
 const https = require('https')
+const http2 = require('http2')
+
+const debug = require('debug')('web:provider:dadi-api')
+const formatError = require('@dadi/format-error')
 const path = require('path')
 const qs = require('query-string')
 const url = require('url')
@@ -126,13 +128,27 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
 
       this.options.headers = headers
 
-      let httpProvider = this.options.protocol === 'https:' ? https : http
+      // Select http provider to use
+      let httpProvider
+
+      if (this.options.protocol === 'https:') {
+        if (config.get('server.enableHTTP2')) {
+          httpProvider = http2
+        } else {
+          httpProvider = https
+        }
+      } else {
+        httpProvider = http
+      }
+
+      // Make the request
       let request = httpProvider.request(
         Object.assign({}, this.options, {
           protocol: this.options.protocol + ':'
         })
       )
 
+      // If we see a response
       request.on('response', res => {
         // If the token is not valid, we try a second time
         // with a new one.
@@ -143,6 +159,7 @@ DadiApiProvider.prototype.load = function (requestUrl, done, isRetry) {
         this.handleResponse(this.endpoint, res, done)
       })
 
+      // Error handling
       request.on('error', err => {
         const message =
           err.toString() + ". Couldn't request data from " + this.endpoint
@@ -350,6 +367,11 @@ DadiApiProvider.prototype.processDatasourceParameters = function (
   // pass cache flag to API endpoint
   if (datasourceParams.hasOwnProperty('cache')) {
     params.push({ cache: datasourceParams.cache })
+  }
+
+  // pass compose parameter to API endpoint
+  if (datasourceParams.hasOwnProperty('compose')) {
+    params.push({ compose: datasourceParams.compose })
   }
 
   // pass language to api endpoint

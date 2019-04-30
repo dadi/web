@@ -99,7 +99,7 @@ module.exports.validateRequestMethod = function (req, res, allowedMethod) {
         stack: 'Nothing to see',
         statusCode: 405,
         error: 'Method not allowed',
-        server: req.headers.host
+        server: req.headers.host || req.headers[':authority']
       })
     )
 

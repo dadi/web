@@ -5,7 +5,7 @@ const forceDomain = function (options) {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
     const newRoute = domainRedirect(
       protocol,
-      req.headers.host,
+      (req.headers.host || req.headers[':authority']),
       req.url,
       options
     )
@@ -15,7 +15,7 @@ const forceDomain = function (options) {
       return next()
     }
 
-    statusCode = newRoute.type === 'temporary' ? 307 : 301
+    statusCode = newRoute.type
 
     res.writeHead(statusCode, {
       Location: newRoute.url
@@ -36,10 +36,7 @@ const domainRedirect = function (protocol, hostHeader, url, options) {
   let rewrittenRoute
   let route
 
-  options = Object.assign({}, options, {
-    protocol: 'http',
-    type: 'permanent'
-  })
+  options = Object.assign({}, { protocol: 'http', type: 301 }, options)
 
   const hostHeaderParts = (hostHeader || '').split(':')
   const hostname = hostHeaderParts[0] || ''

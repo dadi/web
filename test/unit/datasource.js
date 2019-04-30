@@ -1,3 +1,4 @@
+const fs = require('fs')
 const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
@@ -52,14 +53,45 @@ describe('Datasource', done => {
     const p = page(name, schema)
     const dsName = 'car_makes'
     const options = TestHelper.getPathOptions()
+
+    let flattenedSchema = {
+      key: 'car_makes',
+      name: 'Makes datasource',
+      source: {
+        type: 'static',
+        endpoint: '1.0/cars/makes'
+      },
+      caching: {
+        ttl: 300,
+        directory: {
+          enabled: true,
+          path: './cache/web/',
+          extension: 'json'
+        },
+        redis: {
+          enabled: false
+        }
+      },
+      paginate: true,
+      count: 20,
+      sort: { name: 1 },
+      fields: { name: 1, _id: 0 },
+      requestParams: [{ param: 'make', field: 'name' }]
+    }
+
+    let filePath = options.datasourcePath + '/' + dsName + '.json'
+    let stub = sinon
+      .stub(fs, 'readFileSync')
+      .withArgs(filePath, { encoding: 'utf-8' })
+      .callsFake(() => {
+        return JSON.stringify(flattenedSchema)
+      })
+
     new Datasource(p, dsName, options).init((err, ds) => {
       if (err) done(err)
-      const fsSchema = TestHelper.getSchemaFromFile(
-        options.datasourcePath,
-        dsName,
-        null
-      )
-      ds.schema.datasource.key.should.eql(fsSchema.datasource.key)
+
+      fs.readFileSync.restore()
+      ds.schema.datasource.key.should.eql('car_makes')
       done()
     })
   })
@@ -266,6 +298,7 @@ describe('Datasource', done => {
     const schema = TestHelper.getPageSchema()
     const dsName = 'car_makes_nosource'
 
+    config.set('api.host', '127.0.0.1')
     config.set('api.port', 80)
 
     new Datasource(null, dsName, TestHelper.getPathOptions()).init(
@@ -821,6 +854,36 @@ describe('Datasource', done => {
 
         // ;(typeof ds.schema.datasource.cache === 'undefined').should.eql(true)
 
+        done()
+      })
+    })
+
+    it('should pass compose param to the endpoint', done => {
+      const name = 'test'
+      const schema = TestHelper.getPageSchema()
+      const p = page(name, schema)
+      const dsName = 'car_makes'
+      const options = TestHelper.getPathOptions()
+      const dsSchema = TestHelper.getSchemaFromFile(
+        options.datasourcePath,
+        dsName
+      )
+
+      // modify the endpoint to give it a compose setting
+      dsSchema.datasource.compose = 'all'
+
+      sinon
+        .stub(Datasource.Datasource.prototype, 'loadDatasource')
+        .yields(null, dsSchema)
+
+      const req = { params: {}, url: '/1.0/makes/ford/2' }
+
+      new Datasource(p, dsName, options).init((err, ds) => {
+        Datasource.Datasource.prototype.loadDatasource.restore()
+        ds.processRequest(dsName, req)
+        ds.provider.endpoint.should.eql(
+          'http://127.0.0.1:3000/1.0/cars/makes?count=20&page=1&filter={}&fields={"name":1,"_id":0}&sort={"name":1}&compose=all'
+        )
         done()
       })
     })

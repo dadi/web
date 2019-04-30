@@ -1,17 +1,15 @@
 {
   "name": "@dadi/web",
-  "version": "6.1.1",
+  "version": "7.0.0",
   "product": "DADI Web",
   "description": "A schemaless templating layer that can operate as a standalone platform or with DADI API as a full stack web application.",
   "main": "main.js",
   "scripts": {
     "start": "node ./start.js",
-    "test": "standard 'lib/**/*.js' | snazzy && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha './test/{!(app),*}/*.js'",
+    "test": "./node_modules/.bin/standard 'lib/**/*.js' | ./node_modules/.bin/snazzy && env NODE_ENV=test ./node_modules/.bin/istanbul cover -x '**/workspace/**' -x '**/app/**' --report cobertura --report text --report html --report lcov ./node_modules/mocha/bin/_mocha './test/{!(app),*}/*.js'",
     "posttest": "node ./scripts/coverage.js",
     "snyk-protect": "snyk protect",
     "prepublishOnly": "npm run snyk-protect",
-    "precommit": "node scripts/precommit.js && lint-staged",
-    "commitmsg": "commitlint -e",
     "format": "prettier-standard '{dadi,scripts,test}/{!(app),*}/*.js'",
     "prepare": "npm run snyk-protect"
   },
@@ -37,8 +35,7 @@
     "@purest/providers": "~1.0.0",
     "async": "~1.5.2",
     "body-parser": "~1.18.2",
-    "chokidar": "~2.0.0",
-    "circular-json": "~0.5.1",
+    "chokidar": "^2.0.4",
     "clone": "~2.1.1",
     "colors": "~1.1.2",
     "compressible": "~2.0.11",
@@ -58,6 +55,7 @@
     "get-value": "~3.0.0",
     "iltorb": "~2.4.0",
     "js-yaml": "~3.12.0",
+    "json-stringify-safe": "^5.0.1",
     "kinesis": "~1.2.2",
     "marked": "~0.3.9",
     "mime-types": "~2.1.17",
@@ -90,11 +88,12 @@
     "mocha": "^5.2.0",
     "nock": "~10.0.0",
     "nodeunit": "~0.5.1",
-    "prettier-standard": "~8.0.1",
+    "prettier-standard": "^9.1.1",
     "should": "~13.2.0",
     "sinon": "~2.3.2",
     "sinon-test": "~1.0.2",
     "snazzy": "~8.0.0",
+    "standard": "^12.0.1",
     "supertest": "~3.0.0"
   },
   "repository": {
@@ -115,14 +114,13 @@
       "workspace"
     ]
   },
-  "greenkeeper": {
-    "ignore": [
-      "sinon",
-      "mocha",
-      "lint-staged"
-    ]
-  },
   "author": "DADI <team@dadi.tech>",
   "license": "SEE LICENSE IN GPL.md",
-  "snyk": true
+  "snyk": true,
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -e",
+      "pre-commit": "node scripts/precommit.js && lint-staged"
+    }
+  }
 }

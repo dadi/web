@@ -443,7 +443,7 @@ module.exports = function (server, options) {
                 location =
                   'http' +
                   '://' +
-                  req.headers.host +
+                  (req.headers.host || req.headers[':authority']) +
                   req.url.replace(rule.rule, rule.replacement)
               }
 
@@ -517,10 +517,10 @@ module.exports = function (server, options) {
         debug(
           'redirecting %s to %s',
           req.url,
-          protocol + '://' + req.headers.host + location
+          protocol + '://' + (req.headers.host || req.headers[':authority']) + location
         )
         res.writeHead(301, {
-          Location: protocol + '://' + req.headers.host + location
+          Location: protocol + '://' + (req.headers.host || req.headers[':authority']) + location
         })
         res.end()
       } else {
