@@ -378,8 +378,12 @@ const conf = convict({
     },
     forceDomain: {
       doc: 'The domain to force requests to',
-      format: String,
-      default: ''
+      format: Object,
+      default: {
+        hostname: '',
+        port: 80,
+        type: 301
+      }
     }
   },
   security: {
