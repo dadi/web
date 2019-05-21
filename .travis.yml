@@ -6,8 +6,9 @@ notifications:
   slack: dadi:pnhiL60xOrm7GOglHUmb7xHK
   email: false
 node_js:
-  - '10'
   - '8'
+  - '10'
+  - 'lts/*'
 before_script:
   - npm prune
 branches:
