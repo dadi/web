@@ -25,24 +25,41 @@ const Public = function(arg) {
   this.originalPath = ''
 
   // Make it so
-  this.init({ req: arg.req, res: arg.res, next: arg.next, files: arg.files })
+  this.init({
+    req: arg.req,
+    res: arg.res,
+    next: arg.next,
+    files: arg.files,
+    isVirtualDirectory: arg.isVirtualDirectory
+  })
 }
 
 Public.prototype.init = function(arg) {
   const filteredFiles = arg.files
     .map(i => url.parse(i).pathname.replace(/\/+$/, ''))
     .filter(i => i.length)
-    .map(i => ({
-      url: i,
-      path: this.publicPath
-        .split('/')
-        .concat(i.split('/'))
-        .filter((node, index) => {
-          return node !== '' || index === 0
-        })
-        .join('/'),
-      ext: path.extname(i)
-    }))
+    .map(i => {
+      let filePath = i.split('/')
+
+      // If we're dealing with a virtual directory, we must remove the first
+      // node in the URL, since it's already been defined in the directory.
+      if (arg.isVirtualDirectory) {
+        filePath.splice(1, 1)
+      }
+
+      return {
+        url: filePath.join('/'),
+        path: this.publicPath
+          .split('/')
+          .concat(filePath)
+          .filter((node, index) => {
+            // Allow empty nodes only at the beginning of the path.
+            return node !== '' || index === 0
+          })
+          .join('/'),
+        ext: path.extname(i)
+      }
+    })
 
   if (filteredFiles.length) {
     this.files = filteredFiles
@@ -294,6 +311,7 @@ module.exports = {
         files: [req.url],
         publicPath: path.resolve(directory.path),
         isMiddleware: true,
+        isVirtualDirectory: true,
         cache,
         index: directory.index
       })
