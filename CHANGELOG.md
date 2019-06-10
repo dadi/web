@@ -4,6 +4,115 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [7.0.1] - 2019-06-10
+
+## Fixed
+
+* [#493](https://github.com/dadi/web/pull/493): Allow duplicate nodes in public path
+
+# [7.0.0] - 2019-04-30
+
+## Domain redirects
+
+Web 7.0 modifies the way domain redirects are configured. The existing functionality is to supply only a hostname to redirect to, as a String property. This is a breaking change in Web 7.0, and requires configuring `forceDomain` to be an object containing hostname, port and redirect type (now also a `number` rather than a `string`).
+
+The default is an empty hostname, effectively disabling the functionality.
+
+    "default": {
+      "hostname": "",
+      "port": 80,
+      "type": 301
+    }
+
+### **Example**
+
+To redirect to `example.com` from `www.example.com` *temporarily* you could configure it thus:
+
+    "rewrites": {
+      "forceDomain": {
+        "hostname": "example.com",
+        "type": 307
+      }
+    }
+
+## Simpler datasource specifications
+
+Web 7.0 allows flattened datasource specification files, to match the page specification files. Notice in the example below there is no top-level `datasource` property as [specified here]([https://docs.dadi.cloud/web/6.1#datasource-specification-file](https://docs.dadi.cloud/web/6.1#datasource-specification-file)). No changes to existing projects are required, this change is backwards compatible with previous versions.
+
+    {
+        "key": "cars",
+        "name": "Cars datasource",
+        "source": {},
+        "count": 20,
+        "search": {},
+        "filter": {}
+    }
+
+## Simpler page specifications
+
+Web 7.0 allows page specification files without the "page" block, using the filename as the page name internally.
+
+Both the following examples will work for `index.json`
+
+    {
+      "page": {
+        "name": "index"
+      },
+      "routes": [
+        {
+          "path": "/"
+        }
+      ]
+    }
+
+    {
+      "routes": [
+        {
+          "path": "/"
+        }
+      ]
+    }
+
+## Add "composed" option to datasources
+
+The value of the `composed` property will be added to the API endpoint querystring.
+
+    {
+      "datasource": {
+        "key": "cars",
+        "name": "Cars datasource",
+        "source": {
+    		  "endpoint": "/1.0/db/cars"
+        },
+        "compose": "all",
+        "count": 20
+      }
+    }
+
+The generated endpoint will become `/1.0/db/cars?count=20&compose=all` 
+
+## HTTP2
+
+Start the server with support for HTTP2 by changing the protocol used in the `server` configuration:
+
+    "server": {
+      "host": "example.com",
+      "port": 443,
+      "protocol": "http2",
+      "sslPrivateKeyPath": "keys/server.key",    
+      "sslCertificatePath": "keys/server.crt",
+    }
+
+This basic level of support gives Web most of the HTTP2 benefits such as multiplexing, binary transfers and header compression, and is backwards compatible with clients that do not support it 🎉
+
+## Fixed
+
+- [#263](https://github.com/dadi/web/issues/263): allow composed option in datasource specification files
+- [#438](https://github.com/dadi/web/issues/438): simplify page specification files
+- [#469](https://github.com/dadi/web/issues/469): allow adding/modifying/deleting page.json files while the application is running
+- [#479](https://github.com/dadi/web/issues/479): allow flattened datasource specification files
+- [#489](https://github.com/dadi/web/issues/489): fix an issue whereby the querystring parameters of a URL were not taken into account when constructing a cache key
+
 # [6.1.1] - 2018-11-29
 
 ## Changed

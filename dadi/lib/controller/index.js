@@ -155,7 +155,7 @@ Controller.prototype.buildInitialViewData = function (req) {
   }
 
   const urlData = url.parse(
-    `${req.protocol}://${req.headers.host}${req.url}`,
+    `${req.protocol}://${(req.headers.host || req.headers[':authority'])}${req.url}`,
     true
   )
 

@@ -35,6 +35,14 @@ describe('Page', done => {
     done()
   })
 
+  it('should use filename if no name supplied', done => {
+    const name = 'test-no-name-given'
+    const schema = TestHelper.getPageSchema()
+    delete schema.page
+    page(name, schema).key.should.eql('test-no-name-given')
+    done()
+  })
+
   it('should attach key using name if not supplied', done => {
     const name = 'test'
     const schema = TestHelper.getPageSchema()
@@ -211,11 +219,13 @@ describe('Page', done => {
     }
 
     let component
-    const matches = Object.keys(server.object.components).map(component => {
-      if (server.object.components[component].page.key === 'test') {
-        return server.object.components[component]
-      }
-    })
+    const matches = Object.keys(server.object.components)
+      .map(component => {
+        if (server.object.components[component].page.key === 'test') {
+          return server.object.components[component]
+        }
+      })
+      .filter(Boolean)
 
     if (matches.length > 0) {
       component = matches[0]
