@@ -14,7 +14,7 @@ const Cache = require(path.join(__dirname, '/../cache'))
 const config = require(path.resolve(path.join(__dirname, '/../../../config')))
 const help = require(path.join(__dirname, '/../help'))
 
-const Public = function (arg) {
+const Public = function(arg) {
   this.cacheInstance = Cache(arg.cache)
   this.publicPath = arg.publicPath
   this.isMiddleware = arg.isMiddleware
@@ -25,20 +25,41 @@ const Public = function (arg) {
   this.originalPath = ''
 
   // Make it so
-  this.init({ req: arg.req, res: arg.res, next: arg.next, files: arg.files })
+  this.init({
+    req: arg.req,
+    res: arg.res,
+    next: arg.next,
+    files: arg.files,
+    isVirtualDirectory: arg.isVirtualDirectory
+  })
 }
 
-Public.prototype.init = function (arg) {
+Public.prototype.init = function(arg) {
   const filteredFiles = arg.files
     .map(i => url.parse(i).pathname.replace(/\/+$/, ''))
     .filter(i => i.length)
-    .map(i => ({
-      url: i,
-      path: [...new Set([...this.publicPath.split('/'), ...i.split('/')])].join(
-        '/'
-      ), // Removes any duplicates in a path
-      ext: path.extname(i)
-    }))
+    .map(i => {
+      let filePath = i.split('/')
+
+      // If we're dealing with a virtual directory, we must remove the first
+      // node in the URL, since it's already been defined in the directory.
+      if (arg.isVirtualDirectory) {
+        filePath.splice(1, 1)
+      }
+
+      return {
+        url: filePath.join('/'),
+        path: this.publicPath
+          .split('/')
+          .concat(filePath)
+          .filter((node, index) => {
+            // Allow empty nodes only at the beginning of the path.
+            return node !== '' || index === 0
+          })
+          .join('/'),
+        ext: path.extname(i)
+      }
+    })
 
   if (filteredFiles.length) {
     this.files = filteredFiles
@@ -50,7 +71,7 @@ Public.prototype.init = function (arg) {
   }
 }
 
-Public.prototype.process = function (arg) {
+Public.prototype.process = function(arg) {
   const contentType = mime.lookup(arg.file.url)
   const shouldCompress = compressible(contentType)
     ? help.canCompress(arg.req.headers)
@@ -131,7 +152,7 @@ Public.prototype.process = function (arg) {
   }
 }
 
-Public.prototype.openStream = function (arg) {
+Public.prototype.openStream = function(arg) {
   // Normalise file name
   let filePath = decodeURIComponent(arg.file.path.replace(/\+/g, ' '))
 
@@ -143,8 +164,8 @@ Public.prototype.openStream = function (arg) {
       const stats = fs.statSync(filePath)
       const parts = arg.req.headers.range.replace(/bytes=/, '').split('-')
 
-      rsOpts.start = parseInt(parts[0], 10),
-      rsOpts.end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1
+      ;(rsOpts.start = parseInt(parts[0], 10)),
+        (rsOpts.end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1)
 
       const chunkSize = rsOpts.end - rsOpts.start + 1
 
@@ -163,7 +184,7 @@ Public.prototype.openStream = function (arg) {
   if (!arg.rs) arg.rs = fs.createReadStream(filePath, rsOpts)
 
   // Try to load a folder index, if nothing found
-  arg.rs.on('error', (err) => {
+  arg.rs.on('error', err => {
     if (this.loadAttempts === 0) this.originalPath = filePath
 
     if (this.index[this.loadAttempts]) {
@@ -211,12 +232,12 @@ Public.prototype.openStream = function (arg) {
   })
 }
 
-Public.prototype.deliver = function (arg) {
+Public.prototype.deliver = function(arg) {
   const parent = this
   const data = []
 
   const extras = through(
-    function write (chunk) {
+    function write(chunk) {
       if (chunk) data.push(chunk)
 
       // Update header with the compressed size
@@ -232,7 +253,7 @@ Public.prototype.deliver = function (arg) {
       // Pass data through
       this.queue(chunk)
     },
-    function end () {
+    function end() {
       // Set cache if needed
       if (arg.cacheInfo) {
         parent.cacheInstance.cache
@@ -261,9 +282,12 @@ Public.prototype.deliver = function (arg) {
 }
 
 module.exports = {
-  middleware: function (publicPath, cache, hosts) {
+  middleware: function(publicPath, cache, hosts) {
     return (req, res, next) => {
-      if (!hosts || hosts.includes((req.headers.host || req.headers[':authority']))) {
+      if (
+        !hosts ||
+        hosts.includes(req.headers.host || req.headers[':authority'])
+      ) {
         return new Public({
           req,
           res,
@@ -276,7 +300,7 @@ module.exports = {
       }
     }
   },
-  virtualDirectories: function (directory, cache, hosts) {
+  virtualDirectories: function(directory, cache, hosts) {
     return (req, res, next) => {
       if (!Array.isArray(directory.index)) directory.index = [directory.index]
 
@@ -287,12 +311,13 @@ module.exports = {
         files: [req.url],
         publicPath: path.resolve(directory.path),
         isMiddleware: true,
+        isVirtualDirectory: true,
         cache,
         index: directory.index
       })
     }
   },
-  process: function (req, res, next, files, publicPath, isMiddleware, cache) {
+  process: function(req, res, next, files, publicPath, isMiddleware, cache) {
     return new Public({
       req,
       res,
