@@ -1,6 +1,6 @@
 {
   "name": "@dadi/web",
-  "version": "7.0.2-rc1",
+  "version": "7.0.2",
   "product": "DADI Web",
   "description": "A schemaless templating layer that can operate as a standalone platform or with DADI API as a full stack web application.",
   "main": "main.js",
