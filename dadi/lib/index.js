@@ -5,7 +5,6 @@ const site = require('../../package.json').name
 const nodeVersion = Number(process.version.match(/^v(\d+\.\d+)/)[1])
 
 const bodyParser = require('body-parser')
-const chokidar = require('chokidar')
 const debug = require('debug')('web:server')
 const enableDestroy = require('server-destroy')
 const fs = require('fs')
@@ -44,6 +43,7 @@ const forceDomain = require(path.join(__dirname, '/controller/forceDomain'))
 const help = require(path.join(__dirname, '/help'))
 const Send = require(path.join(__dirname, '/view/send'))
 const Middleware = require(path.join(__dirname, '/middleware'))
+const monitor = require(path.join(__dirname, '/monitor'))
 const servePublic = require(path.join(__dirname, '/view/public'))
 const Page = require(path.join(__dirname, '/page'))
 const Preload = require(path.resolve(
@@ -550,48 +550,46 @@ Server.prototype.updatePages = function (directoryPath, options, reload) {
     .then(pages => {
       pages.forEach(page => {
         // Ignore files that aren't a JSON schema
-        if (path.extname(page) !== '.json') {
-          return
-        }
-
-        const relativePath = path.relative(directoryPath, page)
-
-        // strip the filename minus the extension
-        // to use as the page name
-        const name = relativePath.slice(0, -'.json'.length)
-
-        // Find a file with the same base name as the JSON file, which will be
-        // a candidate to page template.
-        let templateCandidate
-
-        pages.some(page => {
-          const candidateExtension = path.extname(page)
-
-          if (candidateExtension === '.json') return
-
+        if (path.extname(page) === '.json') {
           const relativePath = path.relative(directoryPath, page)
-          const candidateName = relativePath.slice(
-            0,
-            -candidateExtension.length
+
+          // strip the filename minus the extension
+          // to use as the page name
+          const name = relativePath.slice(0, -'.json'.length)
+
+          // Find a file with the same base name as the JSON file, which will be
+          // a candidate to page template.
+          let templateCandidate
+
+          pages.some(page => {
+            const candidateExtension = path.extname(page)
+
+            if (candidateExtension === '.json') return
+
+            const relativePath = path.relative(directoryPath, page)
+            const candidateName = relativePath.slice(
+              0,
+              -candidateExtension.length
+            )
+
+            if (candidateName === name) {
+              templateCandidate = candidateName + candidateExtension
+
+              return true
+            }
+          })
+
+          this.addRoute(
+            {
+              name,
+              filepath: page
+            },
+            Object.assign({}, options, {
+              templateCandidate
+            }),
+            reload
           )
-
-          if (candidateName === name) {
-            templateCandidate = candidateName + candidateExtension
-
-            return true
-          }
-        })
-
-        this.addRoute(
-          {
-            name,
-            filepath: page
-          },
-          Object.assign({}, options, {
-            templateCandidate
-          }),
-          reload
-        )
+        }
       })
 
       return this
@@ -606,48 +604,48 @@ Server.prototype.addRoute = function (obj, options, reload) {
   // get the page schema
   let schema
 
-  fs.readFile(obj.filepath, (_err, data) => {
-    if (data.toString() === '') {
-      return
-    }
+  const data = fs.readFileSync(obj.filepath)
 
-    try {
-      schema = JSON.parse(data.toString())
-    } catch (err) {
-      log.error(
-        { module: 'server' },
-        { err },
-        'Error loading page schema "' + obj.filepath + '". Is it valid JSON?'
-      )
-      throw err
-    }
+  if (data.toString() === '') {
+    return
+  }
 
-    // create a page with the supplied schema,
-    // using the filename as the page name
-    const page = Page(obj.name, schema, options.host, options.templateCandidate)
-
-    // create a handler for requests to this page
-    const controller = new Controller(
-      page,
-      options,
-      schema.page,
-      schema.engine,
-      this.cacheLayer
+  try {
+    schema = JSON.parse(data.toString())
+  } catch (err) {
+    log.error(
+      { module: 'server' },
+      { err },
+      'Error loading page schema "' + obj.filepath + '". Is it valid JSON?'
     )
+    throw err
+  }
 
-    // add the component to the api by adding a route to the app and mapping
-    // `req.method` to component methods
-    this.addComponent(
-      {
-        component: controller,
-        filepath: obj.filepath,
-        host: options.host || '',
-        key: page.key,
-        routes: page.routes
-      },
-      reload
-    )
-  })
+  // create a page with the supplied schema,
+  // using the filename as the page name
+  const page = Page(obj.name, schema, options.host, options.templateCandidate)
+
+  // create a handler for requests to this page
+  const controller = new Controller(
+    page,
+    options,
+    schema.page,
+    schema.engine,
+    this.cacheLayer
+  )
+
+  // add the component to the api by adding a route to the app and mapping
+  // `req.method` to component methods
+  this.addComponent(
+    {
+      component: controller,
+      filepath: obj.filepath,
+      host: options.host || '',
+      key: page.key,
+      routes: page.routes
+    },
+    reload
+  )
 }
 
 Server.prototype.addComponent = function (options, reload) {
@@ -746,24 +744,10 @@ Server.prototype.addMonitor = function (filepath, callback) {
   // only add one watcher per path
   if (this.monitors[filepath]) return
 
-  let watcher = chokidar.watch(filepath, {
-    ignored: /(^|[/\\])\../,
-    persistent: true
-  })
+  const m = monitor(filepath)
+  m.on('change', callback)
 
-  watcher.on('add', path => {
-    callback()
-  })
-
-  watcher.on('change', path => {
-    callback()
-  })
-
-  watcher.on('unlink', path => {
-    callback()
-  })
-
-  this.monitors[filepath] = watcher
+  this.monitors[filepath] = m
 }
 
 Server.prototype.removeMonitor = function (filepath) {
@@ -775,26 +759,20 @@ Server.prototype.compile = function (options) {
   const templatePath = options.pagePath
 
   // Get a list of templates to render based on the registered components
-  const componentTemplates = Object.keys(this.components)
-    .map(route => {
-      if (!this.components[route].page.template) {
-        return
-      }
+  const componentTemplates = Object.keys(this.components).map(route => {
+    if (this.components[route].options.host === options.host) {
+      const resolvedTemplate = path.join(
+        templatePath,
+        this.components[route].page.template
+      )
+      this.components[route].page.resolvedTemplate = resolvedTemplate
 
-      if (this.components[route].options.host === options.host) {
-        const resolvedTemplate = path.join(
-          templatePath,
-          this.components[route].page.template
-        )
-        this.components[route].page.resolvedTemplate = resolvedTemplate
-
-        return {
-          engine: this.components[route].engine,
-          file: resolvedTemplate
-        }
+      return {
+        engine: this.components[route].engine,
+        file: resolvedTemplate
       }
-    })
-    .filter(Boolean)
+    }
+  })
 
   // Loading engines and templates
   return templateStore
