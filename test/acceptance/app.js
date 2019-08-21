@@ -107,6 +107,123 @@ describe('Application', () => {
     })
   })
 
+  describe('CORS', () => {
+    it('should return CORS headers when not found in cache', done => {
+      const clientHost = `http://${config.get('server.host')}:${config.get(
+        'server.port'
+      )}`
+      const apiHost = `http://${config.get('api').host}:${
+        config.get('api').port
+      }`
+
+      const client = request(clientHost)
+      const endpoint1 =
+        '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D'
+      const scope2 = nock(apiHost)
+        .get(endpoint1)
+        .reply(200, JSON.stringify({ results: [{ name: 'Crime' }] }))
+
+      // create page 1
+      const page1 = page('page1', TestHelper.getPageSchema())
+      page1.datasources = ['categories']
+      page1.template = 'test.js'
+      page1.routes[0].path = '/categories/:category'
+      page1.events = []
+
+      const pages = []
+      pages.push(page1)
+
+      const headers = {
+        cors: {
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({ headers })
+          .then(() => {
+            TestHelper.startServer(pages).then(() => {
+              client.get('/categories/Crime').end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.headers['access-control-allow-origin'])
+                res.headers['access-control-allow-origin'].should.eql('*')
+                res.text.should.eql('<h3>Crime</h3>')
+
+                done()
+              })
+            })
+          })
+          .catch(err => {
+            console.log('err :', err)
+          })
+      })
+    })
+
+    it('should return CORS headers when found in cache', done => {
+      const clientHost = `http://${config.get('server.host')}:${config.get(
+        'server.port'
+      )}`
+      const apiHost = `http://${config.get('api').host}:${
+        config.get('api').port
+      }`
+
+      const client = request(clientHost)
+      const endpoint1 =
+        '/1.0/library/categories?count=20&page=1&filter=%7B%22name%22:%22Crime%22%7D&fields=%7B%22name%22:1%7D&sort=%7B%22name%22:1%7D'
+      const scope2 = nock(apiHost)
+        .get(endpoint1)
+        .reply(200, JSON.stringify({ results: [{ name: 'Crime' }] }))
+
+      // create page 1
+      const page1 = page('page1', TestHelper.getPageSchema())
+      page1.datasources = ['categories']
+      page1.template = 'test.js'
+      page1.routes[0].path = '/categories/:category'
+      page1.events = []
+
+      const pages = []
+      pages.push(page1)
+
+      const headers = {
+        cors: {
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+
+      TestHelper.enableApiConfig().then(() => {
+        TestHelper.updateConfig({ headers })
+          .then(() => {
+            TestHelper.startServer(pages).then(() => {
+              client.get('/categories/Crime').end((err, res) => {
+                if (err) return done(err)
+                should.exist(res.headers['x-cache'])
+                res.headers['x-cache'].should.eql('MISS')
+
+                should.exist(res.headers['access-control-allow-origin'])
+                res.headers['access-control-allow-origin'].should.eql('*')
+                res.text.should.eql('<h3>Crime</h3>')
+
+                client.get('/categories/Crime').end((err, res) => {
+                  if (err) return done(err)
+                  should.exist(res.headers['x-cache'])
+                  res.headers['x-cache'].should.eql('HIT')
+
+                  should.exist(res.headers['access-control-allow-origin'])
+                  res.headers['access-control-allow-origin'].should.eql('*')
+                  res.text.should.eql('<h3>Crime</h3>')
+
+                  done()
+                })
+              })
+            })
+          })
+          .catch(err => {
+            console.log('err :', err)
+          })
+      })
+    })
+  })
+
   describe('Status Endpoint', () => {
     describe('GET', () => {
       it('should return 405 error', done => {
