@@ -7,8 +7,8 @@
 
 ## DADI Web
 
-* [Overview](#overview)
-* [Getting started](#getting-started)
+- [Overview](#overview)
+- [Getting started](#getting-started)
 
 ## Overview
 
@@ -29,7 +29,7 @@ The [DADI Web Documentation](https://docs.dadi.cloud/web/) is the best place for
 DADI is a data centric development and delivery stack, built specifically in support of the principles of API first and COPE.
 
 Copyright notice<br />
-(C) 2019 DADI+ Limited <support@dadi.tech><br />
+(C) 2019 DADI+ Limited <support@dadi.cloud><br />
 All rights reserved
 
 This product is part of DADI.<br />
@@ -49,7 +49,7 @@ them, to determine what licences are applicable.**
 
 DADI is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 The GNU General Public License (GPL) is available at

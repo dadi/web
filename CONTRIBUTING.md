@@ -15,7 +15,7 @@ Here are the guidelines we'd like you to follow:
 
 ## <a name="question"></a> Got a Question or Problem?
 
-Documentation is maintained under the `docs` branch and can be found on the [dadi.tech](https://dadi.tech) site.
+Documentation is maintained under the `docs` branch and can be found on the [dadi.cloud](https://dadi.cloud) site.
 
 If the documentation doesn't answer your problem please feel free to email the
 DADI team directly on: team@dadi.tech
