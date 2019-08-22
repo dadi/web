@@ -234,13 +234,20 @@ Cache.prototype.init = function () {
           return next()
         }
 
+        // Add standard cache response headers and configured CORS headers.
+        const configuredHeaders = config.get('headers').cors || {}
         const headers = {
+          ...configuredHeaders,
           'X-Cache-Lookup': 'HIT',
           'X-Cache': 'HIT',
           'Content-Type': contentType,
           'Cache-Control':
             config.get('headers.cacheControl')[contentType] ||
             'public, max-age=86400'
+        }
+
+        if (headers['Access-Control-Allow-Origin'] && headers['Access-Control-Allow-Origin'] !== '*') {
+          headers['Vary'] = 'Origin'
         }
 
         // Add compression headers

@@ -36,6 +36,8 @@ scripts/coverage.svg
 
 test/kinesis-test-db
 
+.nyc_output/
+
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
