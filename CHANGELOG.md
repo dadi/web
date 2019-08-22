@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [7.0.3] - 2019-08-22
+
+## Fixed
+
+* [#499](https://github.com/dadi/web/pull/499): add CORS headers to response from cache
+
 # [7.0.2] - 2019-06-19
 
 ## Fixed
