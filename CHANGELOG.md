@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# [7.0.4] - 2019-09-16
+
+## Fixed
+
+* [#500](https://github.com/dadi/web/pull/500): fix error with remote datasource
+
 # [7.0.3] - 2019-08-22
 
 ## Fixed
