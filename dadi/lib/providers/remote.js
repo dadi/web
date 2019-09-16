@@ -1,5 +1,6 @@
 'use strict'
 
+const config = require('../../../config')
 const http = require('http')
 const https = require('https')
 const http2 = require('http2')
@@ -133,11 +134,7 @@ RemoteProvider.prototype.makeRequest = function (requestUrl, done) {
   let agent
 
   if (this.options.protocol.includes('https')) {
-    if (config.get('server.enableHTTP2')) {
-      agent = http2
-    } else {
-      agent = https
-    }
+    agent = https
   } else {
     agent = http
   }
