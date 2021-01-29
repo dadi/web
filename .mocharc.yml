@@ -1,0 +1,8 @@
+bail: true
+exit: true
+recursive: true
+require:
+ - 'env-test'
+ - 'test/pretest.js'
+timeout: 8000
+ui: 'bdd'
