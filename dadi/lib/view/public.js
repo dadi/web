@@ -1,5 +1,4 @@
 const async = require('async')
-const brotli = require('iltorb')
 const compressible = require('compressible')
 const crypto = require('crypto')
 const etag = require('etag')
@@ -14,7 +13,7 @@ const Cache = require(path.join(__dirname, '/../cache'))
 const config = require(path.resolve(path.join(__dirname, '/../../../config')))
 const help = require(path.join(__dirname, '/../help'))
 
-const Public = function(arg) {
+const Public = function (arg) {
   this.cacheInstance = Cache(arg.cache)
   this.publicPath = arg.publicPath
   this.isMiddleware = arg.isMiddleware
@@ -34,7 +33,7 @@ const Public = function(arg) {
   })
 }
 
-Public.prototype.init = function(arg) {
+Public.prototype.init = function (arg) {
   const filteredFiles = arg.files
     .map(i => url.parse(i).pathname.replace(/\/+$/, ''))
     .filter(i => i.length)
@@ -71,7 +70,7 @@ Public.prototype.init = function(arg) {
   }
 }
 
-Public.prototype.process = function(arg) {
+Public.prototype.process = function (arg) {
   const contentType = mime.lookup(arg.file.url)
   const shouldCompress = compressible(contentType)
     ? help.canCompress(arg.req.headers)
@@ -152,7 +151,7 @@ Public.prototype.process = function(arg) {
   }
 }
 
-Public.prototype.openStream = function(arg) {
+Public.prototype.openStream = function (arg) {
   // Normalise file name
   let filePath = decodeURIComponent(arg.file.path.replace(/\+/g, ' '))
 
@@ -232,12 +231,12 @@ Public.prototype.openStream = function(arg) {
   })
 }
 
-Public.prototype.deliver = function(arg) {
+Public.prototype.deliver = function (arg) {
   const parent = this
   const data = []
 
   const extras = through(
-    function write(chunk) {
+    function write (chunk) {
       if (chunk) data.push(chunk)
 
       // Update header with the compressed size
@@ -253,7 +252,7 @@ Public.prototype.deliver = function(arg) {
       // Pass data through
       this.queue(chunk)
     },
-    function end() {
+    function end () {
       // Set cache if needed
       if (arg.cacheInfo) {
         parent.cacheInstance.cache
@@ -268,7 +267,7 @@ Public.prototype.deliver = function(arg) {
   // Compress
   if (arg.shouldCompress === 'br') {
     arg.rs
-      .pipe(brotli.compressStream())
+      .pipe(zlib.createBrotliCompress())
       .pipe(extras)
       .pipe(arg.res)
   } else if (arg.shouldCompress === 'gzip') {
@@ -282,7 +281,7 @@ Public.prototype.deliver = function(arg) {
 }
 
 module.exports = {
-  middleware: function(publicPath, cache, hosts) {
+  middleware: function (publicPath, cache, hosts) {
     return (req, res, next) => {
       if (
         !hosts ||
@@ -300,7 +299,7 @@ module.exports = {
       }
     }
   },
-  virtualDirectories: function(directory, cache, hosts) {
+  virtualDirectories: function (directory, cache, hosts) {
     return (req, res, next) => {
       if (!Array.isArray(directory.index)) directory.index = [directory.index]
 
@@ -317,7 +316,7 @@ module.exports = {
       })
     }
   },
-  process: function(req, res, next, files, publicPath, isMiddleware, cache) {
+  process: function (req, res, next, files, publicPath, isMiddleware, cache) {
     return new Public({
       req,
       res,

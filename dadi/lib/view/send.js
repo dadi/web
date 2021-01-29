@@ -1,6 +1,5 @@
 const path = require('path')
 const zlib = require('zlib')
-const brotli = require('iltorb')
 const compressible = require('compressible')
 const stringify = require('json-stringify-safe')
 
@@ -54,7 +53,7 @@ module.exports.html = function (req, res, next, statusCode, contentType) {
       res.setHeader('Content-Encoding', shouldCompress)
       resBody =
         shouldCompress === 'br'
-          ? brotli.compressSync(Buffer.from(resBody, 'utf-8'))
+          ? zlib.brotliCompressSync(Buffer.from(resBody, 'utf-8'))
           : zlib.gzipSync(resBody)
     }
 
