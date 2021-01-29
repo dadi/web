@@ -73,8 +73,11 @@ const Api = function () {
     // such as incorrect passphrase or no passphrase provided
     try {
       if (config.get('server.enableHTTP2')) {
-        serverOptions['allowHTTP1'] = true // fallback to http1  
-        this.httpsInstance = http2.createSecureServer(serverOptions, this.listener)
+        serverOptions['allowHTTP1'] = true // fallback to http1
+        this.httpsInstance = http2.createSecureServer(
+          serverOptions,
+          this.listener
+        )
       } else {
         this.httpsInstance = https.createServer(serverOptions, this.listener)
       }
@@ -185,7 +188,7 @@ Api.prototype.listen = function (backlog, done) {
  *  @api public
  */
 Api.prototype.listener = function (req, res) {
-  debug('request %s%s', (req.headers.host || req.headers[':authority']), req.url)
+  debug('request %s%s', req.headers.host || req.headers[':authority'], req.url)
 
   // clone the middleware stack
   this.stack = this.all.slice(0)
@@ -277,7 +280,9 @@ Api.prototype.getMatchingRoutes = function (req) {
   const virtualHosts = config.get('virtualHosts')
   const host =
     Object.keys(virtualHosts).find(key => {
-      return virtualHosts[key].hostnames.includes((req.headers.host || req.headers[':authority']))
+      return virtualHosts[key].hostnames.includes(
+        req.headers.host || req.headers[':authority']
+      )
     }) || ''
 
   const paths = this.paths.filter(path => {
@@ -354,7 +359,7 @@ function onError (api) {
           stack: data.stack,
           statusCode: data.statusCode,
           error: data.code,
-          server: (req.headers.host || req.headers[':authority'])
+          server: req.headers.host || req.headers[':authority']
         })
       )
     }
@@ -384,7 +389,7 @@ function notFound (api, req, res) {
           stack: JSON.stringify(req.headers, null, 2),
           statusCode: '404',
           error: 'Page not found',
-          server: (req.headers.host || req.headers[':authority'])
+          server: req.headers.host || req.headers[':authority']
         })
       )
     }
@@ -404,7 +409,9 @@ function findPath (req, paths, pathString) {
 
   const host =
     Object.keys(virtualHosts).find(key => {
-      return virtualHosts[key].hostnames.includes((req.headers.host || req.headers[':authority']))
+      return virtualHosts[key].hostnames.includes(
+        req.headers.host || req.headers[':authority']
+      )
     }) || ''
 
   const matchingPaths = paths.filter(path => {

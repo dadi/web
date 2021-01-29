@@ -517,10 +517,17 @@ module.exports = function (server, options) {
         debug(
           'redirecting %s to %s',
           req.url,
-          protocol + '://' + (req.headers.host || req.headers[':authority']) + location
+          protocol +
+            '://' +
+            (req.headers.host || req.headers[':authority']) +
+            location
         )
         res.writeHead(301, {
-          Location: protocol + '://' + (req.headers.host || req.headers[':authority']) + location
+          Location:
+            protocol +
+            '://' +
+            (req.headers.host || req.headers[':authority']) +
+            location
         })
         res.end()
       } else {
