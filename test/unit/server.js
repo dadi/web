@@ -90,7 +90,7 @@ describe('Server', done => {
 
             done()
           })
-        }, 2000)
+        }, 1000)
       })
     })
   })

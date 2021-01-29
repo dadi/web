@@ -831,9 +831,9 @@ describe('Data Providers', done => {
                   res.body.markdown.results[0].original.should.eql(
                     '---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n'
                   ),
-                  res.body.markdown.results[0].attributes.title.should.eql(
-                    'A Quick Brown Fox'
-                  )
+                    res.body.markdown.results[0].attributes.title.should.eql(
+                      'A Quick Brown Fox'
+                    )
                   res.body.markdown.results[0].attributes.category.should.eql(
                     'guggenheim'
                   )
@@ -884,9 +884,9 @@ describe('Data Providers', done => {
                   res.body.markdown.results[0].original.should.eql(
                     '---\ntitle: A Quick Brown Fox\ncategory: guggenheim\ndate: 2010-01-01\n---\n\n# Basic markdown\n\nMarkdown can have [links](https://dadi.tech), _emphasis_ and **bold** formatting.\n'
                   ),
-                  res.body.markdown.results[0].attributes.title.should.eql(
-                    'A Quick Brown Fox'
-                  )
+                    res.body.markdown.results[0].attributes.title.should.eql(
+                      'A Quick Brown Fox'
+                    )
                   res.body.markdown.results[0].attributes.category.should.eql(
                     'guggenheim'
                   )
