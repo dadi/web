@@ -5,7 +5,7 @@ const forceDomain = function (options) {
     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
     const newRoute = domainRedirect(
       protocol,
-      (req.headers.host || req.headers[':authority']),
+      req.headers.host || req.headers[':authority'],
       req.url,
       options
     )

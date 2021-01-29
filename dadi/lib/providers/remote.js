@@ -238,7 +238,12 @@ RemoteProvider.prototype.handleResponse = function (requestUrl, res, done) {
  * @param  {fn} done
  * @return {void}
  */
-RemoteProvider.prototype.processOutput = function (requestUrl, res, data, done) {
+RemoteProvider.prototype.processOutput = function (
+  requestUrl,
+  res,
+  data,
+  done
+) {
   setImmediate(() => {
     // Return a 202 Accepted response immediately,
     // along with the datasource response

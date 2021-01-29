@@ -38,7 +38,10 @@ const compileTrust = function (val) {
 
 middleware.handleHostHeader = function () {
   return function hostHeaderCheck (req, res, next) {
-    if (!(req.headers.host || req.headers[':authority']) || (req.headers.host || req.headers[':authority']) === '') {
+    if (
+      !(req.headers.host || req.headers[':authority']) ||
+      (req.headers.host || req.headers[':authority']) === ''
+    ) {
       res.statusCode = 400
       return res.end()
     } else {
@@ -128,7 +131,8 @@ middleware.transportSecurity = function () {
   }
 
   function redirect (req, res, scheme) {
-    const location = scheme + '//' + (req.headers.host || req.headers[':authority']) + req.url
+    const location =
+      scheme + '//' + (req.headers.host || req.headers[':authority']) + req.url
     res.writeHead(301, {
       Location: location
     })
